@@ -5,6 +5,12 @@
 
     RewriteEngine On
 
+    # CENTRAL_FORCE_HTTPS
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !^https$ [NC]
+    RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/
+    RewriteRule ^ https://central.arpynet.com%{REQUEST_URI} [L,R=301,NE]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
