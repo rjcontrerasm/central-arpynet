@@ -74,15 +74,12 @@ class GoogleCalendarService
 
         $client->setAccessToken($token);
 
-        $calendar = new GoogleCalendar($client);
-        $primary = $calendar->calendars->get('primary');
-
         $connection = GoogleCalendarConnection::query()
             ->updateOrCreate(
                 ['user_id' => $user->id],
                 [
                     'calendar_id' => 'primary',
-                    'calendar_summary' => $primary->getSummary(),
+                    'calendar_summary' => 'Calendario principal',
                     'token_data' => $token,
                     'scopes' => self::SCOPES,
                     'connected_at' => now(),
