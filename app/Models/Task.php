@@ -16,6 +16,7 @@ class Task extends Model
 
     protected $fillable = [
         'organization_id',
+        'project_id',
         'parent_task_id',
         'title',
         'description',
@@ -65,9 +66,14 @@ class Task extends Model
             $task->refreshPriorityAttributes();
         });
 
+        static::created(function (Task $task): void {
+            $task->project?->touchActivity();
+        });
+
         static::updating(function (Task $task): void {
             $activityFields = [
                 'organization_id',
+                'project_id',
                 'parent_task_id',
                 'title',
                 'description',
@@ -92,6 +98,18 @@ class Task extends Model
 
             $task->synchronizeCompletionState();
             $task->refreshPriorityAttributes();
+        });
+
+        static::updated(function (Task $task): void {
+            $task->project?->touchActivity();
+
+            if ($task->wasChanged('project_id') && $task->getOriginal('project_id')) {
+                Project::query()->find($task->getOriginal('project_id'))?->touchActivity();
+            }
+        });
+
+        static::deleted(function (Task $task): void {
+            $task->project?->touchActivity();
         });
     }
 
@@ -147,6 +165,11 @@ class Task extends Model
     public function organization(): BelongsTo
     {
         return $this->belongsTo(Organization::class);
+    }
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
     }
 
     public function parent(): BelongsTo

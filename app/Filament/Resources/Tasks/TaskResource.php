@@ -67,6 +67,20 @@ class TaskResource extends Resource
                             ->native(false)
                             ->required(),
 
+                        Select::make('project_id')
+                            ->label('Proyecto')
+                            ->relationship(
+                                name: 'project',
+                                titleAttribute: 'name',
+                                modifyQueryUsing: fn ($query) => auth()->user()
+                                    ? $query->visibleTo(auth()->user())
+                                    : $query->whereRaw('1 = 0'),
+                            )
+                            ->searchable()
+                            ->preload()
+                            ->native(false)
+                            ->nullable(),
+
                         TextInput::make('title')
                             ->label('Título')
                             ->required()
@@ -165,6 +179,11 @@ class TaskResource extends Resource
                     ->badge()
                     ->searchable()
                     ->sortable(),
+
+                TextColumn::make('project.name')
+                    ->label('Proyecto')
+                    ->placeholder('Sin proyecto')
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('status')
                     ->label('Estado')
