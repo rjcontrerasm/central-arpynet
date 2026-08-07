@@ -1,5 +1,9 @@
 <?php
 
+use App\Support\ObligationOccurrenceGenerator;
+
+use App\Models\RecurringObligation;
+
 use App\Models\Task;
 use App\Support\TaskPriorityCalculator;
 use Illuminate\Foundation\Inspiring;
@@ -53,3 +57,41 @@ Artisan::command(
 Schedule::command('tasks:recalculate-priority')
     ->everyFifteenMinutes()
     ->withoutOverlapping();
+
+Artisan::command(
+    'obligations:generate-occurrences',
+    function (): void {
+        $generator = app(
+            ObligationOccurrenceGenerator::class,
+        );
+
+        $created = 0;
+
+        RecurringObligation::query()
+            ->where('is_active', true)
+            ->chunkById(
+                100,
+                function ($obligations) use (
+                    $generator,
+                    &$created,
+                ): void {
+                    foreach ($obligations as $obligation) {
+                        $created += $generator->generateFor(
+                            $obligation,
+                            now()->startOfDay(),
+                            now()->addDays(120)->endOfDay(),
+                        );
+                    }
+                },
+            );
+
+        $this->info(
+            "Vencimientos creados: {$created}",
+        );
+    },
+)->purpose('Generate recurring obligation occurrences');
+
+Schedule::command('obligations:generate-occurrences')
+    ->dailyAt('00:10')
+    ->withoutOverlapping();
+

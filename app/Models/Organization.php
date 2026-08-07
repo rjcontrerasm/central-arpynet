@@ -85,6 +85,16 @@ class Organization extends Model
         return $this->hasMany(Task::class);
     }
 
+    public function recurringObligations(): HasMany
+    {
+        return $this->hasMany(RecurringObligation::class);
+    }
+
+    public function obligationOccurrences(): HasMany
+    {
+        return $this->hasMany(ObligationOccurrence::class);
+    }
+
     public function clients(): HasMany
     {
         return $this->hasMany(Client::class);
