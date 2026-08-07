@@ -105,6 +105,11 @@ class Organization extends Model
         return $this->hasMany(ServiceOrder::class);
     }
 
+    public function incidents(): HasMany
+    {
+        return $this->hasMany(Incident::class);
+    }
+
     public function projects(): HasMany
     {
         return $this->hasMany(Project::class);
