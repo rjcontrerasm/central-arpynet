@@ -51,6 +51,24 @@
                         {{ $connection->connected_at?->format('d/m/Y H:i') }}
                     </div>
 
+                    <div>
+                        <strong>Última sincronización:</strong>
+                        {{ $connection->last_sync_at?->format('d/m/Y H:i') ?? 'Aún no ejecutada' }}
+                    </div>
+
+                    <form
+                        method="POST"
+                        action="{{ route('google-calendar.sync') }}"
+                    >
+                        @csrf
+
+                        <x-filament::button
+                            type="submit"
+                        >
+                            Sincronizar ahora
+                        </x-filament::button>
+                    </form>
+
                     <form
                         method="POST"
                         action="{{ route('google-calendar.disconnect') }}"

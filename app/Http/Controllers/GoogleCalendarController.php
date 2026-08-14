@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\GoogleCalendarService;
+use App\Services\GoogleCalendarSyncService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -82,6 +83,39 @@ class GoogleCalendarController extends Controller
             ->with(
                 'google_calendar_success',
                 'Google Calendar quedó conectado correctamente.',
+            );
+    }
+
+    public function sync(
+        Request $request,
+        GoogleCalendarSyncService $sync,
+    ): RedirectResponse {
+        try {
+            $result = $sync->syncUser(
+                $request->user(),
+            );
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->route('filament.admin.pages.integraciones')
+                ->with(
+                    'google_calendar_error',
+                    $exception->getMessage(),
+                );
+        }
+
+        return redirect()
+            ->route('filament.admin.pages.integraciones')
+            ->with(
+                'google_calendar_success',
+                sprintf(
+                    'Sincronización completada: %d creados, %d actualizados, %d eliminados, %d sin cambios.',
+                    $result['created'],
+                    $result['updated'],
+                    $result['deleted'],
+                    $result['unchanged'],
+                ),
             );
     }
 

@@ -1,5 +1,9 @@
 <?php
 
+use App\Services\GoogleCalendarSyncService;
+
+use App\Models\GoogleCalendarConnection;
+
 use App\Support\ObligationOccurrenceGenerator;
 
 use App\Models\RecurringObligation;
@@ -93,5 +97,56 @@ Artisan::command(
 
 Schedule::command('obligations:generate-occurrences')
     ->dailyAt('00:10')
+    ->withoutOverlapping();
+
+Artisan::command(
+    'calendar:sync',
+    function (): void {
+        $service = app(GoogleCalendarSyncService::class);
+
+        GoogleCalendarConnection::query()
+            ->with('user')
+            ->chunkById(
+                50,
+                function ($connections) use ($service): void {
+                    foreach ($connections as $connection) {
+                        if (! $connection->user) {
+                            continue;
+                        }
+
+                        try {
+                            $result = $service->syncUser(
+                                $connection->user,
+                            );
+
+                            $this->info(
+                                $connection->user->email
+                                .' | creados: '.$result['created']
+                                .' | actualizados: '.$result['updated']
+                                .' | sin cambios: '.$result['unchanged']
+                                .' | eliminados: '.$result['deleted']
+                                .' | errores: '.$result['errors'],
+                            );
+                        } catch (Throwable $exception) {
+                            report($exception);
+
+                            $connection->forceFill([
+                                'last_error_at' => now(),
+                                'last_error' => $exception->getMessage(),
+                            ])->save();
+
+                            $this->error(
+                                $connection->user->email
+                                .' | '.$exception->getMessage(),
+                            );
+                        }
+                    }
+                },
+            );
+    },
+)->purpose('Synchronize Central items with Google Calendar');
+
+Schedule::command('calendar:sync')
+    ->everyTenMinutes()
     ->withoutOverlapping();
 

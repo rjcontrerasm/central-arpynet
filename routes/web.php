@@ -22,6 +22,11 @@ Route::middleware('auth')->group(function (): void {
     )->name('google-calendar.callback');
 
     Route::post(
+        '/google-calendar/sync',
+        [GoogleCalendarController::class, 'sync'],
+    )->name('google-calendar.sync');
+
+    Route::post(
         '/google-calendar/disconnect',
         [GoogleCalendarController::class, 'disconnect'],
     )->name('google-calendar.disconnect');
