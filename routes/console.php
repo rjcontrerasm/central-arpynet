@@ -150,3 +150,59 @@ Schedule::command('calendar:sync')
     ->everyTenMinutes()
     ->withoutOverlapping();
 
+
+Artisan::command(
+    'monitor:casa-andina-sync',
+    function (): int {
+        $service = app(
+            \App\Services\CasaAndinaMonitorSyncService::class,
+        );
+
+        if (! $service->enabled()) {
+            $this->info(
+                'Casa Andina Monitor: deshabilitado. '
+                .'No se realizó ninguna consulta externa.',
+            );
+
+            return self::SUCCESS;
+        }
+
+        if (! $service->configured()) {
+            $this->error(
+                'Casa Andina Monitor: faltan URL o token.',
+            );
+
+            return self::FAILURE;
+        }
+
+        try {
+            $result = $service->sync();
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            $this->error(
+                'Casa Andina Monitor: '
+                .$exception->getMessage(),
+            );
+
+            return self::FAILURE;
+        }
+
+        $this->info(
+            'Casa Andina Monitor'
+            .' | items: '.$result['items']
+            .' | creados: '.$result['created']
+            .' | actualizados: '.$result['updated']
+            .' | resueltos: '.$result['resolved']
+            .' | sin cambios: '.$result['unchanged'],
+        );
+
+        return self::SUCCESS;
+    },
+)->purpose(
+    'Synchronize Casa Andina Monitor incidents with Central',
+);
+
+Schedule::command('monitor:casa-andina-sync')
+    ->everyFiveMinutes()
+    ->withoutOverlapping();
