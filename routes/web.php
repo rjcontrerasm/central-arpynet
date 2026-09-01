@@ -32,3 +32,21 @@ Route::middleware('auth')->group(function (): void {
     )->name('google-calendar.disconnect');
 });
 
+
+Route::middleware('auth')->group(function (): void {
+    Route::get(
+        '/captura',
+        [
+            \App\Http\Controllers\QuickCaptureController::class,
+            'show',
+        ],
+    )->name('quick-capture.show');
+
+    Route::post(
+        '/captura',
+        [
+            \App\Http\Controllers\QuickCaptureController::class,
+            'store',
+        ],
+    )->name('quick-capture.store');
+});
