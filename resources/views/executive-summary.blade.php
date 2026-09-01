@@ -197,11 +197,19 @@
             line-height: 1.45;
         }
 
-        .pills {
+        .summary-detail {
             display: flex;
             flex-wrap: wrap;
-            gap: 6px;
+            align-items: center;
+            gap: 5px;
             margin-top: 7px;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 650;
+        }
+
+        .summary-detail .dot {
+            color: #94a3b8;
         }
 
         .pill {
@@ -229,10 +237,11 @@
         }
 
         .reason {
-            margin-top: 6px;
-            color: #fbbf24;
+            margin-top: 5px;
+            color: #b45309;
             font-size: 11px;
-            font-weight: 750;
+            font-weight: 650;
+            line-height: 1.35;
         }
 
         .money-groups {
@@ -314,7 +323,8 @@
             .meta,
             .stat-label,
             .empty,
-            .money-label {
+            .money-label,
+            .summary-detail {
                 color: #64748b;
             }
 
@@ -532,26 +542,32 @@
                                 </span>
                             </div>
 
-                            <div class="pills">
-                                <span class="pill">
+                            <div class="summary-detail">
+                                <span>
                                     {{ $item['meta'] }}
                                 </span>
 
                                 @if ($item['date_label'])
-                                    <span class="pill">
+                                    <span class="dot">·</span>
+
+                                    <span>
                                         {{ $item['date_label'] }}
                                     </span>
                                 @endif
                             </div>
 
-                            @foreach (
-                                $item['reasons']
-                                as $reason
-                            )
+                            @if (! empty($item['reasons']))
                                 <div class="reason">
-                                    {{ $reason }}
+                                    {{ implode(
+                                        ' · ',
+                                        array_slice(
+                                            $item['reasons'],
+                                            0,
+                                            2,
+                                        ),
+                                    ) }}
                                 </div>
-                            @endforeach
+                            @endif
                         </a>
                     @empty
                         <div class="empty">
