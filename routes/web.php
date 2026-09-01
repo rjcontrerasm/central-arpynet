@@ -118,3 +118,13 @@ Route::middleware('auth')->group(function (): void {
         ],
     )->name('service-orders-ops.update');
 });
+
+Route::middleware('auth')->group(function (): void {
+    Route::post(
+        '/servicios/{serviceOrder}/finanzas',
+        [
+            \App\Http\Controllers\ServiceOrderFinanceController::class,
+            'update',
+        ],
+    )->name('service-orders-finance.update');
+});

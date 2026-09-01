@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Organization;
 use App\Models\ServiceOrder;
 use App\Support\ServiceOrderOperationalState;
+use App\Support\ServiceOrderFinancialState;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -32,6 +33,10 @@ class ServiceOrderOpsController extends Controller
                 'nullable',
                 'string',
                 'max:120',
+            ],
+            'finance' => [
+                'nullable',
+                'in:all,pending_invoice,receivable,overdue,paid',
             ],
         ]);
 
@@ -80,6 +85,9 @@ class ServiceOrderOpsController extends Controller
         $search = trim(
             (string) ($validated['q'] ?? ''),
         );
+
+        $finance = $validated['finance']
+            ?? 'all';
 
         $query = ServiceOrder::query()
             ->with([
@@ -152,8 +160,30 @@ class ServiceOrderOpsController extends Controller
                         $value,
                     );
                 }
+
+                $financial =
+                    ServiceOrderFinancialState::evaluate(
+                        $order,
+                        $now,
+                    );
+
+                foreach ($financial as $key => $value) {
+                    $order->setAttribute(
+                        'fin_'.$key,
+                        $value,
+                    );
+                }
             },
         );
+
+        if ($finance !== 'all') {
+            $orders = $orders
+                ->filter(
+                    fn (ServiceOrder $order): bool =>
+                        $order->fin_status === $finance,
+                )
+                ->values();
+        }
 
         if ($focus === 'attention') {
             $orders = $orders
@@ -175,6 +205,33 @@ class ServiceOrderOpsController extends Controller
         $orders = $orders
             ->sortByDesc('ops_rank')
             ->values();
+
+        $financialSummary = [
+            'service_amount' => $orders->sum(
+                'fin_service_amount',
+            ),
+            'invoiced' => $orders
+                ->filter(
+                    fn (ServiceOrder $order): bool =>
+                        $order->fin_is_invoiced,
+                )
+                ->sum('fin_invoice_amount'),
+            'outstanding' => $orders->sum(
+                'fin_outstanding',
+            ),
+            'overdue' => $orders
+                ->filter(
+                    fn (ServiceOrder $order): bool =>
+                        $order->fin_is_overdue,
+                )
+                ->sum('fin_outstanding'),
+            'paid' => $orders
+                ->filter(
+                    fn (ServiceOrder $order): bool =>
+                        $order->fin_is_paid,
+                )
+                ->sum('fin_invoice_amount'),
+        ];
 
         $summary = [
             'critical' => $orders
@@ -214,8 +271,10 @@ class ServiceOrderOpsController extends Controller
                 'selectedScope',
                 'selectedStage',
                 'focus',
+                'finance',
                 'search',
                 'summary',
+                'financialSummary',
             ),
         );
     }
