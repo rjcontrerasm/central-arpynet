@@ -20,18 +20,16 @@ class DailyTaskActionController extends Controller
                 'required',
                 'in:complete,tomorrow,next_week',
             ],
+            'scope' => [
+                'nullable',
+                'integer',
+            ],
         ]);
 
-        $allowed = DB::table('organization_user')
-            ->where('user_id', $request->user()->id)
-            ->where(
-                'organization_id',
-                $task->organization_id,
-            )
-            ->where('is_active', true)
-            ->exists();
-
-        abort_unless($allowed, 403);
+        $this->authorizeTask(
+            $request,
+            $task,
+        );
 
         $timezone = config(
             'app.timezone',
@@ -64,11 +62,58 @@ class DailyTaskActionController extends Controller
         };
 
         return redirect()
-            ->route('daily-ops.show')
+            ->route(
+                'daily-ops.show',
+                $this->scopeParams(
+                    $request,
+                    $validated['scope'] ?? null,
+                ),
+            )
             ->with(
                 'daily_action_success',
                 $message,
             );
+    }
+
+    private function authorizeTask(
+        Request $request,
+        Task $task,
+    ): void {
+        $allowed = DB::table('organization_user')
+            ->where(
+                'user_id',
+                $request->user()->id,
+            )
+            ->where(
+                'organization_id',
+                $task->organization_id,
+            )
+            ->where('is_active', true)
+            ->exists();
+
+        abort_unless($allowed, 403);
+    }
+
+    private function scopeParams(
+        Request $request,
+        ?int $scope,
+    ): array {
+        if (! $scope) {
+            return [];
+        }
+
+        $allowed = DB::table('organization_user')
+            ->where(
+                'user_id',
+                $request->user()->id,
+            )
+            ->where('organization_id', $scope)
+            ->where('is_active', true)
+            ->exists();
+
+        abort_unless($allowed, 403);
+
+        return ['scope' => $scope];
     }
 
     private function complete(Task $task): void

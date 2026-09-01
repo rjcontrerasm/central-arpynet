@@ -31,6 +31,10 @@ class DailyTaskEditController extends Controller
                 'required',
                 'in:low,medium,high',
             ],
+            'scope' => [
+                'nullable',
+                'integer',
+            ],
         ]);
 
         $userId = $request->user()->id;
@@ -77,8 +81,26 @@ class DailyTaskEditController extends Controller
             'impact' => $validated['impact'],
         ])->save();
 
+        $scope = $validated['scope'] ?? null;
+
+        if ($scope) {
+            $scopeAllowed =
+                DB::table('organization_user')
+                    ->where('user_id', $userId)
+                    ->where('organization_id', $scope)
+                    ->where('is_active', true)
+                    ->exists();
+
+            abort_unless($scopeAllowed, 403);
+        }
+
         return redirect()
-            ->route('daily-ops.show')
+            ->route(
+                'daily-ops.show',
+                $scope
+                    ? ['scope' => $scope]
+                    : [],
+            )
             ->with(
                 'daily_action_success',
                 'Tarea actualizada.',

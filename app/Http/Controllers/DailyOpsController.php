@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Incident;
-use App\Models\Organization;
 use App\Models\ObligationOccurrence;
+use App\Models\Organization;
 use App\Models\Task;
+use App\Support\DailyTaskPriority;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -22,14 +25,26 @@ class DailyOpsController extends Controller
             ->where('is_active', true)
             ->pluck('organization_id');
 
-
         $organizations = Organization::query()
             ->whereIn('id', $organizationIds)
             ->where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        $timezone = config('app.timezone', 'America/Lima');
+        $selectedScope = $request->integer('scope') ?: null;
+
+        if (
+            $selectedScope
+            && ! $organizationIds->contains($selectedScope)
+        ) {
+            abort(403);
+        }
+
+        $timezone = config(
+            'app.timezone',
+            'America/Lima',
+        );
+
         $now = CarbonImmutable::now($timezone);
         $todayStart = $now->startOfDay();
         $todayEnd = $now->endOfDay();
@@ -43,13 +58,21 @@ class DailyOpsController extends Controller
                 ['completed', 'cancelled', 'someday'],
             );
 
+        $this->applyScope(
+            $baseTasks,
+            $selectedScope,
+        );
+
         $overdueCount = (clone $baseTasks)
             ->whereNotNull('due_at')
             ->where('due_at', '<', $todayStart)
             ->count();
 
         $todayCount = (clone $baseTasks)
-            ->whereBetween('due_at', [$todayStart, $todayEnd])
+            ->whereBetween(
+                'due_at',
+                [$todayStart, $todayEnd],
+            )
             ->count();
 
         $weekCount = (clone $baseTasks)
@@ -61,51 +84,151 @@ class DailyOpsController extends Controller
             ->whereNull('due_at')
             ->count();
 
-        $attentionTasks = (clone $baseTasks)
+        $tasks = (clone $baseTasks)
             ->orderByRaw(
-                "CASE
-                    WHEN due_at IS NOT NULL AND due_at < ? THEN 0
-                    WHEN due_at IS NOT NULL AND due_at <= ? THEN 1
-                    WHEN urgency = 'high' THEN 2
-                    WHEN impact = 'high' THEN 3
-                    WHEN due_at IS NULL THEN 5
-                    ELSE 4
-                END",
-                [$todayStart, $todayEnd],
-            )
-            ->orderByRaw(
-                "CASE WHEN due_at IS NULL THEN 1 ELSE 0 END",
+                'CASE WHEN due_at IS NULL THEN 1 ELSE 0 END',
             )
             ->orderBy('due_at')
-            ->latest('id')
-            ->limit(8)
+            ->limit(250)
             ->get();
 
-        $upcomingObligations = ObligationOccurrence::query()
-            ->with(['organization', 'obligation'])
-            ->whereIn('organization_id', $organizationIds)
-            ->where('status', 'pending')
-            ->where(
-                'due_date',
-                '>=',
-                $todayStart->toDateString(),
+        $tasks->each(
+            function (Task $task) use ($now): void {
+                $score = DailyTaskPriority::score(
+                    $task,
+                    $now,
+                );
+
+                $band = DailyTaskPriority::band(
+                    $task,
+                    $now,
+                );
+
+                $task->setAttribute(
+                    'display_priority_score',
+                    $score,
+                );
+
+                $task->setAttribute(
+                    'display_priority_band',
+                    $band,
+                );
+
+                $task->setAttribute(
+                    'display_priority_label',
+                    DailyTaskPriority::label($band),
+                );
+            },
+        );
+
+        $nowTasks = $tasks
+            ->filter(
+                fn (Task $task): bool =>
+                    (
+                        $task->due_at
+                        && $task->due_at->isBefore(
+                            $todayStart,
+                        )
+                    )
+                    || $task->display_priority_score >= 85,
             )
-            ->where(
-                'due_date',
-                '<=',
-                $weekEnd->toDateString(),
+            ->sortByDesc('display_priority_score')
+            ->take(8)
+            ->values();
+
+        $nowIds = $nowTasks->pluck('id');
+
+        $todayTasks = $tasks
+            ->filter(
+                fn (Task $task): bool =>
+                    ! $nowIds->contains($task->id)
+                    && $task->due_at
+                    && $task->due_at->isSameDay($now),
             )
-            ->orderBy('due_date')
-            ->limit(6)
-            ->get();
+            ->sortByDesc('display_priority_score')
+            ->take(8)
+            ->values();
+
+        $usedIds = $nowIds
+            ->merge($todayTasks->pluck('id'));
+
+        $upcomingTasks = $tasks
+            ->filter(
+                fn (Task $task): bool =>
+                    ! $usedIds->contains($task->id)
+                    && $task->due_at
+                    && $task->due_at->isAfter($todayEnd)
+                    && $task->due_at->lessThanOrEqualTo(
+                        $weekEnd,
+                    ),
+            )
+            ->sortByDesc('display_priority_score')
+            ->take(8)
+            ->values();
+
+        $noDateTasks = $tasks
+            ->filter(
+                fn (Task $task): bool =>
+                    is_null($task->due_at),
+            )
+            ->sortByDesc('display_priority_score')
+            ->take(8)
+            ->values();
+
+        $upcomingObligations =
+            ObligationOccurrence::query()
+                ->with([
+                    'organization',
+                    'obligation',
+                ])
+                ->whereIn(
+                    'organization_id',
+                    $organizationIds,
+                )
+                ->where('status', 'pending')
+                ->where(
+                    'due_date',
+                    '>=',
+                    $todayStart->toDateString(),
+                )
+                ->where(
+                    'due_date',
+                    '<=',
+                    $weekEnd->toDateString(),
+                );
+
+        if ($selectedScope) {
+            $upcomingObligations->where(
+                'organization_id',
+                $selectedScope,
+            );
+        }
+
+        $upcomingObligations =
+            $upcomingObligations
+                ->orderBy('due_date')
+                ->limit(6)
+                ->get();
 
         $openIncidents = Incident::query()
             ->with('organization')
-            ->whereIn('organization_id', $organizationIds)
+            ->whereIn(
+                'organization_id',
+                $organizationIds,
+            )
             ->whereNotIn(
                 'status',
                 ['resolved', 'closed', 'cancelled'],
-            )
+            );
+
+        if ($selectedScope) {
+            $openIncidents->where(
+                'organization_id',
+                $selectedScope,
+            );
+        }
+
+        $openIncidents = $openIncidents
             ->orderByRaw(
                 "CASE severity
                     WHEN 'critical' THEN 0
@@ -123,15 +246,31 @@ class DailyOpsController extends Controller
             'daily-ops',
             compact(
                 'now',
+                'organizations',
+                'selectedScope',
                 'overdueCount',
                 'todayCount',
                 'weekCount',
                 'noDateCount',
-                'attentionTasks',
+                'nowTasks',
+                'todayTasks',
+                'upcomingTasks',
+                'noDateTasks',
                 'upcomingObligations',
                 'openIncidents',
-                'organizations',
             ),
         );
+    }
+
+    private function applyScope(
+        Builder $query,
+        ?int $selectedScope,
+    ): void {
+        if ($selectedScope) {
+            $query->where(
+                'organization_id',
+                $selectedScope,
+            );
+        }
     }
 }

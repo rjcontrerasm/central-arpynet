@@ -22,9 +22,7 @@
             color-scheme: light dark;
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
@@ -37,8 +35,14 @@
             text-decoration: none;
         }
 
+        button,
+        input,
+        select {
+            font: inherit;
+        }
+
         .shell {
-            width: min(100%, 960px);
+            width: min(100%, 1020px);
             margin: 0 auto;
             min-height: 100vh;
             padding: 18px 16px 96px;
@@ -53,9 +57,7 @@
             gap: 12px;
         }
 
-        .topbar {
-            margin-bottom: 24px;
-        }
+        .topbar { margin-bottom: 22px; }
 
         .brand {
             font-weight: 850;
@@ -64,7 +66,6 @@
 
         .nav {
             display: flex;
-            align-items: center;
             gap: 14px;
         }
 
@@ -72,15 +73,190 @@
         .date,
         .meta,
         .stat-label,
-        .task-edit {
-            margin-top: 9px;
-            padding-top: 9px;
-            border-top: 1px solid #24304b;
+        .empty {
+            color: #94a3b8;
         }
 
-        .task-edit summary {
+        .nav a,
+        .section-link {
+            font-size: 13px;
+        }
+
+        .hero {
+            align-items: end;
+            margin-bottom: 16px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(31px, 8vw, 48px);
+            line-height: .95;
+            letter-spacing: -.055em;
+        }
+
+        .date {
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        .quick {
+            display: none;
+            padding: 12px 16px;
+            border-radius: 14px;
+            background: #2563eb;
+            color: #fff;
+            font-weight: 850;
+        }
+
+        .success {
+            margin-bottom: 14px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid #166534;
+            background: #052e16;
+            color: #bbf7d0;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .scopes {
+            display: flex;
+            gap: 7px;
+            overflow-x: auto;
+            padding: 2px 0 14px;
+            scrollbar-width: thin;
+        }
+
+        .scope {
+            flex: 0 0 auto;
+            padding: 8px 11px;
+            border: 1px solid #334155;
+            border-radius: 999px;
+            background: #0f172a;
+            color: #cbd5e1;
+            font-size: 12px;
+            font-weight: 750;
+        }
+
+        .scope.active {
+            border-color: #60a5fa;
+            background: #172554;
+            color: #dbeafe;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+            gap: 9px;
+            margin-bottom: 22px;
+        }
+
+        .stat,
+        .item {
+            background: #11182b;
+            border: 1px solid #24304b;
+        }
+
+        .stat {
+            padding: 13px;
+            border-radius: 16px;
+        }
+
+        .stat-value {
+            font-size: 29px;
+            line-height: 1;
+            font-weight: 850;
+            letter-spacing: -.05em;
+        }
+
+        .stat-label {
+            margin-top: 6px;
+            font-size: 12px;
+        }
+
+        .danger-value { color: #fca5a5; }
+        .today-value { color: #93c5fd; }
+
+        .section { margin-top: 24px; }
+
+        .section-head {
+            align-items: baseline;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: 19px;
+            letter-spacing: -.025em;
+        }
+
+        .section-link {
+            color: #93c5fd;
+        }
+
+        .list {
+            display: grid;
+            gap: 9px;
+        }
+
+        .item {
+            display: grid;
+            gap: 5px;
+            padding: 14px;
+            border-radius: 16px;
+        }
+
+        .item-title {
+            font-weight: 760;
+            line-height: 1.35;
+        }
+
+        .meta {
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .pills,
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .pills { margin-top: 2px; }
+        .actions { margin-top: 9px; }
+
+        .pill {
             display: inline-flex;
-            align-items: center;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: #1e293b;
+            color: #cbd5e1;
+            font-size: 11px;
+            font-weight: 750;
+        }
+
+        .pill.critical,
+        .pill.overdue {
+            background: #450a0a;
+            color: #fecaca;
+        }
+
+        .pill.today {
+            background: #172554;
+            color: #bfdbfe;
+        }
+
+        .pill.week {
+            background: #422006;
+            color: #fde68a;
+        }
+
+        .action-form { margin: 0; }
+
+        .action,
+        .task-edit summary {
             min-height: 34px;
             padding: 6px 10px;
             border: 1px solid #334155;
@@ -90,6 +266,23 @@
             font-size: 12px;
             font-weight: 750;
             cursor: pointer;
+        }
+
+        .action.done {
+            border-color: #166534;
+            background: #052e16;
+            color: #bbf7d0;
+        }
+
+        .task-edit {
+            margin-top: 9px;
+            padding-top: 9px;
+            border-top: 1px solid #24304b;
+        }
+
+        .task-edit summary {
+            display: inline-flex;
+            align-items: center;
             list-style: none;
         }
 
@@ -134,7 +327,6 @@
             border-radius: 9px;
             background: #11182b;
             color: #f8fafc;
-            font: inherit;
         }
 
         .save-edit {
@@ -143,202 +335,17 @@
             border-radius: 10px;
             background: #2563eb;
             color: #fff;
-            font: inherit;
             font-size: 12px;
             font-weight: 800;
             cursor: pointer;
         }
 
         .empty {
-            color: #94a3b8;
-        }
-
-        .nav a,
-        .section-link {
-            font-size: 13px;
-        }
-
-        .hero {
-            align-items: end;
-            margin-bottom: 20px;
-        }
-
-        h1 {
-            margin: 0;
-            font-size: clamp(31px, 8vw, 48px);
-            line-height: .95;
-            letter-spacing: -.055em;
-        }
-
-        .date {
-            margin-top: 8px;
-            font-size: 14px;
-        }
-
-        .quick {
-            display: none;
-            padding: 12px 16px;
-            border-radius: 14px;
-            background: #2563eb;
-            color: white;
-            font-weight: 850;
-        }
-
-        .success {
-            margin-bottom: 16px;
-            padding: 12px 14px;
-            border-radius: 14px;
-            border: 1px solid #166534;
-            background: #052e16;
-            color: #bbf7d0;
-            font-size: 14px;
-            font-weight: 700;
-        }
-
-        .stats {
-            display: grid;
-            grid-template-columns:
-                repeat(2, minmax(0, 1fr));
-            gap: 10px;
-            margin-bottom: 24px;
-        }
-
-        .stat,
-        .item {
-            background: #11182b;
-            border: 1px solid #24304b;
-        }
-
-        .stat {
-            padding: 14px;
-            border-radius: 17px;
-        }
-
-        .stat-value {
-            font-size: 30px;
-            line-height: 1;
-            font-weight: 850;
-            letter-spacing: -.05em;
-        }
-
-        .stat-label {
-            margin-top: 7px;
-            font-size: 13px;
-        }
-
-        .danger-value {
-            color: #fca5a5;
-        }
-
-        .today-value {
-            color: #93c5fd;
-        }
-
-        .section {
-            margin-top: 26px;
-        }
-
-        .section-head {
-            align-items: baseline;
-            margin-bottom: 11px;
-        }
-
-        h2 {
-            margin: 0;
-            font-size: 19px;
-            letter-spacing: -.025em;
-        }
-
-        .section-link {
-            color: #93c5fd;
-        }
-
-        .list {
-            display: grid;
-            gap: 9px;
-        }
-
-        .item {
-            display: grid;
-            gap: 5px;
-            padding: 14px;
-            border-radius: 16px;
-        }
-
-        .item-title {
-            font-weight: 760;
-            line-height: 1.35;
-        }
-
-        .meta {
-            font-size: 12px;
-            line-height: 1.45;
-        }
-
-        .pills,
-        .actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-
-        .pills {
-            margin-top: 2px;
-        }
-
-        .actions {
-            margin-top: 9px;
-        }
-
-        .pill {
-            display: inline-flex;
-            padding: 4px 8px;
-            border-radius: 999px;
-            background: #1e293b;
-            color: #cbd5e1;
-            font-size: 11px;
-            font-weight: 750;
-        }
-
-        .pill.danger {
-            background: #450a0a;
-            color: #fecaca;
-        }
-
-        .pill.today {
-            background: #172554;
-            color: #bfdbfe;
-        }
-
-        .action-form {
-            margin: 0;
-        }
-
-        .action {
-            min-height: 34px;
-            padding: 6px 10px;
-            border: 1px solid #334155;
-            border-radius: 10px;
-            background: #0f172a;
-            color: #cbd5e1;
-            font: inherit;
-            font-size: 12px;
-            font-weight: 750;
-            cursor: pointer;
-        }
-
-        .action.done {
-            border-color: #166534;
-            background: #052e16;
-            color: #bbf7d0;
-        }
-
-        .empty {
-            padding: 18px;
+            padding: 17px;
             border: 1px dashed #334155;
             border-radius: 16px;
             text-align: center;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .fab {
@@ -353,35 +360,28 @@
             min-height: 56px;
             border-radius: 18px;
             background: #2563eb;
-            color: white;
+            color: #fff;
             font-weight: 850;
             box-shadow:
                 0 16px 50px rgba(37, 99, 235, .38);
         }
 
         @media (min-width: 720px) {
-            .shell {
-                padding-top: 30px;
-            }
+            .shell { padding-top: 30px; }
 
             .stats {
                 grid-template-columns:
                     repeat(4, minmax(0, 1fr));
             }
 
-            .quick {
-                display: inline-flex;
-            }
-
-            .fab {
-                display: none;
-            }
+            .quick { display: inline-flex; }
+            .fab { display: none; }
 
             .two-column {
                 display: grid;
                 grid-template-columns:
-                    minmax(0, 1.3fr)
-                    minmax(0, .7fr);
+                    minmax(0, 1.35fr)
+                    minmax(0, .65fr);
                 gap: 24px;
                 align-items: start;
             }
@@ -397,14 +397,29 @@
             .date,
             .meta,
             .stat-label,
-            .empty {
+            .empty,
+            .edit-field {
                 color: #64748b;
             }
 
             .stat,
             .item {
-                background: white;
+                background: #fff;
                 border-color: #e2e8f0;
+            }
+
+            .scope,
+            .action,
+            .task-edit summary {
+                background: #fff;
+                color: #475569;
+                border-color: #cbd5e1;
+            }
+
+            .scope.active {
+                background: #eff6ff;
+                color: #1d4ed8;
+                border-color: #60a5fa;
             }
 
             .pill {
@@ -412,7 +427,8 @@
                 color: #475569;
             }
 
-            .pill.danger {
+            .pill.critical,
+            .pill.overdue {
                 background: #fef2f2;
                 color: #b91c1c;
             }
@@ -422,21 +438,26 @@
                 color: #1d4ed8;
             }
 
-            .action {
-                background: white;
-                color: #475569;
-                border-color: #cbd5e1;
+            .pill.week {
+                background: #fffbeb;
+                color: #a16207;
             }
 
-            .action.done {
-                background: #f0fdf4;
-                color: #166534;
-                border-color: #86efac;
-            }
-
+            .action.done,
             .success {
                 background: #f0fdf4;
                 color: #166534;
+            }
+
+            .edit-form {
+                background: #f8fafc;
+            }
+
+            .edit-field input,
+            .edit-field select {
+                background: #fff;
+                color: #0f172a;
+                border-color: #cbd5e1;
             }
         }
     </style>
@@ -445,15 +466,10 @@
 <body>
 <div class="shell">
     <div class="topbar">
-        <div class="brand">
-            Central ARPYNET
-        </div>
+        <div class="brand">Central ARPYNET</div>
 
         <nav class="nav">
-            <a
-                href="{{ route('daily-ops.show') }}"
-                aria-current="page"
-            >
+            <a href="{{ route('daily-ops.show') }}">
                 Mi día
             </a>
 
@@ -492,302 +508,328 @@
         </a>
     </section>
 
-    <section class="stats">
+    <nav class="scopes" aria-label="Filtrar por ámbito">
         <a
-            class="stat"
-            href="{{ url('/admin/tareas') }}"
+            class="scope {{ $selectedScope ? '' : 'active' }}"
+            href="{{ route('daily-ops.show') }}"
         >
+            Todos
+        </a>
+
+        @foreach ($organizations as $organization)
+            <a
+                class="scope {{
+                    $selectedScope === $organization->id
+                        ? 'active'
+                        : ''
+                }}"
+                href="{{ route(
+                    'daily-ops.show',
+                    ['scope' => $organization->id],
+                ) }}"
+            >
+                {{ $organization->name }}
+            </a>
+        @endforeach
+    </nav>
+
+    <section class="stats">
+        <div class="stat">
             <div class="stat-value danger-value">
                 {{ $overdueCount }}
             </div>
-            <div class="stat-label">
-                Vencidas
-            </div>
-        </a>
+            <div class="stat-label">Vencidas</div>
+        </div>
 
-        <a
-            class="stat"
-            href="{{ url('/admin/tareas') }}"
-        >
+        <div class="stat">
             <div class="stat-value today-value">
                 {{ $todayCount }}
             </div>
-            <div class="stat-label">
-                Para hoy
-            </div>
-        </a>
+            <div class="stat-label">Para hoy</div>
+        </div>
 
-        <a
-            class="stat"
-            href="{{ url('/admin/tareas') }}"
-        >
+        <div class="stat">
             <div class="stat-value">
                 {{ $weekCount }}
             </div>
-            <div class="stat-label">
-                Próximos 7 días
-            </div>
-        </a>
+            <div class="stat-label">Próximos 7 días</div>
+        </div>
 
-        <a
-            class="stat"
-            href="{{ url('/admin/tareas') }}"
-        >
+        <div class="stat">
             <div class="stat-value">
                 {{ $noDateCount }}
             </div>
-            <div class="stat-label">
-                Sin fecha
-            </div>
-        </a>
+            <div class="stat-label">Sin fecha</div>
+        </div>
     </section>
+
+    @php
+        $taskSections = [
+            [
+                'title' => 'Ahora',
+                'tasks' => $nowTasks,
+                'empty' => 'Nada crítico o vencido.',
+            ],
+            [
+                'title' => 'Hoy',
+                'tasks' => $todayTasks,
+                'empty' => 'No quedan tareas para hoy.',
+            ],
+            [
+                'title' => 'Próximos',
+                'tasks' => $upcomingTasks,
+                'empty' => 'Sin tareas en los próximos 7 días.',
+            ],
+            [
+                'title' => 'Sin fecha',
+                'tasks' => $noDateTasks,
+                'empty' => 'No hay tareas pendientes sin fecha.',
+            ],
+        ];
+    @endphp
 
     <div class="two-column">
         <main>
-            <section class="section">
-                <div class="section-head">
-                    <h2>Atender ahora</h2>
+            @foreach ($taskSections as $section)
+                <section class="section">
+                    <div class="section-head">
+                        <h2>{{ $section['title'] }}</h2>
 
-                    <a
-                        class="section-link"
-                        href="{{ url('/admin/tareas') }}"
-                    >
-                        Ver tareas
-                    </a>
-                </div>
+                        <a
+                            class="section-link"
+                            href="{{ url('/admin/tareas') }}"
+                        >
+                            Ver tareas
+                        </a>
+                    </div>
 
-                <div class="list">
-                    @forelse ($attentionTasks as $task)
-                        @php
-                            $isOverdue = $task->due_at
-                                && $task->due_at->isBefore(
-                                    $now->startOfDay(),
-                                );
+                    <div class="list">
+                        @forelse ($section['tasks'] as $task)
+                            @php
+                                $isOverdue = $task->due_at
+                                    && $task->due_at->isBefore(
+                                        $now->startOfDay(),
+                                    );
 
-                            $isToday = $task->due_at
-                                && $task->due_at->isSameDay(
-                                    $now,
-                                );
-                        @endphp
+                                $band = $task
+                                    ->display_priority_band;
+                            @endphp
 
-                        <div class="item">
-                            <div class="item-title">
-                                {{ $task->title }}
-                            </div>
+                            <div class="item">
+                                <div class="item-title">
+                                    {{ $task->title }}
+                                </div>
 
-                            <div class="meta">
-                                {{ $task->organization?->name
-                                    ?? 'Sin ámbito' }}
+                                <div class="meta">
+                                    {{ $task->organization?->name
+                                        ?? 'Sin ámbito' }}
 
-                                @if ($task->due_at)
-                                    ·
-                                    {{ $task->due_at->format(
-                                        'd/m/Y',
-                                    ) }}
-                                @else
-                                    · sin fecha
-                                @endif
-                            </div>
+                                    @if ($task->due_at)
+                                        ·
+                                        {{ $task->due_at->format(
+                                            'd/m/Y',
+                                        ) }}
+                                    @else
+                                        · sin fecha
+                                    @endif
+                                </div>
 
-                            <div class="pills">
-                                @if ($isOverdue)
-                                    <span class="pill danger">
-                                        Vencida
+                                <div class="pills">
+                                    @if ($isOverdue)
+                                        <span class="pill overdue">
+                                            Vencida
+                                        </span>
+                                    @endif
+
+                                    <span
+                                        class="pill {{ $band }}"
+                                    >
+                                        {{
+                                            $task
+                                                ->display_priority_label
+                                        }}
+                                        ·
+                                        {{
+                                            $task
+                                                ->display_priority_score
+                                        }}
                                     </span>
-                                @elseif ($isToday)
-                                    <span class="pill today">
-                                        Hoy
-                                    </span>
-                                @endif
 
-                                @if ($task->urgency === 'high')
-                                    <span class="pill">
-                                        Urgencia alta
-                                    </span>
-                                @endif
+                                    @if ($task->urgency === 'high')
+                                        <span class="pill">
+                                            Urgencia alta
+                                        </span>
+                                    @endif
 
-                                @if ($task->impact === 'high')
-                                    <span class="pill">
-                                        Impacto alto
-                                    </span>
-                                @endif
-                            </div>
+                                    @if ($task->impact === 'high')
+                                        <span class="pill">
+                                            Impacto alto
+                                        </span>
+                                    @endif
+                                </div>
 
-                            <div class="actions">
-                                <form
-                                    class="action-form"
-                                    method="POST"
-                                    action="{{ route(
-                                        'daily-task-action.update',
-                                        $task,
-                                    ) }}"
-                                >
-                                    @csrf
-                                    <input
-                                        type="hidden"
-                                        name="action"
-                                        value="complete"
-                                    >
-                                    <button
-                                        class="action done"
-                                        type="submit"
-                                    >
-                                        ✓ Hecho
-                                    </button>
-                                </form>
-
-                                <form
-                                    class="action-form"
-                                    method="POST"
-                                    action="{{ route(
-                                        'daily-task-action.update',
-                                        $task,
-                                    ) }}"
-                                >
-                                    @csrf
-                                    <input
-                                        type="hidden"
-                                        name="action"
-                                        value="tomorrow"
-                                    >
-                                    <button
-                                        class="action"
-                                        type="submit"
-                                    >
-                                        Mañana
-                                    </button>
-                                </form>
-
-                                <form
-                                    class="action-form"
-                                    method="POST"
-                                    action="{{ route(
-                                        'daily-task-action.update',
-                                        $task,
-                                    ) }}"
-                                >
-                                    @csrf
-                                    <input
-                                        type="hidden"
-                                        name="action"
-                                        value="next_week"
-                                    >
-                                    <button
-                                        class="action"
-                                        type="submit"
-                                    >
-                                        +1 semana
-                                    </button>
-                                </form>
-                            </div>
-
-                            <details class="task-edit">
-                                <summary>Editar</summary>
-
-                                <form
-                                    class="edit-form"
-                                    method="POST"
-                                    action="{{ route(
-                                        'daily-task-edit.update',
-                                        $task,
-                                    ) }}"
-                                >
-                                    @csrf
-
-                                    <div class="edit-grid">
-                                        <label class="edit-field full">
-                                            Empresa / ámbito
-
-                                            <select
-                                                name="organization_id"
-                                                required
-                                            >
-                                                @foreach (
-                                                    $organizations
-                                                    as $organization
-                                                )
-                                                    <option
-                                                        value="{{ $organization->id }}"
-                                                        @selected(
-                                                            (string) $task->organization_id
-                                                            === (string) $organization->id
-                                                        )
-                                                    >
-                                                        {{ $organization->name }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                        </label>
-
-                                        <label class="edit-field full">
-                                            Fecha
+                                <div class="actions">
+                                    @foreach ([
+                                        'complete' => '✓ Hecho',
+                                        'tomorrow' => 'Mañana',
+                                        'next_week' => '+1 semana',
+                                    ] as $action => $label)
+                                        <form
+                                            class="action-form"
+                                            method="POST"
+                                            action="{{ route(
+                                                'daily-task-action.update',
+                                                $task,
+                                            ) }}"
+                                        >
+                                            @csrf
 
                                             <input
-                                                type="date"
-                                                name="due_date"
-                                                value="{{ $task->due_at?->format('Y-m-d') }}"
+                                                type="hidden"
+                                                name="action"
+                                                value="{{ $action }}"
                                             >
-                                        </label>
 
-                                        <label class="edit-field">
-                                            Urgencia
+                                            @if ($selectedScope)
+                                                <input
+                                                    type="hidden"
+                                                    name="scope"
+                                                    value="{{ $selectedScope }}"
+                                                >
+                                            @endif
 
-                                            <select name="urgency">
-                                                @foreach ([
-                                                    'low' => 'Baja',
-                                                    'medium' => 'Media',
-                                                    'high' => 'Alta',
-                                                ] as $value => $label)
-                                                    <option
-                                                        value="{{ $value }}"
-                                                        @selected(
-                                                            $task->urgency === $value
-                                                        )
-                                                    >
-                                                        {{ $label }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                        </label>
+                                            <button
+                                                class="action {{
+                                                    $action === 'complete'
+                                                        ? 'done'
+                                                        : ''
+                                                }}"
+                                                type="submit"
+                                            >
+                                                {{ $label }}
+                                            </button>
+                                        </form>
+                                    @endforeach
+                                </div>
 
-                                        <label class="edit-field">
-                                            Impacto
+                                <details class="task-edit">
+                                    <summary>Editar</summary>
 
-                                            <select name="impact">
-                                                @foreach ([
-                                                    'low' => 'Bajo',
-                                                    'medium' => 'Medio',
-                                                    'high' => 'Alto',
-                                                ] as $value => $label)
-                                                    <option
-                                                        value="{{ $value }}"
-                                                        @selected(
-                                                            $task->impact === $value
-                                                        )
-                                                    >
-                                                        {{ $label }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                        </label>
-                                    </div>
-
-                                    <button
-                                        class="save-edit"
-                                        type="submit"
+                                    <form
+                                        class="edit-form"
+                                        method="POST"
+                                        action="{{ route(
+                                            'daily-task-edit.update',
+                                            $task,
+                                        ) }}"
                                     >
-                                        Guardar cambios
-                                    </button>
-                                </form>
-                            </details>
-                        </div>
-                    @empty
-                        <div class="empty">
-                            No tienes tareas abiertas.
-                        </div>
-                    @endforelse
-                </div>
-            </section>
+                                        @csrf
+
+                                        @if ($selectedScope)
+                                            <input
+                                                type="hidden"
+                                                name="scope"
+                                                value="{{ $selectedScope }}"
+                                            >
+                                        @endif
+
+                                        <div class="edit-grid">
+                                            <label class="edit-field full">
+                                                Empresa / ámbito
+
+                                                <select
+                                                    name="organization_id"
+                                                    required
+                                                >
+                                                    @foreach (
+                                                        $organizations
+                                                        as $organization
+                                                    )
+                                                        <option
+                                                            value="{{ $organization->id }}"
+                                                            @selected(
+                                                                (string) $task->organization_id
+                                                                === (string) $organization->id
+                                                            )
+                                                        >
+                                                            {{ $organization->name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </label>
+
+                                            <label class="edit-field full">
+                                                Fecha
+
+                                                <input
+                                                    type="date"
+                                                    name="due_date"
+                                                    value="{{ $task->due_at?->format('Y-m-d') }}"
+                                                >
+                                            </label>
+
+                                            <label class="edit-field">
+                                                Urgencia
+
+                                                <select name="urgency">
+                                                    @foreach ([
+                                                        'low' => 'Baja',
+                                                        'medium' => 'Media',
+                                                        'high' => 'Alta',
+                                                    ] as $value => $label)
+                                                        <option
+                                                            value="{{ $value }}"
+                                                            @selected(
+                                                                $task->urgency
+                                                                === $value
+                                                            )
+                                                        >
+                                                            {{ $label }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </label>
+
+                                            <label class="edit-field">
+                                                Impacto
+
+                                                <select name="impact">
+                                                    @foreach ([
+                                                        'low' => 'Bajo',
+                                                        'medium' => 'Medio',
+                                                        'high' => 'Alto',
+                                                    ] as $value => $label)
+                                                        <option
+                                                            value="{{ $value }}"
+                                                            @selected(
+                                                                $task->impact
+                                                                === $value
+                                                            )
+                                                        >
+                                                            {{ $label }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </label>
+                                        </div>
+
+                                        <button
+                                            class="save-edit"
+                                            type="submit"
+                                        >
+                                            Guardar cambios
+                                        </button>
+                                    </form>
+                                </details>
+                            </div>
+                        @empty
+                            <div class="empty">
+                                {{ $section['empty'] }}
+                            </div>
+                        @endforelse
+                    </div>
+                </section>
+            @endforeach
         </main>
 
         <aside>
@@ -863,12 +905,15 @@
 
                             <div class="pills">
                                 <span
-                                    class="pill
-                                    {{ in_array(
-                                        $incident->severity,
-                                        ['critical', 'high'],
-                                        true,
-                                    ) ? 'danger' : '' }}"
+                                    class="pill {{
+                                        in_array(
+                                            $incident->severity,
+                                            ['critical', 'high'],
+                                            true,
+                                        )
+                                            ? 'critical'
+                                            : ''
+                                    }}"
                                 >
                                     {{ ucfirst(
                                         $incident->severity,
