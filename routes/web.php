@@ -146,3 +146,13 @@ Route::middleware('auth')->group(function (): void {
         ],
     )->name('obligation-ops.update');
 });
+
+Route::middleware('auth')->group(function (): void {
+    Route::get(
+        '/seguimiento',
+        [
+            \App\Http\Controllers\GlobalTrackingController::class,
+            'show',
+        ],
+    )->name('global-tracking.show');
+});

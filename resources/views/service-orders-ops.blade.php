@@ -472,6 +472,10 @@
                 Vencimientos
             </a>
 
+            <a href="{{ route('global-tracking.show') }}">
+                Seguimiento
+            </a>
+
             <a href="{{ url('/admin') }}">
                 Panel →
             </a>
