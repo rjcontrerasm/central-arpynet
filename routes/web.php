@@ -1,5 +1,8 @@
 <?php
 
+Route::redirect('/', '/mi-dia', 302)->name('home');
+
+
 use App\Http\Controllers\GoogleCalendarController;
 use Illuminate\Support\Facades\Route;
 
@@ -8,7 +11,6 @@ use Illuminate\Support\Facades\Route;
 Route::redirect('/login', '/admin/login', 302)
     ->name('login');
 
-Route::redirect('/', '/admin', 302)->name('home');
 
 Route::middleware('auth')->group(function (): void {
     Route::get(

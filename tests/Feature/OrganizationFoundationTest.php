@@ -39,9 +39,9 @@ class OrganizationFoundationTest extends TestCase
         );
     }
 
-    public function test_root_redirects_to_admin(): void
+    public function test_root_redirects_to_mi_dia(): void
     {
         $this->get('/')
-            ->assertRedirect('/admin');
+            ->assertRedirect('/mi-dia');
     }
 }

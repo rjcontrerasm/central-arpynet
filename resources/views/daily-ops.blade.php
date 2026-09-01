@@ -285,12 +285,35 @@
     <div class="topbar">
         <div class="brand">Central ARPYNET</div>
 
-        <a
-            class="admin-link"
-            href="{{ url('/admin') }}"
+        <nav
+            style="
+                display:flex;
+                align-items:center;
+                gap:14px;
+            "
         >
-            Panel completo →
-        </a>
+            <a
+                class="admin-link"
+                href="{{ route('daily-ops.show') }}"
+                aria-current="page"
+            >
+                Mi día
+            </a>
+
+            <a
+                class="admin-link"
+                href="{{ route('quick-capture.show') }}"
+            >
+                Captura
+            </a>
+
+            <a
+                class="admin-link"
+                href="{{ url('/admin') }}"
+            >
+                Panel →
+            </a>
+        </nav>
     </div>
 
     <section class="hero">
