@@ -468,6 +468,10 @@
                 Captura
             </a>
 
+            <a href="{{ route('obligation-ops.show') }}">
+                Vencimientos
+            </a>
+
             <a href="{{ url('/admin') }}">
                 Panel →
             </a>

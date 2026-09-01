@@ -128,3 +128,21 @@ Route::middleware('auth')->group(function (): void {
         ],
     )->name('service-orders-finance.update');
 });
+
+Route::middleware('auth')->group(function (): void {
+    Route::get(
+        '/vencimientos',
+        [
+            \App\Http\Controllers\ObligationOpsController::class,
+            'show',
+        ],
+    )->name('obligation-ops.show');
+
+    Route::post(
+        '/vencimientos/{obligationOccurrence}/actualizar',
+        [
+            \App\Http\Controllers\ObligationOpsActionController::class,
+            'update',
+        ],
+    )->name('obligation-ops.update');
+});

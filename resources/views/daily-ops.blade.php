@@ -607,6 +607,10 @@
                 Servicios
             </a>
 
+            <a href="{{ route('obligation-ops.show') }}">
+                Vencimientos
+            </a>
+
             <a href="{{ url('/admin') }}">
                 Panel →
             </a>
@@ -1275,7 +1279,7 @@
 
                     <a
                         class="section-link"
-                        href="{{ url('/admin/vencimientos') }}"
+                        href="{{ route('obligation-ops.show') }}"
                     >
                         Ver todos
                     </a>

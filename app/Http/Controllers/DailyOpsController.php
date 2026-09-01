@@ -280,11 +280,6 @@ class DailyOpsController extends Controller
                 ->where('status', 'pending')
                 ->where(
                     'due_date',
-                    '>=',
-                    $todayStart->toDateString(),
-                )
-                ->where(
-                    'due_date',
                     '<=',
                     $weekEnd->toDateString(),
                 );
