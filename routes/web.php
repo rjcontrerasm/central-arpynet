@@ -62,3 +62,13 @@ Route::middleware('auth')->group(function (): void {
         ],
     )->name('daily-ops.show');
 });
+
+Route::middleware('auth')->group(function (): void {
+    Route::post(
+        '/mi-dia/tareas/{task}/accion',
+        [
+            \App\Http\Controllers\DailyTaskActionController::class,
+            'update',
+        ],
+    )->name('daily-task-action.update');
+});
