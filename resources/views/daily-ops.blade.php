@@ -72,6 +72,83 @@
         .date,
         .meta,
         .stat-label,
+        .task-edit {
+            margin-top: 9px;
+            padding-top: 9px;
+            border-top: 1px solid #24304b;
+        }
+
+        .task-edit summary {
+            display: inline-flex;
+            align-items: center;
+            min-height: 34px;
+            padding: 6px 10px;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            background: #0f172a;
+            color: #cbd5e1;
+            font-size: 12px;
+            font-weight: 750;
+            cursor: pointer;
+            list-style: none;
+        }
+
+        .task-edit summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .edit-form {
+            display: grid;
+            gap: 10px;
+            margin-top: 10px;
+            padding: 12px;
+            border-radius: 13px;
+            background: #0f172a;
+        }
+
+        .edit-grid {
+            display: grid;
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+            gap: 9px;
+        }
+
+        .edit-field {
+            display: grid;
+            gap: 5px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #94a3b8;
+        }
+
+        .edit-field.full {
+            grid-column: 1 / -1;
+        }
+
+        .edit-field input,
+        .edit-field select {
+            width: 100%;
+            min-height: 40px;
+            padding: 8px 10px;
+            border: 1px solid #334155;
+            border-radius: 9px;
+            background: #11182b;
+            color: #f8fafc;
+            font: inherit;
+        }
+
+        .save-edit {
+            min-height: 40px;
+            border: 0;
+            border-radius: 10px;
+            background: #2563eb;
+            color: #fff;
+            font: inherit;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
         .empty {
             color: #94a3b8;
         }
@@ -603,6 +680,106 @@
                                     </button>
                                 </form>
                             </div>
+
+                            <details class="task-edit">
+                                <summary>Editar</summary>
+
+                                <form
+                                    class="edit-form"
+                                    method="POST"
+                                    action="{{ route(
+                                        'daily-task-edit.update',
+                                        $task,
+                                    ) }}"
+                                >
+                                    @csrf
+
+                                    <div class="edit-grid">
+                                        <label class="edit-field full">
+                                            Empresa / ámbito
+
+                                            <select
+                                                name="organization_id"
+                                                required
+                                            >
+                                                @foreach (
+                                                    $organizations
+                                                    as $organization
+                                                )
+                                                    <option
+                                                        value="{{ $organization->id }}"
+                                                        @selected(
+                                                            (string) $task->organization_id
+                                                            === (string) $organization->id
+                                                        )
+                                                    >
+                                                        {{ $organization->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </label>
+
+                                        <label class="edit-field full">
+                                            Fecha
+
+                                            <input
+                                                type="date"
+                                                name="due_date"
+                                                value="{{ $task->due_at?->format('Y-m-d') }}"
+                                            >
+                                        </label>
+
+                                        <label class="edit-field">
+                                            Urgencia
+
+                                            <select name="urgency">
+                                                @foreach ([
+                                                    'low' => 'Baja',
+                                                    'medium' => 'Media',
+                                                    'high' => 'Alta',
+                                                ] as $value => $label)
+                                                    <option
+                                                        value="{{ $value }}"
+                                                        @selected(
+                                                            $task->urgency === $value
+                                                        )
+                                                    >
+                                                        {{ $label }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </label>
+
+                                        <label class="edit-field">
+                                            Impacto
+
+                                            <select name="impact">
+                                                @foreach ([
+                                                    'low' => 'Bajo',
+                                                    'medium' => 'Medio',
+                                                    'high' => 'Alto',
+                                                ] as $value => $label)
+                                                    <option
+                                                        value="{{ $value }}"
+                                                        @selected(
+                                                            $task->impact === $value
+                                                        )
+                                                    >
+                                                        {{ $label }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </label>
+                                    </div>
+
+                                    <button
+                                        class="save-edit"
+                                        type="submit"
+                                    >
+                                        Guardar cambios
+                                    </button>
+                                </form>
+                            </details>
                         </div>
                     @empty
                         <div class="empty">

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Incident;
+use App\Models\Organization;
 use App\Models\ObligationOccurrence;
 use App\Models\Task;
 use Carbon\CarbonImmutable;
@@ -20,6 +21,13 @@ class DailyOpsController extends Controller
             ->where('user_id', $user->id)
             ->where('is_active', true)
             ->pluck('organization_id');
+
+
+        $organizations = Organization::query()
+            ->whereIn('id', $organizationIds)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
         $timezone = config('app.timezone', 'America/Lima');
         $now = CarbonImmutable::now($timezone);
@@ -122,6 +130,7 @@ class DailyOpsController extends Controller
                 'attentionTasks',
                 'upcomingObligations',
                 'openIncidents',
+                'organizations',
             ),
         );
     }
