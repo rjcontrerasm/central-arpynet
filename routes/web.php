@@ -50,3 +50,13 @@ Route::middleware('auth')->group(function (): void {
         ],
     )->name('quick-capture.store');
 });
+
+Route::middleware('auth')->group(function (): void {
+    Route::get(
+        '/mi-dia',
+        [
+            \App\Http\Controllers\DailyOpsController::class,
+            'show',
+        ],
+    )->name('daily-ops.show');
+});
