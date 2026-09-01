@@ -455,6 +455,10 @@
                 Seguimiento
             </a>
 
+            <a href="{{ route('executive-summary.show') }}">
+                Resumen
+            </a>
+
             <a href="{{ url('/admin') }}">
                 Panel →
             </a>

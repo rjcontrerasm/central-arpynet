@@ -156,3 +156,13 @@ Route::middleware('auth')->group(function (): void {
         ],
     )->name('global-tracking.show');
 });
+
+Route::middleware('auth')->group(function (): void {
+    Route::get(
+        '/resumen',
+        [
+            \App\Http\Controllers\ExecutiveSummaryController::class,
+            'show',
+        ],
+    )->name('executive-summary.show');
+});

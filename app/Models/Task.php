@@ -28,6 +28,8 @@ class Task extends Model
         'priority_band',
         'start_at',
         'due_at',
+        'waiting_since',
+        'waiting_reason',
         'waiting_until',
         'completed_at',
         'last_activity_at',
