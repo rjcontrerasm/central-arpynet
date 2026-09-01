@@ -346,6 +346,52 @@
             color: #bbf7d0;
         }
 
+        .waiting-form {
+            display: grid;
+            gap: 8px;
+            margin-top: 9px;
+            padding: 10px;
+            border: 1px dashed #475569;
+            border-radius: 12px;
+            background: rgba(15, 23, 42, .42);
+        }
+
+        .waiting-form input {
+            width: 100%;
+            min-height: 38px;
+            padding: 8px 10px;
+            border: 1px solid #334155;
+            border-radius: 9px;
+            background: #11182b;
+            color: #f8fafc;
+        }
+
+        .wait-button,
+        .resume-button {
+            min-height: 36px;
+            border-radius: 9px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .wait-button {
+            border: 1px solid #92400e;
+            background: #451a03;
+            color: #fde68a;
+        }
+
+        .resume-button {
+            border: 1px solid #166534;
+            background: #052e16;
+            color: #bbf7d0;
+        }
+
+        .waiting-due {
+            color: #fbbf24;
+            font-weight: 800;
+        }
+
         .task-edit {
             margin-top: 9px;
             padding-top: 9px;
@@ -443,7 +489,7 @@
 
             .stats {
                 grid-template-columns:
-                    repeat(4, minmax(0, 1fr));
+                    repeat(5, minmax(0, 1fr));
             }
 
             .quick { display: inline-flex; }
@@ -532,6 +578,7 @@
                 border-color: #cbd5e1;
             }
 
+            .waiting-form input,
             .edit-field input,
             .edit-field select {
                 background: #fff;
@@ -784,6 +831,107 @@
             </div>
             <div class="stat-label">Sin fecha</div>
         </div>
+
+        <div class="stat">
+            <div class="stat-value">
+                {{ $waitingCount }}
+            </div>
+            <div class="stat-label">En espera</div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="section-head">
+            <h2>En espera</h2>
+
+            <span class="meta">
+                {{ $waitingCount }} pendientes
+            </span>
+        </div>
+
+        <div class="list">
+            @forelse ($waitingTasks as $task)
+                @php
+                    $followUpDue = $task->waiting_until
+                        && $task->waiting_until->lte(
+                            $now->toDateString(),
+                        );
+                @endphp
+
+                <div class="item">
+                    <div class="item-title">
+                        {{ $task->title }}
+                    </div>
+
+                    <div class="meta">
+                        {{ $task->organization?->name
+                            ?? 'Sin ámbito' }}
+
+                        @if ($task->waiting_reason)
+                            · {{ $task->waiting_reason }}
+                        @endif
+                    </div>
+
+                    @if ($task->waiting_until)
+                        <div class="meta {{
+                            $followUpDue
+                                ? 'waiting-due'
+                                : ''
+                        }}">
+                            Seguimiento:
+                            {{ $task->waiting_until->format(
+                                'd/m/Y',
+                            ) }}
+                        </div>
+                    @endif
+
+                    <form
+                        method="POST"
+                        action="{{ route(
+                            'daily-task-waiting.resume',
+                            $task,
+                        ) }}"
+                    >
+                        @csrf
+
+                        @if ($selectedScope)
+                            <input
+                                type="hidden"
+                                name="scope"
+                                value="{{ $selectedScope }}"
+                            >
+                        @endif
+
+                        @if ($search !== '')
+                            <input
+                                type="hidden"
+                                name="q"
+                                value="{{ $search }}"
+                            >
+                        @endif
+
+                        @if ($selectedPriority)
+                            <input
+                                type="hidden"
+                                name="priority"
+                                value="{{ $selectedPriority }}"
+                            >
+                        @endif
+
+                        <button
+                            class="resume-button"
+                            type="submit"
+                        >
+                            Reactivar
+                        </button>
+                    </form>
+                </div>
+            @empty
+                <div class="empty">
+                    No hay tareas en espera.
+                </div>
+            @endforelse
+        </div>
     </section>
 
     @php
@@ -934,6 +1082,67 @@
                                         </form>
                                     @endforeach
                                 </div>
+
+                                <details class="task-edit">
+                                    <summary>En espera</summary>
+
+                                    <form
+                                        class="waiting-form"
+                                        method="POST"
+                                        action="{{ route(
+                                            'daily-task-waiting.wait',
+                                            $task,
+                                        ) }}"
+                                    >
+                                        @csrf
+
+                                        @if ($selectedScope)
+                                            <input
+                                                type="hidden"
+                                                name="scope"
+                                                value="{{ $selectedScope }}"
+                                            >
+                                        @endif
+
+                                        @if ($search !== '')
+                                            <input
+                                                type="hidden"
+                                                name="q"
+                                                value="{{ $search }}"
+                                            >
+                                        @endif
+
+                                        @if ($selectedPriority)
+                                            <input
+                                                type="hidden"
+                                                name="priority"
+                                                value="{{ $selectedPriority }}"
+                                            >
+                                        @endif
+
+                                        <input
+                                            type="date"
+                                            name="waiting_until"
+                                            value="{{ $now->addDay()->format('Y-m-d') }}"
+                                            required
+                                        >
+
+                                        <input
+                                            type="text"
+                                            name="waiting_reason"
+                                            placeholder="Esperando respuesta, aprobación..."
+                                            maxlength="255"
+                                            required
+                                        >
+
+                                        <button
+                                            class="wait-button"
+                                            type="submit"
+                                        >
+                                            Poner en espera
+                                        </button>
+                                    </form>
+                                </details>
 
                                 <details class="task-edit">
                                     <summary>Editar</summary>

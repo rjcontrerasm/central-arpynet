@@ -146,7 +146,34 @@ class DailyOpsController extends Controller
                 ->values();
         }
 
-        $overdueCount = $tasks
+        $allWaitingTasks = $tasks
+            ->filter(
+                fn (Task $task): bool =>
+                    ! is_null($task->waiting_since),
+            )
+            ->values();
+
+        $waitingCount = $allWaitingTasks->count();
+
+        $waitingTasks = $allWaitingTasks
+            ->sortBy(
+                fn (Task $task): string =>
+                    (string) (
+                        $task->waiting_until
+                        ?? '9999-12-31'
+                    ),
+            )
+            ->take(12)
+            ->values();
+
+        $activeTasks = $tasks
+            ->filter(
+                fn (Task $task): bool =>
+                    is_null($task->waiting_since),
+            )
+            ->values();
+
+        $overdueCount = $activeTasks
             ->filter(
                 fn (Task $task): bool =>
                     $task->due_at
@@ -156,7 +183,7 @@ class DailyOpsController extends Controller
             )
             ->count();
 
-        $todayCount = $tasks
+        $todayCount = $activeTasks
             ->filter(
                 fn (Task $task): bool =>
                     $task->due_at
@@ -164,7 +191,7 @@ class DailyOpsController extends Controller
             )
             ->count();
 
-        $weekCount = $tasks
+        $weekCount = $activeTasks
             ->filter(
                 fn (Task $task): bool =>
                     $task->due_at
@@ -177,14 +204,14 @@ class DailyOpsController extends Controller
             )
             ->count();
 
-        $noDateCount = $tasks
+        $noDateCount = $activeTasks
             ->filter(
                 fn (Task $task): bool =>
                     is_null($task->due_at),
             )
             ->count();
 
-        $nowTasks = $tasks
+        $nowTasks = $activeTasks
             ->filter(
                 fn (Task $task): bool =>
                     (
@@ -201,7 +228,7 @@ class DailyOpsController extends Controller
 
         $nowIds = $nowTasks->pluck('id');
 
-        $todayTasks = $tasks
+        $todayTasks = $activeTasks
             ->filter(
                 fn (Task $task): bool =>
                     ! $nowIds->contains($task->id)
@@ -215,7 +242,7 @@ class DailyOpsController extends Controller
         $usedIds = $nowIds
             ->merge($todayTasks->pluck('id'));
 
-        $upcomingTasks = $tasks
+        $upcomingTasks = $activeTasks
             ->filter(
                 fn (Task $task): bool =>
                     ! $usedIds->contains($task->id)
@@ -231,7 +258,7 @@ class DailyOpsController extends Controller
             ->take(8)
             ->values();
 
-        $noDateTasks = $tasks
+        $noDateTasks = $activeTasks
             ->filter(
                 fn (Task $task): bool =>
                     is_null($task->due_at),
@@ -319,6 +346,8 @@ class DailyOpsController extends Controller
                 'todayCount',
                 'weekCount',
                 'noDateCount',
+                'waitingCount',
+                'waitingTasks',
                 'nowTasks',
                 'todayTasks',
                 'upcomingTasks',

@@ -47,6 +47,8 @@ class Task extends Model
             'priority_score' => 'integer',
             'start_at' => 'datetime',
             'due_at' => 'datetime',
+            'waiting_since' => 'datetime',
+            'waiting_until' => 'date',
             'waiting_until' => 'datetime',
             'completed_at' => 'datetime',
             'last_activity_at' => 'datetime',

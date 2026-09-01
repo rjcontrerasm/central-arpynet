@@ -82,3 +82,21 @@ Route::middleware('auth')->group(function (): void {
         ],
     )->name('daily-task-edit.update');
 });
+
+Route::middleware('auth')->group(function (): void {
+    Route::post(
+        '/mi-dia/tareas/{task}/esperar',
+        [
+            \App\Http\Controllers\DailyTaskWaitingController::class,
+            'wait',
+        ],
+    )->name('daily-task-waiting.wait');
+
+    Route::post(
+        '/mi-dia/tareas/{task}/reactivar',
+        [
+            \App\Http\Controllers\DailyTaskWaitingController::class,
+            'resume',
+        ],
+    )->name('daily-task-waiting.resume');
+});
