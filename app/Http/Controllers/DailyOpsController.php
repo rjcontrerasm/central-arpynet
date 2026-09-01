@@ -8,7 +8,6 @@ use App\Models\Organization;
 use App\Models\Task;
 use App\Support\DailyTaskPriority;
 use Carbon\CarbonImmutable;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +17,22 @@ class DailyOpsController extends Controller
 {
     public function show(Request $request): View
     {
+        $validated = $request->validate([
+            'scope' => [
+                'nullable',
+                'integer',
+            ],
+            'q' => [
+                'nullable',
+                'string',
+                'max:120',
+            ],
+            'priority' => [
+                'nullable',
+                'in:critical,today,week,planned',
+            ],
+        ]);
+
         $user = $request->user();
 
         $organizationIds = DB::table('organization_user')
@@ -31,7 +46,9 @@ class DailyOpsController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        $selectedScope = $request->integer('scope') ?: null;
+        $selectedScope = isset($validated['scope'])
+            ? (int) $validated['scope']
+            : null;
 
         if (
             $selectedScope
@@ -39,6 +56,13 @@ class DailyOpsController extends Controller
         ) {
             abort(403);
         }
+
+        $search = trim(
+            (string) ($validated['q'] ?? ''),
+        );
+
+        $selectedPriority =
+            $validated['priority'] ?? null;
 
         $timezone = config(
             'app.timezone',
@@ -50,46 +74,37 @@ class DailyOpsController extends Controller
         $todayEnd = $now->endOfDay();
         $weekEnd = $now->addDays(7)->endOfDay();
 
-        $baseTasks = Task::query()
+        $tasksQuery = Task::query()
             ->with('organization')
-            ->whereIn('organization_id', $organizationIds)
+            ->whereIn(
+                'organization_id',
+                $organizationIds,
+            )
             ->whereNotIn(
                 'status',
                 ['completed', 'cancelled', 'someday'],
             );
 
-        $this->applyScope(
-            $baseTasks,
-            $selectedScope,
-        );
+        if ($selectedScope) {
+            $tasksQuery->where(
+                'organization_id',
+                $selectedScope,
+            );
+        }
 
-        $overdueCount = (clone $baseTasks)
-            ->whereNotNull('due_at')
-            ->where('due_at', '<', $todayStart)
-            ->count();
+        if ($search !== '') {
+            $tasksQuery->where(
+                'title',
+                'like',
+                '%'.$search.'%',
+            );
+        }
 
-        $todayCount = (clone $baseTasks)
-            ->whereBetween(
-                'due_at',
-                [$todayStart, $todayEnd],
-            )
-            ->count();
-
-        $weekCount = (clone $baseTasks)
-            ->where('due_at', '>', $todayEnd)
-            ->where('due_at', '<=', $weekEnd)
-            ->count();
-
-        $noDateCount = (clone $baseTasks)
-            ->whereNull('due_at')
-            ->count();
-
-        $tasks = (clone $baseTasks)
+        $tasks = $tasksQuery
             ->orderByRaw(
                 'CASE WHEN due_at IS NULL THEN 1 ELSE 0 END',
             )
             ->orderBy('due_at')
-            ->limit(250)
             ->get();
 
         $tasks->each(
@@ -120,6 +135,54 @@ class DailyOpsController extends Controller
                 );
             },
         );
+
+        if ($selectedPriority) {
+            $tasks = $tasks
+                ->filter(
+                    fn (Task $task): bool =>
+                        $task->display_priority_band
+                        === $selectedPriority,
+                )
+                ->values();
+        }
+
+        $overdueCount = $tasks
+            ->filter(
+                fn (Task $task): bool =>
+                    $task->due_at
+                    && $task->due_at->isBefore(
+                        $todayStart,
+                    ),
+            )
+            ->count();
+
+        $todayCount = $tasks
+            ->filter(
+                fn (Task $task): bool =>
+                    $task->due_at
+                    && $task->due_at->isSameDay($now),
+            )
+            ->count();
+
+        $weekCount = $tasks
+            ->filter(
+                fn (Task $task): bool =>
+                    $task->due_at
+                    && $task->due_at->isAfter(
+                        $todayEnd,
+                    )
+                    && $task->due_at->lessThanOrEqualTo(
+                        $weekEnd,
+                    ),
+            )
+            ->count();
+
+        $noDateCount = $tasks
+            ->filter(
+                fn (Task $task): bool =>
+                    is_null($task->due_at),
+            )
+            ->count();
 
         $nowTasks = $tasks
             ->filter(
@@ -157,7 +220,9 @@ class DailyOpsController extends Controller
                 fn (Task $task): bool =>
                     ! $usedIds->contains($task->id)
                     && $task->due_at
-                    && $task->due_at->isAfter($todayEnd)
+                    && $task->due_at->isAfter(
+                        $todayEnd,
+                    )
                     && $task->due_at->lessThanOrEqualTo(
                         $weekEnd,
                     ),
@@ -248,6 +313,8 @@ class DailyOpsController extends Controller
                 'now',
                 'organizations',
                 'selectedScope',
+                'search',
+                'selectedPriority',
                 'overdueCount',
                 'todayCount',
                 'weekCount',
@@ -260,17 +327,5 @@ class DailyOpsController extends Controller
                 'openIncidents',
             ),
         );
-    }
-
-    private function applyScope(
-        Builder $query,
-        ?int $selectedScope,
-    ): void {
-        if ($selectedScope) {
-            $query->where(
-                'organization_id',
-                $selectedScope,
-            );
-        }
     }
 }

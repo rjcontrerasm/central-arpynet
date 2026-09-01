@@ -35,6 +35,15 @@ class DailyTaskEditController extends Controller
                 'nullable',
                 'integer',
             ],
+            'q' => [
+                'nullable',
+                'string',
+                'max:120',
+            ],
+            'priority' => [
+                'nullable',
+                'in:critical,today,week,planned',
+            ],
         ]);
 
         $userId = $request->user()->id;
@@ -94,12 +103,29 @@ class DailyTaskEditController extends Controller
             abort_unless($scopeAllowed, 403);
         }
 
+        $params = [];
+
+        if ($scope) {
+            $params['scope'] = $scope;
+        }
+
+        $q = trim(
+            (string) ($validated['q'] ?? ''),
+        );
+
+        if ($q !== '') {
+            $params['q'] = $q;
+        }
+
+        if (! empty($validated['priority'])) {
+            $params['priority'] =
+                $validated['priority'];
+        }
+
         return redirect()
             ->route(
                 'daily-ops.show',
-                $scope
-                    ? ['scope' => $scope]
-                    : [],
+                $params,
             )
             ->with(
                 'daily_action_success',

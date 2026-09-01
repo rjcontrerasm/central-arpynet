@@ -144,6 +144,78 @@
             color: #dbeafe;
         }
 
+        .filters {
+            display: grid;
+            gap: 9px;
+            margin-bottom: 14px;
+        }
+
+        .search-form {
+            display: grid;
+            grid-template-columns:
+                minmax(0, 1fr) auto;
+            gap: 8px;
+        }
+
+        .search-input {
+            width: 100%;
+            min-height: 42px;
+            padding: 9px 12px;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            background: #0f172a;
+            color: #f8fafc;
+        }
+
+        .search-button {
+            min-height: 42px;
+            padding: 8px 13px;
+            border: 0;
+            border-radius: 12px;
+            background: #2563eb;
+            color: #fff;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .priority-filters {
+            display: flex;
+            gap: 7px;
+            overflow-x: auto;
+            padding-bottom: 2px;
+        }
+
+        .priority-filter {
+            flex: 0 0 auto;
+            padding: 7px 10px;
+            border: 1px solid #334155;
+            border-radius: 999px;
+            background: #0f172a;
+            color: #cbd5e1;
+            font-size: 11px;
+            font-weight: 750;
+        }
+
+        .priority-filter.active {
+            border-color: #60a5fa;
+            background: #172554;
+            color: #dbeafe;
+        }
+
+        .filter-summary {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 7px;
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+        .clear-filter {
+            color: #93c5fd;
+            font-weight: 750;
+        }
+
         .stats {
             display: grid;
             grid-template-columns:
@@ -410,7 +482,8 @@
 
             .scope,
             .action,
-            .task-edit summary {
+            .task-edit summary,
+            .priority-filter {
                 background: #fff;
                 color: #475569;
                 border-color: #cbd5e1;
@@ -451,6 +524,12 @@
 
             .edit-form {
                 background: #f8fafc;
+            }
+
+            .search-input {
+                background: #fff;
+                color: #0f172a;
+                border-color: #cbd5e1;
             }
 
             .edit-field input,
@@ -511,7 +590,16 @@
     <nav class="scopes" aria-label="Filtrar por ámbito">
         <a
             class="scope {{ $selectedScope ? '' : 'active' }}"
-            href="{{ route('daily-ops.show') }}"
+            href="{{ route(
+                'daily-ops.show',
+                array_filter([
+                    'q' => $search !== ''
+                        ? $search
+                        : null,
+                    'priority' =>
+                        $selectedPriority,
+                ]),
+            ) }}"
         >
             Todos
         </a>
@@ -525,13 +613,148 @@
                 }}"
                 href="{{ route(
                     'daily-ops.show',
-                    ['scope' => $organization->id],
+                    array_filter([
+                        'scope' => $organization->id,
+                        'q' => $search !== ''
+                            ? $search
+                            : null,
+                        'priority' =>
+                            $selectedPriority,
+                    ]),
                 ) }}"
             >
                 {{ $organization->name }}
             </a>
         @endforeach
     </nav>
+
+    @php
+        $baseQuery = array_filter([
+            'scope' => $selectedScope,
+            'q' => $search !== '' ? $search : null,
+        ]);
+
+        $priorityLabels = [
+            'critical' => 'Críticas',
+            'today' => 'Hoy',
+            'week' => 'Semana',
+            'planned' => 'Planificadas',
+        ];
+    @endphp
+
+    <section class="filters">
+        <form
+            class="search-form"
+            method="GET"
+            action="{{ route('daily-ops.show') }}"
+        >
+            @if ($selectedScope)
+                <input
+                    type="hidden"
+                    name="scope"
+                    value="{{ $selectedScope }}"
+                >
+            @endif
+
+            @if ($selectedPriority)
+                <input
+                    type="hidden"
+                    name="priority"
+                    value="{{ $selectedPriority }}"
+                >
+            @endif
+
+            <input
+                class="search-input"
+                type="search"
+                name="q"
+                value="{{ $search }}"
+                placeholder="Buscar tarea..."
+                autocomplete="off"
+            >
+
+            <button
+                class="search-button"
+                type="submit"
+            >
+                Buscar
+            </button>
+        </form>
+
+        <nav
+            class="priority-filters"
+            aria-label="Filtrar por prioridad"
+        >
+            <a
+                class="priority-filter {{
+                    $selectedPriority
+                        ? ''
+                        : 'active'
+                }}"
+                href="{{ route(
+                    'daily-ops.show',
+                    $baseQuery,
+                ) }}"
+            >
+                Todas
+            </a>
+
+            @foreach (
+                $priorityLabels
+                as $value => $label
+            )
+                <a
+                    class="priority-filter {{
+                        $selectedPriority === $value
+                            ? 'active'
+                            : ''
+                    }}"
+                    href="{{ route(
+                        'daily-ops.show',
+                        array_merge(
+                            $baseQuery,
+                            ['priority' => $value],
+                        ),
+                    ) }}"
+                >
+                    {{ $label }}
+                </a>
+            @endforeach
+        </nav>
+
+        @if (
+            $search !== ''
+            || $selectedPriority
+            || $selectedScope
+        )
+            <div class="filter-summary">
+                <span>Filtros activos</span>
+
+                @if ($search !== '')
+                    <span>
+                        · “{{ $search }}”
+                    </span>
+                @endif
+
+                @if ($selectedPriority)
+                    <span>
+                        · {{
+                            $priorityLabels[
+                                $selectedPriority
+                            ]
+                        }}
+                    </span>
+                @endif
+
+                <a
+                    class="clear-filter"
+                    href="{{ route('daily-ops.show') }}"
+                >
+                    Limpiar
+                </a>
+            </div>
+        @endif
+    </section>
 
     <section class="stats">
         <div class="stat">

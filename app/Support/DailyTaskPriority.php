@@ -11,62 +11,41 @@ class DailyTaskPriority
         Task $task,
         CarbonImmutable $now,
     ): int {
-        $stored = $task->getAttribute('priority_score');
+        $dueScore = self::dueScore(
+            $task,
+            $now,
+        );
 
-        if (is_numeric($stored)) {
-            return max(
-                0,
-                min(100, (int) $stored),
-            );
-        }
-
-        $due = 0;
-
-        if ($task->due_at) {
-            $days = $now
-                ->startOfDay()
-                ->diffInDays(
-                    CarbonImmutable::parse($task->due_at)->startOfDay(),
-                    false,
-                );
-
-            $due = match (true) {
-                $days < 0 => 50,
-                $days === 0 => 45,
-                $days === 1 => 38,
-                $days <= 3 => 30,
-                $days <= 7 => 22,
-                $days <= 30 => 12,
-                default => 5,
-            };
-        }
-
-        $urgency = match ($task->urgency) {
+        $urgencyScore = match (
+            strtolower((string) $task->urgency)
+        ) {
             'high' => 25,
             'medium' => 12,
             default => 0,
         };
 
-        $impact = match ($task->impact) {
+        $impactScore = match (
+            strtolower((string) $task->impact)
+        ) {
             'high' => 15,
             'medium' => 8,
             default => 0,
         };
 
-        $inactiveDays = $task->updated_at
-            ? $task->updated_at->diffInDays($now)
-            : 0;
-
-        $inactivity = match (true) {
-            $inactiveDays >= 14 => 10,
-            $inactiveDays >= 7 => 6,
-            $inactiveDays >= 3 => 3,
-            default => 0,
-        };
+        $inactivityScore = self::inactivityScore(
+            $task,
+            $now,
+        );
 
         return min(
             100,
-            $due + $urgency + $impact + $inactivity,
+            max(
+                0,
+                $dueScore
+                + $urgencyScore
+                + $impactScore
+                + $inactivityScore,
+            ),
         );
     }
 
@@ -74,20 +53,10 @@ class DailyTaskPriority
         Task $task,
         CarbonImmutable $now,
     ): string {
-        $stored = $task->getAttribute('priority_band');
-
-        if (
-            is_string($stored)
-            && in_array(
-                $stored,
-                ['critical', 'today', 'week', 'planned'],
-                true,
-            )
-        ) {
-            return $stored;
-        }
-
-        $score = self::score($task, $now);
+        $score = self::score(
+            $task,
+            $now,
+        );
 
         return match (true) {
             $score >= 85 => 'critical',
@@ -97,13 +66,79 @@ class DailyTaskPriority
         };
     }
 
-    public static function label(string $band): string
-    {
+    public static function label(
+        string $band,
+    ): string {
         return match ($band) {
             'critical' => 'Crítica',
             'today' => 'Hoy',
             'week' => 'Semana',
             default => 'Planificada',
+        };
+    }
+
+    private static function dueScore(
+        Task $task,
+        CarbonImmutable $now,
+    ): int {
+        if (! $task->due_at) {
+            return 0;
+        }
+
+        $today = $now->startOfDay();
+
+        $dueDate = CarbonImmutable::instance(
+            $task->due_at,
+        )->startOfDay();
+
+        if ($dueDate->isBefore($today)) {
+            return 50;
+        }
+
+        if ($dueDate->isSameDay($today)) {
+            return 50;
+        }
+
+        $days = (int) $today->diffInDays(
+            $dueDate,
+            false,
+        );
+
+        return match (true) {
+            $days === 1 => 40,
+            $days <= 3 => 32,
+            $days <= 7 => 24,
+            $days <= 30 => 12,
+            default => 5,
+        };
+    }
+
+    private static function inactivityScore(
+        Task $task,
+        CarbonImmutable $now,
+    ): int {
+        if (! $task->updated_at) {
+            return 0;
+        }
+
+        $updatedAt = CarbonImmutable::instance(
+            $task->updated_at,
+        );
+
+        if ($updatedAt->isAfter($now)) {
+            return 0;
+        }
+
+        $days = (int) $updatedAt->diffInDays(
+            $now,
+            false,
+        );
+
+        return match (true) {
+            $days >= 14 => 10,
+            $days >= 7 => 6,
+            $days >= 3 => 3,
+            default => 0,
         };
     }
 }

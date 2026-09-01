@@ -24,6 +24,15 @@ class DailyTaskActionController extends Controller
                 'nullable',
                 'integer',
             ],
+            'q' => [
+                'nullable',
+                'string',
+                'max:120',
+            ],
+            'priority' => [
+                'nullable',
+                'in:critical,today,week,planned',
+            ],
         ]);
 
         $this->authorizeTask(
@@ -64,9 +73,9 @@ class DailyTaskActionController extends Controller
         return redirect()
             ->route(
                 'daily-ops.show',
-                $this->scopeParams(
+                $this->filterParams(
                     $request,
-                    $validated['scope'] ?? null,
+                    $validated,
                 ),
             )
             ->with(
@@ -94,26 +103,43 @@ class DailyTaskActionController extends Controller
         abort_unless($allowed, 403);
     }
 
-    private function scopeParams(
+    private function filterParams(
         Request $request,
-        ?int $scope,
+        array $validated,
     ): array {
-        if (! $scope) {
-            return [];
+        $params = [];
+
+        $scope = $validated['scope'] ?? null;
+
+        if ($scope) {
+            $allowed = DB::table('organization_user')
+                ->where(
+                    'user_id',
+                    $request->user()->id,
+                )
+                ->where('organization_id', $scope)
+                ->where('is_active', true)
+                ->exists();
+
+            abort_unless($allowed, 403);
+
+            $params['scope'] = $scope;
         }
 
-        $allowed = DB::table('organization_user')
-            ->where(
-                'user_id',
-                $request->user()->id,
-            )
-            ->where('organization_id', $scope)
-            ->where('is_active', true)
-            ->exists();
+        $q = trim(
+            (string) ($validated['q'] ?? ''),
+        );
 
-        abort_unless($allowed, 403);
+        if ($q !== '') {
+            $params['q'] = $q;
+        }
 
-        return ['scope' => $scope];
+        if (! empty($validated['priority'])) {
+            $params['priority'] =
+                $validated['priority'];
+        }
+
+        return $params;
     }
 
     private function complete(Task $task): void
