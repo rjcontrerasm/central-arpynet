@@ -12,6 +12,17 @@ class ExecutiveSummaryNotificationTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_notification_page_refreshes_when_restored_from_bfcache(): void
+    {
+        [$user] = $this->context();
+
+        $this->actingAs($user)
+            ->get('/notificaciones')
+            ->assertOk()
+            ->assertSee('pageshow', false)
+            ->assertSee('event.persisted', false);
+    }
+
     public function test_notification_center_is_available(): void
     {
         [$user] = $this->context();
