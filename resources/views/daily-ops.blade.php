@@ -603,6 +603,10 @@
                 Captura
             </a>
 
+            <a href="{{ route('service-orders-ops.show') }}">
+                Servicios
+            </a>
+
             <a href="{{ url('/admin') }}">
                 Panel →
             </a>

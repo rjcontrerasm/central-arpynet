@@ -100,3 +100,21 @@ Route::middleware('auth')->group(function (): void {
         ],
     )->name('daily-task-waiting.resume');
 });
+
+Route::middleware('auth')->group(function (): void {
+    Route::get(
+        '/servicios',
+        [
+            \App\Http\Controllers\ServiceOrderOpsController::class,
+            'show',
+        ],
+    )->name('service-orders-ops.show');
+
+    Route::post(
+        '/servicios/{serviceOrder}/actualizar',
+        [
+            \App\Http\Controllers\ServiceOrderOpsActionController::class,
+            'update',
+        ],
+    )->name('service-orders-ops.update');
+});
