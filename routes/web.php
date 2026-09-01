@@ -166,3 +166,29 @@ Route::middleware('auth')->group(function (): void {
         ],
     )->name('executive-summary.show');
 });
+
+Route::middleware('auth')->group(function (): void {
+    Route::get(
+        '/notificaciones',
+        [
+            \App\Http\Controllers\NotificationCenterController::class,
+            'index',
+        ],
+    )->name('notification-center.index');
+
+    Route::post(
+        '/notificaciones/leer-todas',
+        [
+            \App\Http\Controllers\NotificationCenterController::class,
+            'readAll',
+        ],
+    )->name('notification-center.read-all');
+
+    Route::post(
+        '/notificaciones/{notification}/leer',
+        [
+            \App\Http\Controllers\NotificationCenterController::class,
+            'read',
+        ],
+    )->name('notification-center.read');
+});

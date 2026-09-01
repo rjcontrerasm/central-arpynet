@@ -380,6 +380,10 @@
                 Captura
             </a>
 
+            <a href="{{ route('notification-center.index') }}">
+                Notificaciones
+            </a>
+
             <a href="{{ url('/admin') }}">
                 Panel →
             </a>

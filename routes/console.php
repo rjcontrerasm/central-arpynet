@@ -206,3 +206,16 @@ Artisan::command(
 Schedule::command('monitor:casa-andina-sync')
     ->everyFiveMinutes()
     ->withoutOverlapping();
+
+Schedule::command('summary:deliver today')
+    ->dailyAt(config('central.summary.daily_time', '07:30'))
+    ->timezone(config('app.timezone', 'America/Lima'))
+    ->withoutOverlapping();
+
+Schedule::command('summary:deliver week')
+    ->weeklyOn(
+        config('central.summary.weekly_day', 1),
+        config('central.summary.weekly_time', '07:35'),
+    )
+    ->timezone(config('app.timezone', 'America/Lima'))
+    ->withoutOverlapping();
