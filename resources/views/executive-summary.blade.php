@@ -160,6 +160,37 @@
             font-size: 11px;
         }
 
+        .decision-section {
+            margin: 2px 0 26px;
+        }
+
+        .decision-grid {
+            display: grid;
+            gap: 9px;
+        }
+
+        .decision-card {
+            display: block;
+            padding: 14px;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            background: #11182b;
+        }
+
+        .decision-action {
+            margin-top: 9px;
+            color: #93c5fd;
+            font-size: 13px;
+            font-weight: 850;
+        }
+
+        .decision-reason {
+            margin-top: 5px;
+            color: #94a3b8;
+            font-size: 11px;
+            line-height: 1.45;
+        }
+
         .section {
             margin-top: 24px;
         }
@@ -297,6 +328,11 @@
                     repeat(7, minmax(0, 1fr));
             }
 
+            .decision-grid {
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
+            }
+
             .two-column {
                 display: grid;
                 grid-template-columns:
@@ -330,9 +366,14 @@
 
             .stat,
             .item,
-            .money {
+            .money,
+            .decision-card {
                 background: #fff;
                 border-color: #e2e8f0;
+            }
+
+            .decision-reason {
+                color: #64748b;
             }
 
             .chip {
@@ -467,6 +508,73 @@
                 </div>
             </div>
         @endforeach
+    </section>
+
+    <section class="decision-section">
+        <div class="section-head">
+            <h2>Decidir ahora</h2>
+
+            <span class="meta">
+                {{ $summary['counts']['decisions'] }}
+                decisiones
+            </span>
+        </div>
+
+        <div class="decision-grid">
+            @forelse (
+                $summary['decisions']
+                as $decision
+            )
+                <a
+                    class="decision-card"
+                    href="{{ $decision['url'] }}"
+                    data-operational-card
+                >
+                    <div class="item-head">
+                        <div>
+                            <div class="item-title">
+                                {{ $decision['title'] }}
+                            </div>
+
+                            <div class="meta">
+                                {{ $decision['organization'] }}
+                                ·
+                                {{ $decision['type_label'] }}
+                            </div>
+                        </div>
+
+                        <span
+                            class="pill {{
+                                $decision['level']
+                            }}"
+                        >
+                            {{ $decision['level_label'] }}
+                        </span>
+                    </div>
+
+                    <div class="decision-action">
+                        {{
+                            $decision[
+                                'recommended_action'
+                            ]
+                        }}
+                        →
+                    </div>
+
+                    <div class="decision-reason">
+                        {{
+                            $decision[
+                                'decision_reason'
+                            ]
+                        }}
+                    </div>
+                </a>
+            @empty
+                <div class="empty">
+                    No hay decisiones operativas urgentes.
+                </div>
+            @endforelse
+        </div>
     </section>
 
     <div class="two-column">

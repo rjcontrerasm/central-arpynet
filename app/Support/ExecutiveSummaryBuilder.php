@@ -61,6 +61,33 @@ class ExecutiveSummaryBuilder
             ->sortByDesc('rank')
             ->values();
 
+        $decisions = $attention
+            ->filter(
+                fn (array $item): bool =>
+                    ExecutiveDecisionAdvisor::isDecision(
+                        $item,
+                    ),
+            )
+            ->map(
+                function (
+                    array $item,
+                ): array {
+                    $advice =
+                        ExecutiveDecisionAdvisor::recommend(
+                            $item,
+                        );
+
+                    return $item + [
+                        'recommended_action' =>
+                            $advice['action'],
+                        'decision_reason' =>
+                            $advice['reason'],
+                    ];
+                },
+            )
+            ->take(6)
+            ->values();
+
         $dueTasks = Task::query()
             ->with('organization')
             ->whereIn(
@@ -330,7 +357,10 @@ class ExecutiveSummaryBuilder
             'start' => $start,
             'end' => $end,
             'attention' => $attention->take(12),
+            'decisions' => $decisions,
             'counts' => [
+                'decisions' =>
+                    $decisions->count(),
                 'critical' => $attention
                     ->where('level', 'critical')
                     ->count(),
