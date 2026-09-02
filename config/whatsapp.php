@@ -44,4 +44,32 @@ return [
     'default_organization_id' => env(
         'WHATSAPP_DEFAULT_ORGANIZATION_ID',
     ),
+
+    'outbound_enabled' => filter_var(
+        env('WHATSAPP_OUTBOUND_ENABLED', false),
+        FILTER_VALIDATE_BOOL,
+    ),
+
+    'graph_version' => env(
+        'WHATSAPP_GRAPH_VERSION',
+        'v26.0',
+    ),
+
+    'access_token' => env(
+        'WHATSAPP_ACCESS_TOKEN',
+    ),
+
+    'phone_number_id' => env(
+        'WHATSAPP_PHONE_NUMBER_ID',
+    ),
+
+    'confirm_task_creation' => filter_var(
+        env('WHATSAPP_CONFIRM_TASK_CREATION', true),
+        FILTER_VALIDATE_BOOL,
+    ),
+
+    'confirmation_prefix' => env(
+        'WHATSAPP_CONFIRMATION_PREFIX',
+        '✅ Tarea registrada:',
+    ),
 ];

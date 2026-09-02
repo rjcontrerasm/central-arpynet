@@ -19,6 +19,10 @@ class WhatsappInboundMessage extends Model
         'received_at',
         'processed_at',
         'error_code',
+        'confirmation_status',
+        'confirmation_message_id',
+        'confirmation_sent_at',
+        'confirmation_error_code',
     ];
 
     protected function casts(): array
@@ -27,6 +31,8 @@ class WhatsappInboundMessage extends Model
             'text_length' => 'integer',
             'received_at' => 'datetime',
             'processed_at' => 'datetime',
+            'confirmation_sent_at' =>
+                'datetime',
         ];
     }
 

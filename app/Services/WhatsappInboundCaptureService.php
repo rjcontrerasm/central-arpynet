@@ -9,11 +9,18 @@ use App\Models\WhatsappInboundMessage;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use RuntimeException;
 
 class WhatsappInboundCaptureService
 {
+    public function __construct(
+        private readonly
+        WhatsappOutboundService $outbound,
+    ) {
+    }
+
     /**
      * @return 'processed'|'duplicate'|'ignored_sender'|'ignored_type'
      */
@@ -84,7 +91,7 @@ class WhatsappInboundCaptureService
             $this->resolveContext();
 
         try {
-            return DB::transaction(
+            $processed = DB::transaction(
                 function () use (
                     $messageId,
                     $senderWaId,
@@ -94,7 +101,7 @@ class WhatsappInboundCaptureService
                     $text,
                     $user,
                     $organization,
-                ): string {
+                ): array {
                     $inbound =
                         WhatsappInboundMessage::query()
                             ->create([
@@ -168,7 +175,12 @@ class WhatsappInboundCaptureService
                         'processed_at' => now(),
                     ])->save();
 
-                    return 'processed';
+                    return [
+                        'inbound_id' =>
+                            $inbound->id,
+                        'task_title' =>
+                            $title,
+                    ];
                 },
             );
         } catch (QueryException $exception) {
@@ -180,6 +192,64 @@ class WhatsappInboundCaptureService
             }
 
             throw $exception;
+        }
+
+        $this->confirmTaskCreation(
+            (int) $processed['inbound_id'],
+            $senderWaId,
+            (string) $processed['task_title'],
+            $phoneNumberId,
+        );
+
+        return 'processed';
+    }
+
+    private function confirmTaskCreation(
+        int $inboundId,
+        string $senderWaId,
+        string $taskTitle,
+        ?string $phoneNumberId,
+    ): void {
+        $inbound =
+            WhatsappInboundMessage::query()
+                ->find($inboundId);
+
+        if (! $inbound) {
+            return;
+        }
+
+        $result =
+            $this->outbound
+                ->sendTaskConfirmation(
+                    $senderWaId,
+                    $taskTitle,
+                    $phoneNumberId,
+                );
+
+        $status = $result['status'];
+
+        $inbound->forceFill([
+            'confirmation_status' =>
+                $status,
+            'confirmation_message_id' =>
+                $result['message_id'],
+            'confirmation_sent_at' =>
+                $status === 'sent'
+                    ? now()
+                    : null,
+            'confirmation_error_code' =>
+                $result['error_code'],
+        ])->save();
+
+        if ($status === 'failed') {
+            Log::warning(
+                'WhatsApp task confirmation failed.',
+                [
+                    'inbound_id' => $inboundId,
+                    'error_code' =>
+                        $result['error_code'],
+                ],
+            );
         }
     }
 

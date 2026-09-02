@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class WhatsappInboundCaptureTest extends TestCase
@@ -138,6 +140,141 @@ class WhatsappInboundCaptureTest extends TestCase
                 'sender_wa_id' =>
                     self::WA_ID,
                 'status' => 'processed',
+            ],
+        );
+    }
+
+    public function test_processed_text_can_send_task_confirmation(): void
+    {
+        $this->enableWebhook();
+        $this->enableOutbound();
+        $this->context();
+
+        Http::fake([
+            'graph.facebook.com/*' =>
+                Http::response(
+                    [
+                        'messaging_product' =>
+                            'whatsapp',
+                        'contacts' => [[
+                            'input' => self::WA_ID,
+                            'wa_id' => self::WA_ID,
+                        ]],
+                        'messages' => [[
+                            'id' =>
+                                'wamid.confirmation.1',
+                        ]],
+                    ],
+                    200,
+                ),
+        ]);
+
+        $payload = $this->payload(
+            'wamid.confirm.task.1',
+            self::WA_ID,
+            'Registrar pago del cliente',
+        );
+
+        $this->postRaw(
+            $payload,
+            $this->signature($payload),
+        )
+            ->assertOk()
+            ->assertJson([
+                'status' => 'ok',
+                'processed' => 1,
+            ]);
+
+        $this->assertDatabaseHas(
+            'whatsapp_inbound_messages',
+            [
+                'message_id' =>
+                    'wamid.confirm.task.1',
+                'status' => 'processed',
+                'confirmation_status' =>
+                    'sent',
+                'confirmation_message_id' =>
+                    'wamid.confirmation.1',
+            ],
+        );
+
+        Http::assertSent(
+            function (Request $request): bool {
+                return
+                    $request->method() === 'POST'
+                    && $request->url()
+                        === 'https://graph.facebook.com/v26.0/phone-test/messages'
+                    && $request->hasHeader(
+                        'Authorization',
+                        'Bearer test-access-token',
+                    )
+                    && $request['to']
+                        === self::WA_ID
+                    && data_get(
+                        $request->data(),
+                        'text.body',
+                    )
+                        === '✅ Tarea registrada: Registrar pago del cliente';
+            },
+        );
+    }
+
+    public function test_confirmation_failure_does_not_fail_inbound(): void
+    {
+        $this->enableWebhook();
+        $this->enableOutbound();
+        $this->context();
+
+        Http::fake([
+            'graph.facebook.com/*' =>
+                Http::response(
+                    [
+                        'error' => [
+                            'code' => 131000,
+                            'message' =>
+                                'Temporary failure',
+                        ],
+                    ],
+                    500,
+                ),
+        ]);
+
+        $payload = $this->payload(
+            'wamid.confirm.fail.1',
+            self::WA_ID,
+            'Tarea aunque falle respuesta',
+        );
+
+        $this->postRaw(
+            $payload,
+            $this->signature($payload),
+        )
+            ->assertOk()
+            ->assertJson([
+                'status' => 'ok',
+                'processed' => 1,
+            ]);
+
+        $this->assertDatabaseHas(
+            'tasks',
+            [
+                'external_id' =>
+                    'wamid.confirm.fail.1',
+                'title' =>
+                    'Tarea aunque falle respuesta',
+            ],
+        );
+
+        $this->assertDatabaseHas(
+            'whatsapp_inbound_messages',
+            [
+                'message_id' =>
+                    'wamid.confirm.fail.1',
+                'status' => 'processed',
+                'confirmation_status' =>
+                    'failed',
+                'confirmation_error_code' =>
+                    'meta_131000',
             ],
         );
     }
@@ -298,6 +435,39 @@ class WhatsappInboundCaptureTest extends TestCase
         config()->set(
             'whatsapp.default_organization_id',
             null,
+        );
+    }
+
+    private function enableOutbound(): void
+    {
+        config()->set(
+            'whatsapp.outbound_enabled',
+            true,
+        );
+
+        config()->set(
+            'whatsapp.graph_version',
+            'v26.0',
+        );
+
+        config()->set(
+            'whatsapp.access_token',
+            'test-access-token',
+        );
+
+        config()->set(
+            'whatsapp.phone_number_id',
+            'phone-test',
+        );
+
+        config()->set(
+            'whatsapp.confirm_task_creation',
+            true,
+        );
+
+        config()->set(
+            'whatsapp.confirmation_prefix',
+            '✅ Tarea registrada:',
         );
     }
 
