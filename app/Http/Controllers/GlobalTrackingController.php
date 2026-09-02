@@ -29,7 +29,7 @@ class GlobalTrackingController extends Controller
             ],
             'focus' => [
                 'nullable',
-                'in:attention,all',
+                'in:attention,stagnant,no_next_action,all',
             ],
             'q' => [
                 'nullable',
@@ -130,6 +130,26 @@ class GlobalTrackingController extends Controller
                 fn (array $item): bool =>
                     GlobalTrackingItemFactory::needsAttention(
                         $item,
+                    ),
+            );
+        } elseif ($focus === 'stagnant') {
+            $items = $items->filter(
+                fn (array $item): bool =>
+                    (bool) (
+                        $item['stagnant']
+                        ?? false
+                    ),
+            );
+        } elseif (
+            $focus === 'no_next_action'
+        ) {
+            $items = $items->filter(
+                fn (array $item): bool =>
+                    (bool) (
+                        $item[
+                            'no_next_action'
+                        ]
+                        ?? false
                     ),
             );
         }

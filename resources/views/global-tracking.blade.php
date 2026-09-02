@@ -460,6 +460,43 @@
 
             <a
                 class="chip {{
+                    $focus === 'stagnant'
+                        ? 'active'
+                        : ''
+                }}"
+                href="{{ route(
+                    'global-tracking.show',
+                    array_merge(
+                        $base,
+                        ['focus' => 'stagnant'],
+                    ),
+                ) }}"
+            >
+                Estancados
+            </a>
+
+            <a
+                class="chip {{
+                    $focus === 'no_next_action'
+                        ? 'active'
+                        : ''
+                }}"
+                href="{{ route(
+                    'global-tracking.show',
+                    array_merge(
+                        $base,
+                        [
+                            'focus' =>
+                                'no_next_action',
+                        ],
+                    ),
+                ) }}"
+            >
+                Sin próxima acción
+            </a>
+
+            <a
+                class="chip {{
                     $focus === 'all'
                         ? 'active'
                         : ''

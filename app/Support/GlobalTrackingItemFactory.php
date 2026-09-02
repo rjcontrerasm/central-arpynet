@@ -69,6 +69,31 @@ class GlobalTrackingItemFactory
             }
         }
 
+        $signals =
+            TaskOperationalSignals::evaluate(
+                $task,
+                $now,
+            );
+
+        $level = self::strongerLevel(
+            $level,
+            $signals['level'],
+        );
+
+        $rank = max(
+            $rank,
+            $signals['rank'],
+        );
+
+        $reasons = array_values(
+            array_unique(
+                array_merge(
+                    $reasons,
+                    $signals['reasons'],
+                ),
+            ),
+        );
+
         return [
             'type' => 'task',
             'type_label' => 'Tarea',
@@ -90,6 +115,16 @@ class GlobalTrackingItemFactory
                 ? 'Vence '
                     .$task->due_at->format('d/m/Y')
                 : null,
+            'stagnant' =>
+                $signals['stagnant'],
+            'stagnation_days' =>
+                $signals[
+                    'stagnation_days'
+                ],
+            'no_next_action' =>
+                $signals[
+                    'no_next_action'
+                ],
             'url' => route(
                 'daily-ops.show',
                 ['scope' => $task->organization_id],
@@ -180,6 +215,15 @@ class GlobalTrackingItemFactory
                 ? 'Objetivo '
                     .$project->target_date->format('d/m/Y')
                 : null,
+            'stagnant' =>
+                $project->stagnation_days
+                >= 15,
+            'stagnation_days' =>
+                $project->stagnation_days,
+            'no_next_action' =>
+                blank(
+                    $project->next_action,
+                ),
             'url' => url('/admin/proyectos'),
         ];
     }
@@ -224,6 +268,15 @@ class GlobalTrackingItemFactory
                         ? 'Fin '
                             .$order->end_date->format('d/m/Y')
                         : null
+                ),
+            'stagnant' =>
+                $state['days_inactive']
+                >= 7,
+            'stagnation_days' =>
+                $state['days_inactive'],
+            'no_next_action' =>
+                blank(
+                    $order->next_action,
                 ),
             'url' => route(
                 'service-orders-ops.show',
@@ -285,6 +338,9 @@ class GlobalTrackingItemFactory
                 : 'Sin monto',
             'date_label' => 'Vence '
                 .$occurrence->due_date->format('d/m/Y'),
+            'stagnant' => false,
+            'stagnation_days' => 0,
+            'no_next_action' => false,
             'url' => route(
                 'obligation-ops.show',
                 ['scope' => $occurrence->organization_id],
@@ -300,6 +356,27 @@ class GlobalTrackingItemFactory
             ['critical', 'attention', 'watch'],
             true,
         );
+    }
+
+    private static function strongerLevel(
+        string $left,
+        string $right,
+    ): string {
+        $weight = [
+            'closed' => 0,
+            'normal' => 1,
+            'watch' => 2,
+            'attention' => 3,
+            'critical' => 4,
+        ];
+
+        return (
+            $weight[$right] ?? 1
+        ) > (
+            $weight[$left] ?? 1
+        )
+            ? $right
+            : $left;
     }
 
     private static function levelLabel(
