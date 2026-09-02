@@ -41,7 +41,7 @@
         }
 
         .shell {
-            width: min(100%, 1120px);
+            width: min(100%, 1240px);
             margin: 0 auto;
             padding: 24px 16px 80px;
         }
@@ -98,8 +98,17 @@
 
         .filters {
             display: grid;
-            gap: 9px;
+            gap: 8px;
             margin-bottom: 18px;
+        }
+
+        .filter-label {
+            margin-top: 2px;
+            color: #64748b;
+            font-size: 10px;
+            font-weight: 850;
+            letter-spacing: .06em;
+            text-transform: uppercase;
         }
 
         .scroll {
@@ -116,7 +125,7 @@
             border-radius: 999px;
             background: #0f172a;
             color: #cbd5e1;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 750;
         }
 
@@ -279,7 +288,14 @@
 
             .list {
                 grid-template-columns:
-                    repeat(2, minmax(0, 1fr));
+                    repeat(
+                        auto-fit,
+                        minmax(min(100%, 480px), 1fr)
+                    );
+            }
+
+            .empty {
+                grid-column: 1 / -1;
             }
         }
 
@@ -313,6 +329,26 @@
                 background: #eff6ff;
                 color: #1d4ed8;
                 border-color: #60a5fa;
+            }
+
+            .pill {
+                background: #f1f5f9;
+                color: #475569;
+            }
+
+            .pill.critical {
+                background: #fef2f2;
+                color: #b91c1c;
+            }
+
+            .pill.attention {
+                background: #fff7ed;
+                color: #c2410c;
+            }
+
+            .pill.watch {
+                background: #fffbeb;
+                color: #a16207;
             }
 
             .search input {
@@ -351,7 +387,7 @@
         ]);
 
         $types = [
-            'all' => 'Todo',
+            'all' => 'Todos los módulos',
             'task' => 'Tareas',
             'project' => 'Proyectos',
             'service' => 'Servicios',
@@ -360,6 +396,8 @@
     @endphp
 
     <section class="filters">
+        <div class="filter-label">Ámbito</div>
+
         <div class="scroll">
             <a
                 class="chip {{
@@ -403,6 +441,8 @@
             @endforeach
         </div>
 
+        <div class="filter-label">Estado</div>
+
         <div class="scroll">
             <a
                 class="chip {{
@@ -438,6 +478,11 @@
                 Todos
             </a>
 
+        </div>
+
+        <div class="filter-label">Módulo</div>
+
+        <div class="scroll">
             @foreach ($types as $value => $label)
                 <a
                     class="chip {{

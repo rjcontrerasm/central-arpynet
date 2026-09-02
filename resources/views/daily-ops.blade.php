@@ -42,7 +42,7 @@
         }
 
         .shell {
-            width: min(100%, 1020px);
+            width: min(100%, 1120px);
             margin: 0 auto;
             min-height: 100vh;
             padding: 18px 16px 96px;
@@ -298,7 +298,7 @@
         }
 
         a.stat:hover {
-            border-color: #475569;
+            border-color: #60a5fa;
         }
 
         .stat-value {
@@ -479,9 +479,9 @@
         }
 
         .task-edit {
-            margin-top: 9px;
-            padding-top: 9px;
-            border-top: 1px solid #24304b;
+            margin-top: 2px;
+            padding-top: 0;
+            border-top: 0;
         }
 
         .task-edit summary {
@@ -675,6 +675,16 @@
 
             .two-column main > .section:first-child .section-head h2 {
                 color: #b91c1c;
+            }
+
+            .two-column main > .section:first-child .item:first-child {
+                border-color: #fecaca;
+                box-shadow:
+                    0 8px 24px rgba(185, 28, 28, .07);
+            }
+
+            a.stat:hover {
+                border-color: #93c5fd;
             }
 
             .pill {

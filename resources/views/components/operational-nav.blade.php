@@ -4,8 +4,6 @@
 
 @php
     $secondaryLabels = [
-        'services' => 'Servicios',
-        'obligations' => 'Vencimientos',
         'tracking' => 'Seguimiento',
         'summary' => 'Resumen',
         'notifications' => 'Notificaciones',
