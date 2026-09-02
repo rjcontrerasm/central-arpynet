@@ -83,6 +83,17 @@
         display: none;
     }
 
+    .op-nav-more > summary::after {
+        content: '⌄';
+        margin-left: 5px;
+        font-size: 11px;
+        transition: transform 140ms ease;
+    }
+
+    .op-nav-more[open] > summary::after {
+        transform: rotate(180deg);
+    }
+
     .op-nav-more[open] > summary {
         border-color: var(--op-nav-border);
         background: var(--op-nav-surface);
@@ -127,6 +138,21 @@
         height: 1px;
         margin: 6px 4px;
         background: var(--op-nav-border);
+    }
+
+    @media (max-width: 420px) {
+        .op-nav-link,
+        .op-nav-more > summary {
+            min-height: 40px;
+            padding-inline: 8px;
+            font-size: 12px;
+        }
+
+        .op-nav-more > summary {
+            max-width: 132px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
     }
 
     @media (min-width: 760px) {

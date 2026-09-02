@@ -303,5 +303,6 @@
         }
     });
 </script>
+    <x-operational-interactions />
 </body>
 </html>

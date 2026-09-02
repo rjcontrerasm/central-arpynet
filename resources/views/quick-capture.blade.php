@@ -289,6 +289,38 @@
             display: grid;
         }
 
+        @media (max-width: 639px) {
+            .shell {
+                padding-bottom:
+                    calc(28px + env(safe-area-inset-bottom));
+            }
+
+            .topbar {
+                align-items: flex-start;
+            }
+
+            .card {
+                padding: 16px;
+                border-radius: 18px;
+            }
+
+            .grid2 {
+                grid-template-columns: 1fr;
+            }
+
+            .submit {
+                position: sticky;
+                z-index: 20;
+                bottom:
+                    max(
+                        10px,
+                        env(safe-area-inset-bottom)
+                    );
+                box-shadow:
+                    0 14px 34px rgba(37, 99, 235, .28);
+            }
+        }
+
         @media (min-width: 640px) {
             .shell {
                 padding-top: 28px;
@@ -539,6 +571,7 @@
         <button
             class="submit"
             type="submit"
+            data-busy-label="Guardando tarea…"
         >
             Guardar tarea
         </button>
@@ -550,7 +583,7 @@
 
             <div class="recent-list">
                 @foreach ($recentTasks as $task)
-                    <div class="recent-item">
+                    <div class="recent-item" data-operational-card>
                         <div class="recent-title">
                             {{ $task->title }}
                         </div>
@@ -601,5 +634,6 @@
 
     refreshCustomDate();
 </script>
+    <x-operational-interactions />
 </body>
 </html>

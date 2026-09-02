@@ -579,5 +579,6 @@
         @endforelse
     </div>
 </div>
+    <x-operational-interactions />
 </body>
 </html>

@@ -878,5 +878,6 @@
         </div>
     </section>
 </div>
+    <x-operational-interactions />
 </body>
 </html>

@@ -292,6 +292,13 @@
         .stat {
             padding: 13px;
             border-radius: 16px;
+            transition:
+                transform 140ms ease,
+                border-color 140ms ease;
+        }
+
+        a.stat:hover {
+            border-color: #475569;
         }
 
         .stat-value {
@@ -370,6 +377,13 @@
 
         .pills { margin-top: 2px; }
         .actions { margin-top: 9px; }
+
+        .actions button,
+        .actions summary,
+        .resume-button,
+        .wait-button {
+            min-height: 40px;
+        }
 
         .pill {
             display: inline-flex;
@@ -554,6 +568,36 @@
             font-weight: 850;
             box-shadow:
                 0 16px 50px rgba(37, 99, 235, .38);
+        }
+
+        @media (max-width: 719px) {
+            .shell {
+                padding-top: 14px;
+            }
+
+            .topbar {
+                align-items: flex-start;
+            }
+
+            .hero {
+                margin-top: 8px;
+            }
+
+            .stats {
+                grid-template-columns:
+                    repeat(5, minmax(118px, 1fr));
+                overflow-x: auto;
+                padding-bottom: 6px;
+                scroll-snap-type: x proximity;
+            }
+
+            .stat {
+                scroll-snap-align: start;
+            }
+
+            .item {
+                padding: 15px;
+            }
         }
 
         @media (min-width: 720px) {
@@ -1000,7 +1044,7 @@
                                     ->display_priority_band;
                             @endphp
 
-                            <div class="item">
+                            <div class="item" data-operational-card>
                                 <div class="item-title">
                                     {{ $task->title }}
                                 </div>
@@ -1297,7 +1341,7 @@
                                 );
                         @endphp
 
-                        <div class="item">
+                        <div class="item" data-operational-card>
                             <div class="item-title">
                                 {{ $task->title }}
                             </div>
@@ -1480,5 +1524,6 @@
 >
     + Captura rápida
 </a>
+    <x-operational-interactions />
 </body>
 </html>
