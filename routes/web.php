@@ -192,3 +192,13 @@ Route::middleware('auth')->group(function (): void {
         ],
     )->name('notification-center.read');
 });
+
+Route::middleware('auth')
+    ->get(
+        '/historial',
+        [
+            \App\Http\Controllers\AuditHistoryController::class,
+            'index',
+        ],
+    )
+    ->name('audit-history.index');

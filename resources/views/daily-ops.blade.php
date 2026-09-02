@@ -623,6 +623,10 @@
                 Notificaciones
             </a>
 
+            <a href="/historial">
+                Historial
+            </a>
+
             <a href="{{ url('/admin') }}">
                 Panel →
             </a>
