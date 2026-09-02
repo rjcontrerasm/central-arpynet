@@ -194,31 +194,7 @@
     <div class="topbar">
         <div class="brand">Central ARPYNET</div>
 
-        <nav class="nav">
-            <a href="{{ route('daily-ops.show') }}">
-                Mi día
-            </a>
-
-            <a href="{{ route('executive-summary.show') }}">
-                Resumen
-            </a>
-
-            <a href="{{ route('global-tracking.show') }}">
-                Seguimiento
-            </a>
-
-            <a href="{{ route('notification-center.index') }}">
-                Notificaciones
-            </a>
-
-            <a href="/historial">
-                Historial
-            </a>
-
-            <a href="{{ url('/admin') }}">
-                Panel →
-            </a>
-        </nav>
+        <x-operational-nav active="notifications" />
     </div>
 
     @if (session('notification_success'))

@@ -88,9 +88,11 @@ class ProjectResource extends Resource
                 ->searchable()->sortable()->wrap(),
             TextColumn::make('organization.name')->label('Empresa / ámbito')->badge()->sortable(),
             TextColumn::make('type')->label('Tipo')->badge()
-                ->formatStateUsing(fn (?string $state): string => Project::typeOptions()[$state] ?? 'Proyecto'),
+                ->formatStateUsing(fn (?string $state): string => Project::typeOptions()[$state] ?? 'Proyecto')
+                ->toggleable(isToggledHiddenByDefault: true),
             TextColumn::make('horizon')->label('Horizonte')->badge()
-                ->formatStateUsing(fn (?string $state): string => Project::horizonOptions()[$state] ?? 'Sin definir'),
+                ->formatStateUsing(fn (?string $state): string => Project::horizonOptions()[$state] ?? 'Sin definir')
+                ->toggleable(isToggledHiddenByDefault: true),
             TextColumn::make('status')->label('Estado')->badge()
                 ->formatStateUsing(fn (?string $state): string => Project::statusOptions()[$state] ?? 'Sin definir'),
             TextColumn::make('progress_percent')->label('Avance')

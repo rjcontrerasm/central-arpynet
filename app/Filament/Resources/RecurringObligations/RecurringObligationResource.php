@@ -216,6 +216,7 @@ class RecurringObligationResource extends Resource
 
                 TextColumn::make('expected_amount')
                     ->label('Monto esperado')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->state(
                         fn (RecurringObligation $record): string =>
                             $record->expected_amount === null

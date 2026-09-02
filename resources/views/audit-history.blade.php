@@ -424,24 +424,7 @@
     <div class="topbar">
         <div class="brand">Central ARPYNET</div>
 
-        <nav class="nav">
-            <a href="/mi-dia">Mi día</a>
-            <a href="/captura">Captura</a>
-            <a href="/servicios">Servicios</a>
-            <a href="/vencimientos">Vencimientos</a>
-            <a href="/seguimiento">Seguimiento</a>
-            <a href="/resumen">Resumen</a>
-            <a href="/notificaciones">Notificaciones</a>
-
-            <a
-                href="/historial"
-                class="active"
-            >
-                Historial
-            </a>
-
-            <a href="/admin">Panel →</a>
-        </nav>
+        <x-operational-nav active="history" />
     </div>
 
     <section class="hero">

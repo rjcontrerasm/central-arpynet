@@ -307,6 +307,7 @@ class ServiceOrderResource extends Resource
 
                 TextColumn::make('amount')
                     ->label('Monto')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->state(
                         fn (ServiceOrder $record): string =>
                             $record->amount === null
@@ -321,6 +322,7 @@ class ServiceOrderResource extends Resource
 
                 TextColumn::make('days_in_stage')
                     ->label('Días en etapa')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->state(
                         fn (ServiceOrder $record): int =>
                             $record->days_in_stage,

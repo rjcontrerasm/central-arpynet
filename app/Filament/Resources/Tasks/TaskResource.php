@@ -205,9 +205,10 @@ class TaskResource extends Resource
                     ),
 
                 TextColumn::make('priority_score')
-                    ->label('Prioridad')
+                    ->label('Puntaje')
                     ->badge()
                     ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->color(
                         fn ($state): string => match (true) {
                             (int) $state >= 85 => 'danger',

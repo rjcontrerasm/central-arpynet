@@ -141,7 +141,8 @@ class ClientResource extends Resource
 
                 TextColumn::make('contact_name')
                     ->label('Contacto')
-                    ->placeholder('Sin registrar'),
+                    ->placeholder('Sin registrar')
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 IconColumn::make('is_active')
                     ->label('Activo')
