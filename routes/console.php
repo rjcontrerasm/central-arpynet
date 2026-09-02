@@ -233,3 +233,37 @@ Schedule::command('summary:email week')
     )
     ->timezone(config('app.timezone', 'America/Lima'))
     ->withoutOverlapping();
+
+Schedule::command('summary:whatsapp today')
+    ->dailyAt(
+        config(
+            'central.summary_whatsapp.daily_time',
+            '07:32',
+        ),
+    )
+    ->timezone(
+        config(
+            'app.timezone',
+            'America/Lima',
+        ),
+    )
+    ->withoutOverlapping();
+
+Schedule::command('summary:whatsapp week')
+    ->weeklyOn(
+        config(
+            'central.summary.weekly_day',
+            1,
+        ),
+        config(
+            'central.summary_whatsapp.weekly_time',
+            '07:37',
+        ),
+    )
+    ->timezone(
+        config(
+            'app.timezone',
+            'America/Lima',
+        ),
+    )
+    ->withoutOverlapping();

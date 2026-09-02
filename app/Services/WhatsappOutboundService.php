@@ -140,6 +140,146 @@ class WhatsappOutboundService
     }
 
     /**
+     * @param array<int, string|int> $bodyParameters
+     * @return array{
+     *     status: 'sent'|'failed'|'skipped',
+     *     message_id: ?string,
+     *     error_code: ?string
+     * }
+     */
+    public function sendTemplate(
+        string $to,
+        string $templateName,
+        string $language,
+        array $bodyParameters = [],
+    ): array {
+        if (! config('whatsapp.outbound_enabled')) {
+            return $this->result('skipped');
+        }
+
+        $token = trim(
+            (string) config(
+                'whatsapp.access_token',
+                '',
+            ),
+        );
+
+        $phoneNumberId = trim(
+            (string) config(
+                'whatsapp.phone_number_id',
+                '',
+            ),
+        );
+
+        $version = trim(
+            (string) config(
+                'whatsapp.graph_version',
+                'v26.0',
+            ),
+        );
+
+        if (
+            $token === ''
+            || $phoneNumberId === ''
+            || $version === ''
+            || trim($templateName) === ''
+            || trim($language) === ''
+        ) {
+            return $this->result(
+                'failed',
+                null,
+                'outbound_config_missing',
+            );
+        }
+
+        $template = [
+            'name' => trim($templateName),
+            'language' => [
+                'code' => trim($language),
+            ],
+        ];
+
+        if ($bodyParameters !== []) {
+            $template['components'] = [[
+                'type' => 'body',
+                'parameters' => array_map(
+                    static fn (
+                        string|int $value,
+                    ): array => [
+                        'type' => 'text',
+                        'text' => (string) $value,
+                    ],
+                    $bodyParameters,
+                ),
+            ]];
+        }
+
+        try {
+            $response = Http::withToken($token)
+                ->acceptJson()
+                ->timeout(15)
+                ->post(
+                    'https://graph.facebook.com/'
+                    .$version
+                    .'/'
+                    .$phoneNumberId
+                    .'/messages',
+                    [
+                        'messaging_product' =>
+                            'whatsapp',
+                        'recipient_type' =>
+                            'individual',
+                        'to' => $to,
+                        'type' => 'template',
+                        'template' => $template,
+                    ],
+                );
+        } catch (Throwable) {
+            return $this->result(
+                'failed',
+                null,
+                'transport_error',
+            );
+        }
+
+        if (! $response->successful()) {
+            $metaCode = data_get(
+                $response->json(),
+                'error.code',
+            );
+
+            return $this->result(
+                'failed',
+                null,
+                is_scalar($metaCode)
+                    ? 'meta_'.(string) $metaCode
+                    : 'http_'.$response->status(),
+            );
+        }
+
+        $messageId = data_get(
+            $response->json(),
+            'messages.0.id',
+        );
+
+        if (
+            ! is_scalar($messageId)
+            || trim((string) $messageId) === ''
+        ) {
+            return $this->result(
+                'failed',
+                null,
+                'missing_message_id',
+            );
+        }
+
+        return $this->result(
+            'sent',
+            trim((string) $messageId),
+        );
+    }
+
+    /**
      * @return array{
      *     status: 'sent'|'failed'|'skipped',
      *     message_id: ?string,
