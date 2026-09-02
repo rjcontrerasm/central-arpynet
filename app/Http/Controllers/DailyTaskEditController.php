@@ -25,11 +25,11 @@ class DailyTaskEditController extends Controller
             ],
             'urgency' => [
                 'required',
-                'in:low,medium,high',
+                'in:low,normal,medium,high,critical',
             ],
             'impact' => [
                 'required',
-                'in:low,medium,high',
+                'in:low,normal,medium,high,critical',
             ],
             'scope' => [
                 'nullable',
@@ -45,6 +45,12 @@ class DailyTaskEditController extends Controller
                 'in:critical,today,week,planned',
             ],
         ]);
+
+        foreach (['urgency', 'impact'] as $field) {
+            if (($validated[$field] ?? null) === 'medium') {
+                $validated[$field] = 'normal';
+            }
+        }
 
         $userId = $request->user()->id;
 

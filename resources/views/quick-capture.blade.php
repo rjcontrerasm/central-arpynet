@@ -174,6 +174,44 @@
             gap: 12px;
         }
 
+        .advanced {
+            border-top: 1px solid #24304b;
+            padding-top: 2px;
+        }
+
+        .advanced summary {
+            cursor: pointer;
+            list-style: none;
+            color: #94a3b8;
+            font-size: 13px;
+            font-weight: 750;
+            padding: 10px 0 4px;
+        }
+
+        .advanced summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .advanced summary::after {
+            content: ' +';
+            color: #60a5fa;
+        }
+
+        .advanced[open] summary::after {
+            content: ' −';
+        }
+
+        .advanced .grid2 {
+            margin-top: 10px;
+        }
+
+        .advanced-hint {
+            margin-top: 8px;
+            color: #64748b;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
         .submit {
             width: 100%;
             border: 0;
@@ -350,8 +388,8 @@
     <section class="hero">
         <h1>Captura rápida</h1>
         <p>
-            Registra lo importante ahora.
-            Ordenamos la prioridad después.
+            Escribe la tarea, elige cuándo y guarda.
+            Lo demás puede esperar.
         </p>
     </section>
 
@@ -468,51 +506,63 @@
             >
         </label>
 
-        <div class="grid2">
-            <label>
-                Urgencia
+        <details class="advanced">
+            <summary>Opciones avanzadas</summary>
 
-                <select name="urgency">
-                    @foreach ([
-                        'low' => 'Baja',
-                        'medium' => 'Media',
-                        'high' => 'Alta',
-                    ] as $value => $label)
-                        <option
-                            value="{{ $value }}"
-                            @selected(
-                                old('urgency', 'medium')
-                                === $value
-                            )
-                        >
-                            {{ $label }}
-                        </option>
-                    @endforeach
-                </select>
-            </label>
+            <div class="advanced-hint">
+                Normal funciona para la mayoría de tareas.
+                Ajusta urgencia o impacto solo cuando realmente
+                necesites alterar la prioridad.
+            </div>
 
-            <label>
-                Impacto
+            <div class="grid2">
+                <label>
+                    Urgencia
 
-                <select name="impact">
-                    @foreach ([
-                        'low' => 'Bajo',
-                        'medium' => 'Medio',
-                        'high' => 'Alto',
-                    ] as $value => $label)
-                        <option
-                            value="{{ $value }}"
-                            @selected(
-                                old('impact', 'medium')
-                                === $value
-                            )
-                        >
-                            {{ $label }}
-                        </option>
-                    @endforeach
-                </select>
-            </label>
-        </div>
+                    <select name="urgency">
+                        @foreach ([
+                            'low' => 'Baja',
+                            'normal' => 'Normal',
+                            'high' => 'Alta',
+                            'critical' => 'Crítica',
+                        ] as $value => $label)
+                            <option
+                                value="{{ $value }}"
+                                @selected(
+                                    old('urgency', 'normal')
+                                    === $value
+                                )
+                            >
+                                {{ $label }}
+                            </option>
+                        @endforeach
+                    </select>
+                </label>
+
+                <label>
+                    Impacto
+
+                    <select name="impact">
+                        @foreach ([
+                            'low' => 'Bajo',
+                            'normal' => 'Normal',
+                            'high' => 'Alto',
+                            'critical' => 'Crítico',
+                        ] as $value => $label)
+                            <option
+                                value="{{ $value }}"
+                                @selected(
+                                    old('impact', 'normal')
+                                    === $value
+                                )
+                            >
+                                {{ $label }}
+                            </option>
+                        @endforeach
+                    </select>
+                </label>
+            </div>
+        </details>
 
         <button
             class="submit"

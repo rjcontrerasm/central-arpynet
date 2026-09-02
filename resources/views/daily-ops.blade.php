@@ -66,7 +66,66 @@
 
         .nav {
             display: flex;
-            gap: 14px;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .nav > a {
+            padding: 7px 9px;
+            border-radius: 9px;
+        }
+
+        .nav > a[aria-current="page"] {
+            background: #172554;
+            color: #dbeafe;
+        }
+
+        .more-menu {
+            position: relative;
+        }
+
+        .more-menu summary {
+            list-style: none;
+            cursor: pointer;
+            padding: 7px 9px;
+            border-radius: 9px;
+            color: #94a3b8;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .more-menu summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .more-menu[open] summary {
+            background: #11182b;
+            color: #f8fafc;
+        }
+
+        .more-menu-panel {
+            position: absolute;
+            z-index: 40;
+            top: calc(100% + 8px);
+            right: 0;
+            width: 210px;
+            display: grid;
+            padding: 8px;
+            border: 1px solid #334155;
+            border-radius: 14px;
+            background: #0f172a;
+            box-shadow: 0 18px 50px rgba(0, 0, 0, .28);
+        }
+
+        .more-menu-panel a {
+            padding: 9px 10px;
+            border-radius: 9px;
+            color: #cbd5e1;
+            font-size: 13px;
+        }
+
+        .more-menu-panel a:hover {
+            background: #1e293b;
         }
 
         .nav a,
@@ -251,6 +310,19 @@
         .today-value { color: #93c5fd; }
 
         .section { margin-top: 24px; }
+
+        .two-column main > .section:first-child {
+            margin-top: 0;
+        }
+
+        .two-column main > .section:first-child .section-head h2 {
+            color: #fca5a5;
+        }
+
+        .two-column main > .section:first-child .item:first-child {
+            border-color: #7f1d1d;
+            box-shadow: 0 10px 34px rgba(127, 29, 29, .12);
+        }
 
         .section-head {
             align-items: baseline;
@@ -535,10 +607,30 @@
                 border-color: #cbd5e1;
             }
 
-            .scope.active {
+            .scope.active,
+            .nav > a[aria-current="page"] {
                 background: #eff6ff;
                 color: #1d4ed8;
                 border-color: #60a5fa;
+            }
+
+            .more-menu[open] summary,
+            .more-menu-panel {
+                background: #fff;
+                color: #0f172a;
+                border-color: #cbd5e1;
+            }
+
+            .more-menu-panel a {
+                color: #475569;
+            }
+
+            .more-menu-panel a:hover {
+                background: #f1f5f9;
+            }
+
+            .two-column main > .section:first-child .section-head h2 {
+                color: #b91c1c;
             }
 
             .pill {
@@ -595,7 +687,10 @@
         <div class="brand">Central ARPYNET</div>
 
         <nav class="nav">
-            <a href="{{ route('daily-ops.show') }}">
+            <a
+                href="{{ route('daily-ops.show') }}"
+                aria-current="page"
+            >
                 Mi día
             </a>
 
@@ -603,33 +698,39 @@
                 Captura
             </a>
 
-            <a href="{{ route('service-orders-ops.show') }}">
-                Servicios
-            </a>
+            <details class="more-menu">
+                <summary>Más</summary>
 
-            <a href="{{ route('obligation-ops.show') }}">
-                Vencimientos
-            </a>
+                <div class="more-menu-panel">
+                    <a href="{{ route('service-orders-ops.show') }}">
+                        Servicios
+                    </a>
 
-            <a href="{{ route('global-tracking.show') }}">
-                Seguimiento
-            </a>
+                    <a href="{{ route('obligation-ops.show') }}">
+                        Vencimientos
+                    </a>
 
-            <a href="{{ route('executive-summary.show') }}">
-                Resumen
-            </a>
+                    <a href="{{ route('global-tracking.show') }}">
+                        Seguimiento
+                    </a>
 
-            <a href="{{ route('notification-center.index') }}">
-                Notificaciones
-            </a>
+                    <a href="{{ route('executive-summary.show') }}">
+                        Resumen
+                    </a>
 
-            <a href="/historial">
-                Historial
-            </a>
+                    <a href="{{ route('notification-center.index') }}">
+                        Notificaciones
+                    </a>
 
-            <a href="{{ url('/admin') }}">
-                Panel →
-            </a>
+                    <a href="/historial">
+                        Historial
+                    </a>
+
+                    <a href="{{ url('/admin') }}">
+                        Panel →
+                    </a>
+                </div>
+            </details>
         </nav>
     </div>
 
@@ -827,34 +928,62 @@
         @endif
     </section>
 
-    <section class="stats">
-        <div class="stat">
+    <section class="stats" aria-label="Resumen de prioridades">
+        <a
+            class="stat"
+            href="{{ route('daily-ops.show', array_filter([
+                'scope' => $selectedScope,
+                'q' => $search !== '' ? $search : null,
+                'priority' => 'critical',
+            ])) }}"
+        >
             <div class="stat-value danger-value">
-                {{ $overdueCount }}
+                {{ $criticalCount }}
             </div>
-            <div class="stat-label">Vencidas</div>
-        </div>
+            <div class="stat-label">Críticos</div>
+        </a>
 
-        <div class="stat">
+        <a
+            class="stat"
+            href="{{ route('daily-ops.show', array_filter([
+                'scope' => $selectedScope,
+                'q' => $search !== '' ? $search : null,
+                'priority' => 'today',
+            ])) }}"
+        >
             <div class="stat-value today-value">
-                {{ $todayCount }}
+                {{ $priorityTodayCount }}
             </div>
-            <div class="stat-label">Para hoy</div>
-        </div>
+            <div class="stat-label">Hoy</div>
+        </a>
 
-        <div class="stat">
+        <a
+            class="stat"
+            href="{{ route('daily-ops.show', array_filter([
+                'scope' => $selectedScope,
+                'q' => $search !== '' ? $search : null,
+                'priority' => 'week',
+            ])) }}"
+        >
             <div class="stat-value">
-                {{ $weekCount }}
+                {{ $priorityWeekCount }}
             </div>
-            <div class="stat-label">Próximos 7 días</div>
-        </div>
+            <div class="stat-label">Semana</div>
+        </a>
 
-        <div class="stat">
+        <a
+            class="stat"
+            href="{{ route('daily-ops.show', array_filter([
+                'scope' => $selectedScope,
+                'q' => $search !== '' ? $search : null,
+                'priority' => 'planned',
+            ])) }}"
+        >
             <div class="stat-value">
-                {{ $noDateCount }}
+                {{ $plannedCount }}
             </div>
-            <div class="stat-label">Sin fecha</div>
-        </div>
+            <div class="stat-label">Planificados</div>
+        </a>
 
         <div class="stat">
             <div class="stat-value">
@@ -864,106 +993,12 @@
         </div>
     </section>
 
-    <section class="section">
-        <div class="section-head">
-            <h2>En espera</h2>
-
-            <span class="meta">
-                {{ $waitingCount }} pendientes
-            </span>
-        </div>
-
-        <div class="list">
-            @forelse ($waitingTasks as $task)
-                @php
-                    $followUpDue = $task->waiting_until
-                        && $task->waiting_until->lte(
-                            $now->toDateString(),
-                        );
-                @endphp
-
-                <div class="item">
-                    <div class="item-title">
-                        {{ $task->title }}
-                    </div>
-
-                    <div class="meta">
-                        {{ $task->organization?->name
-                            ?? 'Sin ámbito' }}
-
-                        @if ($task->waiting_reason)
-                            · {{ $task->waiting_reason }}
-                        @endif
-                    </div>
-
-                    @if ($task->waiting_until)
-                        <div class="meta {{
-                            $followUpDue
-                                ? 'waiting-due'
-                                : ''
-                        }}">
-                            Seguimiento:
-                            {{ $task->waiting_until->format(
-                                'd/m/Y',
-                            ) }}
-                        </div>
-                    @endif
-
-                    <form
-                        method="POST"
-                        action="{{ route(
-                            'daily-task-waiting.resume',
-                            $task,
-                        ) }}"
-                    >
-                        @csrf
-
-                        @if ($selectedScope)
-                            <input
-                                type="hidden"
-                                name="scope"
-                                value="{{ $selectedScope }}"
-                            >
-                        @endif
-
-                        @if ($search !== '')
-                            <input
-                                type="hidden"
-                                name="q"
-                                value="{{ $search }}"
-                            >
-                        @endif
-
-                        @if ($selectedPriority)
-                            <input
-                                type="hidden"
-                                name="priority"
-                                value="{{ $selectedPriority }}"
-                            >
-                        @endif
-
-                        <button
-                            class="resume-button"
-                            type="submit"
-                        >
-                            Reactivar
-                        </button>
-                    </form>
-                </div>
-            @empty
-                <div class="empty">
-                    No hay tareas en espera.
-                </div>
-            @endforelse
-        </div>
-    </section>
-
     @php
         $taskSections = [
             [
-                'title' => 'Ahora',
+                'title' => 'Prioridad ahora',
                 'tasks' => $nowTasks,
-                'empty' => 'Nada crítico o vencido.',
+                'empty' => 'Nada requiere atención inmediata.',
             ],
             [
                 'title' => 'Hoy',
@@ -971,12 +1006,12 @@
                 'empty' => 'No quedan tareas para hoy.',
             ],
             [
-                'title' => 'Próximos',
+                'title' => 'Esta semana',
                 'tasks' => $upcomingTasks,
                 'empty' => 'Sin tareas en los próximos 7 días.',
             ],
             [
-                'title' => 'Sin fecha',
+                'title' => 'Planificados',
                 'tasks' => $noDateTasks,
                 'empty' => 'No hay tareas pendientes sin fecha.',
             ],
@@ -1050,15 +1085,15 @@
                                         }}
                                     </span>
 
-                                    @if ($task->urgency === 'high')
+                                    @if (in_array($task->urgency, ['high', 'critical'], true))
                                         <span class="pill">
-                                            Urgencia alta
+                                            {{ $task->urgency === 'critical' ? 'Urgencia crítica' : 'Urgencia alta' }}
                                         </span>
                                     @endif
 
-                                    @if ($task->impact === 'high')
+                                    @if (in_array($task->impact, ['high', 'critical'], true))
                                         <span class="pill">
-                                            Impacto alto
+                                            {{ $task->impact === 'critical' ? 'Impacto crítico' : 'Impacto alto' }}
                                         </span>
                                     @endif
                                 </div>
@@ -1230,8 +1265,9 @@
                                                 <select name="urgency">
                                                     @foreach ([
                                                         'low' => 'Baja',
-                                                        'medium' => 'Media',
+                                                        'normal' => 'Normal',
                                                         'high' => 'Alta',
+                                                        'critical' => 'Crítica',
                                                     ] as $value => $label)
                                                         <option
                                                             value="{{ $value }}"
@@ -1252,8 +1288,9 @@
                                                 <select name="impact">
                                                     @foreach ([
                                                         'low' => 'Bajo',
-                                                        'medium' => 'Medio',
+                                                        'normal' => 'Normal',
                                                         'high' => 'Alto',
+                                                        'critical' => 'Crítico',
                                                     ] as $value => $label)
                                                         <option
                                                             value="{{ $value }}"
@@ -1286,6 +1323,100 @@
                     </div>
                 </section>
             @endforeach
+
+            <section class="section">
+                <div class="section-head">
+                    <h2>En espera</h2>
+
+                    <span class="meta">
+                        {{ $waitingCount }} pendientes
+                    </span>
+                </div>
+
+                <div class="list">
+                    @forelse ($waitingTasks as $task)
+                        @php
+                            $followUpDue = $task->waiting_until
+                                && $task->waiting_until->lte(
+                                    $now->toDateString(),
+                                );
+                        @endphp
+
+                        <div class="item">
+                            <div class="item-title">
+                                {{ $task->title }}
+                            </div>
+
+                            <div class="meta">
+                                {{ $task->organization?->name
+                                    ?? 'Sin ámbito' }}
+
+                                @if ($task->waiting_reason)
+                                    · {{ $task->waiting_reason }}
+                                @endif
+                            </div>
+
+                            @if ($task->waiting_until)
+                                <div class="meta {{
+                                    $followUpDue
+                                        ? 'waiting-due'
+                                        : ''
+                                }}">
+                                    Seguimiento:
+                                    {{ $task->waiting_until->format(
+                                        'd/m/Y',
+                                    ) }}
+                                </div>
+                            @endif
+
+                            <form
+                                method="POST"
+                                action="{{ route(
+                                    'daily-task-waiting.resume',
+                                    $task,
+                                ) }}"
+                            >
+                                @csrf
+
+                                @if ($selectedScope)
+                                    <input
+                                        type="hidden"
+                                        name="scope"
+                                        value="{{ $selectedScope }}"
+                                    >
+                                @endif
+
+                                @if ($search !== '')
+                                    <input
+                                        type="hidden"
+                                        name="q"
+                                        value="{{ $search }}"
+                                    >
+                                @endif
+
+                                @if ($selectedPriority)
+                                    <input
+                                        type="hidden"
+                                        name="priority"
+                                        value="{{ $selectedPriority }}"
+                                    >
+                                @endif
+
+                                <button
+                                    class="resume-button"
+                                    type="submit"
+                                >
+                                    Reactivar
+                                </button>
+                            </form>
+                        </div>
+                    @empty
+                        <div class="empty">
+                            No hay tareas en espera.
+                        </div>
+                    @endforelse
+                </div>
+            </section>
         </main>
 
         <aside>

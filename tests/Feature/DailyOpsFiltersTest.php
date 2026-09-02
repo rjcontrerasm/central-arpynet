@@ -47,7 +47,7 @@ class DailyOpsFiltersTest extends TestCase
             $user,
             $organization,
             'Tarea crítica',
-            'high',
+            'critical',
             'high',
             now(),
         );
@@ -66,6 +66,25 @@ class DailyOpsFiltersTest extends TestCase
             ->assertOk()
             ->assertSee('Tarea crítica')
             ->assertDontSee('Tarea planificada');
+    }
+
+    public function test_critical_filter_also_includes_overdue_task(): void
+    {
+        [$user, $organization] = $this->context();
+
+        $this->task(
+            $user,
+            $organization,
+            'Tarea vencida operativa',
+            'low',
+            'low',
+            now()->subDay(),
+        );
+
+        $this->actingAs($user)
+            ->get('/mi-dia?priority=critical')
+            ->assertOk()
+            ->assertSee('Tarea vencida operativa');
     }
 
     public function test_search_and_scope_can_be_combined(): void

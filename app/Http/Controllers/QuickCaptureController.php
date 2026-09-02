@@ -81,13 +81,19 @@ class QuickCaptureController extends Controller
             ],
             'urgency' => [
                 'required',
-                'in:low,medium,high',
+                'in:low,normal,medium,high,critical',
             ],
             'impact' => [
                 'required',
-                'in:low,medium,high',
+                'in:low,normal,medium,high,critical',
             ],
         ]);
+
+        foreach (['urgency', 'impact'] as $field) {
+            if (($validated[$field] ?? null) === 'medium') {
+                $validated[$field] = 'normal';
+            }
+        }
 
         $allowed = DB::table('organization_user')
             ->where('user_id', $user->id)

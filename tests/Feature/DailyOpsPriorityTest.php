@@ -19,10 +19,10 @@ class DailyOpsPriorityTest extends TestCase
         $this->actingAs($user)
             ->get('/mi-dia')
             ->assertOk()
-            ->assertSee('Ahora')
+            ->assertSee('Prioridad ahora')
             ->assertSee('Hoy')
-            ->assertSee('Próximos')
-            ->assertSee('Sin fecha');
+            ->assertSee('Esta semana')
+            ->assertSee('Planificados');
     }
 
     public function test_scope_filter_hides_other_scope_tasks(): void

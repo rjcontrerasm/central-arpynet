@@ -139,9 +139,26 @@ class DailyOpsController extends Controller
         if ($selectedPriority) {
             $tasks = $tasks
                 ->filter(
-                    fn (Task $task): bool =>
-                        $task->display_priority_band
-                        === $selectedPriority,
+                    function (Task $task) use (
+                        $selectedPriority,
+                        $todayStart,
+                    ): bool {
+                        if (
+                            $selectedPriority === 'critical'
+                        ) {
+                            return (
+                                $task->due_at
+                                && $task->due_at->isBefore(
+                                    $todayStart,
+                                )
+                            )
+                            || $task->display_priority_band
+                                === 'critical';
+                        }
+
+                        return $task->display_priority_band
+                            === $selectedPriority;
+                    },
                 )
                 ->values();
         }
@@ -208,6 +225,44 @@ class DailyOpsController extends Controller
             ->filter(
                 fn (Task $task): bool =>
                     is_null($task->due_at),
+            )
+            ->count();
+
+        $criticalCount = $activeTasks
+            ->filter(
+                fn (Task $task): bool =>
+                    (
+                        $task->due_at
+                        && $task->due_at->isBefore(
+                            $todayStart,
+                        )
+                    )
+                    || $task->display_priority_band
+                        === 'critical',
+            )
+            ->count();
+
+        $priorityTodayCount = $activeTasks
+            ->filter(
+                fn (Task $task): bool =>
+                    $task->display_priority_band
+                    === 'today',
+            )
+            ->count();
+
+        $priorityWeekCount = $activeTasks
+            ->filter(
+                fn (Task $task): bool =>
+                    $task->display_priority_band
+                    === 'week',
+            )
+            ->count();
+
+        $plannedCount = $activeTasks
+            ->filter(
+                fn (Task $task): bool =>
+                    $task->display_priority_band
+                    === 'planned',
             )
             ->count();
 
@@ -341,6 +396,10 @@ class DailyOpsController extends Controller
                 'todayCount',
                 'weekCount',
                 'noDateCount',
+                'criticalCount',
+                'priorityTodayCount',
+                'priorityWeekCount',
+                'plannedCount',
                 'waitingCount',
                 'waitingTasks',
                 'nowTasks',
