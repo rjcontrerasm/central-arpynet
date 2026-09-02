@@ -36,7 +36,7 @@
         }
 
         .shell {
-            width: min(100%, 1120px);
+            width: min(100%, 1200px);
             margin: 0 auto;
             padding: 24px 16px 80px;
         }
@@ -878,6 +878,7 @@
         </div>
     </section>
 </div>
+    <x-operational-theme />
     <x-operational-interactions />
 </body>
 </html>

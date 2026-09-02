@@ -34,7 +34,7 @@
         button { font: inherit; }
 
         .shell {
-            width: min(100%, 860px);
+            width: min(100%, 1200px);
             margin: 0 auto;
             padding: 24px 16px 80px;
         }
@@ -64,8 +64,16 @@
         }
 
         .hero {
+            width: min(100%, 860px);
+            margin: 0 auto 18px;
             align-items: end;
-            margin-bottom: 18px;
+        }
+
+        .success,
+        .list {
+            width: min(100%, 860px);
+            margin-left: auto;
+            margin-right: auto;
         }
 
         h1 {
@@ -303,6 +311,7 @@
         }
     });
 </script>
+    <x-operational-theme />
     <x-operational-interactions />
 </body>
 </html>

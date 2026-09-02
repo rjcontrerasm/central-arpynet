@@ -42,7 +42,7 @@
         }
 
         .shell {
-            width: min(100%, 1120px);
+            width: min(100%, 1200px);
             margin: 0 auto;
             min-height: 100vh;
             padding: 18px 16px 96px;
@@ -1576,6 +1576,7 @@
 >
     + Captura rápida
 </a>
+    <x-operational-theme />
     <x-operational-interactions />
 </body>
 </html>

@@ -42,7 +42,7 @@
         }
 
         .shell {
-            width: min(100%, 1240px);
+            width: min(100%, 1200px);
             margin: 0 auto;
             padding: 24px 16px 80px;
         }
@@ -404,10 +404,7 @@
 
             .list {
                 grid-template-columns:
-                    repeat(
-                        auto-fit,
-                        minmax(min(100%, 460px), 1fr)
-                    );
+                    repeat(2, minmax(0, 1fr));
             }
 
             .empty {
@@ -1190,6 +1187,7 @@
         @endforelse
     </div>
 </div>
+    <x-operational-theme />
     <x-operational-interactions />
 </body>
 </html>

@@ -40,7 +40,7 @@
         }
 
         .shell {
-            width: min(100%, 760px);
+            width: min(100%, 1200px);
             margin: 0 auto;
             min-height: 100vh;
             padding: 18px 16px 40px;
@@ -66,7 +66,17 @@
         }
 
         .hero {
-            margin-bottom: 20px;
+            width: min(100%, 760px);
+            margin: 0 auto 20px;
+        }
+
+        .success,
+        .errors,
+        .card,
+        .recent {
+            width: min(100%, 760px);
+            margin-left: auto;
+            margin-right: auto;
         }
 
         h1 {
@@ -659,6 +669,7 @@
 
     refreshCustomDate();
 </script>
+    <x-operational-theme />
     <x-operational-interactions />
 </body>
 </html>
