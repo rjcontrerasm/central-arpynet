@@ -654,12 +654,34 @@
             .fab { display: none; }
 
             .two-column {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .two-column > aside {
+                order: -1;
                 display: grid;
                 grid-template-columns:
-                    minmax(0, 1.35fr)
-                    minmax(0, .65fr);
-                gap: 24px;
-                align-items: start;
+                    repeat(2, minmax(0, 1fr));
+                gap: 18px;
+                margin-bottom: 24px;
+            }
+
+            .two-column > aside > .section {
+                margin-top: 0;
+            }
+
+            .two-column > main {
+                width: 100%;
+            }
+
+            .two-column > main > .section > .list {
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
+            }
+
+            .two-column > main > .section > .list > .empty {
+                grid-column: 1 / -1;
             }
         }
 
@@ -1470,7 +1492,7 @@
             </section>
         </main>
 
-        <aside>
+        <aside aria-label="Contexto operativo">
             <section class="section">
                 <div class="section-head">
                     <h2>Vencimientos</h2>

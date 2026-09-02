@@ -1,17 +1,17 @@
 <style>
     :root {
-        --central-bg: #f5f7fb;
+        --central-bg: #f2f5f9;
         --central-surface: #ffffff;
-        --central-surface-soft: #f8fafc;
-        --central-border: #dbe3ec;
-        --central-border-strong: #c7d2df;
+        --central-surface-soft: #f7f9fc;
+        --central-border: #d2dde9;
+        --central-border-strong: #bdcad9;
         --central-text: #10213a;
-        --central-muted: #66758a;
+        --central-muted: #5e6f85;
 
-        --central-primary: #2563eb;
-        --central-primary-hover: #1d4ed8;
-        --central-primary-soft: #eef5ff;
-        --central-primary-text: #1e4fa8;
+        --central-primary: #245fd7;
+        --central-primary-hover: #1d4fb8;
+        --central-primary-soft: #eaf2ff;
+        --central-primary-text: #1d4fa7;
 
         --central-danger: #b93b36;
         --central-danger-soft: #fff1f0;
@@ -26,7 +26,7 @@
         --central-success-soft: #eefaf3;
 
         --central-shadow:
-            0 10px 28px rgba(15, 23, 42, .055);
+            0 7px 20px rgba(15, 23, 42, .045);
     }
 
     body {
@@ -65,7 +65,9 @@
     .card,
     .notification,
     .recent-item {
-        box-shadow: none;
+        box-shadow:
+            0 1px 2px rgba(15, 23, 42, .025),
+            var(--central-shadow);
     }
 
     .scope,
@@ -181,7 +183,15 @@
 
     .empty {
         border-color: var(--central-border-strong) !important;
-        background: rgba(255, 255, 255, .36);
+        background: rgba(255, 255, 255, .58);
+    }
+
+    .danger-value {
+        color: #d85a55 !important;
+    }
+
+    .today-value {
+        color: #4f8fe6 !important;
     }
 
     .next,

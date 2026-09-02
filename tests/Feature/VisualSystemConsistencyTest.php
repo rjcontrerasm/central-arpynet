@@ -33,7 +33,7 @@ class VisualSystemConsistencyTest extends TestCase
                     false,
                 )
                 ->assertSee(
-                    '--central-primary: #2563eb',
+                    '--central-primary: #245fd7',
                     false,
                 );
         }
