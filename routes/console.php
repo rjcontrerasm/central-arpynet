@@ -219,3 +219,17 @@ Schedule::command('summary:deliver week')
     )
     ->timezone(config('app.timezone', 'America/Lima'))
     ->withoutOverlapping();
+
+
+Schedule::command('summary:email today')
+    ->dailyAt(config('central.summary.daily_time', '07:30'))
+    ->timezone(config('app.timezone', 'America/Lima'))
+    ->withoutOverlapping();
+
+Schedule::command('summary:email week')
+    ->weeklyOn(
+        config('central.summary.weekly_day', 1),
+        config('central.summary.weekly_time', '07:35'),
+    )
+    ->timezone(config('app.timezone', 'America/Lima'))
+    ->withoutOverlapping();

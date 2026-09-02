@@ -15,4 +15,23 @@ return [
             '07:35',
         ),
     ],
+    'summary_mail' => [
+        'enabled' => (bool) env(
+            'CENTRAL_SUMMARY_MAIL_ENABLED',
+            true,
+        ),
+        'mailer' => env(
+            'CENTRAL_SUMMARY_MAILER',
+            'sendmail',
+        ),
+        'from_address' => env(
+            'CENTRAL_SUMMARY_MAIL_FROM',
+            'notificaciones@central.arpynet.com',
+        ),
+        'from_name' => env(
+            'CENTRAL_SUMMARY_MAIL_FROM_NAME',
+            'Central ARPYNET',
+        ),
+    ],
+
 ];
