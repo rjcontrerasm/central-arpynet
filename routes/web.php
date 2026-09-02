@@ -75,6 +75,16 @@ Route::middleware('auth')->group(function (): void {
 
 Route::middleware('auth')->group(function (): void {
     Route::post(
+        '/mi-dia/deshacer',
+        [
+            \App\Http\Controllers\DailyTaskUndoController::class,
+            'restore',
+        ],
+    )->name('daily-task-action.undo');
+});
+
+Route::middleware('auth')->group(function (): void {
+    Route::post(
         '/mi-dia/tareas/{task}/editar',
         [
             \App\Http\Controllers\DailyTaskEditController::class,

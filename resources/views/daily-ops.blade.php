@@ -178,6 +178,31 @@
             font-weight: 700;
         }
 
+        .success-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .undo-form {
+            margin: 0;
+            flex: 0 0 auto;
+        }
+
+        .undo-button {
+            min-height: 34px;
+            padding: 6px 10px;
+            border: 1px solid currentColor;
+            border-radius: 9px;
+            background: transparent;
+            color: inherit;
+            font: inherit;
+            font-size: 12px;
+            font-weight: 850;
+            cursor: pointer;
+        }
+
         .scopes {
             display: flex;
             gap: 7px;
@@ -808,8 +833,46 @@
     </div>
 
     @if (session('daily_action_success'))
+        @php
+            $undoSnapshot = session(
+                'daily_action_undo',
+            );
+
+            $canUndo =
+                is_array($undoSnapshot)
+                && (int) (
+                    $undoSnapshot[
+                        'expires_at'
+                    ] ?? 0
+                ) >= time();
+        @endphp
+
         <div class="success">
-            {{ session('daily_action_success') }}
+            <div class="success-row">
+                <span>
+                    {{ session('daily_action_success') }}
+                </span>
+
+                @if ($canUndo)
+                    <form
+                        class="undo-form"
+                        method="POST"
+                        action="{{ route(
+                            'daily-task-action.undo',
+                        ) }}"
+                    >
+                        @csrf
+
+                        <button
+                            class="undo-button"
+                            type="submit"
+                            data-busy-label="Deshaciendo…"
+                        >
+                            Deshacer
+                        </button>
+                    </form>
+                @endif
+            </div>
         </div>
     @endif
 
@@ -1158,6 +1221,12 @@
                                         }}
                                     </span>
 
+                                    @if ($task->status === 'in_progress')
+                                        <span class="pill today">
+                                            En curso
+                                        </span>
+                                    @endif
+
                                     @if (in_array($task->urgency, ['high', 'critical'], true))
                                         <span class="pill">
                                             {{ $task->urgency === 'critical' ? 'Urgencia crítica' : 'Urgencia alta' }}
@@ -1171,12 +1240,44 @@
                                     @endif
                                 </div>
 
-                                <div class="actions">
-                                    @foreach ([
+                                @php
+                                    $quickActions = [
                                         'complete' => '✓ Hecho',
-                                        'tomorrow' => 'Mañana',
-                                        'next_week' => '+1 semana',
-                                    ] as $action => $label)
+                                    ];
+
+                                    if (
+                                        $task->status
+                                        !== 'in_progress'
+                                    ) {
+                                        $quickActions[
+                                            'start'
+                                        ] = 'En curso';
+                                    }
+
+                                    if (
+                                        ! $task->due_at
+                                        || ! $task->due_at
+                                            ->isSameDay($now)
+                                    ) {
+                                        $quickActions[
+                                            'today'
+                                        ] = 'Hoy';
+                                    }
+
+                                    $quickActions[
+                                        'tomorrow'
+                                    ] = 'Mañana';
+
+                                    $quickActions[
+                                        'next_week'
+                                    ] = '+1 semana';
+                                @endphp
+
+                                <div class="actions">
+                                    @foreach (
+                                        $quickActions
+                                        as $action => $label
+                                    )
                                         <form
                                             class="action-form"
                                             method="POST"
@@ -1201,13 +1302,31 @@
                                                 >
                                             @endif
 
+                                            @if ($search !== '')
+                                                <input
+                                                    type="hidden"
+                                                    name="q"
+                                                    value="{{ $search }}"
+                                                >
+                                            @endif
+
+                                            @if ($selectedPriority)
+                                                <input
+                                                    type="hidden"
+                                                    name="priority"
+                                                    value="{{ $selectedPriority }}"
+                                                >
+                                            @endif
+
                                             <button
                                                 class="action {{
-                                                    $action === 'complete'
+                                                    $action
+                                                        === 'complete'
                                                         ? 'done'
                                                         : ''
                                                 }}"
                                                 type="submit"
+                                                data-busy-label="Aplicando…"
                                             >
                                                 {{ $label }}
                                             </button>

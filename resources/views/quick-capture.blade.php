@@ -113,6 +113,26 @@
             font-size: 14px;
         }
 
+        .smart-hint {
+            margin-top: -7px;
+            padding: 10px 11px;
+            border-radius: 11px;
+            background: rgba(59, 130, 246, .08);
+            color: #94a3b8;
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        .smart-hint strong {
+            color: #93c5fd;
+        }
+
+        .smart-hint code {
+            font: inherit;
+            font-weight: 750;
+        }
+
         input,
         select {
             width: 100%;
@@ -383,6 +403,15 @@
                 color: #64748b;
             }
 
+            .smart-hint {
+                background: #eff6ff;
+                color: #526277;
+            }
+
+            .smart-hint strong {
+                color: #1d4ed8;
+            }
+
             .card,
             .recent-item {
                 background: white;
@@ -466,12 +495,23 @@
                 name="title"
                 type="text"
                 maxlength="255"
-                placeholder="Ej. Enviar informe SUNARP"
+                placeholder="Ej. mañana enviar informe SUNARP"
                 value="{{ old('title') }}"
                 autofocus
                 required
             >
         </label>
+
+        <div class="smart-hint">
+            <strong>Atajos:</strong>
+            <code>mañana</code>,
+            <code>urgente</code>,
+            <code>crítico</code>,
+            <code>esperando</code> o
+            <code>@Personal</code>
+            al inicio. Solo se interpretan estos
+            prefijos explícitos.
+        </div>
 
         <label>
             Empresa / ámbito
