@@ -267,3 +267,8 @@ Schedule::command('summary:whatsapp week')
         ),
     )
     ->withoutOverlapping();
+
+Schedule::command('alerts:whatsapp-critical')
+    ->everyFifteenMinutes()
+    ->timezone(config('app.timezone', 'America/Lima'))
+    ->withoutOverlapping();

@@ -98,5 +98,39 @@
                 @endif
             </div>
         </x-filament::section>
+
+        <x-filament::section>
+            <x-slot name="heading">WhatsApp Cloud API</x-slot>
+            <x-slot name="description">Estado operativo del canal WhatsApp de Central. Nunca se muestran secretos ni números completos.</x-slot>
+
+            <div class="grid gap-4 md:grid-cols-2">
+                <div class="space-y-2">
+                    <div><strong>Recepción:</strong> {{ $whatsapp['inbound_enabled'] ? 'activa' : 'inactiva' }}</div>
+                    <div><strong>Envío:</strong> {{ $whatsapp['outbound_enabled'] ? 'activo' : 'inactivo' }}</div>
+                    <div><strong>Token de envío:</strong> {{ $whatsapp['access_token_configured'] ? 'configurado' : 'no configurado' }}</div>
+                    <div><strong>Phone Number ID:</strong> {{ $whatsapp['phone_number_id_configured'] ? 'configurado' : 'no configurado' }}</div>
+                    <div><strong>Remitentes autorizados:</strong> {{ $whatsapp['allowed_senders'] }}</div>
+                </div>
+                <div class="space-y-2">
+                    <div><strong>Último inbound:</strong> {{ $whatsapp['latest_inbound_status'] ?? 'sin registros' }}</div>
+                    <div><strong>Última confirmación:</strong> {{ $whatsapp['latest_confirmation_status'] ?? 'sin registros' }}</div>
+                    <div><strong>Resumen:</strong> {{ $whatsapp['summary_enabled'] ? 'activo' : 'inactivo' }}</div>
+                    <div><strong>Plantilla resumen:</strong> {{ $whatsapp['summary_template'] }} ({{ $whatsapp['summary_language'] }})</div>
+                    <div><strong>Último resumen:</strong> {{ $whatsapp['latest_summary_status'] ?? 'sin registros' }}</div>
+                </div>
+            </div>
+
+            <div class="mt-6 rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+                <div class="font-semibold">Alertas críticas</div>
+                <div class="mt-2 grid gap-2 md:grid-cols-2">
+                    <div><strong>Estado:</strong> {{ $whatsapp['critical_enabled'] ? 'activo' : 'inactivo' }}</div>
+                    <div><strong>Plantilla:</strong> {{ $whatsapp['critical_template'] }} ({{ $whatsapp['critical_language'] }})</div>
+                    <div><strong>Cooldown:</strong> {{ $whatsapp['critical_cooldown_minutes'] }} minutos</div>
+                    <div><strong>Estados críticos activos:</strong> {{ $whatsapp['active_critical_states'] }}</div>
+                </div>
+            </div>
+
+            <div class="mt-4 text-sm text-gray-500">Las funciones salientes permanecen deshabilitadas mientras no exista un System User Access Token permanente.</div>
+        </x-filament::section>
     </div>
 </x-filament-panels::page>
