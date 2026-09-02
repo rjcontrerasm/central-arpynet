@@ -183,7 +183,13 @@
             gap: 7px;
             overflow-x: auto;
             padding: 2px 0 14px;
-            scrollbar-width: thin;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .scopes::-webkit-scrollbar,
+        .priority-filters::-webkit-scrollbar {
+            display: none;
         }
 
         .scope {
@@ -242,6 +248,8 @@
             gap: 7px;
             overflow-x: auto;
             padding-bottom: 2px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
         }
 
         .priority-filter {
@@ -573,6 +581,11 @@
         @media (max-width: 719px) {
             .shell {
                 padding-top: 14px;
+                padding-bottom:
+                    calc(
+                        92px
+                        + env(safe-area-inset-bottom)
+                    );
             }
 
             .topbar {
@@ -585,18 +598,47 @@
 
             .stats {
                 grid-template-columns:
-                    repeat(5, minmax(118px, 1fr));
-                overflow-x: auto;
-                padding-bottom: 6px;
-                scroll-snap-type: x proximity;
+                    repeat(3, minmax(0, 1fr));
+                overflow: visible;
+                gap: 8px;
+                padding-bottom: 0;
+                scroll-snap-type: none;
             }
 
             .stat {
-                scroll-snap-align: start;
+                min-width: 0;
+                padding: 12px 10px;
+                scroll-snap-align: none;
+            }
+
+            .stat-value {
+                font-size: 25px;
+            }
+
+            .stat-label {
+                font-size: 11px;
             }
 
             .item {
                 padding: 15px;
+            }
+
+            .fab {
+                left: auto;
+                right: 16px;
+                bottom:
+                    max(
+                        14px,
+                        env(safe-area-inset-bottom)
+                    );
+                transform: none;
+                width: auto;
+                min-width: 164px;
+                min-height: 50px;
+                padding: 0 18px;
+                border-radius: 999px;
+                box-shadow:
+                    0 12px 32px rgba(37, 99, 235, .32);
             }
         }
 

@@ -291,17 +291,48 @@
 
         @media (max-width: 639px) {
             .shell {
+                padding-top: 14px;
                 padding-bottom:
                     calc(28px + env(safe-area-inset-bottom));
             }
 
             .topbar {
                 align-items: flex-start;
+                margin-bottom: 20px;
+            }
+
+            .hero {
+                margin-bottom: 16px;
+            }
+
+            .hero p {
+                font-size: 15px;
+                line-height: 1.45;
             }
 
             .card {
-                padding: 16px;
+                padding: 15px;
                 border-radius: 18px;
+                box-shadow:
+                    0 14px 36px rgba(15, 23, 42, .10);
+            }
+
+            .stack {
+                gap: 14px;
+            }
+
+            input,
+            select {
+                min-height: 46px;
+            }
+
+            #title {
+                min-height: 58px;
+                font-size: 17px;
+            }
+
+            .chip span {
+                min-height: 44px;
             }
 
             .grid2 {
@@ -309,15 +340,9 @@
             }
 
             .submit {
-                position: sticky;
-                z-index: 20;
-                bottom:
-                    max(
-                        10px,
-                        env(safe-area-inset-bottom)
-                    );
-                box-shadow:
-                    0 14px 34px rgba(37, 99, 235, .28);
+                position: static;
+                min-height: 52px;
+                box-shadow: none;
             }
         }
 
