@@ -62,6 +62,16 @@ Schedule::command('tasks:recalculate-priority')
     ->everyFifteenMinutes()
     ->withoutOverlapping();
 
+Schedule::command('daily-review:remind')
+    ->hourly()
+    ->timezone(
+        config(
+            'app.timezone',
+            'America/Lima',
+        ),
+    )
+    ->withoutOverlapping();
+
 Schedule::command('tasks:generate-recurring')
     ->hourly()
     ->timezone(

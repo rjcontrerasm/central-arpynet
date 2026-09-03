@@ -15,6 +15,7 @@ class DailyReviewSession extends Model
         'tasks_reviewed_at',
         'operations_reviewed_at',
         'completed_at',
+        'reminder_sent_at',
     ];
 
     protected function casts(): array
@@ -26,6 +27,7 @@ class DailyReviewSession extends Model
             'tasks_reviewed_at' => 'datetime',
             'operations_reviewed_at' => 'datetime',
             'completed_at' => 'datetime',
+            'reminder_sent_at' => 'datetime',
         ];
     }
 
