@@ -254,6 +254,24 @@ Route::middleware('auth')->group(function (): void {
 
 Route::middleware('auth')->group(function (): void {
     Route::get(
+        '/revision-semanal',
+        [
+            \App\Http\Controllers\WeeklyReviewController::class,
+            'show',
+        ],
+    )->name('weekly-review.show');
+
+    Route::post(
+        '/revision-semanal/revisar',
+        [
+            \App\Http\Controllers\WeeklyReviewController::class,
+            'mark',
+        ],
+    )->name('weekly-review.mark');
+});
+
+Route::middleware('auth')->group(function (): void {
+    Route::get(
         '/revision-diaria',
         [
             \App\Http\Controllers\DailyReviewController::class,

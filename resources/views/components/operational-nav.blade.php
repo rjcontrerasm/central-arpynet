@@ -17,6 +17,7 @@
         'agenda' => 'Agenda',
         'tracking' => 'Seguimiento',
         'review' => 'Revisión',
+        'weekly' => 'Revisión semanal',
         'decisions' => 'Decisiones',
         'summary' => 'Resumen',
         'notifications' => 'Notificaciones',
@@ -337,6 +338,13 @@
                 href="{{ route('daily-review.show') }}"
             >
                 Revisión diaria
+            </a>
+
+            <a
+                class="{{ $active === 'weekly' ? 'is-active' : '' }}"
+                href="{{ route('weekly-review.show') }}"
+            >
+                Revisión semanal
             </a>
 
             <a
