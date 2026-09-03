@@ -179,6 +179,24 @@ Route::middleware('auth')->group(function (): void {
 
 Route::middleware('auth')->group(function (): void {
     Route::get(
+        '/revision-diaria',
+        [
+            \App\Http\Controllers\DailyReviewController::class,
+            'show',
+        ],
+    )->name('daily-review.show');
+
+    Route::post(
+        '/revision-diaria/revisar',
+        [
+            \App\Http\Controllers\DailyReviewController::class,
+            'mark',
+        ],
+    )->name('daily-review.mark');
+});
+
+Route::middleware('auth')->group(function (): void {
+    Route::get(
         '/decisiones',
         [
             \App\Http\Controllers\DecisionInboxController::class,

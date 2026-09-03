@@ -110,6 +110,7 @@
         .decision-grid { display: grid; gap: 10px; }
 
         .decision-card {
+            align-self: start;
             padding: 14px;
             border-radius: 16px;
         }

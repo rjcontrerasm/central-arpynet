@@ -5,6 +5,7 @@
 @php
     $secondaryLabels = [
         'tracking' => 'Seguimiento',
+        'review' => 'Revisión',
         'decisions' => 'Decisiones',
         'summary' => 'Resumen',
         'notifications' => 'Notificaciones',
@@ -261,6 +262,13 @@
                 href="{{ route('global-tracking.show') }}"
             >
                 Seguimiento
+            </a>
+
+            <a
+                class="{{ $active === 'review' ? 'is-active' : '' }}"
+                href="{{ route('daily-review.show') }}"
+            >
+                Revisión diaria
             </a>
 
             <a
