@@ -409,6 +409,15 @@
         }
 
         .pills { margin-top: 2px; }
+        .convert-link {
+            display: inline-flex;
+            margin-top: 9px;
+            color: #93c5fd;
+            font-size: 11px;
+            font-weight: 800;
+            text-decoration: none;
+        }
+
         .actions { margin-top: 9px; }
 
         .next-action-current {
@@ -1495,6 +1504,16 @@
                                         </button>
                                     </form>
                                 </details>
+
+                                <a
+                                    class="convert-link"
+                                    href="{{ route(
+                                        'task-conversion.show',
+                                        $task,
+                                    ) }}"
+                                >
+                                    Convertir tarea →
+                                </a>
 
                                 <details class="task-edit">
                                     <summary>Editar</summary>

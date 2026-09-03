@@ -94,6 +94,24 @@ Route::middleware('auth')->group(function (): void {
 });
 
 Route::middleware('auth')->group(function (): void {
+    Route::get(
+        '/tareas/{task}/convertir',
+        [
+            \App\Http\Controllers\TaskConversionController::class,
+            'show',
+        ],
+    )->name('task-conversion.show');
+
+    Route::post(
+        '/tareas/{task}/convertir',
+        [
+            \App\Http\Controllers\TaskConversionController::class,
+            'store',
+        ],
+    )->name('task-conversion.store');
+});
+
+Route::middleware('auth')->group(function (): void {
     Route::post(
         '/tareas/{task}/proxima-accion',
         [

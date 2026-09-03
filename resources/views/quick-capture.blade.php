@@ -197,6 +197,10 @@
             color: #dbeafe;
         }
 
+        .grid2 .full {
+            grid-column: 1 / -1;
+        }
+
         .grid2 {
             display: grid;
             grid-template-columns:
@@ -504,13 +508,14 @@
 
         <div class="smart-hint">
             <strong>Atajos:</strong>
-            <code>mañana</code>,
+            <code>viernes</code>,
+            <code>en 3 días</code>,
+            <code>15/09</code>,
             <code>urgente</code>,
-            <code>crítico</code>,
-            <code>esperando</code> o
-            <code>@Personal</code>
-            al inicio. Solo se interpretan estos
-            prefijos explícitos.
+            <code>@Personal</code>,
+            <code>#Proyecto</code> y
+            <code>-&gt; próxima acción</code>.
+            Solo se interpretan formatos explícitos.
         </div>
 
         <label>
@@ -595,6 +600,26 @@
             </div>
 
             <div class="grid2">
+                <label class="full">
+                    Proyecto
+
+                    <select name="project_id">
+                        <option value="">Sin proyecto</option>
+
+                        @foreach ($projects as $project)
+                            <option
+                                value="{{ $project->id }}"
+                                @selected(
+                                    (string) old('project_id')
+                                    === (string) $project->id
+                                )
+                            >
+                                {{ $project->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </label>
+
                 <label>
                     Urgencia
 
