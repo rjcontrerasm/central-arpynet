@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ObligationOccurrence;
+use App\Support\GlobalUndoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,6 +13,7 @@ class ObligationOpsActionController extends Controller
     public function update(
         Request $request,
         ObligationOccurrence $obligationOccurrence,
+        GlobalUndoService $undo,
     ): RedirectResponse {
         $validated = $request->validate([
             'action' => [
@@ -52,18 +54,38 @@ class ObligationOpsActionController extends Controller
             ],
         ]);
 
-        $userId = $request->user()->id;
+        $userId =
+            $request->user()->id;
 
-        $allowed = DB::table('organization_user')
-            ->where('user_id', $userId)
+        $allowed = DB::table(
+            'organization_user',
+        )
+            ->where(
+                'user_id',
+                $userId,
+            )
             ->where(
                 'organization_id',
-                $obligationOccurrence->organization_id,
+                $obligationOccurrence
+                    ->organization_id,
             )
-            ->where('is_active', true)
+            ->where(
+                'is_active',
+                true,
+            )
             ->exists();
 
         abort_unless($allowed, 403);
+
+        $filters = $this->filters(
+            $request,
+            $validated,
+        );
+
+        $before =
+            $undo->captureObligationOccurrence(
+                $obligationOccurrence,
+            );
 
         match ($validated['action']) {
             'paid' => $this->markPaid(
@@ -78,21 +100,37 @@ class ObligationOpsActionController extends Controller
             ),
         };
 
+        $label = match (
+            $validated['action']
+        ) {
+            'paid' =>
+                'Pago registrado',
+            'skipped' =>
+                'Vencimiento omitido',
+            'pending' =>
+                'Vencimiento reabierto',
+        };
+
+        $undo->rememberObligationMutation(
+            $request->user(),
+            $obligationOccurrence,
+            $before,
+            $label,
+            route(
+                'obligation-ops.show',
+                $filters,
+                false,
+            ),
+        );
+
         return redirect()
             ->route(
                 'obligation-ops.show',
-                $this->filters(
-                    $request,
-                    $validated,
-                ),
+                $filters,
             )
             ->with(
                 'obligation_success',
-                match ($validated['action']) {
-                    'paid' => 'Pago registrado.',
-                    'skipped' => 'Vencimiento omitido.',
-                    'pending' => 'Vencimiento reabierto.',
-                },
+                $label.'.',
             );
     }
 
@@ -100,13 +138,16 @@ class ObligationOpsActionController extends Controller
         ObligationOccurrence $occurrence,
         array $validated,
     ): void {
-        $actual = $validated['actual_amount']
-            ?? $occurrence->expected_amount;
+        $actual =
+            $validated['actual_amount']
+            ?? $occurrence
+                ->expected_amount;
 
         $occurrence->forceFill([
             'status' => 'paid',
             'actual_amount' => $actual,
-            'paid_date' => $validated['paid_date']
+            'paid_date' =>
+                $validated['paid_date']
                 ?? now()->toDateString(),
             'payment_reference' => trim(
                 (string) (
@@ -152,17 +193,26 @@ class ObligationOpsActionController extends Controller
         array $validated,
     ): array {
         $params = [];
-
-        $scope = $validated['scope'] ?? null;
+        $scope =
+            $validated['scope']
+            ?? null;
 
         if ($scope) {
-            $allowed = DB::table('organization_user')
+            $allowed = DB::table(
+                'organization_user',
+            )
                 ->where(
                     'user_id',
                     $request->user()->id,
                 )
-                ->where('organization_id', $scope)
-                ->where('is_active', true)
+                ->where(
+                    'organization_id',
+                    $scope,
+                )
+                ->where(
+                    'is_active',
+                    true,
+                )
                 ->exists();
 
             abort_unless($allowed, 403);
@@ -170,13 +220,19 @@ class ObligationOpsActionController extends Controller
             $params['scope'] = $scope;
         }
 
-        if (! empty($validated['focus'])) {
+        if (! empty(
+            $validated['focus']
+                ?? null
+        )) {
             $params['focus'] =
                 $validated['focus'];
         }
 
         $q = trim(
-            (string) ($validated['q'] ?? ''),
+            (string) (
+                $validated['q']
+                ?? ''
+            ),
         );
 
         if ($q !== '') {

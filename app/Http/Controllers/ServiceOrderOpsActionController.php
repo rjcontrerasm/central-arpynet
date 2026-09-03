@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ServiceOrder;
+use App\Support\GlobalUndoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,6 +13,7 @@ class ServiceOrderOpsActionController extends Controller
     public function update(
         Request $request,
         ServiceOrder $serviceOrder,
+        GlobalUndoService $undo,
     ): RedirectResponse {
         $validated = $request->validate([
             'stage' => [
@@ -49,18 +51,27 @@ class ServiceOrderOpsActionController extends Controller
 
         $userId = $request->user()->id;
 
-        $allowed = DB::table('organization_user')
-            ->where('user_id', $userId)
+        $allowed = DB::table(
+            'organization_user',
+        )
+            ->where(
+                'user_id',
+                $userId,
+            )
             ->where(
                 'organization_id',
                 $serviceOrder->organization_id,
             )
-            ->where('is_active', true)
+            ->where(
+                'is_active',
+                true,
+            )
             ->exists();
 
         abort_unless($allowed, 403);
 
-        $stageOptions = ServiceOrder::stageOptions();
+        $stageOptions =
+            ServiceOrder::stageOptions();
 
         abort_unless(
             array_key_exists(
@@ -70,8 +81,19 @@ class ServiceOrderOpsActionController extends Controller
             422,
         );
 
+        $filters = $this->filters(
+            $request,
+            $validated,
+        );
+
+        $before =
+            $undo->captureServiceOrder(
+                $serviceOrder,
+            );
+
         $serviceOrder->forceFill([
-            'stage' => $validated['stage'],
+            'stage' =>
+                $validated['stage'],
             'next_action' => trim(
                 (string) (
                     $validated['next_action']
@@ -84,13 +106,22 @@ class ServiceOrderOpsActionController extends Controller
             'last_activity_at' => now(),
         ])->save();
 
+        $undo->rememberServiceOrderMutation(
+            $request->user(),
+            $serviceOrder,
+            $before,
+            'Servicio actualizado',
+            route(
+                'service-orders-ops.show',
+                $filters,
+                false,
+            ),
+        );
+
         return redirect()
             ->route(
                 'service-orders-ops.show',
-                $this->filters(
-                    $request,
-                    $validated,
-                ),
+                $filters,
             )
             ->with(
                 'ops_success',
@@ -103,35 +134,56 @@ class ServiceOrderOpsActionController extends Controller
         array $validated,
     ): array {
         $params = [];
-
-        $scope = $validated['scope'] ?? null;
+        $scope =
+            $validated['scope']
+            ?? null;
 
         if ($scope) {
-            $allowed = DB::table('organization_user')
+            $allowed = DB::table(
+                'organization_user',
+            )
                 ->where(
                     'user_id',
                     $request->user()->id,
                 )
-                ->where('organization_id', $scope)
-                ->where('is_active', true)
+                ->where(
+                    'organization_id',
+                    $scope,
+                )
+                ->where(
+                    'is_active',
+                    true,
+                )
                 ->exists();
 
             abort_unless($allowed, 403);
+
             $params['scope'] = $scope;
         }
 
-        if (! empty($validated['filter_stage'])) {
+        if (! empty(
+            $validated['filter_stage']
+                ?? null
+        )) {
             $params['stage'] =
-                $validated['filter_stage'];
+                $validated[
+                    'filter_stage'
+                ];
         }
 
-        if (! empty($validated['focus'])) {
+        if (! empty(
+            $validated['focus']
+                ?? null
+        )) {
             $params['focus'] =
                 $validated['focus'];
         }
 
         $q = trim(
-            (string) ($validated['q'] ?? ''),
+            (string) (
+                $validated['q']
+                ?? ''
+            ),
         );
 
         if ($q !== '') {

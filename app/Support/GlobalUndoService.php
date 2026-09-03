@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\ObligationOccurrence;
 use App\Models\Project;
 use App\Models\RecurringTaskRule;
 use App\Models\ServiceOrder;
@@ -16,6 +17,53 @@ class GlobalUndoService
 {
     public const SESSION_KEY =
         'central_global_undo_id';
+
+    private const SERVICE_ORDER_FIELDS = [
+        'organization_id',
+        'client_id',
+        'title',
+        'description',
+        'stage',
+        'stage_changed_at',
+        'quotation_number',
+        'quotation_date',
+        'order_number',
+        'order_received_date',
+        'start_date',
+        'end_date',
+        'report_submitted_date',
+        'conformity_date',
+        'invoice_number',
+        'invoice_date',
+        'invoice_due_date',
+        'paid_date',
+        'closed_date',
+        'amount',
+        'invoice_amount',
+        'currency',
+        'includes_tax',
+        'next_action',
+        'next_action_at',
+        'drive_url',
+        'notes',
+        'last_activity_at',
+        'created_by',
+    ];
+
+    private const OBLIGATION_OCCURRENCE_FIELDS = [
+        'recurring_obligation_id',
+        'organization_id',
+        'due_date',
+        'status',
+        'expected_amount',
+        'actual_amount',
+        'currency',
+        'paid_date',
+        'payment_reference',
+        'receipt_url',
+        'notes',
+        'completed_at',
+    ];
 
     private const TASK_FIELDS = [
         'organization_id',
@@ -117,6 +165,102 @@ class GlobalUndoService
             [
                 'expected' =>
                     $this->taskFingerprint(
+                        $fresh,
+                    ),
+            ],
+            $returnUrl,
+        );
+    }
+
+    public function captureServiceOrder(
+        ServiceOrder $serviceOrder,
+    ): array {
+        $raw = $serviceOrder->getAttributes();
+
+        return collect(
+            self::SERVICE_ORDER_FIELDS,
+        )
+            ->mapWithKeys(
+                fn (string $field): array => [
+                    $field =>
+                        $raw[$field] ?? null,
+                ],
+            )
+            ->all();
+    }
+
+    public function rememberServiceOrderMutation(
+        User $user,
+        ServiceOrder $serviceOrder,
+        array $beforeState,
+        string $label,
+        ?string $returnUrl = null,
+    ): ?UndoAction {
+        $fresh = ServiceOrder::query()
+            ->find($serviceOrder->id);
+
+        if (! $fresh) {
+            return null;
+        }
+
+        return $this->remember(
+            $user,
+            'service_mutation',
+            $label,
+            'service_order',
+            $fresh->id,
+            [
+                'before' => $beforeState,
+                'expected' =>
+                    $this->updatedAtFingerprint(
+                        $fresh,
+                    ),
+            ],
+            $returnUrl,
+        );
+    }
+
+    public function captureObligationOccurrence(
+        ObligationOccurrence $occurrence,
+    ): array {
+        $raw = $occurrence->getAttributes();
+
+        return collect(
+            self::OBLIGATION_OCCURRENCE_FIELDS,
+        )
+            ->mapWithKeys(
+                fn (string $field): array => [
+                    $field =>
+                        $raw[$field] ?? null,
+                ],
+            )
+            ->all();
+    }
+
+    public function rememberObligationMutation(
+        User $user,
+        ObligationOccurrence $occurrence,
+        array $beforeState,
+        string $label,
+        ?string $returnUrl = null,
+    ): ?UndoAction {
+        $fresh = ObligationOccurrence::query()
+            ->find($occurrence->id);
+
+        if (! $fresh) {
+            return null;
+        }
+
+        return $this->remember(
+            $user,
+            'obligation_mutation',
+            $label,
+            'obligation_occurrence',
+            $fresh->id,
+            [
+                'before' => $beforeState,
+                'expected' =>
+                    $this->updatedAtFingerprint(
                         $fresh,
                     ),
             ],
@@ -288,6 +432,16 @@ class GlobalUndoService
                         ),
                     'task_created' =>
                         $this->undoTaskCreated(
+                            $user,
+                            $locked,
+                        ),
+                    'service_mutation' =>
+                        $this->undoServiceMutation(
+                            $user,
+                            $locked,
+                        ),
+                    'obligation_mutation' =>
+                        $this->undoObligationMutation(
                             $user,
                             $locked,
                         ),
@@ -591,6 +745,211 @@ class GlobalUndoService
         $task->delete();
 
         return ['ok' => true];
+    }
+
+    private function undoServiceMutation(
+        User $user,
+        UndoAction $action,
+    ): array {
+        $payload = is_array(
+            $action->payload,
+        )
+            ? $action->payload
+            : [];
+
+        $service = ServiceOrder::query()
+            ->find($action->entity_id);
+
+        if (! $service) {
+            return [
+                'ok' => false,
+                'message' =>
+                    'El servicio ya no está disponible.',
+            ];
+        }
+
+        $before = is_array(
+            $payload['before'] ?? null,
+        )
+            ? $payload['before']
+            : [];
+
+        $expected = is_array(
+            $payload['expected'] ?? null,
+        )
+            ? $payload['expected']
+            : [];
+
+        if (
+            ! $this->updatedAtMatches(
+                $service,
+                $expected,
+            )
+        ) {
+            return [
+                'ok' => false,
+                'message' =>
+                    'El servicio cambió después de esa acción; ya no es seguro deshacerla automáticamente.',
+            ];
+        }
+
+        if (
+            ! $this->authorizedOrganization(
+                $user,
+                $service->organization_id,
+            )
+            || ! $this->authorizedOrganization(
+                $user,
+                (int) (
+                    $before['organization_id']
+                    ?? 0
+                ),
+            )
+        ) {
+            abort(403);
+        }
+
+        $restore = collect(
+            self::SERVICE_ORDER_FIELDS,
+        )
+            ->mapWithKeys(
+                fn (string $field): array => [
+                    $field =>
+                        $before[$field] ?? null,
+                ],
+            )
+            ->all();
+
+        $stageChangedAt =
+            $restore['stage_changed_at']
+            ?? null;
+
+        $lastActivityAt =
+            $restore['last_activity_at']
+            ?? null;
+
+        $service->forceFill(
+            $restore,
+        )->save();
+
+        /*
+         * ServiceOrder updates activity timestamps
+         * through model hooks. Restore those two
+         * historical timestamps quietly after the
+         * audited business-state rollback.
+         */
+        $service->forceFill([
+            'stage_changed_at' =>
+                $stageChangedAt,
+            'last_activity_at' =>
+                $lastActivityAt,
+        ])->saveQuietly();
+
+        return ['ok' => true];
+    }
+
+    private function undoObligationMutation(
+        User $user,
+        UndoAction $action,
+    ): array {
+        $payload = is_array(
+            $action->payload,
+        )
+            ? $action->payload
+            : [];
+
+        $occurrence =
+            ObligationOccurrence::query()
+                ->find($action->entity_id);
+
+        if (! $occurrence) {
+            return [
+                'ok' => false,
+                'message' =>
+                    'El vencimiento ya no está disponible.',
+            ];
+        }
+
+        $before = is_array(
+            $payload['before'] ?? null,
+        )
+            ? $payload['before']
+            : [];
+
+        $expected = is_array(
+            $payload['expected'] ?? null,
+        )
+            ? $payload['expected']
+            : [];
+
+        if (
+            ! $this->updatedAtMatches(
+                $occurrence,
+                $expected,
+            )
+        ) {
+            return [
+                'ok' => false,
+                'message' =>
+                    'El vencimiento cambió después de esa acción; ya no es seguro deshacerla automáticamente.',
+            ];
+        }
+
+        if (
+            ! $this->authorizedOrganization(
+                $user,
+                $occurrence->organization_id,
+            )
+            || ! $this->authorizedOrganization(
+                $user,
+                (int) (
+                    $before['organization_id']
+                    ?? 0
+                ),
+            )
+        ) {
+            abort(403);
+        }
+
+        $restore = collect(
+            self::OBLIGATION_OCCURRENCE_FIELDS,
+        )
+            ->mapWithKeys(
+                fn (string $field): array => [
+                    $field =>
+                        $before[$field] ?? null,
+                ],
+            )
+            ->all();
+
+        $occurrence->forceFill(
+            $restore,
+        )->save();
+
+        return ['ok' => true];
+    }
+
+    private function updatedAtFingerprint(
+        object $model,
+    ): array {
+        return [
+            'updated_at' =>
+                $model->updated_at
+                    ?->toIso8601String(),
+        ];
+    }
+
+    private function updatedAtMatches(
+        object $model,
+        array $expected,
+    ): bool {
+        return (
+            $model->updated_at
+                ?->toIso8601String()
+        ) === (
+            $expected['updated_at']
+                ?? null
+        );
     }
 
     private function applyTaskState(
