@@ -581,7 +581,7 @@
         <main>
             <section class="section">
                 <div class="section-head">
-                    <h2>Atender primero</h2>
+                    <h2>Otras alertas</h2>
 
                     <a
                         class="section-link"
@@ -651,7 +651,8 @@
                         </a>
                     @empty
                         <div class="empty">
-                            Nada requiere atención especial.
+                            No hay alertas adicionales fuera de
+                            “Decidir ahora”.
                         </div>
                     @endforelse
                 </div>

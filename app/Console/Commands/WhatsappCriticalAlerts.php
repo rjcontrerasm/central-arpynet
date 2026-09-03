@@ -54,7 +54,13 @@ class WhatsappCriticalAlerts extends Command
         $now = CarbonImmutable::now(config('app.timezone', 'America/Lima'));
         $summary = $builder->build($organizationIds, null, 'today', $now);
         $maxItems = max(1, min(12, (int) config('central.critical_whatsapp.max_items', 5)));
-        $allCritical = collect($summary['attention'])->where('level', 'critical')->values();
+        $allCritical = collect(
+            $summary['attention_all']
+            ?? $summary['attention']
+            ?? [],
+        )
+            ->where('level', 'critical')
+            ->values();
         $critical = $allCritical->take($maxItems)->values();
         $cooldownMinutes = max(15, (int) config('central.critical_whatsapp.cooldown_minutes', 360));
         $retryMinutes = max(15, (int) config('central.critical_whatsapp.retry_minutes', 60));

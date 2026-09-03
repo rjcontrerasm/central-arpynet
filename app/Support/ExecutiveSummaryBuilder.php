@@ -88,6 +88,26 @@ class ExecutiveSummaryBuilder
             ->take(6)
             ->values();
 
+        $decisionKeys = $decisions
+            ->map(
+                fn (array $item): string =>
+                    ($item['type'] ?? 'unknown')
+                    .':'
+                    .($item['id'] ?? '0'),
+            )
+            ->flip();
+
+        $otherAttention = $attention
+            ->reject(
+                fn (array $item): bool =>
+                    $decisionKeys->has(
+                        ($item['type'] ?? 'unknown')
+                        .':'
+                        .($item['id'] ?? '0'),
+                    ),
+            )
+            ->values();
+
         $dueTasks = Task::query()
             ->with('organization')
             ->whereIn(
@@ -356,7 +376,16 @@ class ExecutiveSummaryBuilder
             'period' => $period,
             'start' => $start,
             'end' => $end,
-            'attention' => $attention->take(12),
+            /*
+             * attention_all is the complete operational
+             * contract for alerts/channels.
+             * attention is presentation-only and excludes
+             * items already shown in Decidir ahora.
+             */
+            'attention_all' =>
+                $attention->take(50),
+            'attention' =>
+                $otherAttention->take(12),
             'decisions' => $decisions,
             'counts' => [
                 'decisions' =>

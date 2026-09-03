@@ -23,7 +23,8 @@ class ExecutiveSummaryTest extends TestCase
             ->get('/resumen')
             ->assertOk()
             ->assertSee('Resumen de hoy')
-            ->assertSee('Atender primero');
+            ->assertSee('Decidir ahora')
+            ->assertSee('Otras alertas');
     }
 
     public function test_week_summary_is_available(): void
@@ -54,7 +55,7 @@ class ExecutiveSummaryTest extends TestCase
             ->get('/resumen')
             ->assertOk()
             ->assertSee('Informe atrasado resumen')
-            ->assertSee('Tarea vencida');
+            ->assertSee('Resolver o reprogramar');
     }
 
     public function test_waiting_followup_is_in_summary(): void
