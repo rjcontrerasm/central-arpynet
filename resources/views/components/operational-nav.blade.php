@@ -3,6 +3,16 @@
 ])
 
 @php
+    $globalUndo = auth()->check()
+        ? app(
+            \App\Support\GlobalUndoService::class,
+        )->current(auth()->user())
+        : null;
+
+    $globalUndoFlash = session(
+        'global_undo_success',
+    );
+
     $secondaryLabels = [
         'tracking' => 'Seguimiento',
         'review' => 'Revisión',
@@ -10,6 +20,7 @@
         'summary' => 'Resumen',
         'notifications' => 'Notificaciones',
         'history' => 'Historial',
+        'trash' => 'Papelera',
     ];
 
     $secondaryLabel = $secondaryLabels[$active] ?? null;
@@ -140,6 +151,42 @@
         background: var(--op-nav-border);
     }
 
+    .global-undo-bar {
+        position: fixed;
+        z-index: 250;
+        right: 18px;
+        bottom: 18px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        max-width: min(520px, calc(100vw - 32px));
+        padding: 12px 14px;
+        border: 1px solid #334155;
+        border-radius: 14px;
+        background: #0f172a;
+        color: #e2e8f0;
+        box-shadow: 0 18px 55px rgba(0, 0, 0, .38);
+        font-size: 12px;
+        font-weight: 720;
+    }
+
+    .global-undo-bar form {
+        margin: 0;
+    }
+
+    .global-undo-button {
+        min-height: 34px;
+        padding: 6px 10px;
+        border: 1px solid #3b82f6;
+        border-radius: 9px;
+        background: #172554;
+        color: #dbeafe;
+        font: inherit;
+        font-weight: 850;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
     @media (max-width: 420px) {
         .op-nav-link,
         .op-nav-more > summary {
@@ -196,6 +243,18 @@
 
         .op-nav-menu a:hover {
             background: #f1f5f9;
+        }
+
+        .global-undo-bar {
+            border-color: #cbd5e1;
+            background: #ffffff;
+            color: #334155;
+            box-shadow: 0 18px 45px rgba(15, 23, 42, .16);
+        }
+
+        .global-undo-button {
+            background: #eff6ff;
+            color: #1d4ed8;
         }
     }
 </style>
@@ -299,6 +358,13 @@
                 Historial
             </a>
 
+            <a
+                class="{{ $active === 'trash' ? 'is-active' : '' }}"
+                href="{{ route('task-lifecycle.trash') }}"
+            >
+                Papelera
+            </a>
+
             <div class="op-nav-divider"></div>
 
             <a href="{{ url('/admin') }}">
@@ -307,3 +373,46 @@
         </div>
     </details>
 </nav>
+
+@if ($globalUndo)
+    <div
+        class="global-undo-bar"
+        role="status"
+        aria-live="polite"
+    >
+        <span>
+            {{ $globalUndo->label }}.
+        </span>
+
+        <form
+            method="POST"
+            action="{{ route('global-undo.restore') }}"
+        >
+            @csrf
+
+            <input
+                type="hidden"
+                name="undo_id"
+                value="{{ $globalUndo->id }}"
+            >
+
+            <button
+                class="global-undo-button"
+                type="submit"
+                data-busy-label="Deshaciendo…"
+            >
+                Deshacer
+            </button>
+        </form>
+    </div>
+@elseif ($globalUndoFlash)
+    <div
+        class="global-undo-bar"
+        role="status"
+        aria-live="polite"
+    >
+        <span>
+            {{ $globalUndoFlash }}
+        </span>
+    </div>
+@endif

@@ -54,8 +54,19 @@
         );
 
         forms.forEach((form) => {
-            form.addEventListener('submit', () => {
+            form.addEventListener('submit', (event) => {
                 if (form.dataset.submitting === 'yes') {
+                    return;
+                }
+
+                const confirmation =
+                    form.dataset.confirm;
+
+                if (
+                    confirmation
+                    && ! window.confirm(confirmation)
+                ) {
+                    event.preventDefault();
                     return;
                 }
 

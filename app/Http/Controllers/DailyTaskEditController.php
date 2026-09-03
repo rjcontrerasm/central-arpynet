@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Task;
+use App\Support\GlobalUndoService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,6 +14,7 @@ class DailyTaskEditController extends Controller
     public function update(
         Request $request,
         Task $task,
+        GlobalUndoService $undo,
     ): RedirectResponse {
         $validated = $request->validate([
             'organization_id' => [
@@ -88,6 +90,10 @@ class DailyTaskEditController extends Controller
                 $timezone,
             )->setTime(17, 0);
 
+        $before = $undo->captureTask(
+            $task,
+        );
+
         $task->forceFill([
             'organization_id' =>
                 $validated['organization_id'],
@@ -127,6 +133,18 @@ class DailyTaskEditController extends Controller
             $params['priority'] =
                 $validated['priority'];
         }
+
+        $undo->rememberTaskMutation(
+            $request->user(),
+            $task,
+            $before,
+            'Tarea actualizada',
+            route(
+                'daily-ops.show',
+                $params,
+                false,
+            ),
+        );
 
         return redirect()
             ->route(

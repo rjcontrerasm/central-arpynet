@@ -409,6 +409,35 @@
         }
 
         .pills { margin-top: 2px; }
+        .lifecycle-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+            margin-top: 9px;
+        }
+
+        .lifecycle-button {
+            min-height: 36px;
+            padding: 7px 10px;
+            border-radius: 9px;
+            font: inherit;
+            font-size: 11px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .lifecycle-cancel {
+            border: 1px solid #92400e;
+            background: #451a03;
+            color: #fde68a;
+        }
+
+        .lifecycle-delete {
+            border: 1px solid #7f1d1d;
+            background: #450a0a;
+            color: #fecaca;
+        }
+
         .convert-link {
             display: inline-flex;
             margin-top: 9px;
@@ -1514,6 +1543,50 @@
                                 >
                                     Convertir tarea →
                                 </a>
+
+                                <details class="task-edit">
+                                    <summary>Más opciones</summary>
+
+                                    <div class="lifecycle-actions">
+                                        <form
+                                            method="POST"
+                                            action="{{ route(
+                                                'task-lifecycle.cancel',
+                                                $task,
+                                            ) }}"
+                                            data-confirm="¿Cancelar esta tarea? Podrás deshacer la acción."
+                                        >
+                                            @csrf
+
+                                            <button
+                                                class="lifecycle-button lifecycle-cancel"
+                                                type="submit"
+                                                data-busy-label="Cancelando…"
+                                            >
+                                                Cancelar
+                                            </button>
+                                        </form>
+
+                                        <form
+                                            method="POST"
+                                            action="{{ route(
+                                                'task-lifecycle.delete',
+                                                $task,
+                                            ) }}"
+                                            data-confirm="¿Enviar esta tarea a la papelera? Podrás deshacer la acción."
+                                        >
+                                            @csrf
+
+                                            <button
+                                                class="lifecycle-button lifecycle-delete"
+                                                type="submit"
+                                                data-busy-label="Eliminando…"
+                                            >
+                                                Eliminar
+                                            </button>
+                                        </form>
+                                    </div>
+                                </details>
 
                                 <details class="task-edit">
                                     <summary>Editar</summary>

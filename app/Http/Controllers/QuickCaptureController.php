@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Organization;
 use App\Models\Project;
 use App\Models\Task;
+use App\Support\GlobalUndoService;
 use App\Support\SmartTaskCaptureParser;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
@@ -50,6 +51,7 @@ class QuickCaptureController extends Controller
     public function store(
         Request $request,
         SmartTaskCaptureParser $parser,
+        GlobalUndoService $undo,
     ): RedirectResponse {
         $user = $request->user();
 
@@ -129,7 +131,7 @@ class QuickCaptureController extends Controller
         $dueAt = $this->dueAt($dueMode, $customDate);
         $timezone = config('app.timezone', 'America/Lima');
 
-        Task::query()->create([
+        $task = Task::query()->create([
             'organization_id' => $organizationId,
             'project_id' => $projectId,
             'title' => $title,
@@ -148,6 +150,17 @@ class QuickCaptureController extends Controller
             'source' => 'manual',
             'created_by' => $user->id,
         ]);
+
+        $undo->rememberTaskCreated(
+            $user,
+            $task,
+            'Tarea creada',
+            route(
+                'quick-capture.show',
+                [],
+                false,
+            ),
+        );
 
         $message = 'Tarea registrada correctamente.';
 

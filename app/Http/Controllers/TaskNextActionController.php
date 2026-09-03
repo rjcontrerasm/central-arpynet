@@ -3,14 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\Task;
+use App\Support\GlobalUndoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class TaskNextActionController extends Controller
 {
-    public function update(Request $request, Task $task): RedirectResponse
-    {
+    public function update(
+        Request $request,
+        Task $task,
+        GlobalUndoService $undo,
+    ): RedirectResponse {
         $validated = $request->validate([
             'next_action' => ['nullable', 'string', 'max:255'],
             'return_to' => ['required', 'in:daily,tracking,decisions'],
@@ -47,6 +51,10 @@ class TaskNextActionController extends Controller
 
         $nextAction = trim((string) ($validated['next_action'] ?? ''));
 
+        $before = $undo->captureTask(
+            $task,
+        );
+
         $task->forceFill([
             'next_action' => $nextAction !== '' ? $nextAction : null,
         ])->save();
@@ -68,6 +76,28 @@ class TaskNextActionController extends Controller
                 'priority' => $validated['priority'] ?? null,
             ])),
         };
+
+        $undo->rememberTaskMutation(
+            $request->user(),
+            $task,
+            $before,
+            'Próxima acción actualizada',
+            parse_url(
+                $url,
+                PHP_URL_PATH,
+            )
+            .(
+                parse_url(
+                    $url,
+                    PHP_URL_QUERY,
+                )
+                    ? '?'.parse_url(
+                        $url,
+                        PHP_URL_QUERY,
+                    )
+                    : ''
+            ),
+        );
 
         return redirect()
             ->to($url)

@@ -3,19 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\Task;
+use App\Support\GlobalUndoService;
 use App\Support\OperationalTaskActionService;
-use App\Support\TaskActionUndoSnapshot;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class DailyTaskActionController
-    extends Controller
+class DailyTaskActionController extends Controller
 {
     public function update(
         Request $request,
         Task $task,
-        TaskActionUndoSnapshot $undo,
+        GlobalUndoService $undo,
         OperationalTaskActionService $actions,
     ): RedirectResponse {
         $validated = $request->validate([
@@ -23,26 +22,14 @@ class DailyTaskActionController
                 'required',
                 'in:complete,start,today,tomorrow,next_week',
             ],
-            'scope' => [
-                'nullable',
-                'integer',
-            ],
-            'q' => [
-                'nullable',
-                'string',
-                'max:120',
-            ],
+            'scope' => ['nullable', 'integer'],
+            'q' => ['nullable', 'string', 'max:120'],
             'priority' => [
                 'nullable',
                 'in:critical,today,week,planned',
             ],
         ]);
 
-        /*
-         * Preview performs the task-level
-         * authorization before we store an undo
-         * snapshot or mutate anything.
-         */
         $actions->preview(
             $request->user(),
             $task,
@@ -54,9 +41,8 @@ class DailyTaskActionController
             $validated,
         );
 
-        $undo->remember(
+        $before = $undo->captureTask(
             $task,
-            $filters,
         );
 
         $result = $actions->execute(
@@ -64,6 +50,18 @@ class DailyTaskActionController
             $task,
             $validated['action'],
             confirmed: true,
+        );
+
+        $undo->rememberTaskMutation(
+            $request->user(),
+            $task,
+            $before,
+            $result['label'],
+            route(
+                'daily-ops.show',
+                $filters,
+                false,
+            ),
         );
 
         return redirect()
@@ -82,28 +80,25 @@ class DailyTaskActionController
         array $validated,
     ): array {
         $params = [];
-
-        $scope =
-            $validated['scope'] ?? null;
+        $scope = $validated['scope'] ?? null;
 
         if ($scope) {
-            $allowed =
-                DB::table(
-                    'organization_user',
+            $allowed = DB::table(
+                'organization_user',
+            )
+                ->where(
+                    'user_id',
+                    $request->user()->id,
                 )
-                    ->where(
-                        'user_id',
-                        $request->user()->id,
-                    )
-                    ->where(
-                        'organization_id',
-                        $scope,
-                    )
-                    ->where(
-                        'is_active',
-                        true,
-                    )
-                    ->exists();
+                ->where(
+                    'organization_id',
+                    $scope,
+                )
+                ->where(
+                    'is_active',
+                    true,
+                )
+                ->exists();
 
             abort_unless(
                 $allowed,
@@ -124,11 +119,10 @@ class DailyTaskActionController
             $params['q'] = $q;
         }
 
-        if (
-            ! empty(
-                $validated['priority']
-            )
-        ) {
+        if (! empty(
+            $validated['priority']
+                ?? null
+        )) {
             $params['priority'] =
                 $validated['priority'];
         }

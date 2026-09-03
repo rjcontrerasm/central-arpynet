@@ -75,6 +75,14 @@ Route::middleware('auth')->group(function (): void {
 
 Route::middleware('auth')->group(function (): void {
     Route::post(
+        '/deshacer',
+        [
+            \App\Http\Controllers\GlobalUndoController::class,
+            'restore',
+        ],
+    )->name('global-undo.restore');
+
+    Route::post(
         '/mi-dia/deshacer',
         [
             \App\Http\Controllers\DailyTaskUndoController::class,
@@ -91,6 +99,48 @@ Route::middleware('auth')->group(function (): void {
             'update',
         ],
     )->name('daily-task-edit.update');
+});
+
+Route::middleware('auth')->group(function (): void {
+    Route::post(
+        '/tareas/{task}/cancelar',
+        [
+            \App\Http\Controllers\TaskLifecycleController::class,
+            'cancel',
+        ],
+    )->name('task-lifecycle.cancel');
+
+    Route::post(
+        '/tareas/{task}/eliminar',
+        [
+            \App\Http\Controllers\TaskLifecycleController::class,
+            'delete',
+        ],
+    )->name('task-lifecycle.delete');
+
+    Route::get(
+        '/papelera',
+        [
+            \App\Http\Controllers\TaskLifecycleController::class,
+            'trash',
+        ],
+    )->name('task-lifecycle.trash');
+
+    Route::post(
+        '/papelera/tareas/{taskId}/restaurar',
+        [
+            \App\Http\Controllers\TaskLifecycleController::class,
+            'restore',
+        ],
+    )->name('task-lifecycle.restore');
+
+    Route::post(
+        '/papelera/tareas/{taskId}/eliminar-definitivamente',
+        [
+            \App\Http\Controllers\TaskLifecycleController::class,
+            'purge',
+        ],
+    )->name('task-lifecycle.purge');
 });
 
 Route::middleware('auth')->group(function (): void {

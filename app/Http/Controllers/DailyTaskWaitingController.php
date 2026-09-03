@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Task;
+use App\Support\GlobalUndoService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,6 +14,7 @@ class DailyTaskWaitingController extends Controller
     public function wait(
         Request $request,
         Task $task,
+        GlobalUndoService $undo,
     ): RedirectResponse {
         $validated = $request->validate([
             'waiting_until' => [
@@ -46,6 +48,10 @@ class DailyTaskWaitingController extends Controller
             'America/Lima',
         );
 
+        $before = $undo->captureTask(
+            $task,
+        );
+
         $task->forceFill([
             'waiting_since' => CarbonImmutable::now(
                 $timezone,
@@ -56,13 +62,27 @@ class DailyTaskWaitingController extends Controller
                 trim($validated['waiting_reason']),
         ])->save();
 
+        $filters = $this->filters(
+            $request,
+            $validated,
+        );
+
+        $undo->rememberTaskMutation(
+            $request->user(),
+            $task,
+            $before,
+            'Tarea puesta en espera',
+            route(
+                'daily-ops.show',
+                $filters,
+                false,
+            ),
+        );
+
         return redirect()
             ->route(
                 'daily-ops.show',
-                $this->filters(
-                    $request,
-                    $validated,
-                ),
+                $filters,
             )
             ->with(
                 'daily_action_success',
@@ -73,6 +93,7 @@ class DailyTaskWaitingController extends Controller
     public function resume(
         Request $request,
         Task $task,
+        GlobalUndoService $undo,
     ): RedirectResponse {
         $validated = $request->validate([
             'scope' => [
@@ -92,19 +113,37 @@ class DailyTaskWaitingController extends Controller
 
         $this->authorizeTask($request, $task);
 
+        $before = $undo->captureTask(
+            $task,
+        );
+
         $task->forceFill([
             'waiting_since' => null,
             'waiting_until' => null,
             'waiting_reason' => null,
         ])->save();
 
+        $filters = $this->filters(
+            $request,
+            $validated,
+        );
+
+        $undo->rememberTaskMutation(
+            $request->user(),
+            $task,
+            $before,
+            'Tarea reactivada',
+            route(
+                'daily-ops.show',
+                $filters,
+                false,
+            ),
+        );
+
         return redirect()
             ->route(
                 'daily-ops.show',
-                $this->filters(
-                    $request,
-                    $validated,
-                ),
+                $filters,
             )
             ->with(
                 'daily_action_success',
