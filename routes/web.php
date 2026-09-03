@@ -55,6 +55,13 @@ Route::middleware('auth')->group(function (): void {
 
 Route::middleware('auth')->group(function (): void {
     Route::get(
+        '/agenda',
+        [\App\Http\Controllers\OperationalAgendaController::class, 'show'],
+    )->name('operational-agenda.show');
+});
+
+Route::middleware('auth')->group(function (): void {
+    Route::get(
         '/mi-dia',
         [
             \App\Http\Controllers\DailyOpsController::class,

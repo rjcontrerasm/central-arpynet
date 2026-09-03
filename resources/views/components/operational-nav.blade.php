@@ -14,6 +14,7 @@
     );
 
     $secondaryLabels = [
+        'agenda' => 'Agenda',
         'tracking' => 'Seguimiento',
         'review' => 'Revisión',
         'decisions' => 'Decisiones',
@@ -270,6 +271,14 @@
         @if ($active === 'daily') aria-current="page" @endif
     >
         Mi día
+    </a>
+
+    <a
+        class="op-nav-link {{ $active === 'agenda' ? 'is-active' : '' }}"
+        href="{{ route('operational-agenda.show') }}"
+        @if ($active === 'agenda') aria-current="page" @endif
+    >
+        Agenda
     </a>
 
     <a
