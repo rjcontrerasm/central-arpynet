@@ -5,6 +5,7 @@
 @php
     $secondaryLabels = [
         'tracking' => 'Seguimiento',
+        'decisions' => 'Decisiones',
         'summary' => 'Resumen',
         'notifications' => 'Notificaciones',
         'history' => 'Historial',
@@ -260,6 +261,13 @@
                 href="{{ route('global-tracking.show') }}"
             >
                 Seguimiento
+            </a>
+
+            <a
+                class="{{ $active === 'decisions' ? 'is-active' : '' }}"
+                href="{{ route('decision-inbox.index') }}"
+            >
+                Decisiones
             </a>
 
             <a

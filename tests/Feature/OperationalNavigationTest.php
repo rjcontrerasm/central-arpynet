@@ -21,6 +21,7 @@ class OperationalNavigationTest extends TestCase
             '/servicios',
             '/vencimientos',
             '/seguimiento',
+            '/decisiones',
             '/resumen',
             '/notificaciones',
             '/historial',
@@ -49,6 +50,7 @@ class OperationalNavigationTest extends TestCase
             ->assertOk()
             ->assertSee('Más')
             ->assertSee('Seguimiento')
+            ->assertSee('Decisiones')
             ->assertSee('Resumen')
             ->assertSee('Historial');
     }

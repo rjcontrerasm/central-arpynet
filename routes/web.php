@@ -95,6 +95,16 @@ Route::middleware('auth')->group(function (): void {
 
 Route::middleware('auth')->group(function (): void {
     Route::post(
+        '/tareas/{task}/proxima-accion',
+        [
+            \App\Http\Controllers\TaskNextActionController::class,
+            'update',
+        ],
+    )->name('task-next-action.update');
+});
+
+Route::middleware('auth')->group(function (): void {
+    Route::post(
         '/mi-dia/tareas/{task}/esperar',
         [
             \App\Http\Controllers\DailyTaskWaitingController::class,
@@ -165,6 +175,24 @@ Route::middleware('auth')->group(function (): void {
             'show',
         ],
     )->name('global-tracking.show');
+});
+
+Route::middleware('auth')->group(function (): void {
+    Route::get(
+        '/decisiones',
+        [
+            \App\Http\Controllers\DecisionInboxController::class,
+            'index',
+        ],
+    )->name('decision-inbox.index');
+
+    Route::post(
+        '/decisiones/tareas/{task}/accion',
+        [
+            \App\Http\Controllers\DecisionTaskActionController::class,
+            'update',
+        ],
+    )->name('decision-task-action.update');
 });
 
 Route::middleware('auth')->group(function (): void {

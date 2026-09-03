@@ -164,6 +164,12 @@
             margin: 2px 0 26px;
         }
 
+        .decision-head-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
         .decision-grid {
             display: grid;
             gap: 9px;
@@ -514,10 +520,24 @@
         <div class="section-head">
             <h2>Decidir ahora</h2>
 
-            <span class="meta">
-                {{ $summary['counts']['decisions'] }}
-                decisiones
-            </span>
+            <div class="decision-head-actions">
+                <span class="meta">
+                    {{ $summary['counts']['decisions'] }}
+                    decisiones
+                </span>
+
+                <a
+                    class="section-link"
+                    href="{{ route(
+                        'decision-inbox.index',
+                        array_filter([
+                            'scope' => $selectedScope,
+                        ]),
+                    ) }}"
+                >
+                    Abrir bandeja →
+                </a>
+            </div>
         </div>
 
         <div class="decision-grid">

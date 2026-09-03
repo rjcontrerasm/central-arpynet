@@ -411,6 +411,46 @@
         .pills { margin-top: 2px; }
         .actions { margin-top: 9px; }
 
+        .next-action-current {
+            margin-top: 8px;
+            padding: 8px 10px;
+            border-left: 3px solid #60a5fa;
+            border-radius: 8px;
+            background: rgba(37, 99, 235, .08);
+            color: #cbd5e1;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .next-action-form {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 7px;
+            margin-top: 9px;
+        }
+
+        .next-action-form input {
+            min-width: 0;
+            min-height: 38px;
+            padding: 8px 10px;
+            border: 1px solid #334155;
+            border-radius: 9px;
+            background: #11182b;
+            color: #f8fafc;
+        }
+
+        .next-action-save {
+            min-height: 38px;
+            padding: 7px 11px;
+            border: 0;
+            border-radius: 9px;
+            background: #2563eb;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
         .actions button,
         .actions summary,
         .resume-button,
@@ -813,6 +853,12 @@
                 border-color: #cbd5e1;
             }
 
+            .next-action-current {
+                background: #eff6ff;
+                color: #334155;
+            }
+
+            .next-action-form input,
             .waiting-form input,
             .edit-field input,
             .edit-field select {
@@ -1239,6 +1285,61 @@
                                         </span>
                                     @endif
                                 </div>
+
+                                @if ($task->next_action)
+                                    <div class="next-action-current">
+                                        <strong>Siguiente:</strong>
+                                        {{ $task->next_action }}
+                                    </div>
+                                @endif
+
+                                <details class="task-edit">
+                                    <summary>
+                                        {{ $task->next_action
+                                            ? 'Cambiar próxima acción'
+                                            : 'Definir próxima acción' }}
+                                    </summary>
+
+                                    <form
+                                        class="next-action-form"
+                                        method="POST"
+                                        action="{{ route(
+                                            'task-next-action.update',
+                                            $task,
+                                        ) }}"
+                                    >
+                                        @csrf
+                                        <input type="hidden" name="return_to" value="daily">
+
+                                        @if ($selectedScope)
+                                            <input type="hidden" name="scope" value="{{ $selectedScope }}">
+                                        @endif
+
+                                        @if ($search !== '')
+                                            <input type="hidden" name="q" value="{{ $search }}">
+                                        @endif
+
+                                        @if ($selectedPriority)
+                                            <input type="hidden" name="priority" value="{{ $selectedPriority }}">
+                                        @endif
+
+                                        <input
+                                            type="text"
+                                            name="next_action"
+                                            value="{{ $task->next_action }}"
+                                            placeholder="Ej. Enviar correo al cliente"
+                                            maxlength="255"
+                                        >
+
+                                        <button
+                                            class="next-action-save"
+                                            type="submit"
+                                            data-busy-label="Guardando…"
+                                        >
+                                            Guardar
+                                        </button>
+                                    </form>
+                                </details>
 
                                 @php
                                     $quickActions = [

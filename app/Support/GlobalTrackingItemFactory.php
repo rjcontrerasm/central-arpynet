@@ -125,6 +125,7 @@ class GlobalTrackingItemFactory
                 $signals[
                     'no_next_action'
                 ],
+            'next_action' => $task->next_action,
             'url' => route(
                 'daily-ops.show',
                 ['scope' => $task->organization_id],
@@ -224,6 +225,7 @@ class GlobalTrackingItemFactory
                 blank(
                     $project->next_action,
                 ),
+            'next_action' => $project->next_action,
             'url' => url('/admin/proyectos'),
         ];
     }
@@ -278,6 +280,7 @@ class GlobalTrackingItemFactory
                 blank(
                     $order->next_action,
                 ),
+            'next_action' => $order->next_action,
             'url' => route(
                 'service-orders-ops.show',
                 ['scope' => $order->organization_id],
@@ -341,6 +344,7 @@ class GlobalTrackingItemFactory
             'stagnant' => false,
             'stagnation_days' => 0,
             'no_next_action' => false,
+            'next_action' => null,
             'url' => route(
                 'obligation-ops.show',
                 ['scope' => $occurrence->organization_id],

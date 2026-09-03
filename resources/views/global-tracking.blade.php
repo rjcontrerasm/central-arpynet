@@ -212,6 +212,66 @@
             border-color: #475569;
         }
 
+        .card-main {
+            display: block;
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .tracking-next {
+            margin-top: 11px;
+            padding-top: 10px;
+            border-top: 1px solid #334155;
+        }
+
+        .tracking-next-current {
+            margin-bottom: 7px;
+            color: #cbd5e1;
+            font-size: 11px;
+            line-height: 1.45;
+        }
+
+        .tracking-next summary {
+            cursor: pointer;
+            color: #93c5fd;
+            font-size: 11px;
+            font-weight: 800;
+            list-style: none;
+        }
+
+        .tracking-next summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .tracking-next-form {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 7px;
+            margin-top: 8px;
+        }
+
+        .tracking-next-form input {
+            min-width: 0;
+            min-height: 37px;
+            padding: 8px 9px;
+            border: 1px solid #334155;
+            border-radius: 9px;
+            background: #0f172a;
+            color: #f8fafc;
+        }
+
+        .tracking-next-form button {
+            min-height: 37px;
+            padding: 7px 10px;
+            border: 0;
+            border-radius: 9px;
+            background: #2563eb;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
         .card-head {
             align-items: start;
         }
@@ -348,6 +408,15 @@
                 color: #a16207;
             }
 
+            .tracking-next {
+                border-top-color: #e2e8f0;
+            }
+
+            .tracking-next-current {
+                color: #475569;
+            }
+
+            .tracking-next-form input,
             .search input {
                 background: #fff;
                 color: #0f172a;
@@ -598,10 +667,11 @@
 
     <div class="list">
         @forelse ($items as $item)
-            <a
-                class="card"
-                href="{{ $item['url'] }}"
-            >
+            <article class="card" data-operational-card>
+                <a
+                    class="card-main"
+                    href="{{ $item['url'] }}"
+                >
                 <div class="card-head">
                     <div>
                         <div class="title">
@@ -647,10 +717,68 @@
                     </div>
                 @endif
 
-                <div class="go">
-                    Abrir módulo →
-                </div>
-            </a>
+                    <div class="go">
+                        Abrir módulo →
+                    </div>
+                </a>
+
+                @if ($item['type'] === 'task')
+                    <div class="tracking-next">
+                        @if ($item['next_action'])
+                            <div class="tracking-next-current">
+                                <strong>Siguiente:</strong>
+                                {{ $item['next_action'] }}
+                            </div>
+                        @endif
+
+                        <details>
+                            <summary>
+                                {{ $item['next_action']
+                                    ? 'Cambiar próxima acción'
+                                    : 'Definir próxima acción' }}
+                            </summary>
+
+                            <form
+                                class="tracking-next-form"
+                                method="POST"
+                                action="{{ route(
+                                    'task-next-action.update',
+                                    $item['id'],
+                                ) }}"
+                            >
+                                @csrf
+                                <input type="hidden" name="return_to" value="tracking">
+
+                                @if ($selectedScope)
+                                    <input type="hidden" name="scope" value="{{ $selectedScope }}">
+                                @endif
+
+                                <input type="hidden" name="type" value="{{ $type }}">
+                                <input type="hidden" name="focus" value="{{ $focus }}">
+
+                                @if ($search !== '')
+                                    <input type="hidden" name="q" value="{{ $search }}">
+                                @endif
+
+                                <input
+                                    type="text"
+                                    name="next_action"
+                                    value="{{ $item['next_action'] }}"
+                                    placeholder="Próximo paso concreto"
+                                    maxlength="255"
+                                >
+
+                                <button
+                                    type="submit"
+                                    data-busy-label="Guardando…"
+                                >
+                                    Guardar
+                                </button>
+                            </form>
+                        </details>
+                    </div>
+                @endif
+            </article>
         @empty
             <div class="empty">
                 No hay elementos que coincidan con estos filtros.
