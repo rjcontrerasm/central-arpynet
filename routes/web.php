@@ -351,3 +351,45 @@ Route::middleware('auth')
         ],
     )
     ->name('audit-history.index');
+
+Route::middleware('auth')->group(function (): void {
+    Route::get(
+        '/automatizaciones',
+        [
+            \App\Http\Controllers\AutomationCenterController::class,
+            'index',
+        ],
+    )->name('automation-center.index');
+
+    Route::post(
+        '/automatizaciones',
+        [
+            \App\Http\Controllers\AutomationCenterController::class,
+            'store',
+        ],
+    )->name('automation-center.store');
+
+    Route::post(
+        '/automatizaciones/{automationRule}/activar',
+        [
+            \App\Http\Controllers\AutomationCenterController::class,
+            'toggle',
+        ],
+    )->name('automation-center.toggle');
+
+    Route::post(
+        '/automatizaciones/{automationRule}/vista-previa',
+        [
+            \App\Http\Controllers\AutomationCenterController::class,
+            'preview',
+        ],
+    )->name('automation-center.preview');
+
+    Route::post(
+        '/automatizaciones/{automationRule}/ejecutar',
+        [
+            \App\Http\Controllers\AutomationCenterController::class,
+            'run',
+        ],
+    )->name('automation-center.run');
+});

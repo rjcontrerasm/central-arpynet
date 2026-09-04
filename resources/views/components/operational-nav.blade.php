@@ -21,6 +21,7 @@
         'decisions' => 'Decisiones',
         'summary' => 'Resumen',
         'notifications' => 'Notificaciones',
+        'automations' => 'Automatizaciones',
         'history' => 'Historial',
         'trash' => 'Papelera',
     ];
@@ -366,6 +367,13 @@
                 href="{{ route('notification-center.index') }}"
             >
                 Notificaciones
+            </a>
+
+            <a
+                class="{{ $active === 'automations' ? 'is-active' : '' }}"
+                href="{{ route('automation-center.index') }}"
+            >
+                Automatizaciones
             </a>
 
             <a
