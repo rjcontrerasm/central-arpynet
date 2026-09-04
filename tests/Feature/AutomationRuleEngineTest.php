@@ -26,15 +26,18 @@ class AutomationRuleEngineTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_catalog_is_closed_and_execution_is_disabled(): void
+    public function test_catalog_is_closed_and_manual_execution_is_limited(): void
     {
         $contract = app(AutomationRuleCatalog::class)->contract();
 
         $this->assertFalse($contract['public_api']);
         $this->assertFalse($contract['network_calls']);
         $this->assertFalse($contract['delete_actions']);
-        $this->assertFalse($contract['execution_enabled']);
+        $this->assertTrue($contract['execution_enabled']);
+        $this->assertTrue($contract['manual_execution_enabled']);
         $this->assertFalse($contract['scheduler_enabled']);
+        $this->assertFalse($contract['external_channels']);
+        $this->assertFalse($contract['subject_mutations_enabled']);
         $this->assertTrue($contract['preview_read_only']);
     }
 

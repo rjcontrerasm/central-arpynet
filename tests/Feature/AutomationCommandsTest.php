@@ -20,8 +20,11 @@ class AutomationCommandsTest extends TestCase
         $output = Artisan::output();
 
         $this->assertSame(0, $exitCode);
-        $this->assertStringContainsString('"execution_enabled": false', $output);
+        $this->assertStringContainsString('"execution_enabled": true', $output);
+        $this->assertStringContainsString('"manual_execution_enabled": true', $output);
         $this->assertStringContainsString('"scheduler_enabled": false', $output);
+        $this->assertStringContainsString('"external_channels": false', $output);
+        $this->assertStringContainsString('"subject_mutations_enabled": false', $output);
         $this->assertStringContainsString('"preview_read_only": true', $output);
     }
 
