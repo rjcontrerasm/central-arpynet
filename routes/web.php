@@ -392,4 +392,20 @@ Route::middleware('auth')->group(function (): void {
             'run',
         ],
     )->name('automation-center.run');
+
+    Route::post(
+        '/automatizaciones/ejecuciones/{automationRun}/confirmar',
+        [
+            \App\Http\Controllers\AutomationCenterController::class,
+            'confirm',
+        ],
+    )->name('automation-center.confirm');
+
+    Route::post(
+        '/automatizaciones/ejecuciones/{automationRun}/rechazar',
+        [
+            \App\Http\Controllers\AutomationCenterController::class,
+            'reject',
+        ],
+    )->name('automation-center.reject');
 });

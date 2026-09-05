@@ -188,6 +188,39 @@
     </div>
 
     <section class="automation-card" style="margin-top:14px">
+        <h2>Confirmaciones pendientes</h2>
+        @forelse($pendingConfirmations as $run)
+            <div class="automation-run-row">
+                <div>
+                    <strong>{{ $run->rule?->name ?? 'Regla' }}</strong>
+                    <div class="automation-meta">
+                        {{ data_get($run->payload,'title',$run->subject_type.' #'.$run->subject_id) }}
+                    </div>
+                </div>
+                <div class="automation-actions">
+                    @if($run->rule?->action_key === 'waiting.return_to_daily')
+                        <form method="POST" action="{{ route('automation-center.confirm',$run) }}">
+                            @csrf
+                            <button class="automation-button" type="submit" data-busy-label="Confirmando…">Confirmar</button>
+                        </form>
+                    @else
+                        <span class="automation-pill">Sin ejecución segura todavía</span>
+                    @endif
+                    <form method="POST" action="{{ route('automation-center.reject',$run) }}">
+                        @csrf
+                        <button class="automation-button secondary" type="submit">Rechazar</button>
+                    </form>
+                </div>
+                <div class="automation-meta">
+                    {{ $run->evaluated_at?->format('d/m/Y H:i') }}
+                </div>
+            </div>
+        @empty
+            <div class="automation-empty">No hay decisiones pendientes.</div>
+        @endforelse
+    </section>
+
+    <section class="automation-card" style="margin-top:14px">
         <h2>Ejecuciones recientes</h2>
         @forelse($recentRuns as $run)
             <div class="automation-run-row">

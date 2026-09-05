@@ -35,9 +35,10 @@ class AutomationRuleEngineTest extends TestCase
         $this->assertFalse($contract['delete_actions']);
         $this->assertTrue($contract['execution_enabled']);
         $this->assertTrue($contract['manual_execution_enabled']);
-        $this->assertFalse($contract['scheduler_enabled']);
+        $this->assertTrue($contract['scheduler_enabled']);
         $this->assertFalse($contract['external_channels']);
         $this->assertFalse($contract['subject_mutations_enabled']);
+        $this->assertTrue($contract['confirmed_subject_mutations_enabled']);
         $this->assertTrue($contract['preview_read_only']);
     }
 

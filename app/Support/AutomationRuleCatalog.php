@@ -132,8 +132,9 @@ class AutomationRuleCatalog
                         'preview',
                         'confirmation',
                     ],
-                    false,
                     true,
+                    true,
+                    'confirmed_task_mutation',
                 ),
         ];
     }
@@ -214,7 +215,7 @@ class AutomationRuleCatalog
     {
         return [
             'contract' =>
-                'central-automation-contract-v2',
+                'central-automation-contract-v3',
             'public_api' => false,
             'network_calls' => false,
             'external_channels' => false,
@@ -223,7 +224,7 @@ class AutomationRuleCatalog
             'bulk_execution' => false,
             'bounded_candidates_per_rule' =>
                 100,
-            'scheduler_enabled' => false,
+            'scheduler_enabled' => true,
             'execution_enabled' => true,
             'manual_execution_enabled' =>
                 true,
@@ -231,9 +232,11 @@ class AutomationRuleCatalog
                 'database_notifications_only',
             'subject_mutations_enabled' =>
                 false,
+            'confirmed_subject_mutations_enabled' =>
+                true,
             'preview_read_only' => true,
             'confirmation_execution_enabled' =>
-                false,
+                true,
             'modes' => self::MODES,
             'automatic_internal_actions' =>
                 self::AUTOMATIC_INTERNAL_ACTIONS,

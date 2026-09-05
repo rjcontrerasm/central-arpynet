@@ -210,16 +210,37 @@ class AutomationRuleExecutor
             )
             ->orderBy('id')
             ->get()
-            ->map(
-                fn (
-                    AutomationRule $rule,
-                ): array =>
-                    $this->runRule(
+            ->map(function (
+                AutomationRule $rule,
+            ) use ($limit, $now): array {
+                try {
+                    return $this->runRule(
                         $rule,
                         $limit,
                         $now,
-                    ),
-            );
+                    );
+                } catch (Throwable $e) {
+                    report($e);
+
+                    return [
+                        'rule_id' => $rule->id,
+                        'name' => $rule->name,
+                        'mode' => $rule->mode,
+                        'matches' => 0,
+                        'executed' => 0,
+                        'pending_confirmation' => 0,
+                        'previewed' => 0,
+                        'blocked' => 0,
+                        'failed' => 1,
+                        'duplicates' => 0,
+                        'rule_error' => mb_substr(
+                            $e->getMessage(),
+                            0,
+                            2000,
+                        ),
+                    ];
+                }
+            });
     }
 
     private function executeAutomatic(

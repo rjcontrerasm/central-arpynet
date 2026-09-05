@@ -292,3 +292,13 @@ Schedule::command('alerts:whatsapp-critical')
     ->everyFifteenMinutes()
     ->timezone(config('app.timezone', 'America/Lima'))
     ->withoutOverlapping();
+
+Schedule::command('central:automation-run --limit=100')
+    ->everyFifteenMinutes()
+    ->timezone(
+        config(
+            'app.timezone',
+            'America/Lima',
+        ),
+    )
+    ->withoutOverlapping();

@@ -22,9 +22,10 @@ class AutomationCommandsTest extends TestCase
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString('"execution_enabled": true', $output);
         $this->assertStringContainsString('"manual_execution_enabled": true', $output);
-        $this->assertStringContainsString('"scheduler_enabled": false', $output);
+        $this->assertStringContainsString('"scheduler_enabled": true', $output);
         $this->assertStringContainsString('"external_channels": false', $output);
         $this->assertStringContainsString('"subject_mutations_enabled": false', $output);
+        $this->assertStringContainsString('"confirmed_subject_mutations_enabled": true', $output);
         $this->assertStringContainsString('"preview_read_only": true', $output);
     }
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AutomationRule;
 use App\Models\AutomationRuleRun;
+use App\Support\AutomationConfirmationService;
 use App\Support\AutomationRuleCatalog;
 use App\Support\AutomationRuleEngine;
 use App\Support\AutomationRuleExecutor;
@@ -56,6 +57,14 @@ class AutomationCenterController extends Controller
                 return $rule;
             });
 
+        $pendingConfirmations = AutomationRuleRun::query()
+            ->with('rule')
+            ->whereIn('organization_id', $organizationIds)
+            ->where('outcome', 'pending_confirmation')
+            ->latest('id')
+            ->limit(30)
+            ->get();
+
         $recentRuns = AutomationRuleRun::query()
             ->with('rule')
             ->whereIn('organization_id', $organizationIds)
@@ -70,14 +79,19 @@ class AutomationCenterController extends Controller
                 ->where('mode', 'automatic')
                 ->where('is_active', true)
                 ->count(),
-            'pending_confirmation' => $recentRuns
-                ->where('outcome', 'pending_confirmation')
-                ->count(),
+            'pending_confirmation' =>
+                $pendingConfirmations->count(),
+            'executed_recent' =>
+                $recentRuns->where('outcome', 'executed')->count(),
+            'failed_recent' =>
+                $recentRuns->where('outcome', 'failed')->count(),
         ];
 
         return view('automation-center', [
             'organizations' => $organizations,
             'rules' => $rules,
+            'pendingConfirmations' =>
+                $pendingConfirmations,
             'recentRuns' => $recentRuns,
             'counts' => $counts,
             'triggers' => $catalog->triggers(),
@@ -250,6 +264,42 @@ class AutomationCenterController extends Controller
         return redirect()
             ->route('automation-center.index')
             ->with('automation_run', $result);
+    }
+
+    public function confirm(
+        Request $request,
+        AutomationRuleRun $automationRun,
+        AutomationConfirmationService $confirmations,
+    ): RedirectResponse {
+        $result = $confirmations->confirm(
+            $request->user(),
+            $automationRun,
+        );
+
+        return redirect()
+            ->route('automation-center.index')
+            ->with(
+                'automation_success',
+                $result['message'],
+            );
+    }
+
+    public function reject(
+        Request $request,
+        AutomationRuleRun $automationRun,
+        AutomationConfirmationService $confirmations,
+    ): RedirectResponse {
+        $result = $confirmations->reject(
+            $request->user(),
+            $automationRun,
+        );
+
+        return redirect()
+            ->route('automation-center.index')
+            ->with(
+                'automation_success',
+                $result['message'],
+            );
     }
 
     private function authorizeOrganization(
