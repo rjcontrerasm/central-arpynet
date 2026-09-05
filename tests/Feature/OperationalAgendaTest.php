@@ -46,6 +46,72 @@ class OperationalAgendaTest extends TestCase
         $this->actingAs($user)->get('/agenda?date=2026-09-03')->assertOk()->assertSee('Agenda')->assertSee('Reunión externa')->assertSee('Preparar propuesta')->assertSee('Seguimiento comercial')->assertSee('Renovar dominio')->assertSee('Google Calendar conectado');
     }
 
+    public function test_today_includes_open_overdue_items(): void
+    {
+        CarbonImmutable::setTestNow('2026-09-05 10:00:00');
+        [$user,$organization]=$this->context();
+
+        Task::query()->create([
+            'organization_id'=>$organization->id,
+            'title'=>'Tarea atrasada agenda',
+            'status'=>'pending',
+            'urgency'=>'normal',
+            'impact'=>'normal',
+            'due_at'=>'2026-09-04 17:00:00',
+            'created_by'=>$user->id,
+        ]);
+
+        Task::query()->create([
+            'organization_id'=>$organization->id,
+            'title'=>'Seguimiento atrasado agenda',
+            'status'=>'waiting',
+            'urgency'=>'normal',
+            'impact'=>'normal',
+            'waiting_until'=>'2026-09-04 18:00:00',
+            'created_by'=>$user->id,
+        ]);
+
+        $reader=Mockery::mock(GoogleCalendarAgendaReader::class);
+        $reader->shouldReceive('eventsFor')->once()->andReturn([
+            'connected'=>true,'status'=>'ok','error'=>null,'events'=>[],
+        ]);
+        $this->app->instance(GoogleCalendarAgendaReader::class,$reader);
+
+        $this->actingAs($user)
+            ->get('/agenda?date=2026-09-05')
+            ->assertOk()
+            ->assertSee('Pendientes vencidos')
+            ->assertSee('Tarea atrasada agenda')
+            ->assertSee('Seguimiento atrasado agenda');
+    }
+
+    public function test_future_day_does_not_carry_overdue_backlog(): void
+    {
+        CarbonImmutable::setTestNow('2026-09-05 10:00:00');
+        [$user,$organization]=$this->context();
+
+        Task::query()->create([
+            'organization_id'=>$organization->id,
+            'title'=>'No arrastrar al futuro',
+            'status'=>'pending',
+            'urgency'=>'normal',
+            'impact'=>'normal',
+            'due_at'=>'2026-09-04 17:00:00',
+            'created_by'=>$user->id,
+        ]);
+
+        $reader=Mockery::mock(GoogleCalendarAgendaReader::class);
+        $reader->shouldReceive('eventsFor')->once()->andReturn([
+            'connected'=>true,'status'=>'ok','error'=>null,'events'=>[],
+        ]);
+        $this->app->instance(GoogleCalendarAgendaReader::class,$reader);
+
+        $this->actingAs($user)
+            ->get('/agenda?date=2026-09-06')
+            ->assertOk()
+            ->assertDontSee('No arrastrar al futuro');
+    }
+
     public function test_foreign_scope_is_forbidden(): void
     {
         [$user]=$this->context();
