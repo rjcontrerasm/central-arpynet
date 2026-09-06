@@ -15,6 +15,7 @@
 
     $secondaryLabels = [
         'agenda' => 'Agenda',
+        'overview360' => 'Vista 360',
         'tracking' => 'Seguimiento',
         'review' => 'Revisión',
         'weekly' => 'Revisión semanal',
@@ -327,6 +328,12 @@
                 Vencimientos
             </a>
 
+            <a
+                class="{{ $active === 'overview360' ? 'is-active' : '' }}"
+                href="{{ route('operational-360.show') }}"
+            >
+                Vista 360
+            </a>
             <a
                 class="{{ $active === 'tracking' ? 'is-active' : '' }}"
                 href="{{ route('global-tracking.show') }}"

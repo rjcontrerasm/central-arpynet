@@ -261,6 +261,15 @@ Route::middleware('auth')->group(function (): void {
 
 Route::middleware('auth')->group(function (): void {
     Route::get(
+        '/360',
+        [
+            \App\Http\Controllers\Operational360Controller::class,
+            'show',
+        ],
+    )->name('operational-360.show');
+});
+Route::middleware('auth')->group(function (): void {
+    Route::get(
         '/seguimiento',
         [
             \App\Http\Controllers\GlobalTrackingController::class,
