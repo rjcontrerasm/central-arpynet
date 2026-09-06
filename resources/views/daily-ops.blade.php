@@ -438,9 +438,26 @@
             color: #fecaca;
         }
 
+        .convert-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 9px;
+        }
+
+        .recurrence-note {
+            margin-top: 8px;
+            padding: 8px 10px;
+            border-left: 3px solid #a78bfa;
+            border-radius: 8px;
+            background: rgba(124, 58, 237, .08);
+            color: #ddd6fe;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
         .convert-link {
             display: inline-flex;
-            margin-top: 9px;
             color: #93c5fd;
             font-size: 11px;
             font-weight: 800;
@@ -896,6 +913,11 @@
                 color: #334155;
             }
 
+            .recurrence-note {
+                background: #f5f3ff;
+                color: #5b21b6;
+            }
+
             .next-action-form input,
             .waiting-form input,
             .edit-field input,
@@ -1305,6 +1327,12 @@
                                         }}
                                     </span>
 
+                                    @if ($task->recurrence_label)
+                                        <span class="pill week">
+                                            ↻ {{ $task->recurrence_label }}
+                                        </span>
+                                    @endif
+
                                     @if ($task->status === 'in_progress')
                                         <span class="pill today">
                                             En curso
@@ -1328,6 +1356,20 @@
                                     <div class="next-action-current">
                                         <strong>Siguiente:</strong>
                                         {{ $task->next_action }}
+                                    </div>
+                                @endif
+
+                                @if (
+                                    $task->recurrence_label
+                                    && $task->recurrence_next_date
+                                )
+                                    <div class="recurrence-note">
+                                        <strong>Recurrente:</strong>
+                                        {{ $task->recurrence_label }}
+                                        · próxima
+                                        {{ $task
+                                            ->recurrence_next_date
+                                            ->format('d/m/Y') }}
                                     </div>
                                 @endif
 
@@ -1534,15 +1576,42 @@
                                     </form>
                                 </details>
 
-                                <a
-                                    class="convert-link"
-                                    href="{{ route(
-                                        'task-conversion.show',
-                                        $task,
-                                    ) }}"
-                                >
-                                    Convertir tarea →
-                                </a>
+                                <div class="convert-links">
+                                    @if ($task->recurrence_label)
+                                        <a
+                                            class="convert-link"
+                                            href="{{ url(
+                                                '/admin/tareas-recurrentes',
+                                            ) }}"
+                                        >
+                                            Administrar recurrencia →
+                                        </a>
+                                    @else
+                                        <a
+                                            class="convert-link"
+                                            href="{{ route(
+                                                'task-conversion.show',
+                                                [
+                                                    $task,
+                                                    'target' =>
+                                                        'recurring',
+                                                ],
+                                            ) }}"
+                                        >
+                                            ↻ Hacer recurrente
+                                        </a>
+                                    @endif
+
+                                    <a
+                                        class="convert-link"
+                                        href="{{ route(
+                                            'task-conversion.show',
+                                            $task,
+                                        ) }}"
+                                    >
+                                        Más conversiones →
+                                    </a>
+                                </div>
 
                                 <details class="task-edit">
                                     <summary>Más opciones</summary>

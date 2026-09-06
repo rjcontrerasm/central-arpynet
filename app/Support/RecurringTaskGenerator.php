@@ -269,6 +269,25 @@ class RecurringTaskGenerator
         );
     }
 
+    public function nextScheduledDate(
+        RecurringTaskRule $rule,
+        CarbonInterface $scheduledFor,
+    ): CarbonImmutable {
+        $timezone = config(
+            'app.timezone',
+            'America/Lima',
+        );
+
+        $date = CarbonImmutable::parse(
+            $scheduledFor->toDateString(),
+            $timezone,
+        )->startOfDay();
+
+        return $this->next(
+            $date,
+            $rule->frequency,
+        );
+    }
     private function next(
         CarbonImmutable $date,
         string $frequency,

@@ -57,10 +57,10 @@
         <label>
             Convertir en
             <select name="target" id="conversion-target" required>
-                <option value="project">Proyecto</option>
-                <option value="service">Servicio / oportunidad</option>
-                <option value="recurring">Tarea recurrente</option>
-                <option value="waiting">Seguimiento en espera</option>
+                <option value="project" @selected($selectedTarget === 'project')>Proyecto</option>
+                <option value="service" @selected($selectedTarget === 'service')>Servicio / oportunidad</option>
+                <option value="recurring" @selected($selectedTarget === 'recurring')>Tarea recurrente</option>
+                <option value="waiting" @selected($selectedTarget === 'waiting')>Seguimiento en espera</option>
             </select>
         </label>
 
@@ -81,11 +81,69 @@
                 Frecuencia
                 <select name="frequency">
                     @foreach ($frequencies as $value => $label)
-                        <option value="{{ $value }}">{{ $label }}</option>
+                        <option
+                            value="{{ $value }}"
+                            @selected(
+                                old(
+                                    'frequency',
+                                    $selectedFrequency,
+                                ) === $value
+                            )
+                        >
+                            {{ $label }}
+                        </option>
                     @endforeach
                 </select>
             </label>
-            <div class="hint">Empieza en la siguiente ocurrencia; la tarea actual se conserva.</div>
+
+            <label>
+                Próxima fecha
+                <input
+                    type="date"
+                    name="anchor_date"
+                    value="{{ old(
+                        'anchor_date',
+                        $suggestedAnchor->format('Y-m-d'),
+                    ) }}"
+                >
+            </label>
+
+            <label>
+                Crear con anticipación
+                <input
+                    type="number"
+                    name="create_days_before"
+                    value="{{ old(
+                        'create_days_before',
+                        0,
+                    ) }}"
+                    min="0"
+                    max="90"
+                >
+                <span class="hint">
+                    0 = crear el mismo día. Por ejemplo,
+                    3 crea la tarea tres días antes.
+                </span>
+            </label>
+
+            <label>
+                Hora de vencimiento
+                <input
+                    type="time"
+                    name="due_time"
+                    value="{{ old(
+                        'due_time',
+                        $task->due_at?->format('H:i')
+                            ?? '17:00',
+                    ) }}"
+                >
+            </label>
+
+            <div class="hint">
+                La tarea actual se conserva como la
+                ocurrencia de origen. CENTRAL generará
+                las siguientes sin duplicarlas.
+            </div>
         </div>
 
         <div id="waiting-fields" hidden>

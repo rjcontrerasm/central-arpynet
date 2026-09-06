@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Task extends Model
@@ -185,6 +186,13 @@ class Task extends Model
         return $this->hasMany(Task::class, 'parent_task_id');
     }
 
+    public function recurringRun(): HasOne
+    {
+        return $this->hasOne(
+            RecurringTaskRun::class,
+            'task_id',
+        );
+    }
     public function assignee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');

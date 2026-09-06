@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Organization;
+use App\Models\RecurringTaskRule;
+use App\Models\RecurringTaskRun;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -49,6 +51,102 @@ class DailyOpsTest extends TestCase
             ->assertSee('Tarea visible');
     }
 
+    public function test_mi_dia_shows_recurring_cycle_and_next_occurrence(): void
+    {
+        \Carbon\CarbonImmutable::setTestNow(
+            '2026-09-06 10:00:00',
+        );
+
+        [$user, $organization] =
+            $this->context();
+
+        $task = Task::query()->create([
+            'organization_id' =>
+                $organization->id,
+            'title' =>
+                'Enviar consumos de luz y agua a Noemi',
+            'status' => 'pending',
+            'urgency' => 'normal',
+            'impact' => 'normal',
+            'due_at' => '2026-09-05 17:00:00',
+            'created_by' => $user->id,
+        ]);
+
+        $rule = RecurringTaskRule::withoutEvents(
+            fn () => RecurringTaskRule::query()
+                ->create([
+                    'organization_id' =>
+                        $organization->id,
+                    'title' =>
+                        'Enviar consumos de luz y agua a Noemi',
+                    'frequency' => 'monthly',
+                    'anchor_date' =>
+                        '2026-09-05',
+                    'create_days_before' => 3,
+                    'due_time' => '17:00',
+                    'urgency' => 'normal',
+                    'impact' => 'normal',
+                    'is_active' => true,
+                    'assigned_to' => $user->id,
+                    'created_by' => $user->id,
+                ]),
+        );
+
+        RecurringTaskRun::query()->create([
+            'recurring_task_rule_id' =>
+                $rule->id,
+            'organization_id' =>
+                $organization->id,
+            'scheduled_for' =>
+                '2026-09-05',
+            'task_id' => $task->id,
+            'generated_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->get('/mi-dia')
+            ->assertOk()
+            ->assertSee(
+                'Enviar consumos de luz y agua a Noemi',
+            )
+            ->assertSee('Mensual')
+            ->assertSee('próxima')
+            ->assertSee('05/10/2026')
+            ->assertSee(
+                'Administrar recurrencia',
+            );
+    }
+
+    public function test_normal_task_offers_direct_recurring_conversion(): void
+    {
+        [$user, $organization] =
+            $this->context();
+
+        $task = Task::query()->create([
+            'organization_id' =>
+                $organization->id,
+            'title' =>
+                'Tarea mensual por convertir',
+            'status' => 'pending',
+            'urgency' => 'normal',
+            'impact' => 'normal',
+            'due_at' => now(),
+            'created_by' => $user->id,
+        ]);
+
+        $this->actingAs($user)
+            ->get('/mi-dia')
+            ->assertOk()
+            ->assertSee(
+                'Tarea mensual por convertir',
+            )
+            ->assertSee('Hacer recurrente')
+            ->assertSee(
+                '/tareas/'.$task->id
+                .'/convertir?target=recurring',
+                false,
+            );
+    }
     public function test_foreign_scope_task_is_hidden(): void
     {
         [$user] = $this->context();

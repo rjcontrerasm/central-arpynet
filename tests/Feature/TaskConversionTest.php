@@ -62,7 +62,7 @@ class TaskConversionTest extends TestCase
         $this->assertSame('service:'.$service->id, $task->fresh()->external_id);
     }
 
-    public function test_recurring_conversion_starts_next_occurrence(): void
+    public function test_recurring_conversion_uses_explicit_next_occurrence_and_links_source_task(): void
     {
         CarbonImmutable::setTestNow('2026-09-02 10:00:00');
 
@@ -71,15 +71,102 @@ class TaskConversionTest extends TestCase
         $this->actingAs($user)
             ->post("/tareas/{$task->id}/convertir", [
                 'target' => 'recurring',
-                'frequency' => 'weekly',
+                'frequency' => 'monthly',
+                'anchor_date' => '2026-10-05',
+                'create_days_before' => 3,
+                'due_time' => '17:00',
             ])
             ->assertRedirect('/mi-dia');
 
-        $rule = RecurringTaskRule::query()->where('title', $task->title)->firstOrFail();
+        $rule = RecurringTaskRule::query()
+            ->where('title', $task->title)
+            ->firstOrFail();
 
-        $this->assertSame('2026-09-09', $rule->anchor_date?->format('Y-m-d'));
-        $this->assertSame('pending', $task->fresh()->status);
-        $this->assertDatabaseCount('recurring_task_runs', 0);
+        $this->assertSame(
+            '2026-10-05',
+            $rule->anchor_date?->format('Y-m-d'),
+        );
+        $this->assertSame(
+            3,
+            $rule->create_days_before,
+        );
+        $this->assertSame(
+            'monthly',
+            $rule->frequency,
+        );
+        $this->assertSame(
+            'pending',
+            $task->fresh()->status,
+        );
+
+        $this->assertDatabaseHas(
+            'recurring_task_runs',
+            [
+                'recurring_task_rule_id' =>
+                    $rule->id,
+                'task_id' => $task->id,
+            ],
+        );
+    }
+
+    public function test_recurring_conversion_can_generate_next_task_with_anticipation_without_duplicate(): void
+    {
+        CarbonImmutable::setTestNow('2026-09-02 10:00:00');
+
+        [$user, , $task] = $this->context();
+
+        $payload = [
+            'target' => 'recurring',
+            'frequency' => 'monthly',
+            'anchor_date' => '2026-09-09',
+            'create_days_before' => 7,
+            'due_time' => '17:00',
+        ];
+
+        $this->actingAs($user)
+            ->post(
+                "/tareas/{$task->id}/convertir",
+                $payload,
+            )
+            ->assertRedirect('/mi-dia');
+
+        $rule = RecurringTaskRule::query()
+            ->where('title', $task->title)
+            ->firstOrFail();
+
+        $externalId =
+            'rule:'.$rule->id
+            .':2026-09-09';
+
+        $this->assertDatabaseHas(
+            'tasks',
+            [
+                'organization_id' =>
+                    $task->organization_id,
+                'title' => $task->title,
+                'source' => 'recurring',
+                'external_system' =>
+                    'central_recurring_task',
+                'external_id' => $externalId,
+            ],
+        );
+
+        app(
+            \App\Support\RecurringTaskGenerator::class,
+        )->generateFor(
+            $rule->fresh(),
+            now(),
+        );
+
+        $this->assertSame(
+            1,
+            Task::query()
+                ->where(
+                    'external_id',
+                    $externalId,
+                )
+                ->count(),
+        );
     }
 
     public function test_waiting_conversion_moves_due_date_to_followup(): void

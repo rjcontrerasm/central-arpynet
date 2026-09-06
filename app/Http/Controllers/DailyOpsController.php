@@ -6,9 +6,11 @@ use App\Models\Incident;
 use App\Models\ObligationOccurrence;
 use App\Models\Organization;
 use App\Models\Project;
+use App\Models\RecurringTaskRule;
 use App\Models\Task;
 use App\Support\DailyTaskPriority;
 use App\Support\GlobalTrackingItemFactory;
+use App\Support\RecurringTaskGenerator;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -17,7 +19,10 @@ use Illuminate\View\View;
 
 class DailyOpsController extends Controller
 {
-    public function show(Request $request): View
+    public function show(
+        Request $request,
+        RecurringTaskGenerator $recurringGenerator,
+    ): View
     {
         $validated = $request->validate([
             'scope' => [
@@ -77,7 +82,10 @@ class DailyOpsController extends Controller
         $weekEnd = $now->addDays(7)->endOfDay();
 
         $tasksQuery = Task::query()
-            ->with('organization')
+            ->with([
+                'organization',
+                'recurringRun.rule',
+            ])
             ->whereIn(
                 'organization_id',
                 $organizationIds,
@@ -110,7 +118,10 @@ class DailyOpsController extends Controller
             ->get();
 
         $tasks->each(
-            function (Task $task) use ($now): void {
+            function (Task $task) use (
+                $now,
+                $recurringGenerator,
+            ): void {
                 $score = DailyTaskPriority::score(
                     $task,
                     $now,
@@ -135,6 +146,37 @@ class DailyOpsController extends Controller
                     'display_priority_label',
                     DailyTaskPriority::label($band),
                 );
+
+                $run = $task->recurringRun;
+                $rule = $run?->rule;
+
+                if ($rule && $run?->scheduled_for) {
+                    $task->setAttribute(
+                        'recurrence_label',
+                        RecurringTaskRule::frequencyOptions()[
+                            $rule->frequency
+                        ] ?? $rule->frequency,
+                    );
+
+                    $task->setAttribute(
+                        'recurrence_next_date',
+                        $recurringGenerator
+                            ->nextScheduledDate(
+                                $rule,
+                                $run->scheduled_for,
+                            ),
+                    );
+                } else {
+                    $task->setAttribute(
+                        'recurrence_label',
+                        null,
+                    );
+
+                    $task->setAttribute(
+                        'recurrence_next_date',
+                        null,
+                    );
+                }
             },
         );
 

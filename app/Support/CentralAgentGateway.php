@@ -18,6 +18,8 @@ class CentralAgentGateway
 {
     public function __construct(
         private readonly OperationalTaskActionService $actions,
+        private readonly ProjectActionProposalService $projectActions,
+        private readonly ServiceOrderActionProposalService $serviceActions,
     ) {
     }
 
@@ -28,7 +30,7 @@ class CentralAgentGateway
     public function contract(): array
     {
         return [
-            'contract' => 'central-agent-contract-v2',
+            'contract' => 'central-agent-contract-v3',
             'scope' => [
                 'task',
                 'project',
@@ -43,7 +45,9 @@ class CentralAgentGateway
                 'task.read',
                 'task.action.preview',
                 'project.read',
+                'project.action.preview',
                 'service_order.read',
+                'service_order.action.preview',
                 'organization.operational_context.read',
             ],
             'blocked_operations' => [
@@ -55,7 +59,11 @@ class CentralAgentGateway
                 'entity.bulk',
                 'external.network',
             ],
-            'action_catalog' => $this->actions->catalog(),
+            'action_catalog' => [
+                'task' => $this->actions->catalog(),
+                'project' => $this->projectActions->catalog(),
+                'service_order' => $this->serviceActions->catalog(),
+            ],
         ];
     }
 
@@ -407,6 +415,33 @@ class CentralAgentGateway
         ];
     }
 
+    public function previewProjectAction(
+        User $actor,
+        Project $project,
+        string $action,
+        array $payload = [],
+    ): array {
+        return $this->projectActions->preview(
+            $actor,
+            $project,
+            $action,
+            $payload,
+        );
+    }
+
+    public function previewServiceOrderAction(
+        User $actor,
+        ServiceOrder $order,
+        string $action,
+        array $payload = [],
+    ): array {
+        return $this->serviceActions->preview(
+            $actor,
+            $order,
+            $action,
+            $payload,
+        );
+    }
     public function previewTaskAction(
         User $actor,
         Task $task,

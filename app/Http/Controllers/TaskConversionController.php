@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Client;
 use App\Models\Project;
 use App\Models\RecurringTaskRule;
+use App\Models\RecurringTaskRun;
 use App\Models\ServiceOrder;
 use App\Models\Task;
 use App\Support\GlobalUndoService;
+use App\Support\RecurringTaskGenerator;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,13 +38,60 @@ class TaskConversionController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
+        $frequencies =
+            RecurringTaskRule::frequencyOptions();
+
+        $selectedTarget = in_array(
+            (string) $request->query(
+                'target',
+                'project',
+            ),
+            [
+                'project',
+                'service',
+                'recurring',
+                'waiting',
+            ],
+            true,
+        )
+            ? (string) $request->query(
+                'target',
+                'project',
+            )
+            : 'project';
+
+        $selectedFrequency =
+            array_key_exists(
+                (string) $request->query(
+                    'frequency',
+                    'monthly',
+                ),
+                $frequencies,
+            )
+                ? (string) $request->query(
+                    'frequency',
+                    'monthly',
+                )
+                : 'monthly';
+
+        $suggestedAnchor =
+            $this->suggestedNextAnchor(
+                $task,
+                $selectedFrequency,
+            );
+
         return view(
             'task-convert',
             [
                 'task' => $task,
                 'clients' => $clients,
-                'frequencies' =>
-                    RecurringTaskRule::frequencyOptions(),
+                'frequencies' => $frequencies,
+                'selectedTarget' =>
+                    $selectedTarget,
+                'selectedFrequency' =>
+                    $selectedFrequency,
+                'suggestedAnchor' =>
+                    $suggestedAnchor,
             ],
         );
     }
@@ -79,6 +128,24 @@ class TaskConversionController extends Controller
                         RecurringTaskRule::frequencyOptions(),
                     ),
                 ),
+                'required_if:target,recurring',
+            ],
+            'anchor_date' => [
+                'nullable',
+                'date',
+                'after_or_equal:today',
+                'required_if:target,recurring',
+            ],
+            'create_days_before' => [
+                'nullable',
+                'integer',
+                'min:0',
+                'max:90',
+                'required_if:target,recurring',
+            ],
+            'due_time' => [
+                'nullable',
+                'regex:/^(?:[01]\d|2[0-3]):[0-5]\d$/',
                 'required_if:target,recurring',
             ],
             'waiting_until' => [
@@ -124,6 +191,15 @@ class TaskConversionController extends Controller
                             $task,
                             (string) $validated[
                                 'frequency'
+                            ],
+                            (string) $validated[
+                                'anchor_date'
+                            ],
+                            (int) $validated[
+                                'create_days_before'
+                            ],
+                            (string) $validated[
+                                'due_time'
                             ],
                         ),
                     'waiting' =>
@@ -286,21 +362,34 @@ class TaskConversionController extends Controller
         Request $request,
         Task $task,
         string $frequency,
+        string $anchorDate,
+        int $createDaysBefore,
+        string $dueTime,
     ): array {
         $timezone = config(
             'app.timezone',
             'America/Lima',
         );
 
-        $anchor = $this->nextAnchor(
-            CarbonImmutable::now(
-                $timezone,
-            ),
-            $frequency,
-        );
+        if (
+            $task->recurringRun()
+                ->exists()
+        ) {
+            throw ValidationException::withMessages([
+                'target' =>
+                    'Esta tarea ya pertenece a una recurrencia.',
+            ]);
+        }
 
-        $rule = RecurringTaskRule::query()
-            ->create([
+        $anchor = CarbonImmutable::parse(
+            $anchorDate,
+            $timezone,
+        )->startOfDay();
+
+        $rule = RecurringTaskRule::withoutEvents(
+            fn (): RecurringTaskRule =>
+                RecurringTaskRule::query()
+                    ->create([
                 'organization_id' =>
                     $task->organization_id,
                 'project_id' =>
@@ -313,32 +402,66 @@ class TaskConversionController extends Controller
                     $task->next_action,
                 'frequency' =>
                     $frequency,
-                'anchor_date' =>
-                    $anchor->toDateString(),
-                'create_days_before' => 0,
-                'due_time' =>
-                    $task->due_at
-                        ?->format('H:i')
-                    ?? '17:00',
-                'urgency' =>
-                    $task->urgency,
-                'impact' =>
-                    $task->impact,
-                'is_private' =>
-                    (bool) $task->is_private,
-                'is_active' => true,
-                'assigned_to' =>
-                    $task->assigned_to
-                    ?? $request->user()->id,
-                'created_by' =>
-                    $request->user()->id,
-            ]);
+                        'anchor_date' =>
+                            $anchor->toDateString(),
+                        'create_days_before' =>
+                            $createDaysBefore,
+                        'due_time' => $dueTime,
+                        'urgency' =>
+                            $task->urgency,
+                        'impact' =>
+                            $task->impact,
+                        'is_private' =>
+                            (bool) $task->is_private,
+                        'is_active' => true,
+                        'assigned_to' =>
+                            $task->assigned_to
+                            ?? $request->user()->id,
+                        'created_by' =>
+                            $request->user()->id,
+                    ]),
+        );
+
+        $seedDate = $task->due_at
+            ? CarbonImmutable::parse(
+                $task->due_at,
+                $timezone,
+            )->startOfDay()
+            : CarbonImmutable::now(
+                $timezone,
+            )->startOfDay();
+
+        RecurringTaskRun::query()->create([
+            'recurring_task_rule_id' =>
+                $rule->id,
+            'organization_id' =>
+                $rule->organization_id,
+            'scheduled_for' =>
+                $seedDate->toDateString(),
+            'task_id' => $task->id,
+            'generated_at' => now(),
+        ]);
+
+        app(
+            RecurringTaskGenerator::class,
+        )->generateFor(
+            $rule->fresh(),
+            now(),
+        );
 
         $rule->refresh();
 
+        $frequencyLabel =
+            RecurringTaskRule::frequencyOptions()[
+                $frequency
+            ] ?? $frequency;
+
         return [
             'message' =>
-                'Recurrencia creada desde la siguiente ocurrencia; la tarea actual se conserva.',
+                'Recurrencia '.$frequencyLabel
+                .' creada. Próxima ocurrencia: '
+                .$anchor->format('d/m/Y')
+                .'. La tarea actual se conserva.',
             'label' =>
                 'Recurrencia creada desde tarea',
             'cleanup' => [
@@ -394,6 +517,40 @@ class TaskConversionController extends Controller
         ];
     }
 
+    private function suggestedNextAnchor(
+        Task $task,
+        string $frequency,
+    ): CarbonImmutable {
+        $timezone = config(
+            'app.timezone',
+            'America/Lima',
+        );
+
+        $today = CarbonImmutable::now(
+            $timezone,
+        )->startOfDay();
+
+        $base = $task->due_at
+            ? CarbonImmutable::parse(
+                $task->due_at,
+                $timezone,
+            )->startOfDay()
+            : $today;
+
+        $candidate = $this->nextAnchor(
+            $base,
+            $frequency,
+        );
+
+        while ($candidate->lt($today)) {
+            $candidate = $this->nextAnchor(
+                $candidate,
+                $frequency,
+            );
+        }
+
+        return $candidate;
+    }
     private function nextAnchor(
         CarbonImmutable $now,
         string $frequency,
