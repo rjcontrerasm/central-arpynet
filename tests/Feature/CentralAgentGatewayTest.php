@@ -2,7 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\Client;
 use App\Models\Organization;
+use App\Models\Project;
+use App\Models\ServiceOrder;
 use App\Models\Task;
 use App\Models\User;
 use App\Support\CentralAgentGateway;
@@ -15,13 +18,18 @@ class CentralAgentGatewayTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_contract_is_read_preview_only_and_has_no_execute_method(): void
+    public function test_contract_v2_is_read_preview_only_and_has_no_execute_methods(): void
     {
         $gateway = app(
             CentralAgentGateway::class,
         );
 
         $contract = $gateway->contract();
+
+        $this->assertSame(
+            'central-agent-contract-v2',
+            $contract['contract'],
+        );
 
         $this->assertFalse(
             $contract['public_api'],
@@ -39,6 +47,9 @@ class CentralAgentGatewayTest extends TestCase
             [
                 'task.read',
                 'task.action.preview',
+                'project.read',
+                'service_order.read',
+                'organization.operational_context.read',
             ],
             $contract['allowed_operations'],
         );
@@ -47,14 +58,19 @@ class CentralAgentGatewayTest extends TestCase
             CentralAgentGateway::class,
         );
 
-        $this->assertFalse(
-            $reflection->hasMethod(
-                'executeTaskAction',
-            ),
-        );
+        foreach ([
+            'executeTaskAction',
+            'executeProjectAction',
+            'executeServiceOrderAction',
+            'executeOrganizationAction',
+        ] as $method) {
+            $this->assertFalse(
+                $reflection->hasMethod($method),
+            );
+        }
     }
 
-    public function test_task_context_and_preview_are_read_only(): void
+    public function test_task_context_and_preview_remain_read_only(): void
     {
         [$user, $organization] =
             $this->context();
@@ -102,26 +118,205 @@ class CentralAgentGatewayTest extends TestCase
         );
     }
 
-    public function test_foreign_task_is_not_visible_to_gateway(): void
+    public function test_project_and_service_context_are_read_only(): void
+    {
+        [$user, $organization] =
+            $this->context();
+
+        $client = Client::query()->create([
+            'organization_id' =>
+                $organization->id,
+            'name' => 'Cliente Jarvis',
+            'is_active' => true,
+            'created_by' => $user->id,
+        ]);
+
+        $project = Project::query()->create([
+            'organization_id' =>
+                $organization->id,
+            'name' => 'Proyecto Jarvis 360',
+            'type' => 'project',
+            'horizon' => 'short',
+            'status' => 'active',
+            'target_date' => now()
+                ->addDays(3)
+                ->toDateString(),
+            'next_action' =>
+                'Validar entregable',
+            'created_by' => $user->id,
+        ]);
+
+        $order = ServiceOrder::query()->create([
+            'organization_id' =>
+                $organization->id,
+            'client_id' => $client->id,
+            'title' => 'Servicio Jarvis 360',
+            'stage' => 'execution',
+            'currency' => 'PEN',
+            'amount' => 1500,
+            'next_action' =>
+                'Entregar informe',
+            'created_by' => $user->id,
+        ]);
+
+        $gateway = app(
+            CentralAgentGateway::class,
+        );
+
+        $projectBefore =
+            $project->fresh()->toArray();
+        $orderBefore =
+            $order->fresh()->toArray();
+
+        $projectContext =
+            $gateway->projectContext(
+                $user,
+                $project,
+            );
+
+        $orderContext =
+            $gateway->serviceOrderContext(
+                $user,
+                $order,
+            );
+
+        $this->assertSame(
+            'Proyecto Jarvis 360',
+            $projectContext['name'],
+        );
+
+        $this->assertSame(
+            'Validar entregable',
+            $projectContext['next_action'],
+        );
+
+        $this->assertSame(
+            'Servicio Jarvis 360',
+            $orderContext['title'],
+        );
+
+        $this->assertSame(
+            'Cliente Jarvis',
+            $orderContext['client'],
+        );
+
+        $this->assertSame(
+            $projectBefore,
+            $project->fresh()->toArray(),
+        );
+
+        $this->assertSame(
+            $orderBefore,
+            $order->fresh()->toArray(),
+        );
+    }
+
+    public function test_organization_context_exposes_360_counts_and_attention_without_writes(): void
+    {
+        [$user, $organization] =
+            $this->context();
+
+        Client::query()->create([
+            'organization_id' =>
+                $organization->id,
+            'name' => 'Cliente contexto',
+            'is_active' => true,
+            'created_by' => $user->id,
+        ]);
+
+        Project::query()->create([
+            'organization_id' =>
+                $organization->id,
+            'name' =>
+                'Proyecto sin acción Jarvis',
+            'type' => 'project',
+            'horizon' => 'short',
+            'status' => 'active',
+            'created_by' => $user->id,
+        ]);
+
+        Task::query()->create([
+            'organization_id' =>
+                $organization->id,
+            'title' =>
+                'Tarea vencida Jarvis',
+            'status' => 'pending',
+            'urgency' => 'high',
+            'impact' => 'high',
+            'due_at' => now()->subDay(),
+            'created_by' => $user->id,
+        ]);
+
+        $gateway = app(
+            CentralAgentGateway::class,
+        );
+
+        $taskCountBefore =
+            Task::query()->count();
+        $projectCountBefore =
+            Project::query()->count();
+
+        $context =
+            $gateway->organizationContext(
+                $user,
+                $organization,
+            );
+
+        $this->assertSame(
+            'organization',
+            $context['type'],
+        );
+
+        $this->assertSame(
+            1,
+            $context['counts']['clients'],
+        );
+
+        $this->assertSame(
+            1,
+            $context['counts']['projects_open'],
+        );
+
+        $this->assertSame(
+            1,
+            $context['counts']['tasks_open'],
+        );
+
+        $this->assertNotEmpty(
+            $context['attention'],
+        );
+
+        $this->assertSame(
+            $taskCountBefore,
+            Task::query()->count(),
+        );
+
+        $this->assertSame(
+            $projectCountBefore,
+            Project::query()->count(),
+        );
+    }
+
+    public function test_foreign_entities_are_not_visible_to_gateway(): void
     {
         [$user] = $this->context();
 
         $foreign = Organization::query()
             ->create([
                 'name' => 'Ajena agente',
-                'slug' => 'ajena-agente',
+                'slug' => 'ajena-agente-v2',
                 'category' => 'company',
                 'timezone' => 'America/Lima',
                 'is_active' => true,
                 'created_by' => $user->id,
             ]);
 
-        $task = Task::query()->create([
+        $project = Project::query()->create([
             'organization_id' => $foreign->id,
-            'title' => 'No visible',
-            'status' => 'pending',
-            'urgency' => 'normal',
-            'impact' => 'normal',
+            'name' => 'No visible',
+            'type' => 'project',
+            'horizon' => 'short',
+            'status' => 'active',
             'created_by' => $user->id,
         ]);
 
@@ -130,9 +325,9 @@ class CentralAgentGatewayTest extends TestCase
         );
 
         app(CentralAgentGateway::class)
-            ->taskContext(
+            ->projectContext(
                 $user,
-                $task,
+                $project,
             );
     }
 
@@ -142,10 +337,11 @@ class CentralAgentGatewayTest extends TestCase
             'email' => 'rcontreras@arpynet.com',
         ]);
 
-        $organization = Organization::query()
-            ->create([
+        $organization =
+            Organization::query()->create([
                 'name' => 'ARPYNET',
-                'slug' => 'arpynet',
+                'slug' =>
+                    'arpynet-agent-v2',
                 'category' => 'company',
                 'timezone' => 'America/Lima',
                 'is_active' => true,
@@ -160,6 +356,11 @@ class CentralAgentGatewayTest extends TestCase
                 'is_active' => true,
             ],
         );
+
+        $user->forceFill([
+            'current_organization_id' =>
+                $organization->id,
+        ])->save();
 
         return [$user, $organization];
     }

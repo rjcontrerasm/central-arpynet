@@ -10,7 +10,7 @@ class CentralAgentContract extends Command
     protected $signature = 'central:agent-contract';
 
     protected $description =
-        'Show the internal read/preview-only Central agent contract';
+        'Show the internal read/preview-only Central agent v2 contract';
 
     public function handle(
         CentralAgentGateway $gateway,
