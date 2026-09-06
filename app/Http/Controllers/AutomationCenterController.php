@@ -157,8 +157,14 @@ class AutomationCenterController extends Controller
         $triggerConfig = [];
 
         if (
-            $validated['trigger_key']
-                === 'obligation.due_soon'
+            in_array(
+                $validated['trigger_key'],
+                [
+                    'obligation.due_soon',
+                    'project.target_due_soon',
+                ],
+                true,
+            )
         ) {
             $triggerConfig['days'] = (int) (
                 $validated['days'] ?? 7

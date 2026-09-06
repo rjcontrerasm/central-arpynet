@@ -16,6 +16,7 @@ class AutomationRuleCatalog
         'service.create_billing_reminder',
         'service.create_collection_reminder',
         'obligation.create_alert',
+        'project.create_alert',
     ];
 
     public function triggers(): array
@@ -35,7 +36,41 @@ class AutomationRuleCatalog
                     'task.create_followup',
                 ],
             ],
-            'service.conformity_ready' => [
+            'project.stagnant' => [
+                'label' => 'Proyecto sin movimiento',
+                'subject' => 'project',
+                'actions' => [
+                    'project.create_alert',
+                ],
+            ],
+            'project.target_due_soon' => [
+                'label' => 'Fecha objetivo de proyecto próxima',
+                'subject' => 'project',
+                'actions' => [
+                    'project.create_alert',
+                ],
+            ],
+            'project.target_overdue' => [
+                'label' => 'Fecha objetivo de proyecto vencida',
+                'subject' => 'project',
+                'actions' => [
+                    'project.create_alert',
+                ],
+            ],
+            'project.no_next_action' => [
+                'label' => 'Proyecto sin siguiente acción',
+                'subject' => 'project',
+                'actions' => [
+                    'project.create_alert',
+                ],
+            ],
+            'project.blocked' => [
+                'label' => 'Proyecto con bloqueos',
+                'subject' => 'project',
+                'actions' => [
+                    'project.create_alert',
+                ],
+            ],            'service.conformity_ready' => [
                 'label' =>
                     'Servicio con conformidad listo para facturar',
                 'subject' =>
@@ -98,6 +133,17 @@ class AutomationRuleCatalog
                     true,
                 ),
 
+            'project.create_alert' =>
+                $this->buildAction(
+                    'Crear alerta interna de proyecto',
+                    [
+                        'preview',
+                        'automatic',
+                    ],
+                    true,
+                    false,
+                    'database_notification',
+                ),
             'service.create_billing_reminder' =>
                 $this->buildAction(
                     'Crear recordatorio de facturación',

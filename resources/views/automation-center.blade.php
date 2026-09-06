@@ -136,7 +136,7 @@
                 </div>
             </form>
             <div class="automation-safety">
-                Las reglas nuevas nacen inactivas. El modo automático solo está permitido para notificaciones internas de facturación, cobranza y vencimientos.
+                Las reglas nuevas nacen inactivas. El modo automático solo está permitido para notificaciones internas seguras de facturación, cobranza, vencimientos y proyectos.
             </div>
         </section>
 

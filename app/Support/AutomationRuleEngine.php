@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\AutomationRule;
 use App\Models\ObligationOccurrence;
+use App\Models\Project;
 use App\Models\ServiceOrder;
 use App\Models\Task;
 use Carbon\CarbonImmutable;
@@ -33,6 +34,11 @@ class AutomationRuleEngine
         return match ($rule->trigger_key) {
             'task.overdue' => $this->overdueTasks($rule, $now),
             'task.stagnant' => $this->stagnantTasks($rule, $now),
+            'project.stagnant' => $this->stagnantProjects($rule, $now),
+            'project.target_due_soon' => $this->projectsDueSoon($rule, $now),
+            'project.target_overdue' => $this->overdueProjects($rule, $now),
+            'project.no_next_action' => $this->projectsWithoutNextAction($rule),
+            'project.blocked' => $this->blockedProjects($rule),
             'service.conformity_ready' => $this->conformityReady($rule),
             'service.invoice_overdue' => $this->overdueInvoices($rule, $now),
             'obligation.due_soon' => $this->obligationsDueSoon($rule, $now),
@@ -116,6 +122,146 @@ class AutomationRuleEngine
             ->values();
     }
 
+
+    private function stagnantProjects(
+        AutomationRule $rule,
+        CarbonImmutable $now,
+    ): Collection {
+        return Project::query()
+            ->where('organization_id', $rule->organization_id)
+            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->limit(250)
+            ->get()
+            ->map(function (Project $project) use ($rule, $now): ?array {
+                $activity = $project->last_activity_at
+                    ?? $project->updated_at
+                    ?? $project->created_at;
+
+                $days = $activity
+                    ? $activity->diffInDays($now)
+                    : 0;
+
+                if ($days < 15) {
+                    return null;
+                }
+
+                return $this->candidate(
+                    $rule,
+                    'project',
+                    $project->id,
+                    $project->name,
+                    'Proyecto sin movimiento '.$days.' días.',
+                    $project->updated_at,
+                );
+            })
+            ->filter()
+            ->values();
+    }
+
+    private function projectsDueSoon(
+        AutomationRule $rule,
+        CarbonImmutable $now,
+    ): Collection {
+        $config = $rule->trigger_config ?? [];
+        $days = max(
+            0,
+            min(30, (int) ($config['days'] ?? 7)),
+        );
+        $end = $now->startOfDay()->addDays($days);
+
+        return Project::query()
+            ->where('organization_id', $rule->organization_id)
+            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->whereNotNull('target_date')
+            ->whereDate('target_date', '>=', $now->toDateString())
+            ->whereDate('target_date', '<=', $end->toDateString())
+            ->orderBy('target_date')
+            ->limit(100)
+            ->get()
+            ->map(
+                fn (Project $project): array => $this->candidate(
+                    $rule,
+                    'project',
+                    $project->id,
+                    $project->name,
+                    'Fecha objetivo '.$project->target_date->format('d/m/Y').'.',
+                    $project->updated_at,
+                ),
+            );
+    }
+
+    private function overdueProjects(
+        AutomationRule $rule,
+        CarbonImmutable $now,
+    ): Collection {
+        return Project::query()
+            ->where('organization_id', $rule->organization_id)
+            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->whereNotNull('target_date')
+            ->whereDate('target_date', '<', $now->toDateString())
+            ->orderBy('target_date')
+            ->limit(100)
+            ->get()
+            ->map(
+                fn (Project $project): array => $this->candidate(
+                    $rule,
+                    'project',
+                    $project->id,
+                    $project->name,
+                    'Fecha objetivo vencida el '
+                        .$project->target_date->format('d/m/Y').'.',
+                    $project->updated_at,
+                ),
+            );
+    }
+
+    private function projectsWithoutNextAction(
+        AutomationRule $rule,
+    ): Collection {
+        return Project::query()
+            ->where('organization_id', $rule->organization_id)
+            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->limit(250)
+            ->get()
+            ->filter(
+                fn (Project $project): bool =>
+                    blank($project->next_action),
+            )
+            ->take(100)
+            ->values()
+            ->map(
+                fn (Project $project): array => $this->candidate(
+                    $rule,
+                    'project',
+                    $project->id,
+                    $project->name,
+                    'Proyecto sin siguiente acción definida.',
+                    $project->updated_at,
+                ),
+            );
+    }
+
+    private function blockedProjects(
+        AutomationRule $rule,
+    ): Collection {
+        return Project::query()
+            ->where('organization_id', $rule->organization_id)
+            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->whereNotNull('blockers')
+            ->where('blockers', '!=', '')
+            ->limit(100)
+            ->get()
+            ->map(
+                fn (Project $project): array => $this->candidate(
+                    $rule,
+                    'project',
+                    $project->id,
+                    $project->name,
+                    'Bloqueo: '.trim((string) $project->blockers),
+                    $project->updated_at,
+                ),
+            );
+    }
     private function conformityReady(
         AutomationRule $rule,
     ): Collection {
