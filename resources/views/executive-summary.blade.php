@@ -885,7 +885,7 @@
 
                     <a
                         class="section-link"
-                        href="{{ url('/admin/proyectos') }}"
+                        href="{{ route('project-ops.show') }}"
                     >
                         Ver proyectos →
                     </a>
@@ -898,18 +898,68 @@
                     )
                         <a
                             class="item"
-                            href="{{ url('/admin/proyectos') }}"
+                            href="{{ route(
+                                'project-ops.show',
+                                [
+                                    'scope' =>
+                                        $project->organization_id,
+                                    'focus' => 'all',
+                                ],
+                            ) }}"
                         >
-                            <div class="item-title">
-                                {{ $project->name }}
+                            <div class="item-head">
+                                <div>
+                                    <div class="item-title">
+                                        {{ $project->name }}
+                                    </div>
+
+                                    <div class="meta">
+                                        {{ $project->organization?->name
+                                            ?? 'Sin ámbito' }}
+                                    </div>
+                                </div>
+
+                                <span class="pill">
+                                    Avance
+                                    {{ $project->progress_percent }}%
+                                </span>
                             </div>
 
-                            <div class="meta">
-                                Avance
-                                {{ $project->progress_percent }}%
-                                ·
-                                {{ $project->stagnation_label }}
+                            <div class="summary-detail">
+                                <span>
+                                    {{ $project->stagnation_label }}
+                                </span>
+
+                                @if ($project->target_date)
+                                    <span class="dot">·</span>
+
+                                    <span>
+                                        Objetivo
+                                        {{ $project->target_date->format(
+                                            'd/m/Y',
+                                        ) }}
+                                    </span>
+                                @endif
                             </div>
+
+                            @if ($project->next_action)
+                                <div class="decision-action">
+                                    Siguiente:
+                                    {{ $project->next_action }}
+                                    →
+                                </div>
+                            @else
+                                <div class="reason">
+                                    Sin próxima acción definida.
+                                </div>
+                            @endif
+
+                            @if ($project->blockers)
+                                <div class="reason">
+                                    Bloqueo:
+                                    {{ $project->blockers }}
+                                </div>
+                            @endif
                         </a>
                     @empty
                         <div class="empty">

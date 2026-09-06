@@ -152,6 +152,46 @@ class ExecutiveSummaryTest extends TestCase
             ->assertSee('Revisar');
     }
 
+    public function test_project_review_uses_operational_workspace(): void
+    {
+        [$user, $organization] = $this->context();
+
+        Project::query()->create([
+            'organization_id' => $organization->id,
+            'name' => 'Proyecto operativo resumen',
+            'type' => 'project',
+            'horizon' => 'short',
+            'status' => 'active',
+            'target_date' => now()
+                ->addDays(2)
+                ->toDateString(),
+            'next_action' => 'Confirmar entregable',
+            'blockers' => 'Esperando validación',
+            'currency' => 'PEN',
+            'created_by' => $user->id,
+            'is_private' => false,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->get('/resumen?period=week')
+            ->assertOk()
+            ->assertSee('Proyecto operativo resumen')
+            ->assertSee('Confirmar entregable')
+            ->assertSee('Esperando validación')
+            ->assertSee('Ver proyectos');
+
+        $response->assertSee(
+            '/proyectos?scope='
+            .$organization->id
+            .'&amp;focus=all',
+            false,
+        );
+
+        $response->assertDontSee(
+            '/admin/proyectos',
+            false,
+        );
+    }
     public function test_foreign_scope_is_forbidden(): void
     {
         [$user] = $this->context();
