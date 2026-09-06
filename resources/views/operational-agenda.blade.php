@@ -50,7 +50,7 @@ h1{margin:0;font-size:clamp(34px,4.5vw,48px);letter-spacing:-.055em;line-height:
 .scope:before{content:"";width:1px;height:30px;background:#d5e0ed;margin-right:2px}
 .scope select{min-width:220px;min-height:40px;padding:8px 12px;border:1px solid var(--ag-line);border-radius:10px;background:var(--ag-card);color:#15396d;font:inherit;box-shadow:0 2px 8px rgba(28,57,96,.03)}
 
-.stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-top:18px}
+.stats{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;margin-top:18px}
 .stat{display:grid;grid-template-columns:42px 1fr;gap:10px;align-items:center;padding:13px 14px;border:1px solid var(--ag-line);border-radius:13px;background:var(--ag-card);box-shadow:var(--ag-shadow)}
 .stat-icon{width:38px;height:38px;display:grid;place-items:center;border-radius:11px;background:var(--ag-blue-soft);color:var(--ag-blue);font-size:18px;font-weight:900}
 .stat strong{display:block;font-size:22px;letter-spacing:-.04em;line-height:1}
@@ -83,6 +83,7 @@ h1{margin:0;font-size:clamp(34px,4.5vw,48px);letter-spacing:-.055em;line-height:
 .badge.waiting{background:var(--ag-amber-soft);color:var(--ag-amber)}
 .badge.service{background:#eaf3ff;color:#1766cf}
 .badge.incident{background:#fdecec;color:#bd5353}
+.badge.project{background:#e8f8f2;color:#147a58}
 .chevron{color:#2f65b7;font-size:20px;font-weight:700;text-align:center}
 
 .timeline{position:relative;display:grid;gap:8px}
@@ -136,6 +137,7 @@ h1{margin:0;font-size:clamp(34px,4.5vw,48px);letter-spacing:-.055em;line-height:
     $kindLabels = [
         'calendar' => 'Calendario',
         'task' => 'Tarea',
+        'project' => 'Proyecto',
         'waiting' => 'En espera',
         'obligation' => 'Vencimiento',
         'service' => 'Servicio',
@@ -145,6 +147,7 @@ h1{margin:0;font-size:clamp(34px,4.5vw,48px);letter-spacing:-.055em;line-height:
     $kindIcons = [
         'calendar' => '◫',
         'task' => '▣',
+        'project' => '◆',
         'waiting' => '⌛',
         'obligation' => '◷',
         'service' => '⌕',
@@ -228,6 +231,11 @@ h1{margin:0;font-size:clamp(34px,4.5vw,48px);letter-spacing:-.055em;line-height:
                 <div><strong>{{ $counts['followups'] }}</strong><span>Seguimientos</span></div>
             </div>
 
+
+            <div class="stat">
+                <div class="stat-icon">◆</div>
+                <div><strong>{{ $counts['projects'] }}</strong><span>Proyectos</span></div>
+            </div>
             <div class="stat overdue">
                 <div class="stat-icon">◷</div>
                 <div><strong>{{ $counts['overdue'] }}</strong><span>Vencidos</span></div>

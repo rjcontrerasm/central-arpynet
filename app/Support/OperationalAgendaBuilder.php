@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Incident;
 use App\Models\ObligationOccurrence;
+use App\Models\Project;
 use App\Models\ServiceOrder;
 use App\Models\Task;
 use App\Models\User;
@@ -28,6 +29,7 @@ class OperationalAgendaBuilder
 
         foreach ([
             $this->taskItems($user, $start, $end, $organizationId),
+            $this->projectItems($user, $day, $organizationId),
             $this->waitingItems($user, $start, $end, $organizationId),
             $this->obligationItems($user, $day, $organizationId),
             $this->serviceItems($user, $start, $end, $organizationId),
@@ -41,6 +43,7 @@ class OperationalAgendaBuilder
         if ($isToday) {
             foreach ([
                 $this->overdueTaskItems($user, $start, $organizationId),
+                $this->overdueProjectItems($user, $day, $organizationId),
                 $this->overdueWaitingItems($user, $start, $organizationId),
                 $this->overdueObligationItems($user, $day, $organizationId),
                 $this->overdueServiceItems($user, $start, $organizationId),
@@ -82,6 +85,7 @@ class OperationalAgendaBuilder
                 'total' => $items->count(),
                 'calendar' => $items->where('source', 'google_calendar')->count(),
                 'tasks' => $items->where('kind', 'task')->count(),
+                'projects' => $items->where('kind', 'project')->count(),
                 'followups' => $items->whereIn('kind', ['waiting', 'service', 'incident'])->count(),
                 'obligations' => $items->where('kind', 'obligation')->count(),
                 'overdue' => $overdueItems->count(),
@@ -113,6 +117,54 @@ class OperationalAgendaBuilder
             ]);
     }
 
+
+    private function projectItems(
+        User $user,
+        CarbonImmutable $day,
+        ?int $organizationId,
+    ): Collection {
+        return Project::query()
+            ->visibleTo($user)
+            ->with('organization')
+            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->whereNotNull('target_date')
+            ->whereDate('target_date', $day->toDateString())
+            ->when(
+                $organizationId,
+                fn ($query) => $query->where(
+                    'organization_id',
+                    $organizationId,
+                ),
+            )
+            ->get()
+            ->map(fn (Project $project): array => [
+                'key' => 'project:'.$project->id,
+                'source' => 'central',
+                'kind' => 'project',
+                'title' => $project->name,
+                'subtitle' => $project->next_action
+                    ?: (filled($project->blockers)
+                        ? 'Proyecto con bloqueos'
+                        : 'Fecha objetivo del proyecto'),
+                'starts_at' => $day->setTime(9, 0),
+                'ends_at' => null,
+                'all_day' => true,
+                'organization' => $project->organization?->name,
+                'priority' => filled($project->blockers)
+                    ? 'critical'
+                    : null,
+                'url' => route(
+                    'project-ops.show',
+                    [
+                        'scope' => $project->organization_id,
+                        'focus' => 'all',
+                    ],
+                    false,
+                ),
+                'external' => false,
+                'overdue' => false,
+            ]);
+    }
     private function waitingItems(User $user, CarbonImmutable $start, CarbonImmutable $end, ?int $organizationId): Collection
     {
         return Task::query()->visibleTo($user)->with('organization')
@@ -226,6 +278,53 @@ class OperationalAgendaBuilder
             ]);
     }
 
+
+    private function overdueProjectItems(
+        User $user,
+        CarbonImmutable $day,
+        ?int $organizationId,
+    ): Collection {
+        return Project::query()
+            ->visibleTo($user)
+            ->with('organization')
+            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->whereNotNull('target_date')
+            ->whereDate('target_date', '<', $day->toDateString())
+            ->when(
+                $organizationId,
+                fn ($query) => $query->where(
+                    'organization_id',
+                    $organizationId,
+                ),
+            )
+            ->get()
+            ->map(fn (Project $project): array => [
+                'key' => 'overdue-project:'.$project->id,
+                'source' => 'central',
+                'kind' => 'project',
+                'title' => $project->name,
+                'subtitle' => $project->next_action
+                    ?: 'Fecha objetivo vencida',
+                'starts_at' => CarbonImmutable::parse(
+                    $project->target_date,
+                    config('app.timezone', 'America/Lima'),
+                )->startOfDay(),
+                'ends_at' => null,
+                'all_day' => true,
+                'organization' => $project->organization?->name,
+                'priority' => 'critical',
+                'url' => route(
+                    'project-ops.show',
+                    [
+                        'scope' => $project->organization_id,
+                        'focus' => 'all',
+                    ],
+                    false,
+                ),
+                'external' => false,
+                'overdue' => true,
+            ]);
+    }
     private function overdueWaitingItems(User $user, CarbonImmutable $start, ?int $organizationId): Collection
     {
         return Task::query()->visibleTo($user)->with('organization')

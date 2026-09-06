@@ -1807,6 +1807,97 @@
         <aside aria-label="Contexto operativo">
             <section class="section">
                 <div class="section-head">
+                    <h2>Proyectos a revisar</h2>
+
+                    <a
+                        class="section-link"
+                        href="{{ route('project-ops.show') }}"
+                    >
+                        Ver proyectos
+                    </a>
+                </div>
+
+                <div class="list">
+                    @forelse ($projectsAttention as $row)
+                        @php
+                            $project = $row['project'];
+                            $signal = $row['signal'];
+                        @endphp
+
+                        <a
+                            class="item"
+                            href="{{ route(
+                                'project-ops.show',
+                                [
+                                    'scope' => $project->organization_id,
+                                    'focus' => 'all',
+                                ],
+                            ) }}"
+                        >
+                            <div class="item-title">
+                                {{ $project->name }}
+                            </div>
+
+                            <div class="meta">
+                                {{ $project->organization?->name
+                                    ?? 'Sin ámbito' }}
+
+                                @if ($project->target_date)
+                                    · objetivo
+                                    {{ $project->target_date->format(
+                                        'd/m/Y',
+                                    ) }}
+                                @else
+                                    · sin fecha objetivo
+                                @endif
+                            </div>
+
+                            <div class="pills">
+                                <span class="pill {{
+                                    $signal['level'] === 'critical'
+                                        ? 'critical'
+                                        : 'week'
+                                }}">
+                                    {{ $signal['level_label'] }}
+                                </span>
+
+                                <span class="pill">
+                                    Avance
+                                    {{ $project->progress_percent }}%
+                                </span>
+                            </div>
+
+                            @if ($project->next_action)
+                                <div class="next-action-current">
+                                    <strong>Siguiente:</strong>
+                                    {{ $project->next_action }}
+                                </div>
+                            @endif
+
+                            @if ($project->blockers)
+                                <div class="meta waiting-due">
+                                    Bloqueo:
+                                    {{ $project->blockers }}
+                                </div>
+                            @endif
+                        </a>
+                    @empty
+                        <div class="empty">
+                            No hay proyectos que requieran revisión.
+                        </div>
+                    @endforelse
+                </div>
+
+                @if ($projectsAttentionCount > $projectsAttention->count())
+                    <div class="meta" style="margin-top:8px">
+                        Mostrando {{ $projectsAttention->count() }}
+                        de {{ $projectsAttentionCount }} proyecto(s)
+                        con señales operativas.
+                    </div>
+                @endif
+            </section>
+            <section class="section">
+                <div class="section-head">
                     <h2>Vencimientos</h2>
 
                     <a

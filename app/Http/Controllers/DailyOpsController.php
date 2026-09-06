@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Incident;
 use App\Models\ObligationOccurrence;
 use App\Models\Organization;
+use App\Models\Project;
 use App\Models\Task;
 use App\Support\DailyTaskPriority;
+use App\Support\GlobalTrackingItemFactory;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -384,6 +386,111 @@ class DailyOpsController extends Controller
             ->limit(5)
             ->get();
 
+
+        $projectsQuery = Project::query()
+            ->visibleTo($user)
+            ->with('organization')
+            ->withCount([
+                'tasks',
+                'tasks as completed_tasks_count' =>
+                    fn ($taskQuery) => $taskQuery->where(
+                        'status',
+                        'completed',
+                    ),
+            ])
+            ->whereNotIn(
+                'status',
+                ['completed', 'cancelled'],
+            );
+
+        if ($selectedScope) {
+            $projectsQuery->where(
+                'organization_id',
+                $selectedScope,
+            );
+        }
+
+        if ($search !== '') {
+            $projectsQuery->where(
+                function ($projectQuery) use ($search): void {
+                    $like = '%'.$search.'%';
+
+                    $projectQuery
+                        ->where('name', 'like', $like)
+                        ->orWhere('next_action', 'like', $like)
+                        ->orWhere('blockers', 'like', $like);
+                },
+            );
+        }
+
+        $projectRows = $projectsQuery
+            ->limit(150)
+            ->get()
+            ->map(
+                function (Project $project) use (
+                    $now,
+                    $todayStart,
+                    $weekEnd,
+                ): array {
+                    $signal =
+                        GlobalTrackingItemFactory::project(
+                            $project,
+                            $now,
+                        );
+
+                    $rank = (int) $signal['rank'];
+                    $targetSoon = false;
+
+                    if ($project->target_date) {
+                        if (
+                            $project->target_date->isBefore(
+                                $todayStart,
+                            )
+                        ) {
+                            $rank = max($rank, 95);
+                            $targetSoon = true;
+                        } elseif (
+                            $project->target_date->isSameDay(
+                                $now,
+                            )
+                        ) {
+                            $rank = max($rank, 85);
+                            $targetSoon = true;
+                        } elseif (
+                            $project->target_date
+                                ->lessThanOrEqualTo($weekEnd)
+                        ) {
+                            $rank = max($rank, 65);
+                            $targetSoon = true;
+                        }
+                    }
+
+                    return [
+                        'project' => $project,
+                        'signal' => $signal,
+                        'rank' => $rank,
+                        'target_soon' => $targetSoon,
+                    ];
+                },
+            )
+            ->filter(
+                fn (array $row): bool =>
+                    $row['target_soon']
+                    || in_array(
+                        $row['signal']['level'],
+                        ['critical', 'attention', 'watch'],
+                        true,
+                    ),
+            )
+            ->sortByDesc('rank')
+            ->values();
+
+        $projectsAttentionCount =
+            $projectRows->count();
+
+        $projectsAttention = $projectRows
+            ->take(6)
+            ->values();
         return view(
             'daily-ops',
             compact(
@@ -408,6 +515,8 @@ class DailyOpsController extends Controller
                 'noDateTasks',
                 'upcomingObligations',
                 'openIncidents',
+                'projectsAttention',
+                'projectsAttentionCount',
             ),
         );
     }
