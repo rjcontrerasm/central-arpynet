@@ -7,21 +7,26 @@
 <title>Proyectos · Central ARPYNET</title>
 <style>
 :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark}
-*{box-sizing:border-box}body{margin:0;background:#0b1020;color:#f8fafc}a{color:inherit;text-decoration:none}button,input,select{font:inherit}
+*{box-sizing:border-box}body{margin:0;background:#0b1020;color:#f8fafc}a{color:inherit;text-decoration:none}button,input,select,textarea{font:inherit}
 .shell{width:min(100%,1200px);margin:0 auto;padding:20px 16px 80px}.topbar,.hero,.card-head,.card-foot{display:flex;align-items:center;justify-content:space-between;gap:12px}.topbar{margin-bottom:24px}
 .brand{font-weight:850;letter-spacing:-.03em}.nav{display:flex;flex-wrap:wrap;gap:8px;font-size:13px}.nav a{padding:7px 9px;border-radius:9px;color:#94a3b8}.nav a.active{background:#172554;color:#dbeafe}
 .hero{align-items:end;margin-bottom:18px}h1{margin:0;font-size:clamp(31px,7vw,48px);line-height:.96;letter-spacing:-.05em}.subtitle,.muted,.empty{color:#94a3b8}.subtitle{margin-top:8px;font-size:13px}
 .admin{padding:10px 13px;border:1px solid #334155;border-radius:11px;background:#11182b;font-size:12px;font-weight:800}
+.success{margin-bottom:15px;padding:11px 13px;border:1px solid #166534;border-radius:12px;background:#052e16;color:#bbf7d0;font-size:13px;font-weight:750}
 .filters{display:grid;grid-template-columns:1fr 1fr minmax(180px,2fr) auto;gap:8px;margin-bottom:18px}.filters select,.filters input{min-width:0;height:40px;padding:8px 10px;border:1px solid #334155;border-radius:10px;background:#11182b;color:#f8fafc}.filters button{border:0;border-radius:10px;padding:0 14px;background:#2563eb;color:#fff;font-weight:850;cursor:pointer}
 .stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin-bottom:22px}.stat,.card{border:1px solid #24304b;background:#11182b}.stat{padding:13px;border-radius:15px}.stat-value{font-size:27px;font-weight:850;line-height:1}.stat-label{margin-top:5px;color:#94a3b8;font-size:11px}
 .list{display:grid;gap:11px}.card{padding:15px;border-radius:17px}.card.critical{border-color:#7f1d1d}.card.attention{border-color:#92400e}.card.watch{border-color:#1e40af}.title{font-size:17px;font-weight:850}.org{margin-top:4px;color:#94a3b8;font-size:12px}
 .badges{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}.badge{padding:4px 8px;border-radius:999px;background:#1e293b;color:#cbd5e1;font-size:10px;font-weight:800}.badge.critical{background:#450a0a;color:#fecaca}.badge.attention{background:#451a03;color:#fde68a}.badge.watch{background:#172554;color:#bfdbfe}
 .progress{height:7px;margin-top:13px;overflow:hidden;border-radius:999px;background:#1e293b}.progress>span{display:block;height:100%;background:#3b82f6;border-radius:inherit}.meta-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;color:#94a3b8;font-size:11px}
 .next,.blockers{margin-top:11px;padding:10px 11px;border-radius:11px;font-size:12px;line-height:1.45}.next{background:#0f172a;border-left:3px solid #3b82f6;color:#cbd5e1}.blockers{background:#2a1608;border-left:3px solid #d97706;color:#fde68a}
-.reasons{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.reason{padding:4px 7px;border-radius:8px;background:#1e293b;color:#cbd5e1;font-size:10px;font-weight:750}.card-foot{margin-top:12px;padding-top:11px;border-top:1px solid #24304b}.card-link{color:#93c5fd;font-size:11px;font-weight:850}
-.empty{padding:30px 18px;text-align:center;border:1px dashed #334155;border-radius:16px}
-@media(max-width:800px){.topbar,.hero{align-items:flex-start;flex-direction:column}.filters{grid-template-columns:1fr 1fr}.filters input{grid-column:1/-1}.filters button{height:40px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:520px){.shell{padding:16px 12px 72px}.filters{grid-template-columns:1fr}.filters input{grid-column:auto}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.card-head,.card-foot{align-items:flex-start;flex-direction:column}.badges{justify-content:flex-start}}
+.reasons{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.reason{padding:4px 7px;border-radius:8px;background:#1e293b;color:#cbd5e1;font-size:10px;font-weight:750}
+.quick{margin-top:12px;border-top:1px solid #24304b;padding-top:10px}.quick summary{display:inline-flex;cursor:pointer;color:#93c5fd;font-size:11px;font-weight:850;list-style:none}.quick summary::-webkit-details-marker{display:none}
+.quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.quick-panel{padding:11px;border:1px solid #334155;border-radius:12px;background:#0f172a}.quick-title{margin-bottom:8px;font-size:11px;font-weight:850;color:#cbd5e1}
+.quick-form{display:grid;gap:8px}.quick-form input,.quick-form select,.quick-form textarea{width:100%;min-width:0;padding:8px 9px;border:1px solid #334155;border-radius:9px;background:#11182b;color:#f8fafc}.quick-form textarea{min-height:68px;resize:vertical}.quick-form button{min-height:38px;border:0;border-radius:9px;background:#2563eb;color:#fff;font-size:12px;font-weight:850;cursor:pointer}.quick-form .secondary{background:#1d4ed8}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.form-label{font-size:10px;color:#94a3b8}
+.card-foot{margin-top:12px;padding-top:11px;border-top:1px solid #24304b}.card-link{color:#93c5fd;font-size:11px;font-weight:850}.empty{padding:30px 18px;text-align:center;border:1px dashed #334155;border-radius:16px}
+@media(max-width:800px){.topbar,.hero{align-items:flex-start;flex-direction:column}.filters{grid-template-columns:1fr 1fr}.filters input{grid-column:1/-1}.filters button{height:40px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.quick-grid{grid-template-columns:1fr}}
+@media(max-width:520px){.shell{padding:16px 12px 72px}.filters{grid-template-columns:1fr}.filters input{grid-column:auto}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.card-head,.card-foot{align-items:flex-start;flex-direction:column}.badges{justify-content:flex-start}.form-row{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -40,6 +45,10 @@
 <div><h1>Proyectos</h1><div class="subtitle">Avance, bloqueos, siguiente acción y señales de estancamiento.</div></div>
 <a class="admin" href="{{ url('/admin/proyectos') }}">Administrar proyectos</a>
 </section>
+
+@if(session('project_action_success'))
+<div class="success">{{ session('project_action_success') }}</div>
+@endif
 
 <form class="filters" method="get" action="{{ route('project-ops.show') }}">
 <select name="scope" aria-label="Ámbito">
@@ -83,18 +92,86 @@ $progress=max(0,min(100,(int)$project->progress_percent));
 <span class="badge">{{ $typeOptions[$project->type] ?? $project->type }}</span>
 </div>
 </div>
+
 <div class="progress" title="Avance {{ $progress }}%"><span style="width: {{ $progress }}%"></span></div>
+
 <div class="meta-row">
 <span>Avance {{ $progress }}%</span><span>·</span><span>{{ $project->stagnation_label }}</span>
 @if($project->target_date)<span>·</span><span>Objetivo {{ $project->target_date->format('d/m/Y') }}</span>@endif
 @if($project->horizon)<span>·</span><span>{{ $horizonOptions[$project->horizon] ?? $project->horizon }}</span>@endif
 @if($project->budget !== null)<span>·</span><span>{{ $project->currency }} {{ number_format((float)$project->budget,2) }}</span>@endif
 </div>
+
 <div class="next"><strong>Siguiente acción:</strong> {{ filled($project->next_action) ? $project->next_action : 'No definida.' }}</div>
 @if(filled($project->blockers))<div class="blockers"><strong>Bloqueos:</strong> {{ $project->blockers }}</div>@endif
+
 @if(!empty($signal['reasons']))
 <div class="reasons">@foreach($signal['reasons'] as $reason)<span class="reason">{{ $reason }}</span>@endforeach</div>
 @endif
+
+<details class="quick">
+<summary>Acciones rápidas</summary>
+<div class="quick-grid">
+
+<div class="quick-panel">
+<div class="quick-title">Actualizar proyecto</div>
+<form class="quick-form" method="post" action="{{ route('project-ops.update', $project) }}">
+@csrf
+<input type="hidden" name="scope" value="{{ $selectedScope }}">
+<input type="hidden" name="focus" value="{{ $focus }}">
+<input type="hidden" name="q" value="{{ $search }}">
+
+<label class="form-label" for="status-{{ $project->id }}">Estado</label>
+<select id="status-{{ $project->id }}" name="status" required>
+@foreach($statusOptions as $value => $label)
+<option value="{{ $value }}" @selected($project->status === $value)>{{ $label }}</option>
+@endforeach
+</select>
+
+<label class="form-label" for="next-{{ $project->id }}">Siguiente acción</label>
+<input id="next-{{ $project->id }}" name="next_action" maxlength="255" value="{{ $project->next_action }}" placeholder="Define la siguiente acción">
+
+<label class="form-label" for="blockers-{{ $project->id }}">Bloqueos</label>
+<textarea id="blockers-{{ $project->id }}" name="blockers" maxlength="5000" placeholder="Sin bloqueos">{{ $project->blockers }}</textarea>
+
+<button type="submit">Guardar cambios</button>
+</form>
+</div>
+
+<div class="quick-panel">
+<div class="quick-title">Crear tarea vinculada</div>
+<form class="quick-form" method="post" action="{{ route('project-ops.task.store', $project) }}">
+@csrf
+<input type="hidden" name="scope" value="{{ $selectedScope }}">
+<input type="hidden" name="focus" value="{{ $focus }}">
+<input type="hidden" name="q" value="{{ $search }}">
+
+<label class="form-label" for="task-title-{{ $project->id }}">Tarea</label>
+<input id="task-title-{{ $project->id }}" name="title" maxlength="255" required placeholder="Nueva tarea del proyecto">
+
+<div class="form-row">
+<div>
+<label class="form-label" for="due-{{ $project->id }}">Vencimiento</label>
+<input id="due-{{ $project->id }}" type="date" name="due_date">
+</div>
+<div>
+<label class="form-label" for="urgency-{{ $project->id }}">Urgencia</label>
+<select id="urgency-{{ $project->id }}" name="urgency" required>
+<option value="normal">Normal</option>
+<option value="high">Alta</option>
+<option value="critical">Crítica</option>
+<option value="low">Baja</option>
+</select>
+</div>
+</div>
+
+<button class="secondary" type="submit">Crear tarea</button>
+</form>
+</div>
+
+</div>
+</details>
+
 <div class="card-foot">
 <span class="muted">{{ $project->tasks_count }} tareas · {{ $project->completed_tasks_count }} completadas</span>
 <a class="card-link" href="{{ url('/admin/proyectos') }}">Abrir administración →</a>

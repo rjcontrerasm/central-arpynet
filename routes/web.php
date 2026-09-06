@@ -247,6 +247,16 @@ Route::middleware('auth')->group(function (): void {
         '/proyectos',
         [\App\Http\Controllers\ProjectOpsController::class, 'show'],
     )->name('project-ops.show');
+
+    Route::post(
+        '/proyectos/{project}/actualizar',
+        [\App\Http\Controllers\ProjectOpsActionController::class, 'update'],
+    )->name('project-ops.update');
+
+    Route::post(
+        '/proyectos/{project}/tareas',
+        [\App\Http\Controllers\ProjectOpsActionController::class, 'storeTask'],
+    )->name('project-ops.task.store');
 });
 
 Route::middleware('auth')->group(function (): void {
