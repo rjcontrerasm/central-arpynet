@@ -120,6 +120,7 @@ class WhatsappCriticalAlerts extends Command
                     Str::limit((string) ($item['date_label'] ?? 'Sin fecha'), 100, ''),
                     (string) ($item['url'] ?? route('executive-summary.show', ['period' => 'today'])),
                 ],
+                'critical_alert',
             );
 
             $base = [

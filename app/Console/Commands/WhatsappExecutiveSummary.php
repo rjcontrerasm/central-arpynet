@@ -194,6 +194,7 @@ class WhatsappExecutiveSummary extends Command
                     ['period' => $period],
                 ),
             ],
+            'executive_summary',
         );
 
         $values = [
