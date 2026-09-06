@@ -244,6 +244,13 @@ Route::middleware('auth')->group(function (): void {
 
 Route::middleware('auth')->group(function (): void {
     Route::get(
+        '/proyectos',
+        [\App\Http\Controllers\ProjectOpsController::class, 'show'],
+    )->name('project-ops.show');
+});
+
+Route::middleware('auth')->group(function (): void {
+    Route::get(
         '/seguimiento',
         [
             \App\Http\Controllers\GlobalTrackingController::class,

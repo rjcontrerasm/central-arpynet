@@ -226,7 +226,10 @@ class GlobalTrackingItemFactory
                     $project->next_action,
                 ),
             'next_action' => $project->next_action,
-            'url' => url('/admin/proyectos'),
+            'url' => route(
+                'project-ops.show',
+                ['scope' => $project->organization_id],
+            ),
         ];
     }
 
