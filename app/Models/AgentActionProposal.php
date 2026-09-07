@@ -12,9 +12,11 @@ class AgentActionProposal extends Model
         'organization_id',
         'created_by',
         'reviewed_by',
+        'executed_by',
         'subject_type',
         'subject_id',
         'subject_title',
+        'subject_version',
         'action_key',
         'action_label',
         'risk',
@@ -24,6 +26,10 @@ class AgentActionProposal extends Model
         'fingerprint',
         'status',
         'reviewed_at',
+        'executed_at',
+        'execution_before',
+        'execution_after',
+        'undo_action_id',
     ];
 
     protected function casts(): array
@@ -31,6 +37,9 @@ class AgentActionProposal extends Model
         return [
             'proposed_changes' => 'array',
             'reviewed_at' => 'datetime',
+            'executed_at' => 'datetime',
+            'execution_before' => 'array',
+            'execution_after' => 'array',
         ];
     }
 
@@ -40,6 +49,8 @@ class AgentActionProposal extends Model
             'pending' => 'Pendiente',
             'approved' => 'Aprobada',
             'rejected' => 'Rechazada',
+            'executed' => 'Ejecutada',
+            'stale' => 'Desactualizada',
         ];
     }
 
@@ -63,6 +74,22 @@ class AgentActionProposal extends Model
         return $this->belongsTo(
             User::class,
             'reviewed_by',
+        );
+    }
+
+    public function executedBy(): BelongsTo
+    {
+        return $this->belongsTo(
+            User::class,
+            'executed_by',
+        );
+    }
+
+    public function undoAction(): BelongsTo
+    {
+        return $this->belongsTo(
+            UndoAction::class,
+            'undo_action_id',
         );
     }
 

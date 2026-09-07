@@ -18,6 +18,24 @@ class GlobalUndoService
     public const SESSION_KEY =
         'central_global_undo_id';
 
+    private const PROJECT_FIELDS = [
+        'organization_id',
+        'name',
+        'description',
+        'type',
+        'horizon',
+        'status',
+        'start_date',
+        'target_date',
+        'budget',
+        'currency',
+        'next_action',
+        'blockers',
+        'notes',
+        'last_activity_at',
+        'created_by',
+        'is_private',
+    ];
     private const SERVICE_ORDER_FIELDS = [
         'organization_id',
         'client_id',
@@ -172,6 +190,53 @@ class GlobalUndoService
         );
     }
 
+    public function captureProject(
+        Project $project,
+    ): array {
+        $raw = $project->getAttributes();
+
+        return collect(
+            self::PROJECT_FIELDS,
+        )
+            ->mapWithKeys(
+                fn (string $field): array => [
+                    $field =>
+                        $raw[$field] ?? null,
+                ],
+            )
+            ->all();
+    }
+
+    public function rememberProjectMutation(
+        User $user,
+        Project $project,
+        array $beforeState,
+        string $label,
+        ?string $returnUrl = null,
+    ): ?UndoAction {
+        $fresh = Project::query()
+            ->find($project->id);
+
+        if (! $fresh) {
+            return null;
+        }
+
+        return $this->remember(
+            $user,
+            'project_mutation',
+            $label,
+            'project',
+            $fresh->id,
+            [
+                'before' => $beforeState,
+                'expected' =>
+                    $this->updatedAtFingerprint(
+                        $fresh,
+                    ),
+            ],
+            $returnUrl,
+        );
+    }
     public function captureServiceOrder(
         ServiceOrder $serviceOrder,
     ): array {
@@ -432,6 +497,11 @@ class GlobalUndoService
                         ),
                     'task_created' =>
                         $this->undoTaskCreated(
+                            $user,
+                            $locked,
+                        ),
+                    'project_mutation' =>
+                        $this->undoProjectMutation(
                             $user,
                             $locked,
                         ),
@@ -747,6 +817,94 @@ class GlobalUndoService
         return ['ok' => true];
     }
 
+    private function undoProjectMutation(
+        User $user,
+        UndoAction $action,
+    ): array {
+        $payload = is_array(
+            $action->payload,
+        )
+            ? $action->payload
+            : [];
+
+        $project = Project::query()
+            ->find($action->entity_id);
+
+        if (! $project) {
+            return [
+                'ok' => false,
+                'message' =>
+                    'El proyecto ya no está disponible.',
+            ];
+        }
+
+        $before = is_array(
+            $payload['before'] ?? null,
+        )
+            ? $payload['before']
+            : [];
+
+        $expected = is_array(
+            $payload['expected'] ?? null,
+        )
+            ? $payload['expected']
+            : [];
+
+        if (
+            ! $this->updatedAtMatches(
+                $project,
+                $expected,
+            )
+        ) {
+            return [
+                'ok' => false,
+                'message' =>
+                    'El proyecto cambió después de esa acción; ya no es seguro deshacerla automáticamente.',
+            ];
+        }
+
+        if (
+            ! $this->authorizedOrganization(
+                $user,
+                $project->organization_id,
+            )
+            || ! $this->authorizedOrganization(
+                $user,
+                (int) (
+                    $before['organization_id']
+                    ?? 0
+                ),
+            )
+        ) {
+            abort(403);
+        }
+
+        $restore = collect(
+            self::PROJECT_FIELDS,
+        )
+            ->mapWithKeys(
+                fn (string $field): array => [
+                    $field =>
+                        $before[$field] ?? null,
+                ],
+            )
+            ->all();
+
+        $lastActivityAt =
+            $restore['last_activity_at']
+            ?? null;
+
+        $project->forceFill(
+            $restore,
+        )->save();
+
+        $project->forceFill([
+            'last_activity_at' =>
+                $lastActivityAt,
+        ])->saveQuietly();
+
+        return ['ok' => true];
+    }
     private function undoServiceMutation(
         User $user,
         UndoAction $action,

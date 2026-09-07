@@ -402,6 +402,14 @@ Route::middleware('auth')->group(function (): void {
             'reject',
         ],
     )->name('agent-proposals.reject');
+
+    Route::post(
+        '/jarvis/propuestas/{proposal}/ejecutar',
+        [
+            \App\Http\Controllers\AgentProposalController::class,
+            'execute',
+        ],
+    )->name('agent-proposals.execute');
 });
 Route::middleware('auth')->group(function (): void {
     Route::get(

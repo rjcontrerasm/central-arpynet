@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AgentActionProposal;
 use App\Models\AuditLog;
+use App\Support\CentralAgentProposalExecutor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -27,6 +28,8 @@ class AgentProposalController extends Controller
                     'pending',
                     'approved',
                     'rejected',
+                    'executed',
+                    'stale',
                 ]),
             ],
         ]);
@@ -89,6 +92,8 @@ class AgentProposalController extends Controller
                     'organization',
                     'createdBy',
                     'reviewedBy',
+                    'executedBy',
+                    'undoAction',
                 ]);
 
         if ($selectedScope) {
@@ -163,6 +168,59 @@ class AgentProposalController extends Controller
         );
     }
 
+    public function execute(
+        Request $request,
+        AgentActionProposal $proposal,
+        CentralAgentProposalExecutor $executor,
+    ): RedirectResponse {
+        $validated = $request->validate([
+            'confirm_execution' => [
+                'required',
+                'accepted',
+            ],
+        ]);
+
+        try {
+            $result = $executor->execute(
+                $request->user(),
+                $proposal,
+                (bool) (
+                    $validated[
+                        'confirm_execution'
+                    ] ?? false
+                ),
+            );
+        } catch (
+            \Illuminate\Validation\ValidationException $exception
+        ) {
+            $message = collect(
+                $exception->errors(),
+            )
+                ->flatten()
+                ->first();
+
+            return back()->with(
+                'agent_proposal_message',
+                $message
+                    ?: 'La propuesta no pudo ejecutarse.',
+            );
+        }
+
+        return redirect()
+            ->route(
+                'agent-proposals.index',
+                [
+                    'status' =>
+                        ($result['stale'] ?? false)
+                            ? 'stale'
+                            : 'executed',
+                ],
+            )
+            ->with(
+                'agent_proposal_message',
+                $result['message'],
+            );
+    }
     private function review(
         Request $request,
         AgentActionProposal $proposal,
@@ -230,11 +288,21 @@ class AgentProposalController extends Controller
             },
         );
 
+        if ($status === 'approved') {
+            return redirect()
+                ->route(
+                    'agent-proposals.index',
+                    ['status' => 'approved'],
+                )
+                ->with(
+                    'agent_proposal_message',
+                    'Propuesta aprobada. Revisa los cambios y usa “Ejecutar cambio” para aplicar una segunda confirmación humana.',
+                );
+        }
+
         return back()->with(
             'agent_proposal_message',
-            $status === 'approved'
-                ? 'Propuesta aprobada. Aún no se ejecutó ningún cambio.'
-                : 'Propuesta rechazada. No se ejecutó ningún cambio.',
+            'Propuesta rechazada. No se ejecutó ningún cambio.',
         );
     }
 

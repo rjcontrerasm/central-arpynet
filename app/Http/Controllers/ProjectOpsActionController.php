@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\Task;
+use App\Support\GlobalUndoService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,7 @@ class ProjectOpsActionController extends Controller
     public function update(
         Request $request,
         Project $project,
+        GlobalUndoService $undo,
     ): RedirectResponse {
         $validated = $request->validate([
             'next_action' => ['nullable', 'string', 'max:255'],
@@ -39,6 +41,10 @@ class ProjectOpsActionController extends Controller
                 : null,
         );
 
+        $before = $undo->captureProject(
+            $project,
+        );
+
         $project->fill([
             'next_action' => $this->nullableText(
                 $validated['next_action'] ?? null,
@@ -48,6 +54,18 @@ class ProjectOpsActionController extends Controller
             ),
             'status' => $validated['status'],
         ])->save();
+
+        $undo->rememberProjectMutation(
+            $request->user(),
+            $project,
+            $before,
+            'Proyecto actualizado',
+            route(
+                'project-ops.show',
+                $this->redirectParams($validated),
+                false,
+            ),
+        );
 
         return redirect()
             ->route(
@@ -63,6 +81,7 @@ class ProjectOpsActionController extends Controller
     public function storeTask(
         Request $request,
         Project $project,
+        GlobalUndoService $undo,
     ): RedirectResponse {
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
@@ -105,7 +124,7 @@ class ProjectOpsActionController extends Controller
             )->setTime(17, 0);
         }
 
-        Task::query()->create([
+        $task = Task::query()->create([
             'organization_id' => $project->organization_id,
             'project_id' => $project->id,
             'title' => trim($validated['title']),
@@ -117,6 +136,17 @@ class ProjectOpsActionController extends Controller
             'assigned_to' => $request->user()->id,
             'created_by' => $request->user()->id,
         ]);
+
+        $undo->rememberTaskCreated(
+            $request->user(),
+            $task,
+            'Tarea de proyecto creada',
+            route(
+                'project-ops.show',
+                $this->redirectParams($validated),
+                false,
+            ),
+        );
 
         return redirect()
             ->route(

@@ -4,6 +4,9 @@ namespace App\Support;
 
 use App\Models\AgentActionProposal;
 use App\Models\AuditLog;
+use App\Models\Project;
+use App\Models\ServiceOrder;
+use App\Models\Task;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +29,11 @@ class CentralAgentProposalQueue
             $normalized['organization_id'],
         );
 
+        $subjectVersion =
+            $this->subjectVersion(
+                $normalized,
+            );
+
         if (
             $normalized[
                 'confirmation_required'
@@ -45,6 +53,7 @@ class CentralAgentProposalQueue
                 ],
                 $normalized['subject_type'],
                 $normalized['subject_id'],
+                $subjectVersion,
                 $normalized['action_key'],
                 json_encode(
                     $this->canonicalize(
@@ -86,6 +95,7 @@ class CentralAgentProposalQueue
                 $normalized,
                 $rationale,
                 $fingerprint,
+                $subjectVersion,
             ): AgentActionProposal {
                 $proposal =
                     AgentActionProposal::query()
@@ -108,6 +118,8 @@ class CentralAgentProposalQueue
                                 $normalized[
                                     'subject_title'
                                 ],
+                            'subject_version' =>
+                                $subjectVersion,
                             'action_key' =>
                                 $normalized[
                                     'action_key'
@@ -173,6 +185,61 @@ class CentralAgentProposalQueue
         );
     }
 
+    private function subjectVersion(
+        array $normalized,
+    ): string {
+        $subject = match (
+            $normalized['subject_type']
+        ) {
+            'task' =>
+                Task::query()->find(
+                    $normalized['subject_id'],
+                ),
+            'project' =>
+                Project::query()->find(
+                    $normalized['subject_id'],
+                ),
+            'service_order' =>
+                ServiceOrder::query()->find(
+                    $normalized['subject_id'],
+                ),
+            default => null,
+        };
+
+        if (
+            ! $subject
+            || (int) $subject->organization_id
+                !== (int) $normalized[
+                    'organization_id'
+                ]
+        ) {
+            throw ValidationException::withMessages([
+                'proposal' =>
+                    'La entidad propuesta ya no está disponible en el ámbito autorizado.',
+            ]);
+        }
+
+        return $this->modelFingerprint(
+            $subject,
+        );
+    }
+
+    private function modelFingerprint(
+        \Illuminate\Database\Eloquent\Model $model,
+    ): string {
+        $attributes = $model->getAttributes();
+        ksort($attributes);
+
+        return hash(
+            'sha256',
+            json_encode(
+                $attributes,
+                JSON_THROW_ON_ERROR
+                | JSON_UNESCAPED_UNICODE
+                | JSON_UNESCAPED_SLASHES,
+            ),
+        );
+    }
     private function normalizePreview(
         array $preview,
     ): array {

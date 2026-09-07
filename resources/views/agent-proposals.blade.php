@@ -19,14 +19,16 @@ h1{margin:0 0 5px;font-size:clamp(32px,7vw,48px);letter-spacing:-.05em}
 .row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.title{font-weight:850;line-height:1.3}.meta{margin-top:3px;font-size:11px;line-height:1.45}
 .badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.badge{padding:4px 7px;border-radius:999px;background:#1e293b;color:#cbd5e1;font-size:10px;font-weight:850}
 .badge.pending{background:#422006;color:#fde68a}.badge.approved{background:#052e16;color:#bbf7d0}.badge.rejected{background:#450a0a;color:#fecaca}
+.badge.executed{background:#082f49;color:#bae6fd}
+.badge.stale{background:#3f3f46;color:#e4e4e7}
 .reason{margin-top:9px;padding:8px 10px;border-left:3px solid #60a5fa;border-radius:8px;background:rgba(37,99,235,.08);font-size:12px}
 .changes{margin-top:9px;display:grid;gap:5px}.change{padding:7px 9px;border-radius:9px;background:rgba(148,163,184,.08);font-size:11px;overflow-wrap:anywhere}
 .actions{display:flex;gap:8px;margin-top:11px}.actions form{margin:0}.button{min-height:36px;padding:7px 11px;border-radius:9px;font:inherit;font-size:11px;font-weight:850;cursor:pointer}
-.approve{border:1px solid #166534;background:#052e16;color:#bbf7d0}.reject{border:1px solid #7f1d1d;background:#450a0a;color:#fecaca}
+.approve{border:1px solid #166534;background:#052e16;color:#bbf7d0}.reject{border:1px solid #7f1d1d;background:#450a0a;color:#fecaca}.execute{border:1px solid #1d4ed8;background:#172554;color:#dbeafe}
 .guard{margin-top:18px;padding:12px;border:1px dashed var(--op-border,#334155);border-radius:14px;color:var(--op-muted,#94a3b8);font-size:11px}
 .empty{padding:20px;border:1px dashed var(--op-border,#334155);border-radius:15px;text-align:center;font-size:12px}
 @media(max-width:620px){.head,.row{display:grid}}
-@media(prefers-color-scheme:light){.chip.active{background:#eff6ff;color:#1d4ed8}.badge{background:#f1f5f9;color:#475569}.badge.pending{background:#fffbeb;color:#a16207}.badge.approved{background:#f0fdf4;color:#166534}.badge.rejected{background:#fef2f2;color:#b91c1c}.notice{background:#f0fdf4;color:#166534}.reason{background:#eff6ff}.approve{background:#f0fdf4;color:#166534}.reject{background:#fef2f2;color:#b91c1c}}
+@media(prefers-color-scheme:light){.chip.active{background:#eff6ff;color:#1d4ed8}.badge{background:#f1f5f9;color:#475569}.badge.pending{background:#fffbeb;color:#a16207}.badge.approved{background:#f0fdf4;color:#166534}.badge.rejected{background:#fef2f2;color:#b91c1c}.badge.executed{background:#f0f9ff;color:#0369a1}.badge.stale{background:#f4f4f5;color:#52525b}.notice{background:#f0fdf4;color:#166534}.reason{background:#eff6ff}.approve{background:#f0fdf4;color:#166534}.reject{background:#fef2f2;color:#b91c1c}.execute{background:#eff6ff;color:#1d4ed8}}
 </style>
 </head>
 <body>
@@ -50,6 +52,8 @@ $statusLabels=[
 'pending'=>'Pendientes',
 'approved'=>'Aprobadas',
 'rejected'=>'Rechazadas',
+'executed'=>'Ejecutadas',
+'stale'=>'Desactualizadas',
 'all'=>'Todas',
 ];
 @endphp
@@ -113,6 +117,15 @@ Propuesta #{{ $proposal->id }} · {{ $proposal->created_at?->format('d/m/Y H:i')
 @if($proposal->reviewed_at)
 · revisada {{ $proposal->reviewed_at->format('d/m/Y H:i') }}
 @endif
+@if($proposal->executed_at)
+· ejecutada {{ $proposal->executed_at->format('d/m/Y H:i') }}
+@endif
+@if(
+    $proposal->undoAction
+    && $proposal->undoAction->undone_at
+)
+· <strong>deshecha</strong>
+@endif
 </div>
 
 @if($proposal->status==='pending')
@@ -126,6 +139,31 @@ Propuesta #{{ $proposal->id }} · {{ $proposal->created_at?->format('d/m/Y H:i')
 <button class="button reject" type="submit" data-confirm="¿Rechazar esta propuesta?">Rechazar</button>
 </form>
 </div>
+@elseif($proposal->status==='approved')
+<div class="actions">
+<form
+    method="POST"
+    action="{{ route(
+        'agent-proposals.execute',
+        $proposal,
+    ) }}"
+>
+@csrf
+<input
+    type="hidden"
+    name="confirm_execution"
+    value="1"
+>
+<button
+    class="button execute"
+    type="submit"
+    data-confirm="Segunda confirmación: ¿ejecutar exactamente estos cambios ahora?"
+    data-busy-label="Ejecutando…"
+>
+    Ejecutar cambio
+</button>
+</form>
+</div>
 @endif
 </article>
 @empty
@@ -135,7 +173,7 @@ Propuesta #{{ $proposal->id }} · {{ $proposal->created_at?->format('d/m/Y H:i')
 
 <div class="guard">
 <strong>Control activo:</strong>
-aprobar una propuesta no modifica la tarea, proyecto o servicio. La ejecución seguirá bloqueada hasta la siguiente etapa de Jarvis.
+Jarvis no ejecuta cambios por sí solo. Primero debes aprobar la propuesta y luego usar “Ejecutar cambio” como segunda confirmación humana. Si la entidad cambió desde que se creó la propuesta, CENTRAL bloqueará la ejecución por seguridad.
 </div>
 </div>
 <x-operational-interactions />

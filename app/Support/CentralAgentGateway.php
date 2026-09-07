@@ -31,7 +31,7 @@ class CentralAgentGateway
     public function contract(): array
     {
         return [
-            'contract' => 'central-agent-contract-v4',
+            'contract' => 'central-agent-contract-v5',
             'scope' => [
                 'task',
                 'project',
@@ -42,6 +42,8 @@ class CentralAgentGateway
             'network_calls' => false,
             'write_execution' => false,
             'proposal_persistence' => true,
+            'human_confirmed_execution' => true,
+            'autonomous_write_execution' => false,
             'confirmation_required_for_future_writes' => true,
             'allowed_operations' => [
                 'task.read',
@@ -56,7 +58,7 @@ class CentralAgentGateway
                 'organization.operational_context.read',
             ],
             'blocked_operations' => [
-                'proposal.execute',
+                'proposal.execute.agent',
                 'task.action.execute',
                 'project.action.execute',
                 'service_order.action.execute',

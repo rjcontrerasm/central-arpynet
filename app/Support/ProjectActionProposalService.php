@@ -152,7 +152,7 @@ class ProjectActionProposalService
                             $now,
                         ),
                     'source' =>
-                        'agent_project_preview',
+                        'central_agent',
                 ],
             ],
         };

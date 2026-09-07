@@ -20,7 +20,7 @@ class CentralAgentProposalQueueTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_v4_contract_allows_proposal_persistence_but_not_execution(): void
+    public function test_v5_contract_allows_proposal_persistence_but_not_execution(): void
     {
         $gateway = app(
             CentralAgentGateway::class,
@@ -29,7 +29,7 @@ class CentralAgentProposalQueueTest extends TestCase
         $contract = $gateway->contract();
 
         $this->assertSame(
-            'central-agent-contract-v4',
+            'central-agent-contract-v5',
             $contract['contract'],
         );
 
@@ -39,6 +39,14 @@ class CentralAgentProposalQueueTest extends TestCase
 
         $this->assertFalse(
             $contract['write_execution'],
+        );
+
+        $this->assertTrue(
+            $contract['human_confirmed_execution'],
+        );
+
+        $this->assertFalse(
+            $contract['autonomous_write_execution'],
         );
 
         $this->assertFalse(
@@ -56,7 +64,7 @@ class CentralAgentProposalQueueTest extends TestCase
         );
 
         $this->assertContains(
-            'proposal.execute',
+            'proposal.execute.agent',
             $contract['blocked_operations'],
         );
 
@@ -414,11 +422,11 @@ class CentralAgentProposalQueueTest extends TestCase
                 'Rechazar',
             )
             ->assertSee(
-                'aprobar una propuesta no modifica',
+                'Jarvis no ejecuta cambios por sí solo',
                 false,
             )
             ->assertSee(
-                'La ejecución seguirá bloqueada',
+                'segunda confirmación humana',
                 false,
             );
     }
