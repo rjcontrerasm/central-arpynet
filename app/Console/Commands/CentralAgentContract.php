@@ -10,7 +10,7 @@ class CentralAgentContract extends Command
     protected $signature = 'central:agent-contract';
 
     protected $description =
-        'Show the internal read/preview-only Central agent v3 contract with read-only action previews';
+        'Show the internal read/preview-only Central agent v4 contract with auditable proposal persistence and no entity execution';
 
     public function handle(
         CentralAgentGateway $gateway,

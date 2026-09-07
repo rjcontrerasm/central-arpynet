@@ -18,7 +18,7 @@ class CentralAgentGatewayTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_contract_v3_is_read_preview_only_and_has_no_execute_methods(): void
+    public function test_contract_v4_is_read_preview_only_and_has_no_execute_methods(): void
     {
         $gateway = app(
             CentralAgentGateway::class,
@@ -27,7 +27,7 @@ class CentralAgentGatewayTest extends TestCase
         $contract = $gateway->contract();
 
         $this->assertSame(
-            'central-agent-contract-v3',
+            'central-agent-contract-v4',
             $contract['contract'],
         );
 
@@ -47,10 +47,13 @@ class CentralAgentGatewayTest extends TestCase
             [
                 'task.read',
                 'task.action.preview',
+                'task.action.propose',
                 'project.read',
                 'project.action.preview',
+                'project.action.propose',
                 'service_order.read',
                 'service_order.action.preview',
+                'service_order.action.propose',
                 'organization.operational_context.read',
             ],
             $contract['allowed_operations'],

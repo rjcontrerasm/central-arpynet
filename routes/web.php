@@ -380,6 +380,31 @@ Route::middleware('auth')
 
 Route::middleware('auth')->group(function (): void {
     Route::get(
+        '/jarvis',
+        [
+            \App\Http\Controllers\AgentProposalController::class,
+            'index',
+        ],
+    )->name('agent-proposals.index');
+
+    Route::post(
+        '/jarvis/propuestas/{proposal}/aprobar',
+        [
+            \App\Http\Controllers\AgentProposalController::class,
+            'approve',
+        ],
+    )->name('agent-proposals.approve');
+
+    Route::post(
+        '/jarvis/propuestas/{proposal}/rechazar',
+        [
+            \App\Http\Controllers\AgentProposalController::class,
+            'reject',
+        ],
+    )->name('agent-proposals.reject');
+});
+Route::middleware('auth')->group(function (): void {
+    Route::get(
         '/automatizaciones',
         [
             \App\Http\Controllers\AutomationCenterController::class,

@@ -20,6 +20,7 @@ class CentralAgentGateway
         private readonly OperationalTaskActionService $actions,
         private readonly ProjectActionProposalService $projectActions,
         private readonly ServiceOrderActionProposalService $serviceActions,
+        private readonly CentralAgentProposalQueue $proposalQueue,
     ) {
     }
 
@@ -30,7 +31,7 @@ class CentralAgentGateway
     public function contract(): array
     {
         return [
-            'contract' => 'central-agent-contract-v3',
+            'contract' => 'central-agent-contract-v4',
             'scope' => [
                 'task',
                 'project',
@@ -40,17 +41,22 @@ class CentralAgentGateway
             'public_api' => false,
             'network_calls' => false,
             'write_execution' => false,
+            'proposal_persistence' => true,
             'confirmation_required_for_future_writes' => true,
             'allowed_operations' => [
                 'task.read',
                 'task.action.preview',
+                'task.action.propose',
                 'project.read',
                 'project.action.preview',
+                'project.action.propose',
                 'service_order.read',
                 'service_order.action.preview',
+                'service_order.action.propose',
                 'organization.operational_context.read',
             ],
             'blocked_operations' => [
+                'proposal.execute',
                 'task.action.execute',
                 'project.action.execute',
                 'service_order.action.execute',
@@ -415,6 +421,60 @@ class CentralAgentGateway
         ];
     }
 
+    public function proposeTaskAction(
+        User $actor,
+        Task $task,
+        string $action,
+        ?string $rationale = null,
+    ): \App\Models\AgentActionProposal {
+        return $this->proposalQueue->enqueue(
+            $actor,
+            $this->previewTaskAction(
+                $actor,
+                $task,
+                $action,
+            ),
+            $rationale,
+        );
+    }
+
+    public function proposeProjectAction(
+        User $actor,
+        Project $project,
+        string $action,
+        array $payload = [],
+        ?string $rationale = null,
+    ): \App\Models\AgentActionProposal {
+        return $this->proposalQueue->enqueue(
+            $actor,
+            $this->previewProjectAction(
+                $actor,
+                $project,
+                $action,
+                $payload,
+            ),
+            $rationale,
+        );
+    }
+
+    public function proposeServiceOrderAction(
+        User $actor,
+        ServiceOrder $order,
+        string $action,
+        array $payload = [],
+        ?string $rationale = null,
+    ): \App\Models\AgentActionProposal {
+        return $this->proposalQueue->enqueue(
+            $actor,
+            $this->previewServiceOrderAction(
+                $actor,
+                $order,
+                $action,
+                $payload,
+            ),
+            $rationale,
+        );
+    }
     public function previewProjectAction(
         User $actor,
         Project $project,

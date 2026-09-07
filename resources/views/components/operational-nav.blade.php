@@ -22,6 +22,7 @@
         'decisions' => 'Decisiones',
         'summary' => 'Resumen',
         'notifications' => 'Notificaciones',
+        'agent' => 'Jarvis',
         'automations' => 'Automatizaciones',
         'history' => 'Historial',
         'trash' => 'Papelera',
@@ -376,6 +377,12 @@
                 Notificaciones
             </a>
 
+            <a
+                class="{{ $active === 'agent' ? 'is-active' : '' }}"
+                href="{{ route('agent-proposals.index') }}"
+            >
+                Jarvis
+            </a>
             <a
                 class="{{ $active === 'automations' ? 'is-active' : '' }}"
                 href="{{ route('automation-center.index') }}"

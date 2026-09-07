@@ -17,7 +17,7 @@ class CentralAgentActionPreviewTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_v3_contract_exposes_project_and_service_previews_without_execution(): void
+    public function test_v4_contract_exposes_project_and_service_previews_without_execution(): void
     {
         $gateway = app(
             CentralAgentGateway::class,
@@ -26,7 +26,7 @@ class CentralAgentActionPreviewTest extends TestCase
         $contract = $gateway->contract();
 
         $this->assertSame(
-            'central-agent-contract-v3',
+            'central-agent-contract-v4',
             $contract['contract'],
         );
 
