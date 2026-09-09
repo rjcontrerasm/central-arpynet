@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AgentActionProposal;
 use App\Models\AuditLog;
+use App\Support\CentralAgentGateway;
 use App\Support\CentralAgentProposalExecutor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,7 @@ class AgentProposalController extends Controller
 {
     public function index(
         Request $request,
+        CentralAgentGateway $gateway,
     ): View {
         $validated = $request->validate([
             'scope' => [
@@ -115,7 +117,7 @@ class AgentProposalController extends Controller
             ->limit(100)
             ->get();
 
-        $counts =
+        $baseProposalQuery =
             AgentActionProposal::query()
                 ->visibleTo($user)
                 ->when(
@@ -124,15 +126,104 @@ class AgentProposalController extends Controller
                         'organization_id',
                         $selectedScope,
                     ),
-                )
-                ->selectRaw(
-                    "status, COUNT(*) as total",
-                )
-                ->groupBy('status')
-                ->pluck(
-                    'total',
-                    'status',
                 );
+
+        $counts = (clone $baseProposalQuery)
+            ->selectRaw(
+                "status, COUNT(*) as total",
+            )
+            ->groupBy('status')
+            ->pluck(
+                'total',
+                'status',
+            );
+
+        $summary = [
+            'pending' =>
+                (int) ($counts['pending'] ?? 0),
+            'approved' =>
+                (int) ($counts['approved'] ?? 0),
+            'executed' =>
+                (int) ($counts['executed'] ?? 0),
+            'stale' =>
+                (int) ($counts['stale'] ?? 0),
+            'rejected' =>
+                (int) ($counts['rejected'] ?? 0),
+            'executed_recent' =>
+                (clone $baseProposalQuery)
+                    ->where(
+                        'status',
+                        'executed',
+                    )
+                    ->where(
+                        'executed_at',
+                        '>=',
+                        now()->subDays(7),
+                    )
+                    ->count(),
+            'undone' =>
+                (clone $baseProposalQuery)
+                    ->where(
+                        'status',
+                        'executed',
+                    )
+                    ->whereHas(
+                        'undoAction',
+                        fn ($q) => $q
+                            ->whereNotNull(
+                                'undone_at',
+                            ),
+                    )
+                    ->count(),
+        ];
+
+        $contract = $gateway->contract();
+
+        $focusOrganization = null;
+
+        if ($selectedScope) {
+            $focusOrganization =
+                $organizations->firstWhere(
+                    'id',
+                    $selectedScope,
+                );
+        }
+
+        if (! $focusOrganization) {
+            $currentId = (int) (
+                $user->current_organization_id
+                ?? 0
+            );
+
+            if ($currentId > 0) {
+                $focusOrganization =
+                    $organizations->firstWhere(
+                        'id',
+                        $currentId,
+                    );
+            }
+        }
+
+        $focusOrganization ??=
+            $organizations->first();
+
+        $operationalContext =
+            $focusOrganization
+                ? $gateway
+                    ->organizationContext(
+                        $user,
+                        $focusOrganization,
+                    )
+                : null;
+
+        $statusLabels = [
+            'pending' => 'Pendientes',
+            'approved' => 'Aprobadas',
+            'rejected' => 'Rechazadas',
+            'executed' => 'Ejecutadas',
+            'stale' => 'Desactualizadas',
+            'all' => 'Todas',
+        ];
 
         return view(
             'agent-proposals',
@@ -142,6 +233,11 @@ class AgentProposalController extends Controller
                 'selectedStatus',
                 'proposals',
                 'counts',
+                'summary',
+                'contract',
+                'focusOrganization',
+                'operationalContext',
+                'statusLabels',
             ),
         );
     }
