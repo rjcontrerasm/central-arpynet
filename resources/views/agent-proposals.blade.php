@@ -19,6 +19,7 @@ h2{margin:0;font-size:16px;letter-spacing:-.02em}
 .metric{display:block;padding:13px;border:1px solid var(--op-border,#334155);border-radius:15px;background:var(--op-card,#0f172a);color:inherit;text-decoration:none}
 .metric strong{display:block;font-size:25px;line-height:1}.metric span{display:block;margin-top:6px;font-size:10px;font-weight:850;color:var(--op-muted,#94a3b8)}
 .metric.attention strong{color:#fde68a}.metric.ready strong{color:#86efac}.metric.done strong{color:#7dd3fc}.metric.stale strong{color:#d4d4d8}
+.executive{margin-bottom:12px;padding:15px;border:1px solid var(--op-border,#334155);border-radius:17px;background:var(--op-card,#0f172a)}.executive-grid{display:grid;grid-template-columns:180px minmax(0,1fr);gap:16px}.executive-rank{display:grid;gap:7px;margin-top:11px}.executive-org{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:9px 10px;border-radius:11px;background:rgba(148,163,184,.06);text-decoration:none;color:inherit}.executive-org strong{font-size:11px}.executive-org-meta{margin-top:3px;font-size:9px;color:var(--op-muted,#94a3b8)}.executive-score{font-size:16px;font-weight:900}.executive-top{display:grid;gap:7px;margin-top:11px}.executive-priority{padding:9px 10px;border-radius:11px;background:rgba(148,163,184,.06)}.executive-priority-head{display:flex;justify-content:space-between;gap:10px}.executive-scope{font-size:9px;font-weight:900;color:#93c5fd}.executive-title{margin-top:3px;font-size:11px;font-weight:900}.executive-reason{margin-top:3px;font-size:9px;color:var(--op-muted,#94a3b8);line-height:1.4}
 .intel{margin-bottom:12px;padding:15px;border:1px solid var(--op-border,#334155);border-radius:17px;background:var(--op-card,#0f172a)}
 .intel-grid{display:grid;grid-template-columns:180px minmax(0,1fr);gap:16px;align-items:start}.pressure{padding:14px;border-radius:14px;background:rgba(148,163,184,.07)}.pressure-score{font-size:38px;font-weight:900;line-height:1;letter-spacing:-.05em}.pressure-label{margin-top:5px;font-size:10px;font-weight:900;text-transform:uppercase}.pressure.high .pressure-score{color:#fca5a5}.pressure.elevated .pressure-score{color:#fdba74}.pressure.moderate .pressure-score{color:#fde68a}.pressure.controlled .pressure-score{color:#86efac}.intel-summary{font-size:12px;line-height:1.55}.driver-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.driver{padding:5px 7px;border-radius:999px;background:rgba(148,163,184,.08);font-size:9px;font-weight:800}.priority-intel{display:grid;gap:7px;margin-top:12px}.priority-row{padding:10px;border-radius:12px;background:rgba(148,163,184,.06)}.priority-top{display:flex;justify-content:space-between;gap:10px}.priority-name{font-size:11px;font-weight:900}.priority-rank{font-size:10px;font-weight:900;color:var(--op-muted,#94a3b8)}.priority-why,.priority-move{margin-top:4px;font-size:10px;line-height:1.45;color:var(--op-muted,#94a3b8)}.priority-move strong{color:inherit}.proposal-compatible{display:inline-block;margin-top:6px;padding:4px 6px;border-radius:999px;background:#172554;color:#bfdbfe;font-size:9px;font-weight:850}.proposal-prepare{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;margin-top:8px;align-items:end}.proposal-prepare.service{grid-template-columns:minmax(0,1fr) 170px auto}.proposal-field{display:grid;gap:4px}.proposal-field label{font-size:9px;font-weight:800;color:var(--op-muted,#94a3b8)}.proposal-input{width:100%;min-height:36px;padding:7px 9px;border:1px solid var(--op-border,#334155);border-radius:9px;background:transparent;color:inherit;font:inherit;font-size:11px}.proposal-input:focus{outline:2px solid rgba(96,165,250,.35);border-color:#60a5fa}.prepare-button{min-height:36px;padding:7px 10px;border:1px solid #1d4ed8;border-radius:9px;background:#172554;color:#dbeafe;font:inherit;font-size:10px;font-weight:900;cursor:pointer}.prepare-note{margin-top:5px;font-size:9px;color:var(--op-muted,#94a3b8)}
 .center-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);gap:12px;margin-bottom:18px}
@@ -38,7 +39,7 @@ h2{margin:0;font-size:16px;letter-spacing:-.02em}
 .changes{margin-top:9px;display:grid;gap:5px}.change{padding:7px 9px;border-radius:9px;background:rgba(148,163,184,.08);font-size:11px;overflow-wrap:anywhere}
 .actions{display:flex;gap:8px;margin-top:11px}.actions form{margin:0}.button{min-height:36px;padding:7px 11px;border-radius:9px;font:inherit;font-size:11px;font-weight:850;cursor:pointer}.approve{border:1px solid #166534;background:#052e16;color:#bbf7d0}.reject{border:1px solid #7f1d1d;background:#450a0a;color:#fecaca}.execute{border:1px solid #1d4ed8;background:#172554;color:#dbeafe}
 .guard{margin-top:18px;padding:12px;border:1px dashed var(--op-border,#334155);border-radius:14px;color:var(--op-muted,#94a3b8);font-size:11px}.empty{padding:20px;border:1px dashed var(--op-border,#334155);border-radius:15px;text-align:center;font-size:12px}
-@media(max-width:900px){.metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.intel-grid,.center-grid{grid-template-columns:1fr}}
+@media(max-width:900px){.metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.executive-grid,.intel-grid,.center-grid{grid-template-columns:1fr}}
 @media(max-width:620px){.head,.row,.panel-head{display:grid}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.context-counts{grid-template-columns:repeat(2,minmax(0,1fr))}.quick-links,.proposal-prepare,.proposal-prepare.service{grid-template-columns:1fr}}
 @media(prefers-color-scheme:light){.chip.active{background:#eff6ff;color:#1d4ed8}.badge{background:#f1f5f9;color:#475569}.badge.pending{background:#fffbeb;color:#a16207}.badge.approved{background:#f0fdf4;color:#166534}.badge.rejected{background:#fef2f2;color:#b91c1c}.badge.executed{background:#f0f9ff;color:#0369a1}.badge.stale{background:#f4f4f5;color:#52525b}.notice{background:#f0fdf4;color:#166534}.reason{background:#eff6ff}.approve{background:#f0fdf4;color:#166534}.reject{background:#fef2f2;color:#b91c1c}.execute{background:#eff6ff;color:#1d4ed8}.safety span{background:#f8fafc}.safety .safe{color:#166534}.safety .locked{color:#1d4ed8}}
 </style>
@@ -71,6 +72,83 @@ h2{margin:0;font-size:16px;letter-spacing:-.02em}
 <div class="metric"><strong>{{ $summary['executed_recent'] }}</strong><span>EJECUTADAS · 7 DÍAS</span><span class="muted">{{ $summary['undone'] }} deshechas</span></div>
 </section>
 
+<section class="executive" aria-label="Prioridad ejecutiva global">
+<div class="panel-head">
+<div>
+<h2>Prioridad ejecutiva global</h2>
+<div class="muted">Comparación transversal de todos tus ámbitos activos · solo lectura.</div>
+</div>
+<span class="chip">{{ $executivePrioritization['organization_count'] }} ámbitos</span>
+</div>
+
+<div class="executive-grid">
+<div class="pressure {{ $executivePrioritization['pressure_level'] }}">
+<div class="pressure-score">{{ $executivePrioritization['pressure_score'] }}</div>
+<div class="pressure-label">Presión global {{ $executivePrioritization['pressure_label'] }}</div>
+<div class="muted">
+{{ $executivePrioritization['critical_total'] }} críticos ·
+{{ $executivePrioritization['incidents_total'] }} incidentes
+</div>
+</div>
+
+<div>
+<div class="intel-summary">{{ $executivePrioritization['summary'] }}</div>
+
+<div class="executive-rank" aria-label="Ranking de ámbitos">
+@forelse($executivePrioritization['organizations'] as $organizationPriority)
+<a
+    class="executive-org"
+    href="{{ route('agent-proposals.index', ['scope' => $organizationPriority['id'], 'status' => $selectedStatus]) }}"
+>
+<div>
+<strong>{{ $organizationPriority['name'] }}</strong>
+<div class="executive-org-meta">
+{{ $organizationPriority['critical'] }} críticos ·
+{{ $organizationPriority['attention'] }} atención ·
+{{ $organizationPriority['incidents_open'] }} incidentes
+@if($organizationPriority['top_priority'])
+· Principal: {{ $organizationPriority['top_priority']['title'] }}
+@endif
+</div>
+</div>
+<div class="executive-score">{{ $organizationPriority['pressure_score'] }}</div>
+</a>
+@empty
+<div class="empty">No hay ámbitos activos para comparar.</div>
+@endforelse
+</div>
+</div>
+</div>
+
+@if($executivePrioritization['top_priorities'])
+<div class="section-title">
+<div>
+<h2>Top transversal</h2>
+<div class="muted">Los asuntos con mayor rank operativo entre todos los ámbitos.</div>
+</div>
+</div>
+
+<div class="executive-top">
+@foreach($executivePrioritization['top_priorities'] as $globalPriority)
+<div class="executive-priority">
+<div class="executive-priority-head">
+<div>
+<div class="executive-scope">{{ $globalPriority['organization'] }}</div>
+<a class="executive-title" href="{{ $globalPriority['url'] }}">{{ $globalPriority['title'] }}</a>
+</div>
+<span class="priority-rank">{{ $globalPriority['level_label'] }} · {{ $globalPriority['rank'] }}</span>
+</div>
+<div class="executive-reason">{{ $globalPriority['why'] }}</div>
+</div>
+@endforeach
+</div>
+@endif
+
+<div class="guard">
+<strong>Límite activo:</strong>
+la priorización ejecutiva global solo compara señales ya autorizadas. No crea propuestas, no modifica entidades y no ejecuta acciones.
+</div>
+</section>
 <section class="intel" aria-label="Lectura operativa de Jarvis">
 <div class="panel-head">
 <div>

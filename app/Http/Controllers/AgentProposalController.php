@@ -9,6 +9,7 @@ use App\Models\ServiceOrder;
 use App\Models\Task;
 use App\Support\CentralAgentGateway;
 use App\Support\CentralAgentProposalExecutor;
+use App\Support\JarvisExecutivePrioritization;
 use App\Support\JarvisOperationalIntelligence;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,6 +23,7 @@ class AgentProposalController extends Controller
         Request $request,
         CentralAgentGateway $gateway,
         JarvisOperationalIntelligence $intelligence,
+        JarvisExecutivePrioritization $executivePrioritization,
     ): View {
         $validated = $request->validate([
             'scope' => [
@@ -226,6 +228,24 @@ class AgentProposalController extends Controller
                 $operationalContext,
             );
 
+        $executiveContexts =
+            $organizations
+                ->map(
+                    fn ($organization): array =>
+                        $gateway
+                            ->organizationContext(
+                                $user,
+                                $organization,
+                            ),
+                )
+                ->all();
+
+        $executivePrioritization =
+            $executivePrioritization
+                ->analyze(
+                    $executiveContexts,
+                );
+
         $statusLabels = [
             'pending' => 'Pendientes',
             'approved' => 'Aprobadas',
@@ -248,6 +268,7 @@ class AgentProposalController extends Controller
                 'focusOrganization',
                 'operationalContext',
                 'operationalIntelligence',
+                'executivePrioritization',
                 'statusLabels',
             ),
         );
