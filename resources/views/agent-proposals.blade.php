@@ -20,6 +20,7 @@ h2{margin:0;font-size:16px;letter-spacing:-.02em}
 .metric strong{display:block;font-size:25px;line-height:1}.metric span{display:block;margin-top:6px;font-size:10px;font-weight:850;color:var(--op-muted,#94a3b8)}
 .metric.attention strong{color:#fde68a}.metric.ready strong{color:#86efac}.metric.done strong{color:#7dd3fc}.metric.stale strong{color:#d4d4d8}
 .executive{margin-bottom:12px;padding:15px;border:1px solid var(--op-border,#334155);border-radius:17px;background:var(--op-card,#0f172a)}.executive-grid{display:grid;grid-template-columns:180px minmax(0,1fr);gap:16px}.executive-rank{display:grid;gap:7px;margin-top:11px}.executive-org{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:9px 10px;border-radius:11px;background:rgba(148,163,184,.06);text-decoration:none;color:inherit}.executive-org strong{font-size:11px}.executive-org-meta{margin-top:3px;font-size:9px;color:var(--op-muted,#94a3b8)}.executive-score{font-size:16px;font-weight:900}.executive-top{display:grid;gap:7px;margin-top:11px}.executive-priority{padding:9px 10px;border-radius:11px;background:rgba(148,163,184,.06)}.executive-priority-head{display:flex;justify-content:space-between;gap:10px}.executive-scope{font-size:9px;font-weight:900;color:#93c5fd}.executive-title{margin-top:3px;font-size:11px;font-weight:900}.executive-reason{margin-top:3px;font-size:9px;color:var(--op-muted,#94a3b8);line-height:1.4}
+.daily-plan{margin-bottom:12px;padding:15px;border:1px solid var(--op-border,#334155);border-radius:17px;background:var(--op-card,#0f172a)}.daily-plan-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}.daily-section{padding:10px;border-radius:13px;background:rgba(148,163,184,.055)}.daily-section h3{margin:0;font-size:11px}.daily-section-hint{margin-top:3px;font-size:9px;color:var(--op-muted,#94a3b8)}.daily-items{display:grid;gap:7px;margin-top:9px}.daily-item{padding:8px;border-radius:10px;background:rgba(148,163,184,.065)}.daily-item-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.daily-sequence{flex:0 0 auto;min-width:23px;height:23px;display:grid;place-items:center;border-radius:999px;background:#172554;color:#bfdbfe;font-size:9px;font-weight:900}.daily-scope{font-size:8px;font-weight:900;color:#93c5fd}.daily-title{display:block;margin-top:2px;font-size:10px;font-weight:900;color:inherit;text-decoration:none}.daily-reason,.daily-move{margin-top:4px;font-size:9px;line-height:1.4;color:var(--op-muted,#94a3b8)}.daily-move strong{color:inherit}.daily-focus{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}.daily-focus span{padding:4px 6px;border-radius:999px;background:rgba(148,163,184,.08);font-size:9px;font-weight:800}
 .intel{margin-bottom:12px;padding:15px;border:1px solid var(--op-border,#334155);border-radius:17px;background:var(--op-card,#0f172a)}
 .intel-grid{display:grid;grid-template-columns:180px minmax(0,1fr);gap:16px;align-items:start}.pressure{padding:14px;border-radius:14px;background:rgba(148,163,184,.07)}.pressure-score{font-size:38px;font-weight:900;line-height:1;letter-spacing:-.05em}.pressure-label{margin-top:5px;font-size:10px;font-weight:900;text-transform:uppercase}.pressure.high .pressure-score{color:#fca5a5}.pressure.elevated .pressure-score{color:#fdba74}.pressure.moderate .pressure-score{color:#fde68a}.pressure.controlled .pressure-score{color:#86efac}.intel-summary{font-size:12px;line-height:1.55}.driver-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.driver{padding:5px 7px;border-radius:999px;background:rgba(148,163,184,.08);font-size:9px;font-weight:800}.priority-intel{display:grid;gap:7px;margin-top:12px}.priority-row{padding:10px;border-radius:12px;background:rgba(148,163,184,.06)}.priority-top{display:flex;justify-content:space-between;gap:10px}.priority-name{font-size:11px;font-weight:900}.priority-rank{font-size:10px;font-weight:900;color:var(--op-muted,#94a3b8)}.priority-why,.priority-move{margin-top:4px;font-size:10px;line-height:1.45;color:var(--op-muted,#94a3b8)}.priority-move strong{color:inherit}.proposal-compatible{display:inline-block;margin-top:6px;padding:4px 6px;border-radius:999px;background:#172554;color:#bfdbfe;font-size:9px;font-weight:850}.proposal-prepare{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;margin-top:8px;align-items:end}.proposal-prepare.service{grid-template-columns:minmax(0,1fr) 170px auto}.proposal-field{display:grid;gap:4px}.proposal-field label{font-size:9px;font-weight:800;color:var(--op-muted,#94a3b8)}.proposal-input{width:100%;min-height:36px;padding:7px 9px;border:1px solid var(--op-border,#334155);border-radius:9px;background:transparent;color:inherit;font:inherit;font-size:11px}.proposal-input:focus{outline:2px solid rgba(96,165,250,.35);border-color:#60a5fa}.prepare-button{min-height:36px;padding:7px 10px;border:1px solid #1d4ed8;border-radius:9px;background:#172554;color:#dbeafe;font:inherit;font-size:10px;font-weight:900;cursor:pointer}.prepare-note{margin-top:5px;font-size:9px;color:var(--op-muted,#94a3b8)}
 .center-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);gap:12px;margin-bottom:18px}
@@ -39,8 +40,8 @@ h2{margin:0;font-size:16px;letter-spacing:-.02em}
 .changes{margin-top:9px;display:grid;gap:5px}.change{padding:7px 9px;border-radius:9px;background:rgba(148,163,184,.08);font-size:11px;overflow-wrap:anywhere}
 .actions{display:flex;gap:8px;margin-top:11px}.actions form{margin:0}.button{min-height:36px;padding:7px 11px;border-radius:9px;font:inherit;font-size:11px;font-weight:850;cursor:pointer}.approve{border:1px solid #166534;background:#052e16;color:#bbf7d0}.reject{border:1px solid #7f1d1d;background:#450a0a;color:#fecaca}.execute{border:1px solid #1d4ed8;background:#172554;color:#dbeafe}
 .guard{margin-top:18px;padding:12px;border:1px dashed var(--op-border,#334155);border-radius:14px;color:var(--op-muted,#94a3b8);font-size:11px}.empty{padding:20px;border:1px dashed var(--op-border,#334155);border-radius:15px;text-align:center;font-size:12px}
-@media(max-width:900px){.metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.executive-grid,.intel-grid,.center-grid{grid-template-columns:1fr}}
-@media(max-width:620px){.head,.row,.panel-head{display:grid}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.context-counts{grid-template-columns:repeat(2,minmax(0,1fr))}.quick-links,.proposal-prepare,.proposal-prepare.service{grid-template-columns:1fr}}
+@media(max-width:900px){.metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.daily-plan-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.executive-grid,.intel-grid,.center-grid{grid-template-columns:1fr}}
+@media(max-width:620px){.head,.row,.panel-head{display:grid}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.daily-plan-grid,.context-counts{grid-template-columns:1fr}.quick-links,.proposal-prepare,.proposal-prepare.service{grid-template-columns:1fr}}
 @media(prefers-color-scheme:light){.chip.active{background:#eff6ff;color:#1d4ed8}.badge{background:#f1f5f9;color:#475569}.badge.pending{background:#fffbeb;color:#a16207}.badge.approved{background:#f0fdf4;color:#166534}.badge.rejected{background:#fef2f2;color:#b91c1c}.badge.executed{background:#f0f9ff;color:#0369a1}.badge.stale{background:#f4f4f5;color:#52525b}.notice{background:#f0fdf4;color:#166534}.reason{background:#eff6ff}.approve{background:#f0fdf4;color:#166534}.reject{background:#fef2f2;color:#b91c1c}.execute{background:#eff6ff;color:#1d4ed8}.safety span{background:#f8fafc}.safety .safe{color:#166534}.safety .locked{color:#1d4ed8}}
 </style>
 </head>
@@ -147,6 +148,57 @@ h2{margin:0;font-size:16px;letter-spacing:-.02em}
 <div class="guard">
 <strong>Límite activo:</strong>
 la priorización ejecutiva global solo compara señales ya autorizadas. No crea propuestas, no modifica entidades y no ejecuta acciones.
+</div>
+</section>
+<section class="daily-plan" aria-label="Plan Diario Jarvis">
+<div class="panel-head">
+<div>
+<h2>Plan Diario Jarvis</h2>
+<div class="muted">{{ $dailyPlan['date_label'] }} · orden sugerido de jornada · solo lectura.</div>
+</div>
+<span class="chip">{{ $dailyPlan['total_items'] }} asuntos</span>
+</div>
+
+<div class="intel-summary">{{ $dailyPlan['summary'] }}</div>
+
+@if($dailyPlan['focus_organizations'])
+<div class="daily-focus" aria-label="Ámbitos de foco">
+@foreach($dailyPlan['focus_organizations'] as $focus)
+<span>{{ $focus['name'] }} · {{ $focus['pressure_score'] }}</span>
+@endforeach
+</div>
+@endif
+
+<div class="daily-plan-grid">
+@foreach($dailyPlan['sections'] as $sectionKey => $section)
+<div class="daily-section">
+<h3>{{ $section['label'] }}</h3>
+<div class="daily-section-hint">{{ $section['hint'] }}</div>
+
+<div class="daily-items">
+@forelse($section['items'] as $planItem)
+<div class="daily-item">
+<div class="daily-item-top">
+<div>
+<div class="daily-scope">{{ $planItem['organization'] }} · {{ $planItem['type_label'] }}</div>
+<a class="daily-title" href="{{ $planItem['url'] }}">{{ $planItem['title'] }}</a>
+</div>
+<span class="daily-sequence">{{ $planItem['sequence'] }}</span>
+</div>
+<div class="daily-reason">{{ $planItem['why'] }}</div>
+<div class="daily-move"><strong>Siguiente:</strong> {{ $planItem['suggested_move'] }}</div>
+</div>
+@empty
+<div class="muted">Sin asuntos en este bloque.</div>
+@endforelse
+</div>
+</div>
+@endforeach
+</div>
+
+<div class="guard">
+<strong>Límite activo:</strong>
+el Plan Diario Jarvis ordena señales; no reserva horas, no modifica fechas, no mueve tareas y no crea propuestas automáticamente.
 </div>
 </section>
 <section class="intel" aria-label="Lectura operativa de Jarvis">

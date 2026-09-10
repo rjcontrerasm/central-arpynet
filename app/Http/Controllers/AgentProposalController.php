@@ -9,6 +9,7 @@ use App\Models\ServiceOrder;
 use App\Models\Task;
 use App\Support\CentralAgentGateway;
 use App\Support\CentralAgentProposalExecutor;
+use App\Support\JarvisDailyPlan;
 use App\Support\JarvisExecutivePrioritization;
 use App\Support\JarvisOperationalIntelligence;
 use Illuminate\Http\RedirectResponse;
@@ -24,6 +25,7 @@ class AgentProposalController extends Controller
         CentralAgentGateway $gateway,
         JarvisOperationalIntelligence $intelligence,
         JarvisExecutivePrioritization $executivePrioritization,
+        JarvisDailyPlan $dailyPlanService,
     ): View {
         $validated = $request->validate([
             'scope' => [
@@ -214,20 +216,6 @@ class AgentProposalController extends Controller
         $focusOrganization ??=
             $organizations->first();
 
-        $operationalContext =
-            $focusOrganization
-                ? $gateway
-                    ->organizationContext(
-                        $user,
-                        $focusOrganization,
-                    )
-                : null;
-
-        $operationalIntelligence =
-            $intelligence->analyze(
-                $operationalContext,
-            );
-
         $executiveContexts =
             $organizations
                 ->map(
@@ -240,11 +228,32 @@ class AgentProposalController extends Controller
                 )
                 ->all();
 
+        $operationalContext =
+            $focusOrganization
+                ? collect(
+                    $executiveContexts,
+                )->first(
+                    fn (array $context): bool =>
+                        (int) $context['id']
+                        === (int) $focusOrganization->id,
+                )
+                : null;
+
+        $operationalIntelligence =
+            $intelligence->analyze(
+                $operationalContext,
+            );
+
         $executivePrioritization =
             $executivePrioritization
                 ->analyze(
                     $executiveContexts,
                 );
+
+        $dailyPlan =
+            $dailyPlanService->build(
+                $executivePrioritization,
+            );
 
         $statusLabels = [
             'pending' => 'Pendientes',
@@ -269,6 +278,7 @@ class AgentProposalController extends Controller
                 'operationalContext',
                 'operationalIntelligence',
                 'executivePrioritization',
+                'dailyPlan',
                 'statusLabels',
             ),
         );
