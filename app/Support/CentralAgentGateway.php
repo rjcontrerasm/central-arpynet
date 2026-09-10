@@ -369,6 +369,8 @@ class CentralAgentGateway
             ->map(
                 fn (array $item): array => [
                     'type' => $item['type'],
+                    'type_label' =>
+                        $item['type_label'],
                     'id' => $item['id'],
                     'title' => $item['title'],
                     'level' => $item['level'],
@@ -379,6 +381,26 @@ class CentralAgentGateway
                     'meta' => $item['meta'],
                     'date_label' =>
                         $item['date_label'],
+                    'stagnant' =>
+                        (bool) (
+                            $item['stagnant']
+                            ?? false
+                        ),
+                    'stagnation_days' =>
+                        (int) (
+                            $item[
+                                'stagnation_days'
+                            ] ?? 0
+                        ),
+                    'no_next_action' =>
+                        (bool) (
+                            $item[
+                                'no_next_action'
+                            ] ?? false
+                        ),
+                    'next_action' =>
+                        $item['next_action']
+                        ?? null,
                     'url' => $item['url'],
                 ],
             )

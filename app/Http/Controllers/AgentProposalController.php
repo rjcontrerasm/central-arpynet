@@ -6,6 +6,7 @@ use App\Models\AgentActionProposal;
 use App\Models\AuditLog;
 use App\Support\CentralAgentGateway;
 use App\Support\CentralAgentProposalExecutor;
+use App\Support\JarvisOperationalIntelligence;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,7 @@ class AgentProposalController extends Controller
     public function index(
         Request $request,
         CentralAgentGateway $gateway,
+        JarvisOperationalIntelligence $intelligence,
     ): View {
         $validated = $request->validate([
             'scope' => [
@@ -216,6 +218,11 @@ class AgentProposalController extends Controller
                     )
                 : null;
 
+        $operationalIntelligence =
+            $intelligence->analyze(
+                $operationalContext,
+            );
+
         $statusLabels = [
             'pending' => 'Pendientes',
             'approved' => 'Aprobadas',
@@ -237,6 +244,7 @@ class AgentProposalController extends Controller
                 'contract',
                 'focusOrganization',
                 'operationalContext',
+                'operationalIntelligence',
                 'statusLabels',
             ),
         );
