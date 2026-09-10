@@ -6,6 +6,7 @@ use App\Models\AgentActionProposal;
 use App\Models\AuditLog;
 use App\Models\Project;
 use App\Models\ServiceOrder;
+use App\Models\Task;
 use App\Support\CentralAgentGateway;
 use App\Support\CentralAgentProposalExecutor;
 use App\Support\JarvisOperationalIntelligence;
@@ -260,6 +261,7 @@ class AgentProposalController extends Controller
             'subject_type' => [
                 'required',
                 Rule::in([
+                    'task',
                     'project',
                     'service_order',
                 ]),
@@ -272,12 +274,17 @@ class AgentProposalController extends Controller
             'action' => [
                 'required',
                 Rule::in([
+                    'complete',
+                    'start',
+                    'today',
+                    'tomorrow',
+                    'next_week',
                     'project.next_action.set',
                     'service_order.next_action.set',
                 ]),
             ],
             'next_action' => [
-                'required',
+                'nullable',
                 'string',
                 'max:255',
             ],
@@ -287,15 +294,30 @@ class AgentProposalController extends Controller
             ],
         ]);
 
-        $expectedAction =
-            $validated['subject_type']
-            === 'project'
-                ? 'project.next_action.set'
-                : 'service_order.next_action.set';
+        $allowedByType = [
+            'task' => [
+                'complete',
+                'start',
+                'today',
+                'tomorrow',
+                'next_week',
+            ],
+            'project' => [
+                'project.next_action.set',
+            ],
+            'service_order' => [
+                'service_order.next_action.set',
+            ],
+        ];
 
         if (
-            $validated['action']
-            !== $expectedAction
+            ! in_array(
+                $validated['action'],
+                $allowedByType[
+                    $validated['subject_type']
+                ],
+                true,
+            )
         ) {
             throw \Illuminate\Validation\ValidationException::
                 withMessages([
@@ -310,6 +332,72 @@ class AgentProposalController extends Controller
                 $gateway,
                 $validated,
             ): array {
+                if (
+                    $validated['subject_type']
+                    === 'task'
+                ) {
+                    $task =
+                        Task::query()
+                            ->lockForUpdate()
+                            ->findOrFail(
+                                (int) $validated[
+                                    'subject_id'
+                                ],
+                            );
+
+                    $this->authorizeOrganization(
+                        $request,
+                        (int) $task
+                            ->organization_id,
+                    );
+
+                    if (
+                        in_array(
+                            $task->status,
+                            [
+                                'completed',
+                                'cancelled',
+                            ],
+                            true,
+                        )
+                        || (
+                            $validated['action']
+                            === 'start'
+                            && $task->status
+                                === 'in_progress'
+                        )
+                    ) {
+                        return [
+                            'stale' => true,
+                            'scope' =>
+                                (int) $task
+                                    ->organization_id,
+                            'stale_message' =>
+                                'La tarea cambió desde la lectura de Jarvis y esa preparación ya no es pertinente. Recarga Jarvis antes de continuar.',
+                        ];
+                    }
+
+                    $proposal =
+                        $gateway
+                            ->proposeTaskAction(
+                                $request->user(),
+                                $task,
+                                $validated['action'],
+                                'Propuesta de tarea preparada manualmente desde Lectura Jarvis. La tarea permanece sin cambios hasta aprobación y segunda confirmación.',
+                            );
+
+                    return [
+                        'stale' => false,
+                        'scope' =>
+                            (int) $task
+                                ->organization_id,
+                        'proposal' => $proposal,
+                        'created' =>
+                            $proposal
+                                ->wasRecentlyCreated,
+                    ];
+                }
+
                 if (
                     $validated['subject_type']
                     === 'project'
@@ -339,6 +427,8 @@ class AgentProposalController extends Controller
                             'scope' =>
                                 (int) $project
                                     ->organization_id,
+                            'stale_message' =>
+                                'La sugerencia ya no está vigente porque el proyecto ya tiene una siguiente acción. Recarga Jarvis antes de preparar otra propuesta.',
                         ];
                     }
 
@@ -351,9 +441,11 @@ class AgentProposalController extends Controller
                                 [
                                     'next_action' =>
                                         trim(
-                                            (string) $validated[
-                                                'next_action'
-                                            ],
+                                            (string) (
+                                                $validated[
+                                                    'next_action'
+                                                ] ?? ''
+                                            ),
                                         ),
                                 ],
                                 'Propuesta preparada manualmente desde Lectura Jarvis para definir la siguiente acción de un proyecto sin siguiente acción registrada.',
@@ -396,6 +488,8 @@ class AgentProposalController extends Controller
                         'scope' =>
                             (int) $order
                                 ->organization_id,
+                        'stale_message' =>
+                            'La sugerencia ya no está vigente porque el servicio ya tiene una siguiente acción. Recarga Jarvis antes de preparar otra propuesta.',
                     ];
                 }
 
@@ -408,9 +502,11 @@ class AgentProposalController extends Controller
                             [
                                 'next_action' =>
                                     trim(
-                                        (string) $validated[
-                                            'next_action'
-                                        ],
+                                        (string) (
+                                            $validated[
+                                                'next_action'
+                                            ] ?? ''
+                                        ),
                                     ),
                                 'next_action_at' =>
                                     $validated[
@@ -449,7 +545,8 @@ class AgentProposalController extends Controller
                 )
                 ->with(
                     'agent_proposal_message',
-                    'La sugerencia ya no está vigente porque la entidad ya tiene una siguiente acción. Recarga Jarvis antes de preparar otra propuesta.',
+                    $result['stale_message']
+                    ?? 'La sugerencia ya no está vigente. Recarga Jarvis antes de preparar otra propuesta.',
                 );
         }
 

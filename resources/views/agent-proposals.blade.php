@@ -193,6 +193,45 @@ Preparar propuesta
 <div class="prepare-note">La acción y fecha se guardarán únicamente en la propuesta pendiente.</div>
 @endif
 @endif
+
+@if($priority['type'] === 'task')
+<div class="proposal-compatible">
+Acciones de tarea disponibles con preparación humana
+</div>
+<form
+    class="proposal-prepare"
+    method="POST"
+    action="{{ route('agent-proposals.prepare') }}"
+>
+@csrf
+<input type="hidden" name="subject_type" value="task">
+<input type="hidden" name="subject_id" value="{{ $priority['id'] }}">
+<div class="proposal-field">
+<label for="jarvis-task-action-{{ $priority['id'] }}">Acción propuesta</label>
+<select
+    class="proposal-input"
+    id="jarvis-task-action-{{ $priority['id'] }}"
+    name="action"
+    required
+>
+@foreach($contract['action_catalog']['task'] as $actionKey => $definition)
+<option value="{{ $actionKey }}">{{ $definition['label'] }}</option>
+@endforeach
+</select>
+</div>
+<button
+    class="prepare-button"
+    type="submit"
+    data-confirm="¿Preparar esta acción de tarea? Solo se agregará a Pendientes; la tarea no cambiará todavía."
+    data-busy-label="Preparando…"
+>
+Preparar acción
+</button>
+</form>
+<div class="prepare-note">
+La tarea permanecerá intacta hasta que apruebes la propuesta y confirmes su ejecución por segunda vez.
+</div>
+@endif
 </div>
 @empty
 <div class="empty">No hay prioridades operativas que interpretar en este momento.</div>
