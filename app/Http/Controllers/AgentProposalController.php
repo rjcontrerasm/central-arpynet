@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\AgentActionProposal;
 use App\Models\AuditLog;
+use App\Models\Project;
+use App\Models\ServiceOrder;
 use App\Support\CentralAgentGateway;
 use App\Support\CentralAgentProposalExecutor;
 use App\Support\JarvisOperationalIntelligence;
@@ -250,6 +252,230 @@ class AgentProposalController extends Controller
         );
     }
 
+    public function prepare(
+        Request $request,
+        CentralAgentGateway $gateway,
+    ): RedirectResponse {
+        $validated = $request->validate([
+            'subject_type' => [
+                'required',
+                Rule::in([
+                    'project',
+                    'service_order',
+                ]),
+            ],
+            'subject_id' => [
+                'required',
+                'integer',
+                'min:1',
+            ],
+            'action' => [
+                'required',
+                Rule::in([
+                    'project.next_action.set',
+                    'service_order.next_action.set',
+                ]),
+            ],
+            'next_action' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+            'next_action_at' => [
+                'nullable',
+                'date',
+            ],
+        ]);
+
+        $expectedAction =
+            $validated['subject_type']
+            === 'project'
+                ? 'project.next_action.set'
+                : 'service_order.next_action.set';
+
+        if (
+            $validated['action']
+            !== $expectedAction
+        ) {
+            throw \Illuminate\Validation\ValidationException::
+                withMessages([
+                    'action' =>
+                        'La acción propuesta no corresponde al tipo de entidad.',
+                ]);
+        }
+
+        $result = DB::transaction(
+            function () use (
+                $request,
+                $gateway,
+                $validated,
+            ): array {
+                if (
+                    $validated['subject_type']
+                    === 'project'
+                ) {
+                    $project =
+                        Project::query()
+                            ->lockForUpdate()
+                            ->findOrFail(
+                                (int) $validated[
+                                    'subject_id'
+                                ],
+                            );
+
+                    $this->authorizeOrganization(
+                        $request,
+                        (int) $project
+                            ->organization_id,
+                    );
+
+                    if (
+                        filled(
+                            $project->next_action,
+                        )
+                    ) {
+                        return [
+                            'stale' => true,
+                            'scope' =>
+                                (int) $project
+                                    ->organization_id,
+                        ];
+                    }
+
+                    $proposal =
+                        $gateway
+                            ->proposeProjectAction(
+                                $request->user(),
+                                $project,
+                                'project.next_action.set',
+                                [
+                                    'next_action' =>
+                                        trim(
+                                            (string) $validated[
+                                                'next_action'
+                                            ],
+                                        ),
+                                ],
+                                'Propuesta preparada manualmente desde Lectura Jarvis para definir la siguiente acción de un proyecto sin siguiente acción registrada.',
+                            );
+
+                    return [
+                        'stale' => false,
+                        'scope' =>
+                            (int) $project
+                                ->organization_id,
+                        'proposal' => $proposal,
+                        'created' =>
+                            $proposal
+                                ->wasRecentlyCreated,
+                    ];
+                }
+
+                $order =
+                    ServiceOrder::query()
+                        ->lockForUpdate()
+                        ->findOrFail(
+                            (int) $validated[
+                                'subject_id'
+                            ],
+                        );
+
+                $this->authorizeOrganization(
+                    $request,
+                    (int) $order
+                        ->organization_id,
+                );
+
+                if (
+                    filled(
+                        $order->next_action,
+                    )
+                ) {
+                    return [
+                        'stale' => true,
+                        'scope' =>
+                            (int) $order
+                                ->organization_id,
+                    ];
+                }
+
+                $proposal =
+                    $gateway
+                        ->proposeServiceOrderAction(
+                            $request->user(),
+                            $order,
+                            'service_order.next_action.set',
+                            [
+                                'next_action' =>
+                                    trim(
+                                        (string) $validated[
+                                            'next_action'
+                                        ],
+                                    ),
+                                'next_action_at' =>
+                                    $validated[
+                                        'next_action_at'
+                                    ] ?? null,
+                            ],
+                            'Propuesta preparada manualmente desde Lectura Jarvis para definir la siguiente acción de un servicio sin siguiente acción registrada.',
+                        );
+
+                return [
+                    'stale' => false,
+                    'scope' =>
+                        (int) $order
+                            ->organization_id,
+                    'proposal' => $proposal,
+                    'created' =>
+                        $proposal
+                            ->wasRecentlyCreated,
+                ];
+            },
+        );
+
+        if (
+            $result['stale']
+            ?? false
+        ) {
+            return redirect()
+                ->route(
+                    'agent-proposals.index',
+                    [
+                        'scope' =>
+                            $result['scope'],
+                        'status' =>
+                            'pending',
+                    ],
+                )
+                ->with(
+                    'agent_proposal_message',
+                    'La sugerencia ya no está vigente porque la entidad ya tiene una siguiente acción. Recarga Jarvis antes de preparar otra propuesta.',
+                );
+        }
+
+        $message = (
+            $result['created']
+            ?? false
+        )
+            ? 'Propuesta preparada y enviada a Pendientes. Aún no se ejecutó ningún cambio.'
+            : 'Ya existía una propuesta pendiente idéntica; CENTRAL reutilizó la existente. No se ejecutó ningún cambio.';
+
+        return redirect()
+            ->route(
+                'agent-proposals.index',
+                [
+                    'scope' =>
+                        $result['scope'],
+                    'status' =>
+                        'pending',
+                ],
+            )
+            ->with(
+                'agent_proposal_message',
+                $message,
+            );
+    }
+
     public function approve(
         Request $request,
         AgentActionProposal $proposal,
@@ -414,6 +640,17 @@ class AgentProposalController extends Controller
         Request $request,
         AgentActionProposal $proposal,
     ): void {
+        $this->authorizeOrganization(
+            $request,
+            (int) $proposal
+                ->organization_id,
+        );
+    }
+
+    private function authorizeOrganization(
+        Request $request,
+        int $organizationId,
+    ): void {
         $allowed = DB::table(
             'organization_user',
         )
@@ -423,8 +660,7 @@ class AgentProposalController extends Controller
             )
             ->where(
                 'organization_id',
-                $proposal
-                    ->organization_id,
+                $organizationId,
             )
             ->where(
                 'is_active',

@@ -388,6 +388,14 @@ Route::middleware('auth')->group(function (): void {
     )->name('agent-proposals.index');
 
     Route::post(
+        '/jarvis/preparar-propuesta',
+        [
+            \App\Http\Controllers\AgentProposalController::class,
+            'prepare',
+        ],
+    )->name('agent-proposals.prepare');
+
+    Route::post(
         '/jarvis/propuestas/{proposal}/aprobar',
         [
             \App\Http\Controllers\AgentProposalController::class,
