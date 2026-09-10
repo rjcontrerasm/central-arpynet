@@ -4,14 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\AgentActionProposal;
 use App\Models\AuditLog;
+use App\Models\DailyReviewSession;
 use App\Models\Project;
 use App\Models\ServiceOrder;
 use App\Models\Task;
 use App\Support\CentralAgentGateway;
 use App\Support\CentralAgentProposalExecutor;
 use App\Support\JarvisDailyPlan;
+use App\Support\JarvisDailyReviewAssistant;
 use App\Support\JarvisExecutivePrioritization;
 use App\Support\JarvisOperationalIntelligence;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +29,7 @@ class AgentProposalController extends Controller
         JarvisOperationalIntelligence $intelligence,
         JarvisExecutivePrioritization $executivePrioritization,
         JarvisDailyPlan $dailyPlanService,
+        JarvisDailyReviewAssistant $dailyReviewAssistantService,
     ): View {
         $validated = $request->validate([
             'scope' => [
@@ -255,6 +259,35 @@ class AgentProposalController extends Controller
                 $executivePrioritization,
             );
 
+        $reviewNow = CarbonImmutable::now(
+            config(
+                'app.timezone',
+                'America/Lima',
+            ),
+        );
+
+        $dailyReviewSession =
+            DailyReviewSession::query()
+                ->where(
+                    'user_id',
+                    $user->id,
+                )
+                ->whereDate(
+                    'review_date',
+                    $reviewNow
+                        ->toDateString(),
+                )
+                ->first();
+
+        $dailyReviewAssistant =
+            $dailyReviewAssistantService
+                ->build(
+                    $executivePrioritization,
+                    $dailyPlan,
+                    $dailyReviewSession,
+                    $reviewNow,
+                );
+
         $statusLabels = [
             'pending' => 'Pendientes',
             'approved' => 'Aprobadas',
@@ -279,6 +312,7 @@ class AgentProposalController extends Controller
                 'operationalIntelligence',
                 'executivePrioritization',
                 'dailyPlan',
+                'dailyReviewAssistant',
                 'statusLabels',
             ),
         );
