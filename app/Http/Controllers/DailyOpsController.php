@@ -7,11 +7,13 @@ use App\Models\ObligationOccurrence;
 use App\Models\Organization;
 use App\Models\Project;
 use App\Models\RecurringTaskRule;
+use App\Models\ServiceOrder;
 use App\Models\Task;
 use App\Support\DailyTaskPriority;
 use App\Support\GlobalTrackingItemFactory;
 use App\Support\RecurringTaskGenerator;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -38,9 +40,14 @@ class DailyOpsController extends Controller
                 'nullable',
                 'in:critical,today,week,planned',
             ],
+            'view' => [
+                'nullable',
+                'in:mine,team,unassigned',
+            ],
         ]);
 
         $user = $request->user();
+        $selectedWorkView = $validated['view'] ?? 'mine';
 
         $organizationIds = DB::table('organization_user')
             ->where('user_id', $user->id)
@@ -84,6 +91,7 @@ class DailyOpsController extends Controller
         $tasksQuery = Task::query()
             ->with([
                 'organization',
+                'assignee',
                 'recurringRun.rule',
             ])
             ->whereIn(
@@ -94,6 +102,12 @@ class DailyOpsController extends Controller
                 'status',
                 ['completed', 'cancelled', 'someday'],
             );
+
+        $this->applyWorkView(
+            $tasksQuery,
+            $selectedWorkView,
+            $user->id,
+        );
 
         if ($selectedScope) {
             $tasksQuery->where(
@@ -397,7 +411,10 @@ class DailyOpsController extends Controller
                 ->get();
 
         $openIncidents = Incident::query()
-            ->with('organization')
+            ->with([
+                'organization',
+                'assignee',
+            ])
             ->whereIn(
                 'organization_id',
                 $organizationIds,
@@ -406,6 +423,12 @@ class DailyOpsController extends Controller
                 'status',
                 ['resolved', 'closed', 'cancelled'],
             );
+
+        $this->applyWorkView(
+            $openIncidents,
+            $selectedWorkView,
+            $user->id,
+        );
 
         if ($selectedScope) {
             $openIncidents->where(
@@ -428,6 +451,56 @@ class DailyOpsController extends Controller
             ->limit(5)
             ->get();
 
+        $serviceOrders = ServiceOrder::query()
+            ->with([
+                'organization',
+                'client',
+                'assignee',
+            ])
+            ->whereIn(
+                'organization_id',
+                $organizationIds,
+            )
+            ->whereNotIn(
+                'stage',
+                ['closed', 'cancelled'],
+            );
+
+        $this->applyWorkView(
+            $serviceOrders,
+            $selectedWorkView,
+            $user->id,
+        );
+
+        if ($selectedScope) {
+            $serviceOrders->where(
+                'organization_id',
+                $selectedScope,
+            );
+        }
+
+        if ($search !== '') {
+            $serviceOrders->where(
+                function (Builder $query) use ($search): void {
+                    $like = '%'.$search.'%';
+
+                    $query
+                        ->where('title', 'like', $like)
+                        ->orWhere('next_action', 'like', $like)
+                        ->orWhere('order_number', 'like', $like)
+                        ->orWhere('quotation_number', 'like', $like);
+                },
+            );
+        }
+
+        $serviceOrders = $serviceOrders
+            ->orderByRaw(
+                'CASE WHEN next_action_at IS NULL THEN 1 ELSE 0 END',
+            )
+            ->orderBy('next_action_at')
+            ->latest('updated_at')
+            ->limit(6)
+            ->get();
 
         $projectsQuery = Project::query()
             ->visibleTo($user)
@@ -533,12 +606,14 @@ class DailyOpsController extends Controller
         $projectsAttention = $projectRows
             ->take(6)
             ->values();
+
         return view(
             'daily-ops',
             compact(
                 'now',
                 'organizations',
                 'selectedScope',
+                'selectedWorkView',
                 'search',
                 'selectedPriority',
                 'overdueCount',
@@ -557,9 +632,22 @@ class DailyOpsController extends Controller
                 'noDateTasks',
                 'upcomingObligations',
                 'openIncidents',
+                'serviceOrders',
                 'projectsAttention',
                 'projectsAttentionCount',
             ),
         );
+    }
+
+    private function applyWorkView(
+        Builder $query,
+        string $selectedWorkView,
+        int $userId,
+    ): Builder {
+        return match ($selectedWorkView) {
+            'mine' => $query->where('assigned_to', $userId),
+            'unassigned' => $query->whereNull('assigned_to'),
+            default => $query,
+        };
     }
 }
