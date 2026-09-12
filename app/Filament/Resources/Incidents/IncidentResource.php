@@ -7,6 +7,7 @@ use App\Models\Client;
 use App\Models\Incident;
 use App\Models\Project;
 use App\Models\ServiceOrder;
+use App\Models\User;
 use BackedEnum;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DateTimePicker;
@@ -65,6 +66,7 @@ class IncidentResource extends Resource
                                 fn (): ?int => auth()->user()
                                     ?->current_organization_id,
                             )
+                            ->live()
                             ->searchable()
                             ->native(false)
                             ->required(),
@@ -95,6 +97,38 @@ class IncidentResource extends Resource
                             ->default('new')
                             ->native(false)
                             ->required(),
+
+                        Select::make('assigned_to')
+                            ->label('Responsable')
+                            ->options(
+                                function ($get): array {
+                                    $organizationId = (int) ($get('organization_id') ?? 0);
+
+                                    if ($organizationId < 1) {
+                                        return [];
+                                    }
+
+                                    return User::query()
+                                        ->where('is_active', true)
+                                        ->whereHas(
+                                            'organizations',
+                                            fn (Builder $query): Builder => $query
+                                                ->where('organizations.id', $organizationId)
+                                                ->where('organizations.is_active', true)
+                                                ->where('organization_user.is_active', true),
+                                        )
+                                        ->orderBy('name')
+                                        ->pluck('name', 'id')
+                                        ->all();
+                                },
+                            )
+                            ->default(fn (): ?int => auth()->id())
+                            ->searchable()
+                            ->native(false)
+                            ->nullable()
+                            ->helperText(
+                                'Solo aparecen usuarios activos con acceso a la empresa seleccionada.'
+                            ),
 
                         TextInput::make('affected_service')
                             ->label('Servicio afectado')
@@ -272,6 +306,12 @@ class IncidentResource extends Resource
                     ->searchable()
                     ->toggleable(),
 
+                TextColumn::make('assignee.name')
+                    ->label('Responsable')
+                    ->badge()
+                    ->placeholder('Sin asignar')
+                    ->sortable(),
+
                 TextColumn::make('severity')
                     ->label('Severidad')
                     ->badge()
@@ -349,6 +389,10 @@ class IncidentResource extends Resource
                             ->all() ?? [],
                     ),
 
+                SelectFilter::make('assigned_to')
+                    ->label('Responsable')
+                    ->options(fn (): array => static::visibleAssigneeOptions()),
+
                 SelectFilter::make('severity')
                     ->label('Severidad')
                     ->options(Incident::severityOptions()),
@@ -383,6 +427,7 @@ class IncidentResource extends Resource
                 'client',
                 'serviceOrder',
                 'project',
+                'assignee',
             ]);
     }
 
@@ -391,5 +436,27 @@ class IncidentResource extends Resource
         return [
             'index' => ManageIncidents::route('/'),
         ];
+    }
+
+    public static function visibleAssigneeOptions(): array
+    {
+        $organizationIds = auth()->user()
+            ?->activeOrganizationIds() ?? [];
+
+        if ($organizationIds === []) {
+            return [];
+        }
+
+        return User::query()
+            ->where('is_active', true)
+            ->whereHas(
+                'organizations',
+                fn (Builder $query): Builder => $query
+                    ->whereIn('organizations.id', $organizationIds)
+                    ->where('organization_user.is_active', true),
+            )
+            ->orderBy('name')
+            ->pluck('name', 'id')
+            ->all();
     }
 }
