@@ -17,6 +17,28 @@ fail() {
     exit 1
 }
 
+check_repo_permissions() {
+    local problems=0
+    local path
+    local parent
+
+    while IFS= read -r -d '' path; do
+        parent="$(dirname "$path")"
+
+        if [[ -e "$path" && ! -w "$path" ]]; then
+            printf 'NO ESCRIBIBLE archivo: %s\n' "$path" >&2
+            problems=1
+        fi
+
+        if [[ -d "$parent" && ! -w "$parent" ]]; then
+            printf 'NO ESCRIBIBLE directorio: %s\n' "$parent" >&2
+            problems=1
+        fi
+    done < <(git ls-files -z)
+
+    [[ "$problems" -eq 0 ]]
+}
+
 if [[ "$(id -un)" == "root" ]]; then
     fail "Ejecuta este script como el usuario centralarpynet, no como root."
 fi
@@ -41,6 +63,10 @@ fi
 if [[ -n "$(git status --porcelain)" ]]; then
     git status --short
     fail "Hay cambios locales sin guardar. No se desplegará para evitar sobrescribirlos."
+fi
+
+if ! check_repo_permissions; then
+    fail "El repositorio contiene archivos/directorios que centralarpynet no puede reemplazar. Corrige propiedad/permisos antes de desplegar."
 fi
 
 PREVIOUS_SHA="$(git rev-parse HEAD)"
@@ -80,6 +106,15 @@ MAINTENANCE_ON=1
 
 log "Actualizando código"
 git checkout -B "$DEPLOY_REF" "origin/$DEPLOY_REF"
+
+if [[ "$(git rev-parse HEAD)" != "$TARGET_SHA" ]]; then
+    fail "HEAD no coincide con el commit objetivo después del checkout."
+fi
+
+if [[ -n "$(git status --porcelain)" ]]; then
+    git status --short
+    fail "El checkout dejó archivos modificados. Se detiene para evitar un despliegue parcial."
+fi
 
 log "Instalando dependencias PHP de producción"
 "$PHP_BIN" "$COMPOSER_BIN" install \
@@ -143,6 +178,10 @@ if command -v curl >/dev/null 2>&1; then
     log "Verificando respuesta HTTP de Central"
     HTTP_CODE="$(curl -k -L -sS -o /dev/null -w '%{http_code}' "$APP_URL/mi-dia" || true)"
     printf 'HTTP %s\n' "$HTTP_CODE"
+
+    if [[ ! "$HTTP_CODE" =~ ^(200|302)$ ]]; then
+        fail "Central respondió HTTP $HTTP_CODE después del despliegue."
+    fi
 fi
 
 printf '\n========================================\n'
