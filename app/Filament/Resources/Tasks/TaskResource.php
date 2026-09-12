@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Tasks;
 
 use App\Filament\Resources\Tasks\Pages\ManageTasks;
 use App\Models\Task;
+use App\Models\User;
 use BackedEnum;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DateTimePicker;
@@ -63,6 +64,7 @@ class TaskResource extends Resource
                                 fn (): ?int => auth()->user()
                                     ?->current_organization_id,
                             )
+                            ->live()
                             ->searchable()
                             ->native(false)
                             ->required(),
@@ -80,6 +82,38 @@ class TaskResource extends Resource
                             ->preload()
                             ->native(false)
                             ->nullable(),
+
+                        Select::make('assigned_to')
+                            ->label('Responsable')
+                            ->options(
+                                function ($get): array {
+                                    $organizationId = (int) ($get('organization_id') ?? 0);
+
+                                    if ($organizationId < 1) {
+                                        return [];
+                                    }
+
+                                    return User::query()
+                                        ->where('is_active', true)
+                                        ->whereHas(
+                                            'organizations',
+                                            fn (Builder $query): Builder => $query
+                                                ->where('organizations.id', $organizationId)
+                                                ->where('organizations.is_active', true)
+                                                ->where('organization_user.is_active', true),
+                                        )
+                                        ->orderBy('name')
+                                        ->pluck('name', 'id')
+                                        ->all();
+                                },
+                            )
+                            ->default(fn (): ?int => auth()->id())
+                            ->searchable()
+                            ->native(false)
+                            ->nullable()
+                            ->helperText(
+                                'Solo aparecen usuarios activos con acceso a la empresa seleccionada.'
+                            ),
 
                         TextInput::make('title')
                             ->label('Título')
@@ -151,9 +185,6 @@ class TaskResource extends Resource
 
                 Hidden::make('source')
                     ->default('manual'),
-
-                Hidden::make('assigned_to')
-                    ->default(fn (): ?int => auth()->id()),
             ]);
     }
 
@@ -178,6 +209,12 @@ class TaskResource extends Resource
                     ->label('Empresa / ámbito')
                     ->badge()
                     ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('assignee.name')
+                    ->label('Responsable')
+                    ->badge()
+                    ->placeholder('Sin asignar')
                     ->sortable(),
 
                 TextColumn::make('project.name')
@@ -263,6 +300,10 @@ class TaskResource extends Resource
                             ->all() ?? [],
                     ),
 
+                SelectFilter::make('assigned_to')
+                    ->label('Responsable')
+                    ->options(fn (): array => static::visibleAssigneeOptions()),
+
                 SelectFilter::make('status')
                     ->label('Estado')
                     ->options(Task::statusOptions()),
@@ -295,5 +336,31 @@ class TaskResource extends Resource
         return [
             'index' => ManageTasks::route('/'),
         ];
+    }
+
+    public static function visibleAssigneeOptions(): array
+    {
+        $organizationIds = auth()->user()
+            ?->organizations()
+            ->wherePivot('is_active', true)
+            ->where('organizations.is_active', true)
+            ->pluck('organizations.id')
+            ->all() ?? [];
+
+        if ($organizationIds === []) {
+            return [];
+        }
+
+        return User::query()
+            ->where('is_active', true)
+            ->whereHas(
+                'organizations',
+                fn (Builder $query): Builder => $query
+                    ->whereIn('organizations.id', $organizationIds)
+                    ->where('organization_user.is_active', true),
+            )
+            ->orderBy('name')
+            ->pluck('name', 'id')
+            ->all();
     }
 }
