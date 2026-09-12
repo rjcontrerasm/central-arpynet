@@ -121,8 +121,7 @@ class UserResource extends Resource
                 TernaryFilter::make('is_active')
                     ->label('Estado')
                     ->trueLabel('Solo activos')
-                    ->falseLabel('Solo inactivos')
-                    ->native(false),
+                    ->falseLabel('Solo inactivos'),
             ])
             ->recordActions([
                 Action::make('memberships')
@@ -152,7 +151,7 @@ class UserResource extends Resource
                                 ->all(),
                         ],
                     )
-                    ->form([
+                    ->schema([
                         Repeater::make('memberships')
                             ->label('Accesos por empresa')
                             ->schema([
