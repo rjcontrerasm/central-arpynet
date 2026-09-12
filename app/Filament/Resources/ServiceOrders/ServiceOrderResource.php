@@ -116,7 +116,11 @@ class ServiceOrderResource extends Resource
                                             fn (Builder $query): Builder => $query
                                                 ->where('organizations.id', $organizationId)
                                                 ->where('organizations.is_active', true)
-                                                ->where('organization_user.is_active', true),
+                                                ->where('organization_user.is_active', true)
+                                                ->whereIn(
+                                                    'organization_user.role',
+                                                    ['owner', 'admin', 'member'],
+                                                ),
                                         )
                                         ->orderBy('name')
                                         ->pluck('name', 'id')
@@ -128,7 +132,7 @@ class ServiceOrderResource extends Resource
                             ->native(false)
                             ->nullable()
                             ->helperText(
-                                'Solo aparecen usuarios activos con acceso a la empresa seleccionada.'
+                                'Solo aparecen usuarios activos con acceso operativo a la empresa seleccionada.'
                             ),
 
                         TextInput::make('title')
@@ -419,8 +423,23 @@ class ServiceOrderResource extends Resource
             ])
             ->recordActions([
                 EditAction::make()
-                    ->label('Editar'),
+                    ->label('Editar')
+                    ->visible(
+                        fn (ServiceOrder $record): bool => auth()->user()
+                            ?->canWriteToOrganization((int) $record->organization_id) ?? false,
+                    ),
             ]);
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->writableOrganizationIds() !== [];
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()
+            ?->canWriteToOrganization((int) $record->organization_id) ?? false;
     }
 
     public static function getEloquentQuery(): Builder
@@ -463,7 +482,11 @@ class ServiceOrderResource extends Resource
                 'organizations',
                 fn (Builder $query): Builder => $query
                     ->whereIn('organizations.id', $organizationIds)
-                    ->where('organization_user.is_active', true),
+                    ->where('organization_user.is_active', true)
+                    ->whereIn(
+                        'organization_user.role',
+                        ['owner', 'admin', 'member'],
+                    ),
             )
             ->orderBy('name')
             ->pluck('name', 'id')
