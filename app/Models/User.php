@@ -22,6 +22,7 @@ class User extends Authenticatable implements FilamentUser
         'email',
         'password',
         'current_organization_id',
+        'is_active',
     ];
 
     protected $hidden = [
@@ -34,6 +35,17 @@ class User extends Authenticatable implements FilamentUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
+        ];
+    }
+
+    public static function organizationRoleOptions(): array
+    {
+        return [
+            'owner' => 'Owner',
+            'admin' => 'Admin',
+            'member' => 'Miembro',
+            'viewer' => 'Solo lectura',
         ];
     }
 
@@ -67,10 +79,35 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(Task::class, 'created_by');
     }
 
+    public function manageableOrganizationIds(): array
+    {
+        if (! $this->is_active) {
+            return [];
+        }
+
+        return $this->organizations()
+            ->wherePivot('is_active', true)
+            ->whereIn('organization_user.role', ['owner', 'admin'])
+            ->where('organizations.is_active', true)
+            ->pluck('organizations.id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+    }
+
+    public function canManageTeam(): bool
+    {
+        return $this->manageableOrganizationIds() !== [];
+    }
+
     public function canAccessPanel(Panel $panel): bool
     {
-        return $panel->getId() === 'admin'
-            && strtolower(trim((string) $this->email))
-                === 'rcontreras@arpynet.com';
+        if ($panel->getId() !== 'admin' || ! $this->is_active) {
+            return false;
+        }
+
+        return $this->organizations()
+            ->wherePivot('is_active', true)
+            ->where('organizations.is_active', true)
+            ->exists();
     }
 }
