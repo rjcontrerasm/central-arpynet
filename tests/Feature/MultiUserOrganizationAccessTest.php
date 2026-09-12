@@ -7,6 +7,7 @@ use App\Models\Task;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class MultiUserOrganizationAccessTest extends TestCase
@@ -132,6 +133,46 @@ class MultiUserOrganizationAccessTest extends TestCase
             'id' => $task->id,
             'organization_id' => $organization->id,
             'created_by' => $member->id,
+        ]);
+    }
+
+    public function test_viewer_cannot_be_assigned_operational_work(): void
+    {
+        $owner = User::factory()->create(['is_active' => true]);
+        $viewer = User::factory()->create(['is_active' => true]);
+
+        $organization = Organization::query()->create([
+            'name' => 'Casa Andina',
+            'slug' => 'casa-andina-assignee-test',
+            'category' => 'company',
+            'is_active' => true,
+            'created_by' => $owner->id,
+        ]);
+
+        $organization->users()->attach($owner->id, [
+            'role' => 'owner',
+            'is_default' => true,
+            'is_active' => true,
+        ]);
+
+        $organization->users()->attach($viewer->id, [
+            'role' => 'viewer',
+            'is_default' => false,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($owner);
+
+        $this->expectException(ValidationException::class);
+
+        Task::query()->create([
+            'organization_id' => $organization->id,
+            'assigned_to' => $viewer->id,
+            'title' => 'Asignación inválida',
+            'status' => 'pending',
+            'urgency' => 'normal',
+            'impact' => 'normal',
+            'source' => 'manual',
         ]);
     }
 
