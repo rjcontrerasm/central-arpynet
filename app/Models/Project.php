@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Validation\ValidationException;
 
 class Project extends Model
 {
@@ -96,6 +99,12 @@ class Project extends Model
         return $this->hasMany(Task::class);
     }
 
+    public function participants(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class)
+            ->withTimestamps();
+    }
+
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -109,6 +118,55 @@ class Project extends Model
                 ->where('users.id', $user->id)
                 ->where('organization_user.is_active', true),
         );
+    }
+
+    public function syncParticipants(array $userIds): void
+    {
+        $actor = auth()->user();
+
+        if (
+            $actor instanceof User
+            && ! $actor->canWriteToOrganization((int) $this->organization_id)
+        ) {
+            throw new AuthorizationException(
+                'Tu acceso a esta empresa es de solo lectura.',
+            );
+        }
+
+        $requestedIds = collect($userIds)
+            ->filter()
+            ->map(fn ($id): int => (int) $id)
+            ->unique()
+            ->values();
+
+        $allowedIds = User::query()
+            ->whereIn('id', $requestedIds)
+            ->where('is_active', true)
+            ->whereHas(
+                'organizations',
+                fn (Builder $query): Builder => $query
+                    ->where('organizations.id', $this->organization_id)
+                    ->where('organizations.is_active', true)
+                    ->where('organization_user.is_active', true)
+                    ->whereIn(
+                        'organization_user.role',
+                        ['owner', 'admin', 'member'],
+                    ),
+            )
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
+            ->sort()
+            ->values();
+
+        if ($requestedIds->sort()->values()->all() !== $allowedIds->all()) {
+            throw ValidationException::withMessages([
+                'participants' =>
+                    'Todos los participantes deben ser usuarios activos con acceso operativo a la empresa del proyecto.',
+            ]);
+        }
+
+        $this->participants()->sync($allowedIds->all());
+        $this->touchActivity();
     }
 
     public function getProgressPercentAttribute(): int
