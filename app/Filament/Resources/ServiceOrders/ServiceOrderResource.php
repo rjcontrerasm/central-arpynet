@@ -5,6 +5,7 @@ namespace App\Filament\Resources\ServiceOrders;
 use App\Filament\Resources\ServiceOrders\Pages\ManageServiceOrders;
 use App\Models\Client;
 use App\Models\ServiceOrder;
+use App\Models\User;
 use BackedEnum;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
@@ -64,6 +65,7 @@ class ServiceOrderResource extends Resource
                                 fn (): ?int => auth()->user()
                                     ?->current_organization_id,
                             )
+                            ->live()
                             ->searchable()
                             ->native(false)
                             ->required(),
@@ -96,6 +98,38 @@ class ServiceOrderResource extends Resource
                             ->searchable()
                             ->native(false)
                             ->required(),
+
+                        Select::make('assigned_to')
+                            ->label('Responsable')
+                            ->options(
+                                function ($get): array {
+                                    $organizationId = (int) ($get('organization_id') ?? 0);
+
+                                    if ($organizationId < 1) {
+                                        return [];
+                                    }
+
+                                    return User::query()
+                                        ->where('is_active', true)
+                                        ->whereHas(
+                                            'organizations',
+                                            fn (Builder $query): Builder => $query
+                                                ->where('organizations.id', $organizationId)
+                                                ->where('organizations.is_active', true)
+                                                ->where('organization_user.is_active', true),
+                                        )
+                                        ->orderBy('name')
+                                        ->pluck('name', 'id')
+                                        ->all();
+                                },
+                            )
+                            ->default(fn (): ?int => auth()->id())
+                            ->searchable()
+                            ->native(false)
+                            ->nullable()
+                            ->helperText(
+                                'Solo aparecen usuarios activos con acceso a la empresa seleccionada.'
+                            ),
 
                         TextInput::make('title')
                             ->label('Servicio / asunto')
@@ -263,6 +297,12 @@ class ServiceOrderResource extends Resource
                     ->searchable()
                     ->sortable(),
 
+                TextColumn::make('assignee.name')
+                    ->label('Responsable')
+                    ->badge()
+                    ->placeholder('Sin asignar')
+                    ->sortable(),
+
                 TextColumn::make('stage')
                     ->label('Etapa')
                     ->badge()
@@ -355,6 +395,10 @@ class ServiceOrderResource extends Resource
                             ->all() ?? [],
                     ),
 
+                SelectFilter::make('assigned_to')
+                    ->label('Responsable')
+                    ->options(fn (): array => static::visibleAssigneeOptions()),
+
                 SelectFilter::make('client_id')
                     ->label('Cliente')
                     ->options(
@@ -393,6 +437,7 @@ class ServiceOrderResource extends Resource
             ->with([
                 'organization',
                 'client',
+                'assignee',
             ]);
     }
 
@@ -401,5 +446,27 @@ class ServiceOrderResource extends Resource
         return [
             'index' => ManageServiceOrders::route('/'),
         ];
+    }
+
+    public static function visibleAssigneeOptions(): array
+    {
+        $organizationIds = auth()->user()
+            ?->activeOrganizationIds() ?? [];
+
+        if ($organizationIds === []) {
+            return [];
+        }
+
+        return User::query()
+            ->where('is_active', true)
+            ->whereHas(
+                'organizations',
+                fn (Builder $query): Builder => $query
+                    ->whereIn('organizations.id', $organizationIds)
+                    ->where('organization_user.is_active', true),
+            )
+            ->orderBy('name')
+            ->pluck('name', 'id')
+            ->all();
     }
 }
