@@ -41,6 +41,23 @@ class AppServiceProvider extends ServiceProvider
                     }
 
                     $this->authorizeOrganizationWrite($model);
+                },
+            );
+        }
+
+        foreach ([
+            'eloquent.creating: *',
+            'eloquent.updating: *',
+        ] as $event) {
+            Event::listen(
+                $event,
+                function (string $eventName, array $data): void {
+                    $model = $data[0] ?? null;
+
+                    if (! $model instanceof Model) {
+                        return;
+                    }
+
                     $this->validateAssignee($model);
                 },
             );
