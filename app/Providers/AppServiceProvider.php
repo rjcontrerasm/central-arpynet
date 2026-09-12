@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\ValidationException;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -40,6 +41,7 @@ class AppServiceProvider extends ServiceProvider
                     }
 
                     $this->authorizeOrganizationWrite($model);
+                    $this->validateAssignee($model);
                 },
             );
         }
@@ -84,5 +86,49 @@ class AppServiceProvider extends ServiceProvider
                 'Tu acceso a esta empresa es de solo lectura.',
             );
         }
+    }
+
+    private function validateAssignee(Model $model): void
+    {
+        $attributes = $model->getAttributes();
+
+        if (
+            ! array_key_exists('organization_id', $attributes)
+            || ! array_key_exists('assigned_to', $attributes)
+        ) {
+            return;
+        }
+
+        $organizationId = $model->getAttribute('organization_id');
+        $assigneeId = $model->getAttribute('assigned_to');
+
+        if ($organizationId === null || $assigneeId === null) {
+            return;
+        }
+
+        $assignable = User::query()
+            ->whereKey($assigneeId)
+            ->where('is_active', true)
+            ->whereHas(
+                'organizations',
+                fn ($query) => $query
+                    ->where('organizations.id', $organizationId)
+                    ->where('organizations.is_active', true)
+                    ->where('organization_user.is_active', true)
+                    ->whereIn(
+                        'organization_user.role',
+                        ['owner', 'admin', 'member'],
+                    ),
+            )
+            ->exists();
+
+        if ($assignable) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'assigned_to' =>
+                'El responsable debe ser un usuario activo con permiso de trabajo en la empresa seleccionada.',
+        ]);
     }
 }
