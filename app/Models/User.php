@@ -69,6 +69,16 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(Task::class, 'assigned_to');
     }
 
+    public function assignedIncidents(): HasMany
+    {
+        return $this->hasMany(Incident::class, 'assigned_to');
+    }
+
+    public function assignedServiceOrders(): HasMany
+    {
+        return $this->hasMany(ServiceOrder::class, 'assigned_to');
+    }
+
     public function googleCalendarConnection(): HasOne
     {
         return $this->hasOne(GoogleCalendarConnection::class);
@@ -77,6 +87,35 @@ class User extends Authenticatable implements FilamentUser
     public function createdTasks(): HasMany
     {
         return $this->hasMany(Task::class, 'created_by');
+    }
+
+    public function activeOrganizationIds(): array
+    {
+        if (! $this->is_active) {
+            return [];
+        }
+
+        return $this->organizations()
+            ->wherePivot('is_active', true)
+            ->where('organizations.is_active', true)
+            ->pluck('organizations.id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+    }
+
+    public function writableOrganizationIds(): array
+    {
+        if (! $this->is_active) {
+            return [];
+        }
+
+        return $this->organizations()
+            ->wherePivot('is_active', true)
+            ->whereIn('organization_user.role', ['owner', 'admin', 'member'])
+            ->where('organizations.is_active', true)
+            ->pluck('organizations.id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
     }
 
     public function manageableOrganizationIds(): array
@@ -92,6 +131,24 @@ class User extends Authenticatable implements FilamentUser
             ->pluck('organizations.id')
             ->map(fn ($id): int => (int) $id)
             ->all();
+    }
+
+    public function canAccessOrganization(int $organizationId): bool
+    {
+        return in_array(
+            $organizationId,
+            $this->activeOrganizationIds(),
+            true,
+        );
+    }
+
+    public function canWriteToOrganization(int $organizationId): bool
+    {
+        return in_array(
+            $organizationId,
+            $this->writableOrganizationIds(),
+            true,
+        );
     }
 
     public function canManageTeam(): bool
