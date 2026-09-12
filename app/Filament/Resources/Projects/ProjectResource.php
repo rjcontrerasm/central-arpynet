@@ -4,7 +4,9 @@ namespace App\Filament\Resources\Projects;
 
 use App\Filament\Resources\Projects\Pages\ManageProjects;
 use App\Models\Project;
+use App\Models\User;
 use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
@@ -87,6 +89,9 @@ class ProjectResource extends Resource
                 ->description(fn (Project $record): ?string => $record->next_action ? 'Siguiente: '.$record->next_action : null)
                 ->searchable()->sortable()->wrap(),
             TextColumn::make('organization.name')->label('Empresa / ámbito')->badge()->sortable(),
+            TextColumn::make('participants_count')->label('Participantes')
+                ->state(fn (Project $record): int => (int) $record->participants_count)
+                ->badge(),
             TextColumn::make('type')->label('Tipo')->badge()
                 ->formatStateUsing(fn (?string $state): string => Project::typeOptions()[$state] ?? 'Proyecto')
                 ->toggleable(isToggledHiddenByDefault: true),
@@ -113,8 +118,53 @@ class ProjectResource extends Resource
             SelectFilter::make('horizon')->label('Horizonte')->options(Project::horizonOptions()),
             SelectFilter::make('status')->label('Estado')->options(Project::statusOptions()),
         ])->recordActions([
-            EditAction::make()->label('Editar'),
+            Action::make('participants')
+                ->label('Participantes')
+                ->icon(Heroicon::OutlinedUsers)
+                ->modalHeading(fn (Project $record): string => 'Participantes de '.$record->name)
+                ->modalSubmitActionLabel('Guardar participantes')
+                ->fillForm(fn (Project $record): array => [
+                    'participants' => $record->participants()
+                        ->pluck('users.id')
+                        ->all(),
+                ])
+                ->schema([
+                    Select::make('participants')
+                        ->label('Participantes')
+                        ->multiple()
+                        ->options(fn (Project $record): array => static::participantOptions($record))
+                        ->searchable()
+                        ->preload()
+                        ->native(false)
+                        ->helperText(
+                            'Solo usuarios activos con rol operativo en la empresa. La participación organiza el trabajo; no concede acceso adicional.'
+                        ),
+                ])
+                ->action(function (Project $record, array $data): void {
+                    $record->syncParticipants($data['participants'] ?? []);
+                })
+                ->visible(
+                    fn (Project $record): bool => auth()->user()
+                        ?->canWriteToOrganization((int) $record->organization_id) ?? false,
+                ),
+            EditAction::make()
+                ->label('Editar')
+                ->visible(
+                    fn (Project $record): bool => auth()->user()
+                        ?->canWriteToOrganization((int) $record->organization_id) ?? false,
+                ),
         ]);
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->writableOrganizationIds() !== [];
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()
+            ?->canWriteToOrganization((int) $record->organization_id) ?? false;
     }
 
     public static function getEloquentQuery(): Builder
@@ -126,8 +176,29 @@ class ProjectResource extends Resource
 
         return parent::getEloquentQuery()->visibleTo($user)->withCount([
             'tasks',
+            'participants',
             'tasks as completed_tasks_count' => fn (Builder $query) => $query->where('status', 'completed'),
         ]);
+    }
+
+    public static function participantOptions(Project $project): array
+    {
+        return User::query()
+            ->where('is_active', true)
+            ->whereHas(
+                'organizations',
+                fn (Builder $query): Builder => $query
+                    ->where('organizations.id', $project->organization_id)
+                    ->where('organizations.is_active', true)
+                    ->where('organization_user.is_active', true)
+                    ->whereIn(
+                        'organization_user.role',
+                        ['owner', 'admin', 'member'],
+                    ),
+            )
+            ->orderBy('name')
+            ->pluck('name', 'id')
+            ->all();
     }
 
     public static function getPages(): array
