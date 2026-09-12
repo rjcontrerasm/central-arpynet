@@ -42,6 +42,7 @@ class ServiceOrder extends Model
         'drive_url',
         'notes',
         'last_activity_at',
+        'assigned_to',
         'created_by',
     ];
 
@@ -71,6 +72,7 @@ class ServiceOrder extends Model
     {
         static::creating(function (ServiceOrder $order): void {
             $order->created_by ??= auth()->id();
+            $order->assigned_to ??= auth()->id();
             $order->stage_changed_at ??= now();
             $order->last_activity_at ??= now();
 
@@ -111,6 +113,7 @@ class ServiceOrder extends Model
                 'next_action_at',
                 'drive_url',
                 'notes',
+                'assigned_to',
             ];
 
             foreach ($activityFields as $field) {
@@ -146,6 +149,11 @@ class ServiceOrder extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public function assignee(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
     }
 
     public function createdBy(): BelongsTo
