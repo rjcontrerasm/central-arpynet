@@ -13,6 +13,10 @@
         'global_undo_success',
     );
 
+    $dailyWorkView = request()->routeIs('daily-ops.show')
+        ? request()->query('view', 'mine')
+        : null;
+
     $secondaryLabels = [
         'agenda' => 'Agenda',
         'overview360' => 'Vista 360',
@@ -270,11 +274,19 @@
     aria-label="Navegación principal de Central"
 >
     <a
-        class="op-nav-link {{ $active === 'daily' ? 'is-active' : '' }}"
+        class="op-nav-link {{ $active === 'daily' && $dailyWorkView === 'mine' ? 'is-active' : '' }}"
         href="{{ route('daily-ops.show') }}"
-        @if ($active === 'daily') aria-current="page" @endif
+        @if ($active === 'daily' && $dailyWorkView === 'mine') aria-current="page" @endif
     >
         Mi día
+    </a>
+
+    <a
+        class="op-nav-link op-nav-wide {{ $active === 'daily' && $dailyWorkView === 'team' ? 'is-active' : '' }}"
+        href="{{ route('daily-ops.show', ['view' => 'team']) }}"
+        @if ($active === 'daily' && $dailyWorkView === 'team') aria-current="page" @endif
+    >
+        Mi equipo
     </a>
 
     <a
@@ -315,6 +327,22 @@
         </summary>
 
         <div class="op-nav-menu">
+            <a
+                class="{{ $active === 'daily' && $dailyWorkView === 'team' ? 'is-active' : '' }}"
+                href="{{ route('daily-ops.show', ['view' => 'team']) }}"
+            >
+                Mi equipo
+            </a>
+
+            <a
+                class="{{ $active === 'daily' && $dailyWorkView === 'unassigned' ? 'is-active' : '' }}"
+                href="{{ route('daily-ops.show', ['view' => 'unassigned']) }}"
+            >
+                Sin asignar
+            </a>
+
+            <div class="op-nav-divider"></div>
+
             <a
                 class="{{ $active === 'services' ? 'is-active' : '' }}"
                 href="{{ route('service-orders-ops.show') }}"
