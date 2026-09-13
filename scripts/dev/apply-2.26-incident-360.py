@@ -84,4 +84,35 @@ if menu_marker not in text:
 else:
     print(f"{nav}: enlace ya integrado")
 
+view = Path("resources/views/incident-360.blade.php")
+view_text = view.read_text()
+status_marker = '<div class="filter-label">Estado</div>'
+
+if status_marker not in view_text:
+    severity_block = """        <div class=\"filter-label\">Severidad</div>
+        <div class=\"scroll\">
+            <a class=\"chip {{ $selectedSeverity ? '' : 'active' }}\" href=\"{{ route('incident-360.index', array_filter(array_merge($base, ['severity'=>null]))) }}\">Todas</a>
+            @foreach ($severityOptions as $value => $label)
+                <a class=\"chip {{ $selectedSeverity === $value ? 'active' : '' }}\" href=\"{{ route('incident-360.index', array_merge($base, ['severity'=>$value])) }}\">{{ $label }}</a>
+            @endforeach
+        </div>
+"""
+    status_block = severity_block + """
+        <div class=\"filter-label\">Estado</div>
+        <div class=\"scroll\">
+            <a class=\"chip {{ $selectedStatus ? '' : 'active' }}\" href=\"{{ route('incident-360.index', array_filter(array_merge($base, ['status'=>null]))) }}\">Todos</a>
+            @foreach ($statusOptions as $value => $label)
+                <a class=\"chip {{ $selectedStatus === $value ? 'active' : '' }}\" href=\"{{ route('incident-360.index', array_merge($base, ['status'=>$value])) }}\">{{ $label }}</a>
+            @endforeach
+        </div>
+"""
+
+    if severity_block not in view_text:
+        raise SystemExit("ERROR: no se encontro ancla de filtro de severidad")
+
+    view.write_text(view_text.replace(severity_block, status_block, 1))
+    print(f"{view}: filtro de estado agregado")
+else:
+    print(f"{view}: filtro de estado ya integrado")
+
 print("2.26 patch aplicado correctamente")
