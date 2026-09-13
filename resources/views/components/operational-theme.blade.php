@@ -27,6 +27,22 @@
 
         --central-shadow:
             0 7px 20px rgba(15, 23, 42, .045);
+
+        /*
+         * Compatibilidad con las primeras vistas operativas. Varias pantallas
+         * (Jarvis, Automatizaciones, Vista 360, etc.) consumen todavía los
+         * tokens --op-*. Sin este puente caían a sus fallbacks oscuros aun
+         * cuando el shell estaba en tema claro.
+         */
+        --op-bg: var(--central-bg);
+        --op-card: var(--central-surface);
+        --op-card-soft: var(--central-surface-soft);
+        --op-border: var(--central-border);
+        --op-border-strong: var(--central-border-strong);
+        --op-text: var(--central-text);
+        --op-muted: var(--central-muted);
+        --op-primary: var(--central-primary);
+        --op-primary-soft: var(--central-primary-soft);
     }
 
     body {
@@ -93,6 +109,7 @@
 
     input,
     select,
+    textarea,
     .search-input,
     .search input,
     .waiting-form input,
