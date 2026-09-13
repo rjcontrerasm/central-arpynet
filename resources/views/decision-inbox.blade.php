@@ -193,6 +193,75 @@
             line-height: 1.4;
         }
 
+        .delegation-box {
+            margin-top: 12px;
+            padding: 11px;
+            border: 1px solid #1d4ed8;
+            border-radius: 12px;
+            background: rgba(37, 99, 235, .08);
+        }
+
+        .delegation-box.manual {
+            border-color: #334155;
+            background: rgba(15, 23, 42, .35);
+        }
+
+        .delegation-title {
+            color: #bfdbfe;
+            font-size: 11px;
+            font-weight: 850;
+        }
+
+        .delegation-box.manual .delegation-title { color: #cbd5e1; }
+
+        .delegation-copy {
+            margin-top: 4px;
+            color: #94a3b8;
+            font-size: 10px;
+            line-height: 1.45;
+        }
+
+        .delegation-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 9px;
+        }
+
+        .delegation-form {
+            display: grid;
+            gap: 7px;
+            margin-top: 9px;
+        }
+
+        .delegation-fields {
+            display: grid;
+            gap: 7px;
+        }
+
+        .delegation-input {
+            width: 100%;
+            min-width: 0;
+            min-height: 38px;
+            padding: 8px 10px;
+            border: 1px solid #334155;
+            border-radius: 9px;
+            background: #0f172a;
+            color: #f8fafc;
+        }
+
+        .delegation-action {
+            min-height: 36px;
+            padding: 7px 10px;
+            border: 1px solid #2563eb;
+            border-radius: 9px;
+            background: #172554;
+            color: #dbeafe;
+            font-size: 10px;
+            font-weight: 850;
+            cursor: pointer;
+        }
+
         .signals {
             display: flex;
             flex-wrap: wrap;
@@ -324,6 +393,13 @@
             .decision-band { background: #f1f5f9; color: #475569; }
             .evidence { background: #ecfdf5; color: #047857; }
             .why-now { color: #475569; }
+            .delegation-box { background: #eff6ff; border-color: #93c5fd; }
+            .delegation-box.manual { background: #f8fafc; border-color: #cbd5e1; }
+            .delegation-title { color: #1d4ed8; }
+            .delegation-box.manual .delegation-title { color: #475569; }
+            .delegation-copy { color: #64748b; }
+            .delegation-input { background: #fff; color: #0f172a; border-color: #cbd5e1; }
+            .delegation-action { background: #eff6ff; color: #1d4ed8; border-color: #60a5fa; }
 
             .next-form input {
                 background: #fff;
@@ -542,6 +618,79 @@
                             @endforeach
                         </div>
                     @endif
+
+                    @php
+                        $delegation = $decision['delegation'];
+                    @endphp
+
+                    <div class="delegation-box {{ $delegation['can_delegate'] ? '' : 'manual' }}">
+                        <div class="delegation-title">
+                            {{ $delegation['status_label'] }} · Política v{{ $delegation['policy_version'] }}
+                        </div>
+                        <div class="delegation-copy">
+                            {{ $delegation['reason'] }}
+                            Requiere revisión humana y una segunda confirmación antes de cualquier ejecución.
+                        </div>
+
+                        @if ($delegation['can_delegate'] && $decision['type'] === 'task')
+                            <div class="delegation-actions">
+                                @foreach ($delegation['actions'] as $delegationAction)
+                                    <form
+                                        method="POST"
+                                        action="{{ route('decision-delegation.store') }}"
+                                    >
+                                        @csrf
+                                        <input type="hidden" name="subject_type" value="task">
+                                        <input type="hidden" name="subject_id" value="{{ $decision['id'] }}">
+                                        <input type="hidden" name="action" value="{{ $delegationAction['key'] }}">
+                                        <button
+                                            class="delegation-action"
+                                            type="submit"
+                                            data-busy-label="Preparando…"
+                                        >{{ $delegationAction['label'] }}</button>
+                                    </form>
+                                @endforeach
+                            </div>
+                        @elseif ($delegation['can_delegate'] && in_array($decision['type'], ['project', 'service'], true))
+                            @foreach ($delegation['actions'] as $delegationAction)
+                                <form
+                                    class="delegation-form"
+                                    method="POST"
+                                    action="{{ route('decision-delegation.store') }}"
+                                >
+                                    @csrf
+                                    <input type="hidden" name="subject_type" value="{{ $decision['type'] }}">
+                                    <input type="hidden" name="subject_id" value="{{ $decision['id'] }}">
+                                    <input type="hidden" name="action" value="{{ $delegationAction['key'] }}">
+
+                                    <div class="delegation-fields">
+                                        <input
+                                            class="delegation-input"
+                                            type="text"
+                                            name="next_action"
+                                            maxlength="255"
+                                            required
+                                            placeholder="Siguiente acción concreta"
+                                        >
+
+                                        @if ($decision['type'] === 'service')
+                                            <input
+                                                class="delegation-input"
+                                                type="datetime-local"
+                                                name="next_action_at"
+                                            >
+                                        @endif
+                                    </div>
+
+                                    <button
+                                        class="delegation-action"
+                                        type="submit"
+                                        data-busy-label="Preparando…"
+                                    >{{ $delegationAction['label'] }}</button>
+                                </form>
+                            @endforeach
+                        @endif
+                    </div>
 
                     <a class="open-module" href="{{ $decision['url'] }}">
                         Abrir módulo →

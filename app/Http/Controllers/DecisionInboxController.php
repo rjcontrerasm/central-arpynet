@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Organization;
+use App\Support\ControlledDelegationPolicy;
 use App\Support\DecisionEngine;
 use App\Support\ExecutiveSummaryBuilder;
 use Carbon\CarbonImmutable;
@@ -16,6 +17,7 @@ class DecisionInboxController extends Controller
         Request $request,
         ExecutiveSummaryBuilder $builder,
         DecisionEngine $engine,
+        ControlledDelegationPolicy $delegationPolicy,
     ): View {
         $validated = $request->validate([
             'scope' => ['nullable', 'integer'],
@@ -59,7 +61,16 @@ class DecisionInboxController extends Controller
             ->values();
 
         $decisionEngine = $engine->evaluate($candidates->all());
-        $decisions = collect($decisionEngine['decisions']);
+        $decisions = collect($decisionEngine['decisions'])
+            ->map(
+                fn (array $decision): array =>
+                    $decision + [
+                        'delegation' =>
+                            $delegationPolicy->evaluate(
+                                $decision,
+                            ),
+                    ],
+            );
 
         $counts = [
             'total' => $decisions->count(),

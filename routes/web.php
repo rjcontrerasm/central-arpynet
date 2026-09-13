@@ -358,6 +358,14 @@ Route::middleware('auth')->group(function (): void {
             'update',
         ],
     )->name('decision-task-action.update');
+
+    Route::post(
+        '/decisiones/delegar',
+        [
+            \App\Http\Controllers\DecisionDelegationController::class,
+            'store',
+        ],
+    )->name('decision-delegation.store');
 });
 
 Route::middleware('auth')->group(function (): void {
