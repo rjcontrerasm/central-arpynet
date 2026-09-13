@@ -808,6 +808,16 @@
                         {{ $order->fin_label }}
                     </span>
 
+                    @if ($order->health_score !== null)
+                        <span
+                            class="pill {{ $order->health_css }}"
+                            title="Health Score del servicio"
+                        >
+                            Health {{ $order->health_score }}/100
+                            · {{ $order->health_label }}
+                        </span>
+                    @endif
+
                     <span class="pill">
                         {{
                             $stageOptions[$order->stage]
