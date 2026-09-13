@@ -20,6 +20,36 @@ $allowedWaIds = array_values(
     ),
 );
 
+$senderUserMap = [];
+
+foreach (
+    explode(
+        ',',
+        (string) env(
+            'WHATSAPP_SENDER_USER_MAP',
+            '',
+        ),
+    ) as $mapping
+) {
+    [$waId, $email] = array_pad(
+        explode(':', $mapping, 2),
+        2,
+        '',
+    );
+
+    $waId = preg_replace(
+        '/\D+/',
+        '',
+        trim($waId),
+    ) ?? '';
+
+    $email = strtolower(trim($email));
+
+    if ($waId !== '' && $email !== '') {
+        $senderUserMap[$waId] = $email;
+    }
+}
+
 return [
     'enabled' => filter_var(
         env('WHATSAPP_ENABLED', false),
@@ -36,6 +66,8 @@ return [
 
     'allowed_wa_ids' => $allowedWaIds,
 
+    'sender_user_map' => $senderUserMap,
+
     'user_email' => env(
         'WHATSAPP_USER_EMAIL',
         'rcontreras@arpynet.com',
@@ -43,6 +75,11 @@ return [
 
     'default_organization_id' => env(
         'WHATSAPP_DEFAULT_ORGANIZATION_ID',
+    ),
+
+    'commands_enabled' => filter_var(
+        env('WHATSAPP_COMMANDS_ENABLED', false),
+        FILTER_VALIDATE_BOOL,
     ),
 
     'outbound_enabled' => filter_var(
