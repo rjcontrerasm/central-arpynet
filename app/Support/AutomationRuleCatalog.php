@@ -62,6 +62,7 @@ class AutomationRuleCatalog
                 'subject' => 'project',
                 'actions' => [
                     'project.create_alert',
+                    'project.create_task',
                 ],
             ],
             'project.blocked' => [
@@ -69,16 +70,20 @@ class AutomationRuleCatalog
                 'subject' => 'project',
                 'actions' => [
                     'project.create_alert',
+                    'project.create_task',
                 ],
-            ],            'service.conformity_ready' => [
+            ],
+            'service.conformity_ready' => [
                 'label' =>
                     'Servicio con conformidad listo para facturar',
                 'subject' =>
                     'service_order',
                 'actions' => [
                     'service.create_billing_reminder',
+                    'service.create_task',
                 ],
             ],
+
             'service.invoice_overdue' => [
                 'label' =>
                     'Factura vencida',
@@ -86,8 +91,10 @@ class AutomationRuleCatalog
                     'service_order',
                 'actions' => [
                     'service.create_collection_reminder',
+                    'service.create_task',
                 ],
             ],
+
             'obligation.due_soon' => [
                 'label' =>
                     'Vencimiento próximo',
@@ -95,8 +102,10 @@ class AutomationRuleCatalog
                     'obligation_occurrence',
                 'actions' => [
                     'obligation.create_alert',
+                    'obligation.create_task',
                 ],
             ],
+
             'waiting.followup_overdue' => [
                 'label' =>
                     'Seguimiento en espera vencido',
@@ -144,6 +153,16 @@ class AutomationRuleCatalog
                     false,
                     'database_notification',
                 ),
+
+            'project.create_task' =>
+                $this->buildAction(
+                    'Crear tarea operativa desde proyecto',
+                    ['confirmation'],
+                    true,
+                    true,
+                    'confirmed_cross_module_task_create',
+                ),
+
             'service.create_billing_reminder' =>
                 $this->buildAction(
                     'Crear recordatorio de facturación',
@@ -162,6 +181,15 @@ class AutomationRuleCatalog
                     'database_notification',
                 ),
 
+            'service.create_task' =>
+                $this->buildAction(
+                    'Crear tarea operativa desde servicio',
+                    ['confirmation'],
+                    true,
+                    true,
+                    'confirmed_cross_module_task_create',
+                ),
+
             'obligation.create_alert' =>
                 $this->buildAction(
                     'Crear alerta interna de vencimiento',
@@ -169,6 +197,15 @@ class AutomationRuleCatalog
                     true,
                     false,
                     'database_notification',
+                ),
+
+            'obligation.create_task' =>
+                $this->buildAction(
+                    'Crear tarea operativa desde vencimiento',
+                    ['confirmation'],
+                    true,
+                    true,
+                    'confirmed_cross_module_task_create',
                 ),
 
             'waiting.return_to_daily' =>
@@ -280,6 +317,10 @@ class AutomationRuleCatalog
                 false,
             'confirmed_subject_mutations_enabled' =>
                 true,
+            'confirmed_cross_module_task_creation_enabled' =>
+                true,
+            'automatic_cross_module_task_creation_enabled' =>
+                false,
             'preview_read_only' => true,
             'confirmation_execution_enabled' =>
                 true,

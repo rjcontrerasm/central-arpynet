@@ -136,7 +136,7 @@
                 </div>
             </form>
             <div class="automation-safety">
-                Las reglas nuevas nacen inactivas. El modo automático solo está permitido para notificaciones internas seguras de facturación, cobranza, vencimientos y proyectos.
+                Las reglas nuevas nacen inactivas. El modo automático solo está permitido para notificaciones internas seguras. La creación de tareas entre módulos exige siempre confirmación humana.
             </div>
         </section>
 
@@ -198,7 +198,12 @@
                     </div>
                 </div>
                 <div class="automation-actions">
-                    @if($run->rule?->action_key === 'waiting.return_to_daily')
+                    @if(in_array($run->rule?->action_key, [
+                        'waiting.return_to_daily',
+                        'project.create_task',
+                        'service.create_task',
+                        'obligation.create_task',
+                    ], true))
                         <form method="POST" action="{{ route('automation-center.confirm',$run) }}">
                             @csrf
                             <button class="automation-button" type="submit" data-busy-label="Confirmando…">Confirmar</button>
