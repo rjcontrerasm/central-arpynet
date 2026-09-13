@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Organization;
+use App\Support\CalendarExternalContextBuilder;
 use App\Support\OperationalAgendaBuilder;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
@@ -11,8 +12,11 @@ use Illuminate\View\View;
 
 class OperationalAgendaController extends Controller
 {
-    public function show(Request $request, OperationalAgendaBuilder $agenda): View
-    {
+    public function show(
+        Request $request,
+        OperationalAgendaBuilder $agenda,
+        CalendarExternalContextBuilder $calendarContext,
+    ): View {
         $validated = $request->validate([
             'date' => ['nullable', 'date_format:Y-m-d'],
             'scope' => ['nullable', 'integer'],
@@ -36,8 +40,18 @@ class OperationalAgendaController extends Controller
             abort(403);
         }
 
+        $agendaData = $agenda->build(
+            $request->user(),
+            $date,
+            $scope,
+        );
+
         return view('operational-agenda', [
-            ...$agenda->build($request->user(), $date, $scope),
+            ...$agendaData,
+            'calendarContext' => $calendarContext->build(
+                $agendaData['calendar'] ?? [],
+                $date,
+            ),
             'organizations' => $organizations,
             'scope' => $scope,
             'previousDate' => $date->subDay()->toDateString(),
