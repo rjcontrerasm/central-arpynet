@@ -181,6 +181,7 @@ class DailyOpsFiltersTest extends TestCase
             'urgency' => $urgency,
             'impact' => $impact,
             'due_at' => $dueAt,
+            'assigned_to' => $user->id,
             'created_by' => $user->id,
         ]);
     }
