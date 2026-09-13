@@ -982,6 +982,26 @@
         </div>
     @endif
 
+    @php
+        $currentUser = auth()->user();
+        $canQuickCapture = $currentUser
+            && (
+                $selectedScope
+                    ? $currentUser->canWriteToOrganization(
+                        (int) $selectedScope,
+                    )
+                    : $currentUser
+                        ->writableOrganizationIds()
+                        ->isNotEmpty()
+            );
+
+        $workViewLabels = [
+            'mine' => 'Mi bandeja',
+            'team' => 'Mi equipo',
+            'unassigned' => 'Sin asignar',
+        ];
+    @endphp
+
     <section class="hero">
         <div>
             <h1>Mi día</h1>
@@ -993,13 +1013,40 @@
             </div>
         </div>
 
-        <a
-            class="quick"
-            href="{{ route('quick-capture.show') }}"
-        >
-            + Captura rápida
-        </a>
+        @if ($canQuickCapture)
+            <a
+                class="quick"
+                href="{{ route('quick-capture.show') }}"
+            >
+                + Captura rápida
+            </a>
+        @endif
     </section>
+
+    <nav class="scopes" aria-label="Vista de trabajo">
+        @foreach ($workViewLabels as $value => $label)
+            <a
+                class="scope {{
+                    $selectedWorkView === $value
+                        ? 'active'
+                        : ''
+                }}"
+                href="{{ route(
+                    'daily-ops.show',
+                    array_filter([
+                        'view' => $value,
+                        'scope' => $selectedScope,
+                        'q' => $search !== ''
+                            ? $search
+                            : null,
+                        'priority' => $selectedPriority,
+                    ]),
+                ) }}"
+            >
+                {{ $label }}
+            </a>
+        @endforeach
+    </nav>
 
     <nav class="scopes" aria-label="Filtrar por ámbito">
         <a
@@ -1007,6 +1054,7 @@
             href="{{ route(
                 'daily-ops.show',
                 array_filter([
+                    'view' => $selectedWorkView,
                     'q' => $search !== ''
                         ? $search
                         : null,
@@ -1028,6 +1076,7 @@
                 href="{{ route(
                     'daily-ops.show',
                     array_filter([
+                        'view' => $selectedWorkView,
                         'scope' => $organization->id,
                         'q' => $search !== ''
                             ? $search
@@ -1044,6 +1093,7 @@
 
     @php
         $baseQuery = array_filter([
+            'view' => $selectedWorkView,
             'scope' => $selectedScope,
             'q' => $search !== '' ? $search : null,
         ]);
@@ -1062,6 +1112,12 @@
             method="GET"
             action="{{ route('daily-ops.show') }}"
         >
+            <input
+                type="hidden"
+                name="view"
+                value="{{ $selectedWorkView }}"
+            >
+
             @if ($selectedScope)
                 <input
                     type="hidden"
@@ -1162,7 +1218,10 @@
 
                 <a
                     class="clear-filter"
-                    href="{{ route('daily-ops.show') }}"
+                    href="{{ route(
+                        'daily-ops.show',
+                        ['view' => $selectedWorkView],
+                    ) }}"
                 >
                     Limpiar
                 </a>
@@ -1174,6 +1233,7 @@
         <a
             class="stat"
             href="{{ route('daily-ops.show', array_filter([
+                'view' => $selectedWorkView,
                 'scope' => $selectedScope,
                 'q' => $search !== '' ? $search : null,
                 'priority' => 'critical',
@@ -1188,6 +1248,7 @@
         <a
             class="stat"
             href="{{ route('daily-ops.show', array_filter([
+                'view' => $selectedWorkView,
                 'scope' => $selectedScope,
                 'q' => $search !== '' ? $search : null,
                 'priority' => 'today',
@@ -1202,6 +1263,7 @@
         <a
             class="stat"
             href="{{ route('daily-ops.show', array_filter([
+                'view' => $selectedWorkView,
                 'scope' => $selectedScope,
                 'q' => $search !== '' ? $search : null,
                 'priority' => 'week',
@@ -1216,6 +1278,7 @@
         <a
             class="stat"
             href="{{ route('daily-ops.show', array_filter([
+                'view' => $selectedWorkView,
                 'scope' => $selectedScope,
                 'q' => $search !== '' ? $search : null,
                 'priority' => 'planned',
@@ -1285,6 +1348,11 @@
 
                                 $band = $task
                                     ->display_priority_band;
+
+                                $canWriteTask = $currentUser
+                                    ?->canWriteToOrganization(
+                                        (int) $task->organization_id,
+                                    ) ?? false;
                             @endphp
 
                             <div class="item" data-operational-card>
@@ -1303,6 +1371,12 @@
                                         ) }}
                                     @else
                                         · sin fecha
+                                    @endif
+
+                                    @if ($selectedWorkView === 'team')
+                                        · Responsable:
+                                        {{ $task->assignee?->name
+                                            ?? 'Sin asignar' }}
                                     @endif
                                 </div>
 
@@ -1373,107 +1447,168 @@
                                     </div>
                                 @endif
 
-                                <details class="task-edit">
-                                    <summary>
-                                        {{ $task->next_action
-                                            ? 'Cambiar próxima acción'
-                                            : 'Definir próxima acción' }}
-                                    </summary>
+                                @if ($canWriteTask)
+                                    <details class="task-edit">
+                                        <summary>
+                                            {{ $task->next_action
+                                                ? 'Cambiar próxima acción'
+                                                : 'Definir próxima acción' }}
+                                        </summary>
 
-                                    <form
-                                        class="next-action-form"
-                                        method="POST"
-                                        action="{{ route(
-                                            'task-next-action.update',
-                                            $task,
-                                        ) }}"
-                                    >
-                                        @csrf
-                                        <input type="hidden" name="return_to" value="daily">
-
-                                        @if ($selectedScope)
-                                            <input type="hidden" name="scope" value="{{ $selectedScope }}">
-                                        @endif
-
-                                        @if ($search !== '')
-                                            <input type="hidden" name="q" value="{{ $search }}">
-                                        @endif
-
-                                        @if ($selectedPriority)
-                                            <input type="hidden" name="priority" value="{{ $selectedPriority }}">
-                                        @endif
-
-                                        <input
-                                            type="text"
-                                            name="next_action"
-                                            value="{{ $task->next_action }}"
-                                            placeholder="Ej. Enviar correo al cliente"
-                                            maxlength="255"
-                                        >
-
-                                        <button
-                                            class="next-action-save"
-                                            type="submit"
-                                            data-busy-label="Guardando…"
-                                        >
-                                            Guardar
-                                        </button>
-                                    </form>
-                                </details>
-
-                                @php
-                                    $quickActions = [
-                                        'complete' => '✓ Hecho',
-                                    ];
-
-                                    if (
-                                        $task->status
-                                        !== 'in_progress'
-                                    ) {
-                                        $quickActions[
-                                            'start'
-                                        ] = 'En curso';
-                                    }
-
-                                    if (
-                                        ! $task->due_at
-                                        || ! $task->due_at
-                                            ->isSameDay($now)
-                                    ) {
-                                        $quickActions[
-                                            'today'
-                                        ] = 'Hoy';
-                                    }
-
-                                    $quickActions[
-                                        'tomorrow'
-                                    ] = 'Mañana';
-
-                                    $quickActions[
-                                        'next_week'
-                                    ] = '+1 semana';
-                                @endphp
-
-                                <div class="actions">
-                                    @foreach (
-                                        $quickActions
-                                        as $action => $label
-                                    )
                                         <form
-                                            class="action-form"
+                                            class="next-action-form"
                                             method="POST"
                                             action="{{ route(
-                                                'daily-task-action.update',
+                                                'task-next-action.update',
                                                 $task,
                                             ) }}"
                                         >
                                             @csrf
+                                            <input type="hidden" name="return_to" value="daily">
+                                            <input type="hidden" name="view" value="{{ $selectedWorkView }}">
+
+                                            @if ($selectedScope)
+                                                <input type="hidden" name="scope" value="{{ $selectedScope }}">
+                                            @endif
+
+                                            @if ($search !== '')
+                                                <input type="hidden" name="q" value="{{ $search }}">
+                                            @endif
+
+                                            @if ($selectedPriority)
+                                                <input type="hidden" name="priority" value="{{ $selectedPriority }}">
+                                            @endif
 
                                             <input
-                                                type="hidden"
-                                                name="action"
-                                                value="{{ $action }}"
+                                                type="text"
+                                                name="next_action"
+                                                value="{{ $task->next_action }}"
+                                                placeholder="Ej. Enviar correo al cliente"
+                                                maxlength="255"
                                             >
+
+                                            <button
+                                                class="next-action-save"
+                                                type="submit"
+                                                data-busy-label="Guardando…"
+                                            >
+                                                Guardar
+                                            </button>
+                                        </form>
+                                    </details>
+
+                                    @php
+                                        $quickActions = [
+                                            'complete' => '✓ Hecho',
+                                        ];
+
+                                        if (
+                                            $task->status
+                                            !== 'in_progress'
+                                        ) {
+                                            $quickActions[
+                                                'start'
+                                            ] = 'En curso';
+                                        }
+
+                                        if (
+                                            ! $task->due_at
+                                            || ! $task->due_at
+                                                ->isSameDay($now)
+                                        ) {
+                                            $quickActions[
+                                                'today'
+                                            ] = 'Hoy';
+                                        }
+
+                                        $quickActions[
+                                            'tomorrow'
+                                        ] = 'Mañana';
+
+                                        $quickActions[
+                                            'next_week'
+                                        ] = '+1 semana';
+                                    @endphp
+
+                                    <div class="actions">
+                                        @foreach (
+                                            $quickActions
+                                            as $action => $label
+                                        )
+                                            <form
+                                                class="action-form"
+                                                method="POST"
+                                                action="{{ route(
+                                                    'daily-task-action.update',
+                                                    $task,
+                                                ) }}"
+                                            >
+                                                @csrf
+
+                                                <input
+                                                    type="hidden"
+                                                    name="action"
+                                                    value="{{ $action }}"
+                                                >
+                                                <input
+                                                    type="hidden"
+                                                    name="view"
+                                                    value="{{ $selectedWorkView }}"
+                                                >
+
+                                                @if ($selectedScope)
+                                                    <input
+                                                        type="hidden"
+                                                        name="scope"
+                                                        value="{{ $selectedScope }}"
+                                                    >
+                                                @endif
+
+                                                @if ($search !== '')
+                                                    <input
+                                                        type="hidden"
+                                                        name="q"
+                                                        value="{{ $search }}"
+                                                    >
+                                                @endif
+
+                                                @if ($selectedPriority)
+                                                    <input
+                                                        type="hidden"
+                                                        name="priority"
+                                                        value="{{ $selectedPriority }}"
+                                                    >
+                                                @endif
+
+                                                <button
+                                                    class="action {{
+                                                        $action
+                                                            === 'complete'
+                                                            ? 'done'
+                                                            : ''
+                                                    }}"
+                                                    type="submit"
+                                                    data-busy-label="Aplicando…"
+                                                >
+                                                    {{ $label }}
+                                                </button>
+                                            </form>
+                                        @endforeach
+                                    </div>
+
+                                    <details class="task-edit">
+                                        <summary>En espera</summary>
+
+                                        <form
+                                            class="waiting-form"
+                                            method="POST"
+                                            action="{{ route(
+                                                'daily-task-waiting.wait',
+                                                $task,
+                                            ) }}"
+                                        >
+                                            @csrf
+                                            <input type="hidden" name="view" value="{{ $selectedWorkView }}">
 
                                             @if ($selectedScope)
                                                 <input
@@ -1499,275 +1634,224 @@
                                                 >
                                             @endif
 
-                                            <button
-                                                class="action {{
-                                                    $action
-                                                        === 'complete'
-                                                        ? 'done'
-                                                        : ''
-                                                }}"
-                                                type="submit"
-                                                data-busy-label="Aplicando…"
+                                            <input
+                                                type="date"
+                                                name="waiting_until"
+                                                value="{{ $now->addDay()->format('Y-m-d') }}"
+                                                required
                                             >
-                                                {{ $label }}
+
+                                            <input
+                                                type="text"
+                                                name="waiting_reason"
+                                                placeholder="Esperando respuesta, aprobación..."
+                                                maxlength="255"
+                                                required
+                                            >
+
+                                            <button
+                                                class="wait-button"
+                                                type="submit"
+                                            >
+                                                Poner en espera
                                             </button>
                                         </form>
-                                    @endforeach
-                                </div>
+                                    </details>
 
-                                <details class="task-edit">
-                                    <summary>En espera</summary>
-
-                                    <form
-                                        class="waiting-form"
-                                        method="POST"
-                                        action="{{ route(
-                                            'daily-task-waiting.wait',
-                                            $task,
-                                        ) }}"
-                                    >
-                                        @csrf
-
-                                        @if ($selectedScope)
-                                            <input
-                                                type="hidden"
-                                                name="scope"
-                                                value="{{ $selectedScope }}"
+                                    <div class="convert-links">
+                                        @if ($task->recurrence_label)
+                                            <a
+                                                class="convert-link"
+                                                href="{{ url(
+                                                    '/admin/tareas-recurrentes',
+                                                ) }}"
                                             >
+                                                Administrar recurrencia →
+                                            </a>
+                                        @else
+                                            <a
+                                                class="convert-link"
+                                                href="{{ route(
+                                                    'task-conversion.show',
+                                                    [
+                                                        $task,
+                                                        'target' =>
+                                                            'recurring',
+                                                    ],
+                                                ) }}"
+                                            >
+                                                ↻ Hacer recurrente
+                                            </a>
                                         @endif
 
-                                        @if ($search !== '')
-                                            <input
-                                                type="hidden"
-                                                name="q"
-                                                value="{{ $search }}"
-                                            >
-                                        @endif
-
-                                        @if ($selectedPriority)
-                                            <input
-                                                type="hidden"
-                                                name="priority"
-                                                value="{{ $selectedPriority }}"
-                                            >
-                                        @endif
-
-                                        <input
-                                            type="date"
-                                            name="waiting_until"
-                                            value="{{ $now->addDay()->format('Y-m-d') }}"
-                                            required
-                                        >
-
-                                        <input
-                                            type="text"
-                                            name="waiting_reason"
-                                            placeholder="Esperando respuesta, aprobación..."
-                                            maxlength="255"
-                                            required
-                                        >
-
-                                        <button
-                                            class="wait-button"
-                                            type="submit"
-                                        >
-                                            Poner en espera
-                                        </button>
-                                    </form>
-                                </details>
-
-                                <div class="convert-links">
-                                    @if ($task->recurrence_label)
-                                        <a
-                                            class="convert-link"
-                                            href="{{ url(
-                                                '/admin/tareas-recurrentes',
-                                            ) }}"
-                                        >
-                                            Administrar recurrencia →
-                                        </a>
-                                    @else
                                         <a
                                             class="convert-link"
                                             href="{{ route(
                                                 'task-conversion.show',
-                                                [
-                                                    $task,
-                                                    'target' =>
-                                                        'recurring',
-                                                ],
+                                                $task,
                                             ) }}"
                                         >
-                                            ↻ Hacer recurrente
+                                            Más conversiones →
                                         </a>
-                                    @endif
-
-                                    <a
-                                        class="convert-link"
-                                        href="{{ route(
-                                            'task-conversion.show',
-                                            $task,
-                                        ) }}"
-                                    >
-                                        Más conversiones →
-                                    </a>
-                                </div>
-
-                                <details class="task-edit">
-                                    <summary>Más opciones</summary>
-
-                                    <div class="lifecycle-actions">
-                                        <form
-                                            method="POST"
-                                            action="{{ route(
-                                                'task-lifecycle.cancel',
-                                                $task,
-                                            ) }}"
-                                            data-confirm="¿Cancelar esta tarea? Podrás deshacer la acción."
-                                        >
-                                            @csrf
-
-                                            <button
-                                                class="lifecycle-button lifecycle-cancel"
-                                                type="submit"
-                                                data-busy-label="Cancelando…"
-                                            >
-                                                Cancelar
-                                            </button>
-                                        </form>
-
-                                        <form
-                                            method="POST"
-                                            action="{{ route(
-                                                'task-lifecycle.delete',
-                                                $task,
-                                            ) }}"
-                                            data-confirm="¿Enviar esta tarea a la papelera? Podrás deshacer la acción."
-                                        >
-                                            @csrf
-
-                                            <button
-                                                class="lifecycle-button lifecycle-delete"
-                                                type="submit"
-                                                data-busy-label="Eliminando…"
-                                            >
-                                                Eliminar
-                                            </button>
-                                        </form>
                                     </div>
-                                </details>
 
-                                <details class="task-edit">
-                                    <summary>Editar</summary>
+                                    <details class="task-edit">
+                                        <summary>Más opciones</summary>
 
-                                    <form
-                                        class="edit-form"
-                                        method="POST"
-                                        action="{{ route(
-                                            'daily-task-edit.update',
-                                            $task,
-                                        ) }}"
-                                    >
-                                        @csrf
-
-                                        @if ($selectedScope)
-                                            <input
-                                                type="hidden"
-                                                name="scope"
-                                                value="{{ $selectedScope }}"
+                                        <div class="lifecycle-actions">
+                                            <form
+                                                method="POST"
+                                                action="{{ route(
+                                                    'task-lifecycle.cancel',
+                                                    $task,
+                                                ) }}"
+                                                data-confirm="¿Cancelar esta tarea? Podrás deshacer la acción."
                                             >
-                                        @endif
+                                                @csrf
 
-                                        <div class="edit-grid">
-                                            <label class="edit-field full">
-                                                Empresa / ámbito
-
-                                                <select
-                                                    name="organization_id"
-                                                    required
+                                                <button
+                                                    class="lifecycle-button lifecycle-cancel"
+                                                    type="submit"
+                                                    data-busy-label="Cancelando…"
                                                 >
-                                                    @foreach (
-                                                        $organizations
-                                                        as $organization
-                                                    )
-                                                        <option
-                                                            value="{{ $organization->id }}"
-                                                            @selected(
-                                                                (string) $task->organization_id
-                                                                === (string) $organization->id
-                                                            )
-                                                        >
-                                                            {{ $organization->name }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </label>
+                                                    Cancelar
+                                                </button>
+                                            </form>
 
-                                            <label class="edit-field full">
-                                                Fecha
+                                            <form
+                                                method="POST"
+                                                action="{{ route(
+                                                    'task-lifecycle.delete',
+                                                    $task,
+                                                ) }}"
+                                                data-confirm="¿Enviar esta tarea a la papelera? Podrás deshacer la acción."
+                                            >
+                                                @csrf
 
-                                                <input
-                                                    type="date"
-                                                    name="due_date"
-                                                    value="{{ $task->due_at?->format('Y-m-d') }}"
+                                                <button
+                                                    class="lifecycle-button lifecycle-delete"
+                                                    type="submit"
+                                                    data-busy-label="Eliminando…"
                                                 >
-                                            </label>
-
-                                            <label class="edit-field">
-                                                Urgencia
-
-                                                <select name="urgency">
-                                                    @foreach ([
-                                                        'low' => 'Baja',
-                                                        'normal' => 'Normal',
-                                                        'high' => 'Alta',
-                                                        'critical' => 'Crítica',
-                                                    ] as $value => $label)
-                                                        <option
-                                                            value="{{ $value }}"
-                                                            @selected(
-                                                                $task->urgency
-                                                                === $value
-                                                            )
-                                                        >
-                                                            {{ $label }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </label>
-
-                                            <label class="edit-field">
-                                                Impacto
-
-                                                <select name="impact">
-                                                    @foreach ([
-                                                        'low' => 'Bajo',
-                                                        'normal' => 'Normal',
-                                                        'high' => 'Alto',
-                                                        'critical' => 'Crítico',
-                                                    ] as $value => $label)
-                                                        <option
-                                                            value="{{ $value }}"
-                                                            @selected(
-                                                                $task->impact
-                                                                === $value
-                                                            )
-                                                        >
-                                                            {{ $label }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </label>
+                                                    Eliminar
+                                                </button>
+                                            </form>
                                         </div>
+                                    </details>
 
-                                        <button
-                                            class="save-edit"
-                                            type="submit"
+                                    <details class="task-edit">
+                                        <summary>Editar</summary>
+
+                                        <form
+                                            class="edit-form"
+                                            method="POST"
+                                            action="{{ route(
+                                                'daily-task-edit.update',
+                                                $task,
+                                            ) }}"
                                         >
-                                            Guardar cambios
-                                        </button>
-                                    </form>
-                                </details>
+                                            @csrf
+                                            <input type="hidden" name="view" value="{{ $selectedWorkView }}">
+
+                                            @if ($selectedScope)
+                                                <input
+                                                    type="hidden"
+                                                    name="scope"
+                                                    value="{{ $selectedScope }}"
+                                                >
+                                            @endif
+
+                                            <div class="edit-grid">
+                                                <label class="edit-field full">
+                                                    Empresa / ámbito
+
+                                                    <select
+                                                        name="organization_id"
+                                                        required
+                                                    >
+                                                        @foreach (
+                                                            $organizations
+                                                            as $organization
+                                                        )
+                                                            <option
+                                                                value="{{ $organization->id }}"
+                                                                @selected(
+                                                                    (string) $task->organization_id
+                                                                    === (string) $organization->id
+                                                                )
+                                                            >
+                                                                {{ $organization->name }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                </label>
+
+                                                <label class="edit-field full">
+                                                    Fecha
+
+                                                    <input
+                                                        type="date"
+                                                        name="due_date"
+                                                        value="{{ $task->due_at?->format('Y-m-d') }}"
+                                                    >
+                                                </label>
+
+                                                <label class="edit-field">
+                                                    Urgencia
+
+                                                    <select name="urgency">
+                                                        @foreach ([
+                                                            'low' => 'Baja',
+                                                            'normal' => 'Normal',
+                                                            'high' => 'Alta',
+                                                            'critical' => 'Crítica',
+                                                        ] as $value => $label)
+                                                            <option
+                                                                value="{{ $value }}"
+                                                                @selected(
+                                                                    $task->urgency
+                                                                    === $value
+                                                                )
+                                                            >
+                                                                {{ $label }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                </label>
+
+                                                <label class="edit-field">
+                                                    Impacto
+
+                                                    <select name="impact">
+                                                        @foreach ([
+                                                            'low' => 'Bajo',
+                                                            'normal' => 'Normal',
+                                                            'high' => 'Alto',
+                                                            'critical' => 'Crítico',
+                                                        ] as $value => $label)
+                                                            <option
+                                                                value="{{ $value }}"
+                                                                @selected(
+                                                                    $task->impact
+                                                                    === $value
+                                                                )
+                                                            >
+                                                                {{ $label }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                </label>
+                                            </div>
+
+                                            <button
+                                                class="save-edit"
+                                                type="submit"
+                                            >
+                                                Guardar cambios
+                                            </button>
+                                        </form>
+                                    </details>
+                                @endif
                             </div>
                         @empty
                             <div class="empty">
@@ -1794,6 +1878,11 @@
                                 && $task->waiting_until->lte(
                                     $now->toDateString(),
                                 );
+
+                            $canWriteTask = $currentUser
+                                ?->canWriteToOrganization(
+                                    (int) $task->organization_id,
+                                ) ?? false;
                         @endphp
 
                         <div class="item" data-operational-card>
@@ -1807,6 +1896,12 @@
 
                                 @if ($task->waiting_reason)
                                     · {{ $task->waiting_reason }}
+                                @endif
+
+                                @if ($selectedWorkView === 'team')
+                                    · Responsable:
+                                    {{ $task->assignee?->name
+                                        ?? 'Sin asignar' }}
                                 @endif
                             </div>
 
@@ -1823,46 +1918,49 @@
                                 </div>
                             @endif
 
-                            <form
-                                method="POST"
-                                action="{{ route(
-                                    'daily-task-waiting.resume',
-                                    $task,
-                                ) }}"
-                            >
-                                @csrf
-
-                                @if ($selectedScope)
-                                    <input
-                                        type="hidden"
-                                        name="scope"
-                                        value="{{ $selectedScope }}"
-                                    >
-                                @endif
-
-                                @if ($search !== '')
-                                    <input
-                                        type="hidden"
-                                        name="q"
-                                        value="{{ $search }}"
-                                    >
-                                @endif
-
-                                @if ($selectedPriority)
-                                    <input
-                                        type="hidden"
-                                        name="priority"
-                                        value="{{ $selectedPriority }}"
-                                    >
-                                @endif
-
-                                <button
-                                    class="resume-button"
-                                    type="submit"
+                            @if ($canWriteTask)
+                                <form
+                                    method="POST"
+                                    action="{{ route(
+                                        'daily-task-waiting.resume',
+                                        $task,
+                                    ) }}"
                                 >
-                                    Reactivar
-                                </button>
-                            </form>
+                                    @csrf
+                                    <input type="hidden" name="view" value="{{ $selectedWorkView }}">
+
+                                    @if ($selectedScope)
+                                        <input
+                                            type="hidden"
+                                            name="scope"
+                                            value="{{ $selectedScope }}"
+                                        >
+                                    @endif
+
+                                    @if ($search !== '')
+                                        <input
+                                            type="hidden"
+                                            name="q"
+                                            value="{{ $search }}"
+                                        >
+                                    @endif
+
+                                    @if ($selectedPriority)
+                                        <input
+                                            type="hidden"
+                                            name="priority"
+                                            value="{{ $selectedPriority }}"
+                                        >
+                                    @endif
+
+                                    <button
+                                        class="resume-button"
+                                        type="submit"
+                                    >
+                                        Reactivar
+                                    </button>
+                                </form>
+                            @endif
                         </div>
                     @empty
                         <div class="empty">
@@ -1965,6 +2063,75 @@
                     </div>
                 @endif
             </section>
+
+            <section class="section">
+                <div class="section-head">
+                    <h2>Órdenes y servicios</h2>
+
+                    <a
+                        class="section-link"
+                        href="{{ url('/admin/ordenes-servicio') }}"
+                    >
+                        Ver todos
+                    </a>
+                </div>
+
+                <div class="list">
+                    @forelse ($serviceOrders as $order)
+                        <a
+                            class="item"
+                            href="{{ url('/admin/ordenes-servicio') }}"
+                        >
+                            <div class="item-title">
+                                {{ $order->title }}
+                            </div>
+
+                            <div class="meta">
+                                {{ $order->organization?->name
+                                    ?? 'Sin ámbito' }}
+                                @if ($order->client?->name)
+                                    · {{ $order->client->name }}
+                                @endif
+                                @if ($selectedWorkView === 'team')
+                                    · Responsable:
+                                    {{ $order->assignee?->name
+                                        ?? 'Sin asignar' }}
+                                @endif
+                            </div>
+
+                            <div class="pills">
+                                <span class="pill">
+                                    {{ \App\Models\ServiceOrder::stageOptions()[$order->stage]
+                                        ?? ucfirst($order->stage) }}
+                                </span>
+
+                                @if ($order->next_action_at)
+                                    <span class="pill {{
+                                        $order->next_action_at->isPast()
+                                            ? 'overdue'
+                                            : 'today'
+                                    }}">
+                                        Seguimiento
+                                        {{ $order->next_action_at->format('d/m/Y') }}
+                                    </span>
+                                @endif
+                            </div>
+
+                            @if ($order->next_action)
+                                <div class="next-action-current">
+                                    <strong>Siguiente:</strong>
+                                    {{ $order->next_action }}
+                                </div>
+                            @endif
+                        </a>
+                    @empty
+                        <div class="empty">
+                            No hay órdenes o servicios pendientes.
+                        </div>
+                    @endforelse
+                </div>
+            </section>
+
             <section class="section">
                 <div class="section-head">
                     <h2>Vencimientos</h2>
@@ -2033,6 +2200,11 @@
                             <div class="meta">
                                 {{ $incident->organization?->name
                                     ?? 'Sin ámbito' }}
+                                @if ($selectedWorkView === 'team')
+                                    · Responsable:
+                                    {{ $incident->assignee?->name
+                                        ?? 'Sin asignar' }}
+                                @endif
                             </div>
 
                             <div class="pills">
@@ -2064,12 +2236,14 @@
     </div>
 </div>
 
-<a
-    class="fab"
-    href="{{ route('quick-capture.show') }}"
->
-    + Captura rápida
-</a>
+@if ($canQuickCapture)
+    <a
+        class="fab"
+        href="{{ route('quick-capture.show') }}"
+    >
+        + Captura rápida
+    </a>
+@endif
     <x-operational-theme />
     <x-operational-interactions />
 </body>
