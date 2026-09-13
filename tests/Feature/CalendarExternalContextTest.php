@@ -138,6 +138,7 @@ class CalendarExternalContextTest extends TestCase
             'starts_at' => CarbonImmutable::parse('2026-09-14 '.$start.':00', 'America/Lima'),
             'ends_at' => CarbonImmutable::parse('2026-09-14 '.$end.':00', 'America/Lima'),
             'all_day' => false,
+            'organization' => null,
             'url' => 'https://calendar.google.com/',
             'external' => true,
         ];
