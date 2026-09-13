@@ -39,6 +39,10 @@ class DailyTaskWaitingController extends Controller
                 'nullable',
                 'in:critical,today,week,planned',
             ],
+            'view' => [
+                'nullable',
+                'in:mine,team,unassigned',
+            ],
         ]);
 
         $this->authorizeTask($request, $task);
@@ -108,6 +112,10 @@ class DailyTaskWaitingController extends Controller
             'priority' => [
                 'nullable',
                 'in:critical,today,week,planned',
+            ],
+            'view' => [
+                'nullable',
+                'in:mine,team,unassigned',
             ],
         ]);
 
@@ -204,6 +212,10 @@ class DailyTaskWaitingController extends Controller
         if (! empty($validated['priority'])) {
             $params['priority'] =
                 $validated['priority'];
+        }
+
+        if (! empty($validated['view'])) {
+            $params['view'] = $validated['view'];
         }
 
         return $params;
