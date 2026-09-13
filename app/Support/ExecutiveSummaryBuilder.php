@@ -417,6 +417,13 @@ class ExecutiveSummaryBuilder
             'service_financial' => $serviceFinancial,
             'obligation_financial' =>
                 $obligationFinancial,
+            'executive_finance' => app(
+                ExecutiveFinanceBuilder::class,
+            )->build(
+                $organizationIds,
+                $selectedScope,
+                $now,
+            ),
         ];
     }
 
