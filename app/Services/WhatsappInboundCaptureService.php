@@ -16,8 +16,8 @@ use RuntimeException;
 class WhatsappInboundCaptureService
 {
     public function __construct(
-        private readonly
-        WhatsappOutboundService $outbound,
+        private readonly WhatsappOutboundService $outbound,
+        private readonly WhatsappCentralCommandService $commands,
     ) {
     }
 
@@ -88,7 +88,29 @@ class WhatsappInboundCaptureService
         }
 
         [$user, $organization] =
-            $this->resolveContext();
+            $this->resolveContext($senderWaId);
+
+        if (
+            config('whatsapp.commands_enabled')
+            && $this->commands->isCommand($text)
+        ) {
+            return $this->captureCommand(
+                $messageId,
+                $senderWaId,
+                $phoneNumberId,
+                $messageType,
+                $message['timestamp'] ?? null,
+                $text,
+                $user,
+                $organization,
+            );
+        }
+
+        if (! $user->canWriteToOrganization((int) $organization->id)) {
+            throw new RuntimeException(
+                'whatsapp_organization_not_writable',
+            );
+        }
 
         try {
             $processed = DB::transaction(
@@ -200,6 +222,77 @@ class WhatsappInboundCaptureService
             (string) $processed['task_title'],
             $phoneNumberId,
         );
+
+        return 'processed';
+    }
+
+    private function captureCommand(
+        string $messageId,
+        string $senderWaId,
+        ?string $phoneNumberId,
+        string $messageType,
+        mixed $timestamp,
+        string $text,
+        User $user,
+        Organization $organization,
+    ): string {
+        $command = $this->commands->handle(
+            $user,
+            $organization,
+            $text,
+        );
+
+        try {
+            $inbound = WhatsappInboundMessage::query()
+                ->create([
+                    'message_id' => $messageId,
+                    'sender_wa_id' => $senderWaId,
+                    'phone_number_id' => $phoneNumberId,
+                    'message_type' => $messageType,
+                    'status' => $command['status'],
+                    'text_sha256' => hash('sha256', $text),
+                    'text_length' => mb_strlen($text),
+                    'received_at' => $this->receivedAt($timestamp),
+                    'processed_at' => now(),
+                ]);
+        } catch (QueryException $exception) {
+            if (
+                (string) $exception->getCode()
+                === '23000'
+            ) {
+                return 'duplicate';
+            }
+
+            throw $exception;
+        }
+
+        $result = $this->outbound->sendText(
+            $senderWaId,
+            $command['reply'],
+            $phoneNumberId,
+            $command['purpose'],
+        );
+
+        $inbound->forceFill([
+            'confirmation_status' => $result['status'],
+            'confirmation_message_id' => $result['message_id'],
+            'confirmation_sent_at' =>
+                $result['status'] === 'sent'
+                    ? now()
+                    : null,
+            'confirmation_error_code' =>
+                $result['error_code'],
+        ])->save();
+
+        if ($result['status'] === 'failed') {
+            Log::warning(
+                'WhatsApp CENTRAL command reply failed.',
+                [
+                    'inbound_id' => $inbound->id,
+                    'error_code' => $result['error_code'],
+                ],
+            );
+        }
 
         return 'processed';
     }
@@ -318,13 +411,26 @@ class WhatsappInboundCaptureService
     /**
      * @return array{0: User, 1: Organization}
      */
-    private function resolveContext(): array
-    {
+    private function resolveContext(
+        string $senderWaId,
+    ): array {
+        $map = config(
+            'whatsapp.sender_user_map',
+            [],
+        );
+
+        $mappedEmail = is_array($map)
+            ? ($map[$senderWaId] ?? null)
+            : null;
+
         $email = strtolower(
             trim(
-                (string) config(
-                    'whatsapp.user_email',
-                    '',
+                (string) (
+                    $mappedEmail
+                    ?: config(
+                        'whatsapp.user_email',
+                        '',
+                    )
                 ),
             ),
         );
@@ -340,6 +446,7 @@ class WhatsappInboundCaptureService
                 'LOWER(email) = ?',
                 [$email],
             )
+            ->where('is_active', true)
             ->first();
 
         if (! $user) {
