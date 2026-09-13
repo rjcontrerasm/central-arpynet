@@ -20,6 +20,7 @@
     $secondaryLabels = [
         'agenda' => 'Agenda',
         'clients' => 'Clientes',
+        'projects' => 'Proyectos',
         'overview360' => 'Vista 360',
         'incidents' => 'Incidentes 360',
         'tracking' => 'Seguimiento',
@@ -365,6 +366,13 @@
                 href="{{ route('client-ops.index') }}"
             >
                 Clientes
+            </a>
+
+            <a
+                class="{{ $active === 'projects' ? 'is-active' : '' }}"
+                href="{{ route('project-ops.show') }}"
+            >
+                Proyectos
             </a>
 
             <a
