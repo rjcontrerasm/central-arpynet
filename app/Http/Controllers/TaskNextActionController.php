@@ -21,6 +21,7 @@ class TaskNextActionController extends Controller
             'scope' => ['nullable', 'integer'],
             'q' => ['nullable', 'string', 'max:120'],
             'priority' => ['nullable', 'in:critical,today,week,planned'],
+            'view' => ['nullable', 'in:mine,team,unassigned'],
             'focus' => ['nullable', 'in:attention,stagnant,no_next_action,all'],
             'type' => ['nullable', 'in:all,task,project,service,obligation'],
         ]);
@@ -74,6 +75,7 @@ class TaskNextActionController extends Controller
                 'scope' => $scope,
                 'q' => trim((string) ($validated['q'] ?? '')) ?: null,
                 'priority' => $validated['priority'] ?? null,
+                'view' => $validated['view'] ?? null,
             ])),
         };
 
