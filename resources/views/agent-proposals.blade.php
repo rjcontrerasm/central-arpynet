@@ -382,6 +382,86 @@ Preparar propuesta
 @endif
 @endif
 
+@if($priority['type'] === 'project')
+<details class="proposal-more" data-expanded-actions="2.18">
+<summary>Más acciones de proyecto</summary>
+
+<form class="proposal-prepare" method="POST" action="{{ route('agent-proposals.prepare') }}">
+@csrf
+<input type="hidden" name="subject_type" value="project">
+<input type="hidden" name="subject_id" value="{{ $priority['id'] }}">
+<input type="hidden" name="action" value="project.status.set">
+<div class="proposal-field">
+<label for="jarvis-project-status-{{ $priority['id'] }}">Nuevo estado</label>
+<select class="proposal-input" id="jarvis-project-status-{{ $priority['id'] }}" name="project_status" required>
+@foreach(\App\Models\Project::statusOptions() as $statusKey => $statusLabel)
+<option value="{{ $statusKey }}">{{ $statusLabel }}</option>
+@endforeach
+</select>
+</div>
+<button class="prepare-button" type="submit" data-confirm="¿Preparar el cambio de estado? El proyecto no se modificará todavía." data-busy-label="Preparando…">Preparar estado</button>
+</form>
+
+<form class="proposal-prepare" method="POST" action="{{ route('agent-proposals.prepare') }}">
+@csrf
+<input type="hidden" name="subject_type" value="project">
+<input type="hidden" name="subject_id" value="{{ $priority['id'] }}">
+<input type="hidden" name="action" value="project.blockers.clear">
+<div class="proposal-field">
+<label>Bloqueos</label>
+<div class="prepare-note">Prepara la limpieza de los bloqueos registrados. Si ya no existen, CENTRAL no creará una propuesta vacía.</div>
+</div>
+<button class="prepare-button" type="submit" data-confirm="¿Preparar la limpieza de bloqueos? El proyecto no se modificará todavía." data-busy-label="Preparando…">Preparar limpieza</button>
+</form>
+
+<form class="proposal-prepare service" method="POST" action="{{ route('agent-proposals.prepare') }}">
+@csrf
+<input type="hidden" name="subject_type" value="project">
+<input type="hidden" name="subject_id" value="{{ $priority['id'] }}">
+<input type="hidden" name="action" value="project.task.create">
+<div class="proposal-field">
+<label for="jarvis-project-task-{{ $priority['id'] }}">Nueva tarea vinculada</label>
+<input class="proposal-input" id="jarvis-project-task-{{ $priority['id'] }}" name="project_task_title" type="text" maxlength="255" required placeholder="Ej. Validar entregable con el cliente">
+</div>
+<div class="proposal-field">
+<label for="jarvis-project-urgency-{{ $priority['id'] }}">Urgencia</label>
+<select class="proposal-input" id="jarvis-project-urgency-{{ $priority['id'] }}" name="project_task_urgency">
+<option value="normal">Normal</option>
+<option value="high">Alta</option>
+<option value="critical">Crítica</option>
+<option value="low">Baja</option>
+</select>
+</div>
+<div class="proposal-field">
+<label for="jarvis-project-due-{{ $priority['id'] }}">Vence (opcional)</label>
+<input class="proposal-input" id="jarvis-project-due-{{ $priority['id'] }}" name="project_task_due_date" type="date">
+</div>
+<button class="prepare-button" type="submit" data-confirm="¿Preparar la creación de esta tarea? No se creará hasta aprobar y confirmar la propuesta." data-busy-label="Preparando…">Preparar tarea</button>
+</form>
+<div class="prepare-note">Todas estas acciones siguen el flujo propuesta → aprobación → segunda confirmación → undo.</div>
+</details>
+@elseif($priority['type'] === 'service_order')
+<details class="proposal-more" data-expanded-actions="2.18">
+<summary>Más acciones de servicio</summary>
+<form class="proposal-prepare" method="POST" action="{{ route('agent-proposals.prepare') }}">
+@csrf
+<input type="hidden" name="subject_type" value="service_order">
+<input type="hidden" name="subject_id" value="{{ $priority['id'] }}">
+<input type="hidden" name="action" value="service_order.stage.set">
+<div class="proposal-field">
+<label for="jarvis-service-stage-{{ $priority['id'] }}">Nueva etapa</label>
+<select class="proposal-input" id="jarvis-service-stage-{{ $priority['id'] }}" name="service_stage" required>
+@foreach(\App\Models\ServiceOrder::stageOptions() as $stageKey => $stageLabel)
+<option value="{{ $stageKey }}">{{ $stageLabel }}</option>
+@endforeach
+</select>
+</div>
+<button class="prepare-button" type="submit" data-confirm="¿Preparar el cambio de etapa? El servicio no se modificará todavía." data-busy-label="Preparando…">Preparar etapa</button>
+</form>
+<div class="prepare-note">La etapa solo cambiará después de aprobación humana y segunda confirmación.</div>
+</details>
+@endif
+
 @if($priority['type'] === 'task')
 <div class="proposal-compatible">
 Acciones de tarea disponibles con preparación humana

@@ -344,7 +344,11 @@ class AgentProposalController extends Controller
                     'today',
                     'tomorrow',
                     'next_week',
+                    'project.status.set',
                     'project.next_action.set',
+                    'project.blockers.clear',
+                    'project.task.create',
+                    'service_order.stage.set',
                     'service_order.next_action.set',
                 ]),
             ],
@@ -357,6 +361,35 @@ class AgentProposalController extends Controller
                 'nullable',
                 'date',
             ],
+            'project_status' => [
+                'nullable',
+                'required_if:action,project.status.set',
+                Rule::in(array_keys(Project::statusOptions())),
+            ],
+            'project_task_title' => [
+                'nullable',
+                'required_if:action,project.task.create',
+                'string',
+                'max:255',
+            ],
+            'project_task_urgency' => [
+                'nullable',
+                Rule::in([
+                    'low',
+                    'normal',
+                    'high',
+                    'critical',
+                ]),
+            ],
+            'project_task_due_date' => [
+                'nullable',
+                'date',
+            ],
+            'service_stage' => [
+                'nullable',
+                'required_if:action,service_order.stage.set',
+                Rule::in(array_keys(ServiceOrder::stageOptions())),
+            ],
         ]);
 
         $allowedByType = [
@@ -368,9 +401,13 @@ class AgentProposalController extends Controller
                 'next_week',
             ],
             'project' => [
+                'project.status.set',
                 'project.next_action.set',
+                'project.blockers.clear',
+                'project.task.create',
             ],
             'service_order' => [
+                'service_order.stage.set',
                 'service_order.next_action.set',
             ],
         ];
@@ -401,65 +438,48 @@ class AgentProposalController extends Controller
                     $validated['subject_type']
                     === 'task'
                 ) {
-                    $task =
-                        Task::query()
-                            ->lockForUpdate()
-                            ->findOrFail(
-                                (int) $validated[
-                                    'subject_id'
-                                ],
-                            );
+                    $task = Task::query()
+                        ->lockForUpdate()
+                        ->findOrFail(
+                            (int) $validated['subject_id'],
+                        );
 
                     $this->authorizeOrganization(
                         $request,
-                        (int) $task
-                            ->organization_id,
+                        (int) $task->organization_id,
                     );
 
                     if (
                         in_array(
                             $task->status,
-                            [
-                                'completed',
-                                'cancelled',
-                            ],
+                            ['completed', 'cancelled'],
                             true,
                         )
                         || (
-                            $validated['action']
-                            === 'start'
-                            && $task->status
-                                === 'in_progress'
+                            $validated['action'] === 'start'
+                            && $task->status === 'in_progress'
                         )
                     ) {
                         return [
                             'stale' => true,
-                            'scope' =>
-                                (int) $task
-                                    ->organization_id,
+                            'scope' => (int) $task->organization_id,
                             'stale_message' =>
                                 'La tarea cambió desde la lectura de Jarvis y esa preparación ya no es pertinente. Recarga Jarvis antes de continuar.',
                         ];
                     }
 
-                    $proposal =
-                        $gateway
-                            ->proposeTaskAction(
-                                $request->user(),
-                                $task,
-                                $validated['action'],
-                                'Propuesta de tarea preparada manualmente desde Lectura Jarvis. La tarea permanece sin cambios hasta aprobación y segunda confirmación.',
-                            );
+                    $proposal = $gateway->proposeTaskAction(
+                        $request->user(),
+                        $task,
+                        $validated['action'],
+                        'Propuesta de tarea preparada manualmente desde Lectura Jarvis. La tarea permanece sin cambios hasta aprobación y segunda confirmación.',
+                    );
 
                     return [
                         'stale' => false,
-                        'scope' =>
-                            (int) $task
-                                ->organization_id,
+                        'scope' => (int) $task->organization_id,
                         'proposal' => $proposal,
-                        'created' =>
-                            $proposal
-                                ->wasRecentlyCreated,
+                        'created' => $proposal->wasRecentlyCreated,
                     ];
                 }
 
@@ -467,145 +487,179 @@ class AgentProposalController extends Controller
                     $validated['subject_type']
                     === 'project'
                 ) {
-                    $project =
-                        Project::query()
-                            ->lockForUpdate()
-                            ->findOrFail(
-                                (int) $validated[
-                                    'subject_id'
-                                ],
-                            );
+                    $project = Project::query()
+                        ->lockForUpdate()
+                        ->findOrFail(
+                            (int) $validated['subject_id'],
+                        );
 
                     $this->authorizeOrganization(
                         $request,
-                        (int) $project
-                            ->organization_id,
+                        (int) $project->organization_id,
                     );
 
-                    if (
-                        filled(
-                            $project->next_action,
-                        )
-                    ) {
-                        return [
-                            'stale' => true,
-                            'scope' =>
-                                (int) $project
-                                    ->organization_id,
-                            'stale_message' =>
-                                'La sugerencia ya no está vigente porque el proyecto ya tiene una siguiente acción. Recarga Jarvis antes de preparar otra propuesta.',
+                    $action = $validated['action'];
+                    $payload = [];
+                    $reason =
+                        'Propuesta de proyecto preparada manualmente desde Lectura Jarvis. El proyecto permanece sin cambios hasta aprobación y segunda confirmación.';
+
+                    if ($action === 'project.next_action.set') {
+                        if (filled($project->next_action)) {
+                            return [
+                                'stale' => true,
+                                'scope' => (int) $project->organization_id,
+                                'stale_message' =>
+                                    'La sugerencia ya no está vigente porque el proyecto ya tiene una siguiente acción. Recarga Jarvis antes de preparar otra propuesta.',
+                            ];
+                        }
+
+                        $payload = [
+                            'next_action' => trim(
+                                (string) ($validated['next_action'] ?? ''),
+                            ),
+                        ];
+                    } elseif ($action === 'project.status.set') {
+                        $targetStatus = (string) $validated['project_status'];
+
+                        if ($project->status === $targetStatus) {
+                            return [
+                                'stale' => true,
+                                'scope' => (int) $project->organization_id,
+                                'stale_message' =>
+                                    'El proyecto ya se encuentra en el estado seleccionado. No se creó una propuesta sin cambios.',
+                            ];
+                        }
+
+                        $payload = [
+                            'status' => $targetStatus,
+                        ];
+                    } elseif ($action === 'project.blockers.clear') {
+                        if (blank($project->blockers)) {
+                            return [
+                                'stale' => true,
+                                'scope' => (int) $project->organization_id,
+                                'stale_message' =>
+                                    'El proyecto ya no tiene bloqueos registrados. No se creó una propuesta sin cambios.',
+                            ];
+                        }
+                    } elseif ($action === 'project.task.create') {
+                        if (
+                            in_array(
+                                $project->status,
+                                ['completed', 'cancelled'],
+                                true,
+                            )
+                        ) {
+                            return [
+                                'stale' => true,
+                                'scope' => (int) $project->organization_id,
+                                'stale_message' =>
+                                    'El proyecto ya no admite nuevas tareas porque está completado o cancelado.',
+                            ];
+                        }
+
+                        $payload = [
+                            'title' => trim(
+                                (string) $validated['project_task_title'],
+                            ),
+                            'urgency' =>
+                                $validated['project_task_urgency']
+                                ?? 'normal',
+                            'due_date' =>
+                                $validated['project_task_due_date']
+                                ?? null,
                         ];
                     }
 
-                    $proposal =
-                        $gateway
-                            ->proposeProjectAction(
-                                $request->user(),
-                                $project,
-                                'project.next_action.set',
-                                [
-                                    'next_action' =>
-                                        trim(
-                                            (string) (
-                                                $validated[
-                                                    'next_action'
-                                                ] ?? ''
-                                            ),
-                                        ),
-                                ],
-                                'Propuesta preparada manualmente desde Lectura Jarvis para definir la siguiente acción de un proyecto sin siguiente acción registrada.',
-                            );
+                    $proposal = $gateway->proposeProjectAction(
+                        $request->user(),
+                        $project,
+                        $action,
+                        $payload,
+                        $reason,
+                    );
 
                     return [
                         'stale' => false,
-                        'scope' =>
-                            (int) $project
-                                ->organization_id,
+                        'scope' => (int) $project->organization_id,
                         'proposal' => $proposal,
-                        'created' =>
-                            $proposal
-                                ->wasRecentlyCreated,
+                        'created' => $proposal->wasRecentlyCreated,
                     ];
                 }
 
-                $order =
-                    ServiceOrder::query()
-                        ->lockForUpdate()
-                        ->findOrFail(
-                            (int) $validated[
-                                'subject_id'
-                            ],
-                        );
+                $order = ServiceOrder::query()
+                    ->lockForUpdate()
+                    ->findOrFail(
+                        (int) $validated['subject_id'],
+                    );
 
                 $this->authorizeOrganization(
                     $request,
-                    (int) $order
-                        ->organization_id,
+                    (int) $order->organization_id,
                 );
 
-                if (
-                    filled(
-                        $order->next_action,
-                    )
-                ) {
-                    return [
-                        'stale' => true,
-                        'scope' =>
-                            (int) $order
-                                ->organization_id,
-                        'stale_message' =>
-                            'La sugerencia ya no está vigente porque el servicio ya tiene una siguiente acción. Recarga Jarvis antes de preparar otra propuesta.',
+                $action = $validated['action'];
+                $payload = [];
+
+                if ($action === 'service_order.next_action.set') {
+                    if (filled($order->next_action)) {
+                        return [
+                            'stale' => true,
+                            'scope' => (int) $order->organization_id,
+                            'stale_message' =>
+                                'La sugerencia ya no está vigente porque el servicio ya tiene una siguiente acción. Recarga Jarvis antes de preparar otra propuesta.',
+                        ];
+                    }
+
+                    $payload = [
+                        'next_action' => trim(
+                            (string) ($validated['next_action'] ?? ''),
+                        ),
+                        'next_action_at' =>
+                            $validated['next_action_at']
+                            ?? null,
+                    ];
+                } elseif ($action === 'service_order.stage.set') {
+                    $targetStage = (string) $validated['service_stage'];
+
+                    if ($order->stage === $targetStage) {
+                        return [
+                            'stale' => true,
+                            'scope' => (int) $order->organization_id,
+                            'stale_message' =>
+                                'El servicio ya se encuentra en la etapa seleccionada. No se creó una propuesta sin cambios.',
+                        ];
+                    }
+
+                    $payload = [
+                        'stage' => $targetStage,
                     ];
                 }
 
-                $proposal =
-                    $gateway
-                        ->proposeServiceOrderAction(
-                            $request->user(),
-                            $order,
-                            'service_order.next_action.set',
-                            [
-                                'next_action' =>
-                                    trim(
-                                        (string) (
-                                            $validated[
-                                                'next_action'
-                                            ] ?? ''
-                                        ),
-                                    ),
-                                'next_action_at' =>
-                                    $validated[
-                                        'next_action_at'
-                                    ] ?? null,
-                            ],
-                            'Propuesta preparada manualmente desde Lectura Jarvis para definir la siguiente acción de un servicio sin siguiente acción registrada.',
-                        );
+                $proposal = $gateway->proposeServiceOrderAction(
+                    $request->user(),
+                    $order,
+                    $action,
+                    $payload,
+                    'Propuesta de servicio preparada manualmente desde Lectura Jarvis. El servicio permanece sin cambios hasta aprobación y segunda confirmación.',
+                );
 
                 return [
                     'stale' => false,
-                    'scope' =>
-                        (int) $order
-                            ->organization_id,
+                    'scope' => (int) $order->organization_id,
                     'proposal' => $proposal,
-                    'created' =>
-                        $proposal
-                            ->wasRecentlyCreated,
+                    'created' => $proposal->wasRecentlyCreated,
                 ];
             },
         );
 
-        if (
-            $result['stale']
-            ?? false
-        ) {
+        if ($result['stale'] ?? false) {
             return redirect()
                 ->route(
                     'agent-proposals.index',
                     [
-                        'scope' =>
-                            $result['scope'],
-                        'status' =>
-                            'pending',
+                        'scope' => $result['scope'],
+                        'status' => 'pending',
                     ],
                 )
                 ->with(
@@ -615,10 +669,7 @@ class AgentProposalController extends Controller
                 );
         }
 
-        $message = (
-            $result['created']
-            ?? false
-        )
+        $message = ($result['created'] ?? false)
             ? 'Propuesta preparada y enviada a Pendientes. Aún no se ejecutó ningún cambio.'
             : 'Ya existía una propuesta pendiente idéntica; CENTRAL reutilizó la existente. No se ejecutó ningún cambio.';
 
@@ -626,10 +677,8 @@ class AgentProposalController extends Controller
             ->route(
                 'agent-proposals.index',
                 [
-                    'scope' =>
-                        $result['scope'],
-                    'status' =>
-                        'pending',
+                    'scope' => $result['scope'],
+                    'status' => 'pending',
                 ],
             )
             ->with(
