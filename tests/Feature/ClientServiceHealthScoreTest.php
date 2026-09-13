@@ -156,9 +156,24 @@ class ClientServiceHealthScoreTest extends TestCase
             'is_active' => true,
             'created_by' => $user->id,
         ]);
-        $hidden = $this->client($user, $foreign, 'Oculto');
+        $foreignUser = User::factory()->create([
+            'email' => 'foreign-health@arpynet.test',
+            'is_active' => true,
+        ]);
 
-        $this->order($user, $foreign, $hidden, [
+        $foreign->users()->attach($foreignUser->id, [
+            'role' => 'member',
+            'is_default' => true,
+            'is_active' => true,
+        ]);
+
+        $hidden = $this->client(
+            $foreignUser,
+            $foreign,
+            'Oculto',
+        );
+
+        $this->order($foreignUser, $foreign, $hidden, [
             'stage' => 'invoiced',
             'invoice_number' => 'HIDDEN-1',
             'invoice_amount' => 9999,

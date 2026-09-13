@@ -6,6 +6,7 @@ use App\Models\Organization;
 use App\Models\ServiceOrder;
 use App\Support\ServiceOrderOperationalState;
 use App\Support\ServiceOrderFinancialState;
+use App\Support\ServiceHealthScore;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -170,6 +171,18 @@ class ServiceOrderOpsController extends Controller
                 foreach ($financial as $key => $value) {
                     $order->setAttribute(
                         'fin_'.$key,
+                        $value,
+                    );
+                }
+
+                $health = ServiceHealthScore::evaluate(
+                    $order,
+                    $now,
+                );
+
+                foreach ($health as $key => $value) {
+                    $order->setAttribute(
+                        'health_'.$key,
                         $value,
                     );
                 }

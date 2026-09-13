@@ -971,6 +971,10 @@
         </aside>
     </div>
 
+    <x-client-health
+        :clients="$summary['client_health']"
+    />
+
     <x-executive-finance
         :finance="$summary['executive_finance']"
     />

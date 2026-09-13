@@ -424,6 +424,13 @@ class ExecutiveSummaryBuilder
                 $selectedScope,
                 $now,
             ),
+            'client_health' => app(
+                ClientHealthScoreBuilder::class,
+            )->build(
+                $organizationIds,
+                $selectedScope,
+                $now,
+            ),
         ];
     }
 
