@@ -151,6 +151,7 @@ class DailyTaskWaitingTest extends TestCase
             'urgency' => 'medium',
             'impact' => 'medium',
             'due_at' => '2026-09-10 17:00:00',
+            'assigned_to' => $user->id,
             'created_by' => $user->id,
         ]);
     }
