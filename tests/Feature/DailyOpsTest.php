@@ -42,6 +42,7 @@ class DailyOpsTest extends TestCase
             'urgency' => 'high',
             'impact' => 'high',
             'due_at' => now(),
+            'assigned_to' => $user->id,
             'created_by' => $user->id,
         ]);
 
@@ -69,6 +70,7 @@ class DailyOpsTest extends TestCase
             'urgency' => 'normal',
             'impact' => 'normal',
             'due_at' => '2026-09-05 17:00:00',
+            'assigned_to' => $user->id,
             'created_by' => $user->id,
         ]);
 
@@ -131,6 +133,7 @@ class DailyOpsTest extends TestCase
             'urgency' => 'normal',
             'impact' => 'normal',
             'due_at' => now(),
+            'assigned_to' => $user->id,
             'created_by' => $user->id,
         ]);
 
@@ -147,6 +150,7 @@ class DailyOpsTest extends TestCase
                 false,
             );
     }
+
     public function test_foreign_scope_task_is_hidden(): void
     {
         [$user] = $this->context();
