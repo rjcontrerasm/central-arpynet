@@ -28,6 +28,10 @@ class DailyTaskActionController extends Controller
                 'nullable',
                 'in:critical,today,week,planned',
             ],
+            'view' => [
+                'nullable',
+                'in:mine,team,unassigned',
+            ],
         ]);
 
         $actions->preview(
@@ -125,6 +129,10 @@ class DailyTaskActionController extends Controller
         )) {
             $params['priority'] =
                 $validated['priority'];
+        }
+
+        if (! empty($validated['view'])) {
+            $params['view'] = $validated['view'];
         }
 
         return $params;
