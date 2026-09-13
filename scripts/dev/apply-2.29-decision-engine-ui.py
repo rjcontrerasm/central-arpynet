@@ -1,7 +1,7 @@
 from pathlib import Path
 
-path = Path('resources/views/decision-inbox.blade.php')
-text = path.read_text()
+view_path = Path('resources/views/decision-inbox.blade.php')
+text = view_path.read_text()
 
 replacements = [
     (
@@ -33,8 +33,72 @@ replacements = [
 for needle, replacement in replacements:
     count = text.count(needle)
     if count != 1:
-        raise SystemExit(f'Esperaba 1 coincidencia y encontré {count}: {needle[:80]!r}')
+        raise SystemExit(f'Vista: esperaba 1 coincidencia y encontré {count}: {needle[:80]!r}')
     text = text.replace(needle, replacement, 1)
 
-path.write_text(text)
-print('2.29 Decision Engine UI aplicado correctamente')
+view_path.write_text(text)
+
+builder_path = Path('app/Support/ExecutiveSummaryBuilder.php')
+builder = builder_path.read_text()
+
+old_decisions = """        $decisions = $attention
+            ->filter(
+                fn (array $item): bool =>
+                    ExecutiveDecisionAdvisor::isDecision(
+                        $item,
+                    ),
+            )
+            ->map(
+                function (
+                    array $item,
+                ): array {
+                    $advice =
+                        ExecutiveDecisionAdvisor::recommend(
+                            $item,
+                        );
+
+                    return $item + [
+                        'recommended_action' =>
+                            $advice['action'],
+                        'decision_reason' =>
+                            $advice['reason'],
+                    ];
+                },
+            )
+            ->take(6)
+            ->values();
+"""
+
+new_decisions = """        $decisionEngine = app(
+            DecisionEngine::class,
+        )->evaluate(
+            $attention->all(),
+        );
+
+        $decisions = collect(
+            $decisionEngine['decisions'],
+        )
+            ->take(6)
+            ->values();
+"""
+
+if builder.count(old_decisions) != 1:
+    raise SystemExit(f'Builder: esperaba 1 bloque de decisiones y encontré {builder.count(old_decisions)}.')
+
+builder = builder.replace(old_decisions, new_decisions, 1)
+
+old_return = """            'decisions' => $decisions,
+            'counts' => [
+"""
+new_return = """            'decisions' => $decisions,
+            'decision_engine' => $decisionEngine,
+            'counts' => [
+"""
+
+if builder.count(old_return) != 1:
+    raise SystemExit(f'Builder: esperaba 1 retorno de decisiones y encontré {builder.count(old_return)}.')
+
+builder = builder.replace(old_return, new_return, 1)
+builder_path.write_text(builder)
+
+print('2.29 Decision Engine UI + ExecutiveSummaryBuilder aplicado correctamente')
