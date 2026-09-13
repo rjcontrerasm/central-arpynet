@@ -61,30 +61,15 @@ class ExecutiveSummaryBuilder
             ->sortByDesc('rank')
             ->values();
 
-        $decisions = $attention
-            ->filter(
-                fn (array $item): bool =>
-                    ExecutiveDecisionAdvisor::isDecision(
-                        $item,
-                    ),
-            )
-            ->map(
-                function (
-                    array $item,
-                ): array {
-                    $advice =
-                        ExecutiveDecisionAdvisor::recommend(
-                            $item,
-                        );
+        $decisionEngine = app(
+            DecisionEngine::class,
+        )->evaluate(
+            $attention->all(),
+        );
 
-                    return $item + [
-                        'recommended_action' =>
-                            $advice['action'],
-                        'decision_reason' =>
-                            $advice['reason'],
-                    ];
-                },
-            )
+        $decisions = collect(
+            $decisionEngine['decisions'],
+        )
             ->take(6)
             ->values();
 
@@ -387,6 +372,7 @@ class ExecutiveSummaryBuilder
             'attention' =>
                 $otherAttention->take(12),
             'decisions' => $decisions,
+            'decision_engine' => $decisionEngine,
             'counts' => [
                 'decisions' =>
                     $decisions->count(),

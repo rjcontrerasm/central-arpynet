@@ -146,6 +146,53 @@
             line-height: 1.45;
         }
 
+        .engine-summary {
+            margin: -8px 0 18px;
+            padding: 11px 13px;
+            border: 1px solid #24304b;
+            border-radius: 12px;
+            background: #11182b;
+            color: #cbd5e1;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .decision-engine-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .decision-score, .decision-band, .evidence {
+            display: inline-flex;
+            align-items: center;
+            min-height: 25px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 850;
+        }
+
+        .decision-score { background: #172554; color: #bfdbfe; }
+        .decision-band { background: #1e293b; color: #e2e8f0; }
+        .evidence { background: #052e16; color: #bbf7d0; }
+
+        .why-now {
+            margin-top: 8px;
+            color: #cbd5e1;
+            font-size: 11px;
+            line-height: 1.45;
+        }
+
+        .score-breakdown {
+            margin-top: 5px;
+            color: #64748b;
+            font-size: 10px;
+            line-height: 1.4;
+        }
+
         .signals {
             display: flex;
             flex-wrap: wrap;
@@ -272,6 +319,11 @@
             }
 
             .current-next { background: #eff6ff; color: #334155; }
+            .engine-summary { background: #fff; border-color: #e2e8f0; color: #475569; }
+            .decision-score { background: #eff6ff; color: #1d4ed8; }
+            .decision-band { background: #f1f5f9; color: #475569; }
+            .evidence { background: #ecfdf5; color: #047857; }
+            .why-now { color: #475569; }
 
             .next-form input {
                 background: #fff;
@@ -306,9 +358,15 @@
     <section class="hero">
         <div>
             <h1>Decisiones</h1>
-            <div class="subtitle">Resuelve lo que requiere una decisión concreta.</div>
+            <div class="subtitle">Decision Engine · priorización explicable y determinística.</div>
         </div>
     </section>
+
+    <div class="engine-summary">
+        <strong>{{ $decisionEngineSummary }}</strong>
+        · Score v{{ $decisionScoreVersion }}
+        · Recomendaciones de solo lectura; las acciones manuales siguen usando la capa operativa segura.
+    </div>
 
     @php
         $types = [
@@ -356,9 +414,9 @@
     <section class="stats">
         @foreach ([
             'Decisiones' => $counts['total'],
-            'Críticas' => $counts['critical'],
-            'Sin próxima acción' => $counts['no_next_action'],
-            'Estancadas' => $counts['stagnant'],
+            'Decidir ahora' => $counts['immediate'],
+            'Decidir hoy' => $counts['today'],
+            'Evidencia alta' => $counts['high_evidence'],
         ] as $label => $value)
             <div class="stat">
                 <div class="stat-value">{{ $value }}</div>
@@ -389,8 +447,20 @@
                         </span>
                     </div>
 
+                    <div class="decision-engine-row">
+                        <span class="decision-score">Score {{ $decision['decision_score'] }}/100</span>
+                        <span class="decision-band">{{ $decision['decision_band_label'] }}</span>
+                        <span class="evidence">{{ $decision['evidence_quality_label'] }}</span>
+                    </div>
+
                     <div class="recommendation">{{ $decision['recommended_action'] }}</div>
                     <div class="reason">{{ $decision['decision_reason'] }}</div>
+                    <div class="why-now"><strong>Por qué ahora:</strong> {{ $decision['why_now'] }}</div>
+                    <div class="score-breakdown">
+                        Prioridad {{ $decision['score_breakdown']['operational_priority'] }}
+                        · Riesgo {{ $decision['score_breakdown']['explicit_risk'] }}
+                        · Brecha {{ $decision['score_breakdown']['decision_gap'] }}
+                    </div>
 
                     @if ($decision['reasons'])
                         <div class="signals">

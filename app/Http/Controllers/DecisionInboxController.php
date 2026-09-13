@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Organization;
-use App\Support\ExecutiveDecisionAdvisor;
+use App\Support\DecisionEngine;
 use App\Support\ExecutiveSummaryBuilder;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
@@ -12,8 +12,11 @@ use Illuminate\View\View;
 
 class DecisionInboxController extends Controller
 {
-    public function index(Request $request, ExecutiveSummaryBuilder $builder): View
-    {
+    public function index(
+        Request $request,
+        ExecutiveSummaryBuilder $builder,
+        DecisionEngine $engine,
+    ): View {
         $validated = $request->validate([
             'scope' => ['nullable', 'integer'],
             'type' => ['nullable', 'in:all,task,project,service,obligation'],
@@ -48,32 +51,28 @@ class DecisionInboxController extends Controller
             $now,
         );
 
-        $decisions = collect($summary['attention_all'] ?? [])
-            ->filter(
-                fn (array $item): bool =>
-                    ExecutiveDecisionAdvisor::isDecision($item),
-            )
-            ->map(function (array $item): array {
-                $advice = ExecutiveDecisionAdvisor::recommend($item);
-
-                return $item + [
-                    'recommended_action' => $advice['action'],
-                    'decision_reason' => $advice['reason'],
-                ];
-            })
+        $candidates = collect($summary['attention_all'] ?? [])
             ->when(
                 $type !== 'all',
                 fn ($items) => $items->where('type', $type),
             )
-            ->sortByDesc('rank')
             ->values();
+
+        $decisionEngine = $engine->evaluate($candidates->all());
+        $decisions = collect($decisionEngine['decisions']);
 
         $counts = [
             'total' => $decisions->count(),
+            'immediate' => (int) ($decisionEngine['counts']['immediate'] ?? 0),
+            'today' => (int) ($decisionEngine['counts']['today'] ?? 0),
+            'high_evidence' => (int) ($decisionEngine['counts']['high_evidence'] ?? 0),
             'critical' => $decisions->where('level', 'critical')->count(),
             'no_next_action' => $decisions->where('no_next_action', true)->count(),
             'stagnant' => $decisions->where('stagnant', true)->count(),
         ];
+
+        $decisionEngineSummary = (string) $decisionEngine['summary'];
+        $decisionScoreVersion = (string) $decisionEngine['score_version'];
 
         return view('decision-inbox', compact(
             'now',
@@ -82,6 +81,8 @@ class DecisionInboxController extends Controller
             'type',
             'decisions',
             'counts',
+            'decisionEngineSummary',
+            'decisionScoreVersion',
         ));
     }
 }
