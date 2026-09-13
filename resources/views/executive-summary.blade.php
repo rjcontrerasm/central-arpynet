@@ -971,6 +971,10 @@
         </aside>
     </div>
 
+    <x-executive-finance
+        :finance="$summary['executive_finance']"
+    />
+
     <section class="section">
         <div class="section-head">
             <h2>Resumen financiero</h2>
