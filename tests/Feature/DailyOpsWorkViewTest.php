@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Client;
 use App\Models\Organization;
 use App\Models\ServiceOrder;
 use App\Models\Task;
@@ -65,8 +66,16 @@ class DailyOpsWorkViewTest extends TestCase
     {
         [$owner, $teammate, $organization] = $this->context();
 
+        $client = Client::query()->create([
+            'organization_id' => $organization->id,
+            'name' => 'Cliente Daily Ops',
+            'is_active' => true,
+            'created_by' => $owner->id,
+        ]);
+
         ServiceOrder::query()->create([
             'organization_id' => $organization->id,
+            'client_id' => $client->id,
             'title' => 'Servicio asignado al equipo',
             'stage' => 'execution',
             'assigned_to' => $teammate->id,
@@ -75,6 +84,7 @@ class DailyOpsWorkViewTest extends TestCase
 
         ServiceOrder::query()->create([
             'organization_id' => $organization->id,
+            'client_id' => $client->id,
             'title' => 'Servicio sin responsable',
             'stage' => 'quotation',
             'assigned_to' => null,

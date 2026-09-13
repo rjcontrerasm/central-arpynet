@@ -990,9 +990,7 @@
                     ? $currentUser->canWriteToOrganization(
                         (int) $selectedScope,
                     )
-                    : $currentUser
-                        ->writableOrganizationIds()
-                        ->isNotEmpty()
+                    : ! empty($currentUser->writableOrganizationIds())
             );
 
         $workViewLabels = [
