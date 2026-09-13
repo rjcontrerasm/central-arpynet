@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\ClientOpsActionController;
 use App\Http\Controllers\ClientOpsController;
+use App\Http\Controllers\ProjectFrontActionController;
+use App\Http\Controllers\ProjectFrontController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function (): void {
@@ -19,4 +21,24 @@ Route::middleware('auth')->group(function (): void {
         '/clientes/{client}/actualizar',
         [ClientOpsActionController::class, 'update'],
     )->name('client-ops.update');
+
+    Route::get(
+        '/proyectos/nuevo',
+        [ProjectFrontController::class, 'create'],
+    )->name('project-front.create');
+
+    Route::post(
+        '/proyectos',
+        [ProjectFrontActionController::class, 'store'],
+    )->name('project-front.store');
+
+    Route::get(
+        '/proyectos/{project}/editar',
+        [ProjectFrontController::class, 'edit'],
+    )->name('project-front.edit');
+
+    Route::post(
+        '/proyectos/{project}/editar',
+        [ProjectFrontActionController::class, 'update'],
+    )->name('project-front.update');
 });
