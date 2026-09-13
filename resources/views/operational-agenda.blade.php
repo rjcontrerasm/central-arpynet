@@ -255,6 +255,8 @@ h1{margin:0;font-size:clamp(34px,4.5vw,48px);letter-spacing:-.055em;line-height:
                 Google Calendar conectado · {{ $counts['calendar'] }} evento(s) externo(s).
             </div>
         @endif
+
+        <x-calendar-context :context="$calendarContext" />
     </section>
 
     @if($isToday && $overdueItems->isNotEmpty())
