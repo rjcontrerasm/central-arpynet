@@ -4,7 +4,7 @@ set -Eeuo pipefail
 APP_DIR="/home/centralarpynet/central_app"
 PHP_BIN="/opt/cpanel/ea-php84/root/usr/bin/php"
 COMPOSER_BIN="/usr/local/bin/composer"
-TEST_REF="${1:-feature/2.15-users-organizations}"
+TEST_REF="${1:-main}"
 TEST_DIR="/home/centralarpynet/.central-preflight-$$"
 
 log() {

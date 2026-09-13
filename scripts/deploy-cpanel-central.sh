@@ -5,8 +5,10 @@ APP_DIR="/home/centralarpynet/central_app"
 WEB_DIR="/home/centralarpynet/public_html"
 PHP_BIN="/opt/cpanel/ea-php84/root/usr/bin/php"
 COMPOSER_BIN="/usr/local/bin/composer"
-DEPLOY_REF="${1:-feature/2.15-users-organizations}"
-APP_URL="https://central.arpynet.com"
+DEPLOY_REF="${1:-main}"
+APP_HOST="central.arpynet.com"
+APP_URL="https://$APP_HOST"
+ORIGIN_IP="127.0.0.1"
 
 log() {
     printf '\n[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"
@@ -155,6 +157,7 @@ fi
 
 log "Sincronizando archivos públicos sin reemplazar el index.php adaptado a cPanel"
 rsync -a \
+    --chmod=D755,F644 \
     --exclude='index.php' \
     "$APP_DIR/public/" \
     "$WEB_DIR/"
@@ -175,12 +178,17 @@ log "Verificación Laravel"
 "$PHP_BIN" artisan migrate:status | tail -n 15
 
 if command -v curl >/dev/null 2>&1; then
-    log "Verificando respuesta HTTP de Central"
-    HTTP_CODE="$(curl -k -L -sS -o /dev/null -w '%{http_code}' "$APP_URL/mi-dia" || true)"
-    printf 'HTTP %s\n' "$HTTP_CODE"
+    log "Verificando respuesta HTTP directa del origen"
+    HTTP_CODE="$(curl -k -sS \
+        --resolve "$APP_HOST:443:$ORIGIN_IP" \
+        -o /dev/null \
+        -w '%{http_code}' \
+        "$APP_URL/mi-dia" || true)"
+
+    printf 'Origin HTTP %s\n' "$HTTP_CODE"
 
     if [[ ! "$HTTP_CODE" =~ ^(200|302)$ ]]; then
-        fail "Central respondió HTTP $HTTP_CODE después del despliegue."
+        fail "El origen de Central respondió HTTP $HTTP_CODE después del despliegue."
     fi
 fi
 
