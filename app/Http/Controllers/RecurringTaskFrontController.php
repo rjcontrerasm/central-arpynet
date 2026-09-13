@@ -36,7 +36,11 @@ class RecurringTaskFrontController extends Controller
 
         $query = RecurringTaskRule::query()
             ->visibleTo($user)
-            ->with(['organization:id,name', 'project:id,name'])
+            ->with([
+                'organization:id,name',
+                'project:id,name',
+                'assignee:id,name',
+            ])
             ->orderByDesc('is_active')
             ->orderBy('title');
 
@@ -103,7 +107,10 @@ class RecurringTaskFrontController extends Controller
         );
 
         return view('recurring-task-front-form', [
-            'rule' => $recurringTaskRule->load(['organization:id,name', 'project:id,name']),
+            'rule' => $recurringTaskRule->load([
+                'organization:id,name',
+                'project:id,name',
+            ]),
             'organizations' => $this->accessibleOrganizations($request),
             'defaultOrganizationId' => (int) $recurringTaskRule->organization_id,
             'projectOptions' => $this->projectOptions($request),
