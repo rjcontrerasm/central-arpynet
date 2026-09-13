@@ -77,6 +77,12 @@ class TaskFoundationTest extends TestCase
             'created_by' => $user->id,
         ]);
 
+        $organization->users()->attach($user->id, [
+            'role' => 'owner',
+            'is_default' => true,
+            'is_active' => true,
+        ]);
+
         $this->actingAs($user);
 
         $task = Task::query()->create([
