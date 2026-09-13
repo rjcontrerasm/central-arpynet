@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <title>Incidentes 360 · Central ARPYNET</title>
+    <x-operational-theme />
 
     <style>
         :root {
@@ -64,6 +65,24 @@
         .dot { width:9px; height:9px; margin-top:4px; border-radius:999px; background:#60a5fa; }
         .empty { padding:28px 15px; border:1px dashed #334155; border-radius:15px; color:#94a3b8; text-align:center; font-size:13px; }
         .external { color:#93c5fd; text-decoration:underline; text-underline-offset:2px; }
+        .incident-flash { margin:0 0 14px; padding:11px 13px; border:1px solid #93c5fd; border-radius:12px; background:var(--op-card,#fff); color:var(--op-text,#10213a); font-size:12px; }
+        .incident-flash.error { border-color:#ef9a9a; }
+        .incident-compose,.incident-editor { margin:0 0 16px; border:1px solid var(--op-border,#d2dde9); border-radius:16px; background:var(--op-card,#fff); overflow:hidden; }
+        .incident-compose > summary,.incident-editor > summary { cursor:pointer; list-style:none; padding:12px 14px; font-size:12px; font-weight:850; color:var(--op-text,#10213a); }
+        .incident-compose > summary::-webkit-details-marker,.incident-editor > summary::-webkit-details-marker { display:none; }
+        .incident-form { padding:0 14px 14px; }
+        .incident-form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+        .incident-field { display:grid; gap:5px; min-width:0; }
+        .incident-field.full { grid-column:1/-1; }
+        .incident-field label { color:var(--op-muted,#5e6f85); font-size:10px; font-weight:850; text-transform:uppercase; letter-spacing:.04em; }
+        .incident-field input,.incident-field select,.incident-field textarea { width:100%; min-height:40px; padding:8px 10px; border:1px solid var(--op-border-strong,#bdcad9); border-radius:10px; background:var(--op-card,#fff); color:inherit; font:inherit; font-size:12px; }
+        .incident-field textarea { min-height:78px; resize:vertical; }
+        .incident-actions { display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-top:12px; }
+        .incident-save { min-height:38px; padding:8px 13px; border:0; border-radius:10px; background:var(--op-primary,#245fd7); color:#fff; font:inherit; font-size:12px; font-weight:850; cursor:pointer; }
+        .incident-checkbox { display:flex; align-items:center; gap:8px; min-height:40px; font-size:12px; }
+        .incident-checkbox input { width:auto; min-height:auto; }
+        .admin-hint { color:var(--op-muted,#5e6f85); font-size:10px; }
+        @media(max-width:720px){ .incident-form-grid{grid-template-columns:1fr}.incident-field.full{grid-column:auto} }
         @media (min-width:760px) { .stats { grid-template-columns:repeat(6,minmax(0,1fr)); } }
         @media (min-width:980px) { .layout { grid-template-columns:minmax(360px,.9fr) minmax(0,1.35fr); align-items:start; } .detail-panel { position:sticky; top:16px; } }
         @media (prefers-color-scheme:light) {
@@ -90,8 +109,168 @@
             <h1>Incidentes 360</h1>
             <div class="subtitle">SLA, prioridad, contexto y ciclo de vida en una sola vista.</div>
         </div>
-        <a class="admin-link" href="{{ url('/admin/incidentes') }}">+ Crear / administrar</a>
+        @if ($writableOrganizations->isNotEmpty())
+            <a class="admin-link" href="#nuevo-incidente">+ Nuevo incidente</a>
+        @endif
     </section>
+
+    @if(session('incident_success'))
+        <div class="incident-flash">{{ session('incident_success') }}</div>
+    @endif
+
+    @if($errors->any())
+        <div class="incident-flash error">{{ $errors->first() }}</div>
+    @endif
+
+    @if ($writableOrganizations->isNotEmpty())
+        <details
+            class="incident-compose"
+            id="nuevo-incidente"
+            @if(old('_incident_form') === 'create') open @endif
+        >
+            <summary>＋ Nuevo incidente sin salir de CENTRAL</summary>
+            <form
+                class="incident-form"
+                method="POST"
+                action="{{ route('incident-360.store') }}"
+                data-incident-create
+            >
+                @csrf
+                <input type="hidden" name="_incident_form" value="create">
+                @php
+                    $defaultOrganization = (int) old('organization_id', $selectedScope ?: auth()->user()->current_organization_id);
+                @endphp
+                <div class="incident-form-grid">
+                    <div class="incident-field full">
+                        <label>Título</label>
+                        <input name="title" value="{{ old('title') }}" maxlength="255" required>
+                    </div>
+                    <div class="incident-field">
+                        <label>Ámbito</label>
+                        <select name="organization_id" data-incident-organization required>
+                            @foreach($writableOrganizations as $organization)
+                                <option value="{{ $organization->id }}" {{ $defaultOrganization == $organization->id ? 'selected' : '' }}>{{ $organization->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="incident-field">
+                        <label>Responsable</label>
+                        <select name="assigned_to" data-incident-scoped>
+                            <option value="">Sin asignar</option>
+                            @foreach($assigneeOptions as $organizationId => $options)
+                                @foreach($options as $userId => $name)
+                                    <option value="{{ $userId }}" data-org="{{ $organizationId }}" {{ old('assigned_to', auth()->id()) == $userId ? 'selected' : '' }}>{{ $name }}</option>
+                                @endforeach
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="incident-field">
+                        <label>Severidad</label>
+                        <select name="severity" required>
+                            @foreach($severityOptions as $value => $label)
+                                <option value="{{ $value }}" {{ old('severity','medium') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="incident-field">
+                        <label>Estado</label>
+                        <select name="status" required>
+                            @foreach($statusOptions as $value => $label)
+                                <option value="{{ $value }}" {{ old('status','new') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="incident-field">
+                        <label>Categoría</label>
+                        <select name="category" required>
+                            @foreach($categoryOptions as $value => $label)
+                                <option value="{{ $value }}" {{ old('category','availability') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="incident-field">
+                        <label>Origen</label>
+                        <select name="source" required>
+                            @foreach($sourceOptions as $value => $label)
+                                <option value="{{ $value }}" {{ old('source','manual') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="incident-field">
+                        <label>Cliente</label>
+                        <select name="client_id" data-incident-scoped>
+                            <option value="">Sin cliente</option>
+                            @foreach($clients as $client)
+                                <option value="{{ $client->id }}" data-org="{{ $client->organization_id }}" {{ old('client_id') == $client->id ? 'selected' : '' }}>{{ $client->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="incident-field">
+                        <label>Servicio / orden</label>
+                        <select name="service_order_id" data-incident-scoped>
+                            <option value="">Sin servicio</option>
+                            @foreach($services as $service)
+                                <option value="{{ $service->id }}" data-org="{{ $service->organization_id }}" {{ old('service_order_id') == $service->id ? 'selected' : '' }}>{{ $service->title }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="incident-field">
+                        <label>Proyecto</label>
+                        <select name="project_id" data-incident-scoped>
+                            <option value="">Sin proyecto</option>
+                            @foreach($projects as $project)
+                                <option value="{{ $project->id }}" data-org="{{ $project->organization_id }}" {{ old('project_id') == $project->id ? 'selected' : '' }}>{{ $project->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="incident-field">
+                        <label>Servicio afectado</label>
+                        <input name="affected_service" value="{{ old('affected_service') }}" maxlength="255">
+                    </div>
+                    <div class="incident-field">
+                        <label>Detectado</label>
+                        <input type="datetime-local" name="detected_at" value="{{ old('detected_at', now()->format('Y-m-d\TH:i')) }}">
+                    </div>
+                    <div class="incident-field">
+                        <label>SLA respuesta</label>
+                        <input type="datetime-local" name="response_due_at" value="{{ old('response_due_at') }}">
+                    </div>
+                    <div class="incident-field">
+                        <label>SLA solución</label>
+                        <input type="datetime-local" name="resolution_due_at" value="{{ old('resolution_due_at') }}">
+                    </div>
+                    <div class="incident-field full">
+                        <label>Próxima acción</label>
+                        <input name="next_action" value="{{ old('next_action') }}" maxlength="255">
+                    </div>
+                    <div class="incident-field">
+                        <label>Próximo seguimiento</label>
+                        <input type="datetime-local" name="next_action_at" value="{{ old('next_action_at') }}">
+                    </div>
+                    <div class="incident-field">
+                        <label>ID externo</label>
+                        <input name="external_id" value="{{ old('external_id') }}" maxlength="255">
+                    </div>
+                    <div class="incident-field full">
+                        <label>Descripción</label>
+                        <textarea name="description">{{ old('description') }}</textarea>
+                    </div>
+                    <div class="incident-field full">
+                        <label>Evidencia externa</label>
+                        <input type="url" name="external_url" value="{{ old('external_url') }}" maxlength="255" placeholder="https://...">
+                    </div>
+                    <label class="incident-checkbox full">
+                        <input type="checkbox" name="is_private" value="1" {{ old('is_private') ? 'checked' : '' }}>
+                        Incidente privado
+                    </label>
+                </div>
+                <div class="incident-actions">
+                    <button class="incident-save" type="submit">Crear incidente</button>
+                    <span class="admin-hint">La operación queda dentro del front de CENTRAL.</span>
+                </div>
+            </form>
+        </details>
+    @endif
 
     <section class="stats">
         @foreach ([
@@ -140,6 +319,14 @@
             <a class="chip {{ $selectedSeverity ? '' : 'active' }}" href="{{ route('incident-360.index', array_filter(array_merge($base, ['severity'=>null]))) }}">Todas</a>
             @foreach ($severityOptions as $value => $label)
                 <a class="chip {{ $selectedSeverity === $value ? 'active' : '' }}" href="{{ route('incident-360.index', array_merge($base, ['severity'=>$value])) }}">{{ $label }}</a>
+            @endforeach
+        </div>
+
+        <div class="filter-label">Estado</div>
+        <div class="scroll">
+            <a class="chip {{ $selectedStatus ? '' : 'active' }}" href="{{ route('incident-360.index', array_filter(array_merge($base, ['status'=>null]))) }}">Todos</a>
+            @foreach ($statusOptions as $value => $label)
+                <a class="chip {{ $selectedStatus === $value ? 'active' : '' }}" href="{{ route('incident-360.index', array_merge($base, ['status'=>$value])) }}">{{ $label }}</a>
             @endforeach
         </div>
 
@@ -198,6 +385,45 @@
                     </div>
                     <span class="pill {{ $incident->severity }}">{{ $state['severity_label'] }} · prioridad {{ $state['rank'] }}</span>
                 </div>
+
+                @if(auth()->user()->canWriteToOrganization((int)$incident->organization_id))
+                    <details
+                        class="incident-editor"
+                        @if(old('_incident_form') === 'edit') open @endif
+                    >
+                        <summary>Editar incidente</summary>
+                        <form class="incident-form" method="POST" action="{{ route('incident-360.update', $incident) }}">
+                            @csrf
+                            <input type="hidden" name="_incident_form" value="edit">
+                            <input type="hidden" name="organization_id" value="{{ $incident->organization_id }}">
+                            <div class="incident-form-grid">
+                                <div class="incident-field full"><label>Título</label><input name="title" value="{{ old('title',$incident->title) }}" maxlength="255" required></div>
+                                <div class="incident-field"><label>Severidad</label><select name="severity" required>@foreach($severityOptions as $value=>$label)<option value="{{ $value }}" {{ old('severity',$incident->severity) === $value ? 'selected' : '' }}>{{ $label }}</option>@endforeach</select></div>
+                                <div class="incident-field"><label>Estado</label><select name="status" required>@foreach($statusOptions as $value=>$label)<option value="{{ $value }}" {{ old('status',$incident->status) === $value ? 'selected' : '' }}>{{ $label }}</option>@endforeach</select></div>
+                                <div class="incident-field"><label>Categoría</label><select name="category" required>@foreach($categoryOptions as $value=>$label)<option value="{{ $value }}" {{ old('category',$incident->category) === $value ? 'selected' : '' }}>{{ $label }}</option>@endforeach</select></div>
+                                <div class="incident-field"><label>Origen</label><select name="source" required>@foreach($sourceOptions as $value=>$label)<option value="{{ $value }}" {{ old('source',$incident->source) === $value ? 'selected' : '' }}>{{ $label }}</option>@endforeach</select></div>
+                                <div class="incident-field"><label>Responsable</label><select name="assigned_to"><option value="">Sin asignar</option>@foreach($assigneeOptions->get((int)$incident->organization_id,[]) as $userId=>$name)<option value="{{ $userId }}" {{ old('assigned_to',$incident->assigned_to) == $userId ? 'selected' : '' }}>{{ $name }}</option>@endforeach</select></div>
+                                <div class="incident-field"><label>Cliente</label><select name="client_id"><option value="">Sin cliente</option>@foreach($clients->where('organization_id',$incident->organization_id) as $client)<option value="{{ $client->id }}" {{ old('client_id',$incident->client_id) == $client->id ? 'selected' : '' }}>{{ $client->name }}</option>@endforeach</select></div>
+                                <div class="incident-field"><label>Servicio / orden</label><select name="service_order_id"><option value="">Sin servicio</option>@foreach($services->where('organization_id',$incident->organization_id) as $service)<option value="{{ $service->id }}" {{ old('service_order_id',$incident->service_order_id) == $service->id ? 'selected' : '' }}>{{ $service->title }}</option>@endforeach</select></div>
+                                <div class="incident-field"><label>Proyecto</label><select name="project_id"><option value="">Sin proyecto</option>@foreach($projects->where('organization_id',$incident->organization_id) as $project)<option value="{{ $project->id }}" {{ old('project_id',$incident->project_id) == $project->id ? 'selected' : '' }}>{{ $project->name }}</option>@endforeach</select></div>
+                                <div class="incident-field"><label>Servicio afectado</label><input name="affected_service" value="{{ old('affected_service',$incident->affected_service) }}" maxlength="255"></div>
+                                <div class="incident-field"><label>Detectado</label><input type="datetime-local" name="detected_at" value="{{ old('detected_at',$incident->detected_at?->format('Y-m-d\TH:i')) }}"></div>
+                                <div class="incident-field"><label>SLA respuesta</label><input type="datetime-local" name="response_due_at" value="{{ old('response_due_at',$incident->response_due_at?->format('Y-m-d\TH:i')) }}"></div>
+                                <div class="incident-field"><label>SLA solución</label><input type="datetime-local" name="resolution_due_at" value="{{ old('resolution_due_at',$incident->resolution_due_at?->format('Y-m-d\TH:i')) }}"></div>
+                                <div class="incident-field full"><label>Próxima acción</label><input name="next_action" value="{{ old('next_action',$incident->next_action) }}" maxlength="255"></div>
+                                <div class="incident-field"><label>Próximo seguimiento</label><input type="datetime-local" name="next_action_at" value="{{ old('next_action_at',$incident->next_action_at?->format('Y-m-d\TH:i')) }}"></div>
+                                <div class="incident-field"><label>ID externo</label><input name="external_id" value="{{ old('external_id',$incident->external_id) }}" maxlength="255"></div>
+                                <div class="incident-field full"><label>Descripción</label><textarea name="description">{{ old('description',$incident->description) }}</textarea></div>
+                                <div class="incident-field full"><label>Causa raíz</label><textarea name="root_cause">{{ old('root_cause',$incident->root_cause) }}</textarea></div>
+                                <div class="incident-field full"><label>Resumen de solución</label><textarea name="resolution_summary">{{ old('resolution_summary',$incident->resolution_summary) }}</textarea></div>
+                                <div class="incident-field full"><label>Evidencia externa</label><input type="url" name="external_url" value="{{ old('external_url',$incident->external_url) }}" maxlength="255"></div>
+                                <div class="incident-field full"><label>Notas</label><textarea name="notes">{{ old('notes',$incident->notes) }}</textarea></div>
+                                <label class="incident-checkbox full"><input type="checkbox" name="is_private" value="1" {{ old('is_private',$incident->is_private) ? 'checked' : '' }}> Incidente privado</label>
+                            </div>
+                            <div class="incident-actions"><button class="incident-save" type="submit">Guardar cambios</button></div>
+                        </form>
+                    </details>
+                @endif
 
                 <div class="detail-grid">
                     <div class="detail-card">
@@ -289,5 +515,27 @@
         </section>
     </div>
 </div>
+<script>
+document.querySelectorAll('[data-incident-create]').forEach((form) => {
+    const organization = form.querySelector('[data-incident-organization]');
+    if (!organization) return;
+
+    const sync = () => {
+        const organizationId = organization.value;
+        form.querySelectorAll('[data-incident-scoped]').forEach((select) => {
+            Array.from(select.options).forEach((option) => {
+                const optionOrganization = option.dataset.org;
+                const visible = !optionOrganization || optionOrganization === organizationId;
+                option.hidden = !visible;
+                option.disabled = !visible;
+                if (!visible && option.selected) select.value = '';
+            });
+        });
+    };
+
+    organization.addEventListener('change', sync);
+    sync();
+});
+</script>
 </body>
 </html>

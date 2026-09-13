@@ -85,7 +85,7 @@
 
 <div class="grid two">
 <section class="section">
-<div class="section-head"><h2>Clientes</h2><a class="section-link" href="{{ url('/admin/clientes') }}">Administrar →</a></div>
+<div class="section-head"><h2>Clientes</h2><span class="meta">Vista consolidada</span></div>
 <div class="list">
 @forelse($clients->take(10) as $client)
 <div class="card">
@@ -131,7 +131,7 @@
 </section>
 
 <section class="section">
-<div class="section-head"><h2>Incidentes</h2><a class="section-link" href="{{ url('/admin/incidentes') }}">Administrar →</a></div>
+<div class="section-head"><h2>Incidentes</h2><a class="section-link" href="{{ route('incident-360.index',array_filter(['scope'=>$selectedScope])) }}">Incident 360 →</a></div>
 <div class="list">
 @forelse($incidents->take(10) as $incident)
 <div class="card">
@@ -140,7 +140,7 @@
 <span class="pill {{ in_array($incident->severity,['critical','high'],true) ? 'critical' : '' }}">{{ \App\Models\Incident::severityOptions()[$incident->severity] ?? $incident->severity }}</span>
 </div>
 <div class="links">
-@if($incident->client)<a href="{{ url('/admin/clientes') }}">Cliente: {{ $incident->client->name }}</a>@endif
+@if($incident->client)<span class="meta">Cliente: {{ $incident->client->name }}</span>@endif
 @if($incident->serviceOrder)<a href="{{ route('service-orders-ops.show',['scope'=>$incident->organization_id]) }}">Servicio: {{ $incident->serviceOrder->title }}</a>@endif
 @if($incident->project)<a href="{{ route('project-ops.show',['scope'=>$incident->organization_id,'focus'=>'all']) }}">Proyecto: {{ $incident->project->name }}</a>@endif
 </div>
