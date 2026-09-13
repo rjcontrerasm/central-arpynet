@@ -26,6 +26,7 @@ class OperationalNavigationTest extends TestCase
             '/decisiones',
             '/resumen',
             '/notificaciones',
+            '/colaboracion',
             '/historial',
         ];
 
@@ -39,6 +40,7 @@ class OperationalNavigationTest extends TestCase
                 )
                 ->assertSee('Mi día')
                 ->assertSee('Captura')
+                ->assertSee('Colaboración')
                 ->assertSee('Panel administrativo');
         }
     }
@@ -56,6 +58,7 @@ class OperationalNavigationTest extends TestCase
             ->assertSee('Revisión diaria')
             ->assertSee('Decisiones')
             ->assertSee('Resumen')
+            ->assertSee('Colaboración')
             ->assertSee('Historial');
     }
 
