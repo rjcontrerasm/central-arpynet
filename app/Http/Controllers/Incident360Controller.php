@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Client;
 use App\Models\Incident;
+use App\Models\Project;
+use App\Models\ServiceOrder;
+use App\Models\User;
 use App\Support\Incident360State;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
@@ -45,6 +49,19 @@ class Incident360Controller extends Controller
         $organizationIds = $organizations
             ->pluck('id')
             ->map(fn ($id): int => (int) $id);
+
+        $writableOrganizationIds = collect(
+            $user->writableOrganizationIds(),
+        );
+
+        $writableOrganizations = $organizations
+            ->filter(
+                fn ($organization): bool =>
+                    $writableOrganizationIds->contains(
+                        (int) $organization->id,
+                    ),
+            )
+            ->values();
 
         $selectedScope = isset($validated['scope'])
             ? (int) $validated['scope']
@@ -184,8 +201,54 @@ class Incident360Controller extends Controller
             abort(404);
         }
 
+        $clients = Client::query()
+            ->visibleTo($user)
+            ->where('is_active', true)
+            ->whereIn('organization_id', $organizationIds)
+            ->orderBy('name')
+            ->get(['id', 'organization_id', 'name']);
+
+        $services = ServiceOrder::query()
+            ->visibleTo($user)
+            ->whereIn('organization_id', $organizationIds)
+            ->where('stage', '!=', 'cancelled')
+            ->orderByDesc('updated_at')
+            ->limit(500)
+            ->get(['id', 'organization_id', 'title']);
+
+        $projects = Project::query()
+            ->visibleTo($user)
+            ->whereIn('organization_id', $organizationIds)
+            ->where('status', '!=', 'cancelled')
+            ->orderBy('name')
+            ->limit(500)
+            ->get(['id', 'organization_id', 'name']);
+
+        $assigneeOptions = $writableOrganizationIds
+            ->mapWithKeys(function (int $organizationId): array {
+                $options = User::query()
+                    ->where('is_active', true)
+                    ->whereHas(
+                        'organizations',
+                        fn ($query) => $query
+                            ->where('organizations.id', $organizationId)
+                            ->where('organizations.is_active', true)
+                            ->where('organization_user.is_active', true)
+                            ->whereIn(
+                                'organization_user.role',
+                                ['owner', 'admin', 'member'],
+                            ),
+                    )
+                    ->orderBy('name')
+                    ->pluck('name', 'id')
+                    ->all();
+
+                return [$organizationId => $options];
+            });
+
         return view('incident-360', [
             'organizations' => $organizations,
+            'writableOrganizations' => $writableOrganizations,
             'selectedScope' => $selectedScope,
             'focus' => $focus,
             'selectedSeverity' => $severity,
@@ -195,6 +258,12 @@ class Incident360Controller extends Controller
             'selected' => $selected,
             'severityOptions' => Incident::severityOptions(),
             'statusOptions' => Incident::statusOptions(),
+            'categoryOptions' => Incident::categoryOptions(),
+            'sourceOptions' => Incident::sourceOptions(),
+            'clients' => $clients,
+            'services' => $services,
+            'projects' => $projects,
+            'assigneeOptions' => $assigneeOptions,
             'summary' => $this->summary($all, $now),
         ]);
     }
