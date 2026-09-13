@@ -19,19 +19,38 @@ class WhatsappOutboundService
             return $this->result('skipped');
         }
 
-        $transport = $this->transport($inboundPhoneNumberId);
+        $prefix = trim((string) config('whatsapp.confirmation_prefix', '✅ Tarea registrada:'));
 
-        if (! $transport['ready']) {
-            return $this->finalize('task_confirmation', 'text', $to, $this->result(
+        return $this->sendText(
+            $to,
+            trim($prefix.' '.$taskTitle),
+            $inboundPhoneNumberId,
+            'task_confirmation',
+        );
+    }
+
+    public function sendText(
+        string $to,
+        string $body,
+        ?string $inboundPhoneNumberId = null,
+        string $purpose = 'text',
+    ): array {
+        if (! config('whatsapp.outbound_enabled')) {
+            return $this->result('skipped');
+        }
+
+        $transport = $this->transport($inboundPhoneNumberId);
+        $body = Str::limit(trim($body), 3500, '');
+
+        if (! $transport['ready'] || $body === '') {
+            return $this->finalize($purpose, 'text', $to, $this->result(
                 'failed', null, 'outbound_config_missing', null, null,
-                'configuration', 'Configuración outbound incompleta.'
+                'configuration', 'Configuración outbound incompleta o mensaje vacío.'
             ));
         }
 
-        $prefix = trim((string) config('whatsapp.confirmation_prefix', '✅ Tarea registrada:'));
-
         return $this->sendPayload(
-            'task_confirmation',
+            $purpose,
             'text',
             $to,
             $transport,
@@ -42,7 +61,7 @@ class WhatsappOutboundService
                 'type' => 'text',
                 'text' => [
                     'preview_url' => false,
-                    'body' => trim($prefix.' '.$taskTitle),
+                    'body' => $body,
                 ],
             ],
         );
