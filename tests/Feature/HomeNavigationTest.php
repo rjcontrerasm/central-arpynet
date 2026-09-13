@@ -26,7 +26,9 @@ class HomeNavigationTest extends TestCase
             ->assertOk()
             ->assertSee('Mi día')
             ->assertSee('Captura')
-            ->assertSee('Panel');
+            ->assertSee('Incidentes 360')
+            ->assertSee('Administración avanzada')
+            ->assertDontSee('Panel administrativo');
     }
 
     public function test_capture_has_unified_navigation(): void
@@ -38,7 +40,9 @@ class HomeNavigationTest extends TestCase
             ->assertOk()
             ->assertSee('Mi día')
             ->assertSee('Captura')
-            ->assertSee('Panel');
+            ->assertSee('Incidentes 360')
+            ->assertSee('Administración avanzada')
+            ->assertDontSee('Panel administrativo');
     }
 
     private function context(): array
