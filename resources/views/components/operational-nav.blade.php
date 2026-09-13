@@ -26,6 +26,7 @@
         'decisions' => 'Decisiones',
         'summary' => 'Resumen',
         'notifications' => 'Notificaciones',
+        'collaboration' => 'Colaboración',
         'agent' => 'Jarvis',
         'automations' => 'Automatizaciones',
         'history' => 'Historial',
@@ -403,6 +404,13 @@
                 href="{{ route('notification-center.index') }}"
             >
                 Notificaciones
+            </a>
+
+            <a
+                class="{{ $active === 'collaboration' ? 'is-active' : '' }}"
+                href="{{ route('collaboration.index') }}"
+            >
+                Colaboración
             </a>
 
             <a
