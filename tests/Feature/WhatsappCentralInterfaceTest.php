@@ -266,6 +266,61 @@ class WhatsappCentralInterfaceTest extends TestCase
         );
     }
 
+    public function test_viewer_can_use_read_only_summary_command(): void
+    {
+        $this->enableWebhook(true, true);
+        [, $organization] = $this->context(
+            'rcontreras@arpynet.com',
+            'ARPYNET',
+            'arpynet',
+            'viewer',
+        );
+        $this->fakeMetaSuccess('wamid.reply.viewer.1');
+
+        $payload = $this->payload(
+            'wamid.command.viewer.1',
+            self::WA_ID,
+            '/resumen',
+        );
+
+        $this->postRaw($payload)
+            ->assertOk()
+            ->assertJson(['processed' => 1]);
+
+        $this->assertDatabaseCount('tasks', 0);
+
+        Http::assertSent(fn (Request $request): bool =>
+            str_contains(
+                (string) data_get($request->data(), 'text.body'),
+                'CENTRAL · '.$organization->name,
+            )
+        );
+    }
+
+    public function test_viewer_cannot_create_task_from_free_text(): void
+    {
+        $this->enableWebhook(true, false);
+        $this->context(
+            'rcontreras@arpynet.com',
+            'ARPYNET',
+            'arpynet',
+            'viewer',
+        );
+
+        $payload = $this->payload(
+            'wamid.viewer.write.1',
+            self::WA_ID,
+            'Crear una tarea que no debe existir',
+        );
+
+        $this->postRaw($payload)
+            ->assertStatus(503)
+            ->assertJson(['status' => 'unavailable']);
+
+        $this->assertDatabaseCount('tasks', 0);
+        $this->assertDatabaseCount('whatsapp_inbound_messages', 0);
+    }
+
     private function enableWebhook(
         bool $commands,
         bool $outbound,
@@ -290,6 +345,7 @@ class WhatsappCentralInterfaceTest extends TestCase
         string $email = 'rcontreras@arpynet.com',
         string $organizationName = 'ARPYNET',
         string $slug = 'arpynet',
+        string $role = 'owner',
     ): array {
         $user = User::factory()->create([
             'email' => $email,
@@ -306,7 +362,7 @@ class WhatsappCentralInterfaceTest extends TestCase
         ]);
 
         $organization->users()->attach($user->id, [
-            'role' => 'owner',
+            'role' => $role,
             'is_default' => true,
             'is_active' => true,
         ]);
