@@ -134,6 +134,7 @@ class DailyOpsPriorityTest extends TestCase
             'urgency' => 'high',
             'impact' => 'high',
             'due_at' => now(),
+            'assigned_to' => $user->id,
             'created_by' => $user->id,
         ]);
     }
