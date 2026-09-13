@@ -162,20 +162,31 @@ class ClientFrontTest extends TestCase
 
         $this->assertSame($organization->id, $client->fresh()->organization_id);
 
+        $foreignUser = User::factory()->create([
+            'email' => 'foreign-client-front@arpynet.test',
+            'is_active' => true,
+        ]);
+
         $foreign = Organization::query()->create([
             'name' => 'Ámbito ajeno',
             'slug' => 'client-front-foreign',
             'category' => 'company',
             'timezone' => 'America/Lima',
             'is_active' => true,
-            'created_by' => $user->id,
+            'created_by' => $foreignUser->id,
+        ]);
+
+        $foreign->users()->attach($foreignUser->id, [
+            'role' => 'owner',
+            'is_default' => true,
+            'is_active' => true,
         ]);
 
         Client::query()->create([
             'organization_id' => $foreign->id,
             'name' => 'Cliente oculto',
             'is_active' => true,
-            'created_by' => $user->id,
+            'created_by' => $foreignUser->id,
         ]);
 
         $this->actingAs($user)
