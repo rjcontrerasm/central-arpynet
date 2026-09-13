@@ -20,6 +20,7 @@
     $secondaryLabels = [
         'agenda' => 'Agenda',
         'overview360' => 'Vista 360',
+        'incidents' => 'Incidentes 360',
         'tracking' => 'Seguimiento',
         'review' => 'Revisión',
         'weekly' => 'Revisión semanal',
@@ -365,6 +366,12 @@
                 Vista 360
             </a>
             <a
+                class="{{ $active === 'incidents' ? 'is-active' : '' }}"
+                href="{{ route('incident-360.index') }}"
+            >
+                Incidentes 360
+            </a>
+            <a
                 class="{{ $active === 'tracking' ? 'is-active' : '' }}"
                 href="{{ route('global-tracking.show') }}"
             >
@@ -443,7 +450,7 @@
             <div class="op-nav-divider"></div>
 
             <a href="{{ url('/admin') }}">
-                Panel administrativo →
+                Administración avanzada →
             </a>
         </div>
     </details>

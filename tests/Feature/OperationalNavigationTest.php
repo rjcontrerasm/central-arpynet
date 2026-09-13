@@ -17,16 +17,20 @@ class OperationalNavigationTest extends TestCase
 
         $pages = [
             '/mi-dia',
+            '/agenda',
             '/captura',
             '/servicios',
             '/vencimientos',
             '/360',
+            '/incidentes',
             '/seguimiento',
             '/revision-diaria',
             '/decisiones',
             '/resumen',
             '/notificaciones',
             '/colaboracion',
+            '/jarvis',
+            '/automatizaciones',
             '/historial',
         ];
 
@@ -40,8 +44,10 @@ class OperationalNavigationTest extends TestCase
                 )
                 ->assertSee('Mi día')
                 ->assertSee('Captura')
+                ->assertSee('Incidentes 360')
                 ->assertSee('Colaboración')
-                ->assertSee('Panel administrativo');
+                ->assertSee('Administración avanzada')
+                ->assertDontSee('Panel administrativo');
         }
     }
 
@@ -54,12 +60,15 @@ class OperationalNavigationTest extends TestCase
             ->assertOk()
             ->assertSee('Más')
             ->assertSee('Vista 360')
+            ->assertSee('Incidentes 360')
             ->assertSee('Seguimiento')
             ->assertSee('Revisión diaria')
             ->assertSee('Decisiones')
             ->assertSee('Resumen')
             ->assertSee('Colaboración')
-            ->assertSee('Historial');
+            ->assertSee('Historial')
+            ->assertSee('Administración avanzada')
+            ->assertDontSee('Panel administrativo');
     }
 
     private function context(): array

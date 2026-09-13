@@ -268,6 +268,34 @@ Route::middleware('auth')->group(function (): void {
         ],
     )->name('operational-360.show');
 });
+
+Route::middleware('auth')->group(function (): void {
+    Route::get(
+        '/incidentes',
+        [
+            \App\Http\Controllers\Incident360Controller::class,
+            'index',
+        ],
+    )->name('incident-360.index');
+});
+
+Route::middleware('auth')->group(function (): void {
+    Route::post(
+        '/incidentes',
+        [
+            \App\Http\Controllers\Incident360ActionController::class,
+            'store',
+        ],
+    )->name('incident-360.store');
+
+    Route::post(
+        '/incidentes/{incident}/actualizar',
+        [
+            \App\Http\Controllers\Incident360ActionController::class,
+            'update',
+        ],
+    )->name('incident-360.update');
+});
 Route::middleware('auth')->group(function (): void {
     Route::get(
         '/seguimiento',
