@@ -8,7 +8,6 @@ use App\Support\GlobalUndoService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class ProjectOpsActionController extends Controller
@@ -164,27 +163,20 @@ class ProjectOpsActionController extends Controller
         Project $project,
         ?int $scope,
     ): void {
-        $userId = $request->user()->id;
+        $user = $request->user();
 
-        $canUseProject = DB::table('organization_user')
-            ->where('user_id', $userId)
-            ->where(
-                'organization_id',
-                $project->organization_id,
-            )
-            ->where('is_active', true)
-            ->exists();
-
-        abort_unless($canUseProject, 403);
+        abort_unless(
+            $user->canWriteToOrganization(
+                (int) $project->organization_id,
+            ),
+            403,
+        );
 
         if ($scope) {
-            $canUseScope = DB::table('organization_user')
-                ->where('user_id', $userId)
-                ->where('organization_id', $scope)
-                ->where('is_active', true)
-                ->exists();
-
-            abort_unless($canUseScope, 403);
+            abort_unless(
+                $user->canAccessOrganization($scope),
+                403,
+            );
         }
     }
 

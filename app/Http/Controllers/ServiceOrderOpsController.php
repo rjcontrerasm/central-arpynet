@@ -17,24 +17,10 @@ class ServiceOrderOpsController extends Controller
     public function show(Request $request): View
     {
         $validated = $request->validate([
-            'scope' => [
-                'nullable',
-                'integer',
-            ],
-            'stage' => [
-                'nullable',
-                'string',
-                'max:40',
-            ],
-            'focus' => [
-                'nullable',
-                'in:attention,all',
-            ],
-            'q' => [
-                'nullable',
-                'string',
-                'max:120',
-            ],
+            'scope' => ['nullable', 'integer'],
+            'stage' => ['nullable', 'string', 'max:40'],
+            'focus' => ['nullable', 'in:attention,all'],
+            'q' => ['nullable', 'string', 'max:120'],
             'finance' => [
                 'nullable',
                 'in:all,pending_invoice,receivable,overdue,paid',
@@ -42,6 +28,7 @@ class ServiceOrderOpsController extends Controller
         ]);
 
         $user = $request->user();
+        $writableOrganizationIds = $user->writableOrganizationIds();
 
         $organizationIds = DB::table('organization_user')
             ->where('user_id', $user->id)
@@ -58,136 +45,70 @@ class ServiceOrderOpsController extends Controller
             ? (int) $validated['scope']
             : null;
 
-        if (
-            $selectedScope
-            && ! $organizationIds->contains($selectedScope)
-        ) {
+        if ($selectedScope && ! $organizationIds->contains($selectedScope)) {
             abort(403);
         }
 
         $stageOptions = ServiceOrder::stageOptions();
-
-        $selectedStage =
-            $validated['stage'] ?? null;
+        $selectedStage = $validated['stage'] ?? null;
 
         if (
             $selectedStage
-            && ! array_key_exists(
-                $selectedStage,
-                $stageOptions,
-            )
+            && ! array_key_exists($selectedStage, $stageOptions)
         ) {
             abort(422);
         }
 
-        $focus = $validated['focus']
-            ?? 'attention';
-
-        $search = trim(
-            (string) ($validated['q'] ?? ''),
-        );
-
-        $finance = $validated['finance']
-            ?? 'all';
+        $focus = $validated['focus'] ?? 'attention';
+        $search = trim((string) ($validated['q'] ?? ''));
+        $finance = $validated['finance'] ?? 'all';
 
         $query = ServiceOrder::query()
-            ->with([
-                'organization',
-                'client',
-            ])
-            ->whereIn(
-                'organization_id',
-                $organizationIds,
-            );
+            ->with(['organization', 'client'])
+            ->whereIn('organization_id', $organizationIds);
 
         if ($selectedScope) {
-            $query->where(
-                'organization_id',
-                $selectedScope,
-            );
+            $query->where('organization_id', $selectedScope);
         }
 
         if ($selectedStage) {
-            $query->where(
-                'stage',
-                $selectedStage,
-            );
+            $query->where('stage', $selectedStage);
         }
 
         if ($search !== '') {
-            $query->where(
-                function ($subQuery) use ($search): void {
-                    $subQuery
-                        ->where(
-                            'title',
-                            'like',
-                            '%'.$search.'%',
-                        )
-                        ->orWhere(
-                            'order_number',
-                            'like',
-                            '%'.$search.'%',
-                        )
-                        ->orWhere(
-                            'quotation_number',
-                            'like',
-                            '%'.$search.'%',
-                        );
-                },
-            );
+            $query->where(function ($subQuery) use ($search): void {
+                $subQuery
+                    ->where('title', 'like', '%'.$search.'%')
+                    ->orWhere('order_number', 'like', '%'.$search.'%')
+                    ->orWhere('quotation_number', 'like', '%'.$search.'%');
+            });
         }
 
-        $orders = $query
-            ->latest('updated_at')
-            ->get();
+        $orders = $query->latest('updated_at')->get();
 
         $now = CarbonImmutable::now(
-            config(
-                'app.timezone',
-                'America/Lima',
-            ),
+            config('app.timezone', 'America/Lima'),
         );
 
-        $orders->each(
-            function (ServiceOrder $order) use ($now): void {
-                $state = ServiceOrderOperationalState::evaluate(
-                    $order,
-                    $now,
-                );
+        $orders->each(function (ServiceOrder $order) use ($now): void {
+            $state = ServiceOrderOperationalState::evaluate($order, $now);
 
-                foreach ($state as $key => $value) {
-                    $order->setAttribute(
-                        'ops_'.$key,
-                        $value,
-                    );
-                }
+            foreach ($state as $key => $value) {
+                $order->setAttribute('ops_'.$key, $value);
+            }
 
-                $financial =
-                    ServiceOrderFinancialState::evaluate(
-                        $order,
-                        $now,
-                    );
+            $financial = ServiceOrderFinancialState::evaluate($order, $now);
 
-                foreach ($financial as $key => $value) {
-                    $order->setAttribute(
-                        'fin_'.$key,
-                        $value,
-                    );
-                }
+            foreach ($financial as $key => $value) {
+                $order->setAttribute('fin_'.$key, $value);
+            }
 
-                $health = ServiceHealthScore::evaluate(
-                    $order,
-                    $now,
-                );
+            $health = ServiceHealthScore::evaluate($order, $now);
 
-                foreach ($health as $key => $value) {
-                    $order->setAttribute(
-                        'health_'.$key,
-                        $value,
-                    );
-                }
-            },
-        );
+            foreach ($health as $key => $value) {
+                $order->setAttribute('health_'.$key, $value);
+            }
+        });
 
         if ($finance !== 'all') {
             $orders = $orders
@@ -201,37 +122,26 @@ class ServiceOrderOpsController extends Controller
         if ($focus === 'attention') {
             $orders = $orders
                 ->filter(
-                    fn (ServiceOrder $order): bool =>
-                        in_array(
-                            $order->ops_level,
-                            [
-                                'critical',
-                                'attention',
-                                'watch',
-                            ],
-                            true,
-                        ),
+                    fn (ServiceOrder $order): bool => in_array(
+                        $order->ops_level,
+                        ['critical', 'attention', 'watch'],
+                        true,
+                    ),
                 )
                 ->values();
         }
 
-        $orders = $orders
-            ->sortByDesc('ops_rank')
-            ->values();
+        $orders = $orders->sortByDesc('ops_rank')->values();
 
         $financialSummary = [
-            'service_amount' => $orders->sum(
-                'fin_service_amount',
-            ),
+            'service_amount' => $orders->sum('fin_service_amount'),
             'invoiced' => $orders
                 ->filter(
                     fn (ServiceOrder $order): bool =>
                         $order->fin_is_invoiced,
                 )
                 ->sum('fin_invoice_amount'),
-            'outstanding' => $orders->sum(
-                'fin_outstanding',
-            ),
+            'outstanding' => $orders->sum('fin_outstanding'),
             'overdue' => $orders
                 ->filter(
                     fn (ServiceOrder $order): bool =>
@@ -247,48 +157,28 @@ class ServiceOrderOpsController extends Controller
         ];
 
         $summary = [
-            'critical' => $orders
-                ->where(
-                    'ops_level',
-                    'critical',
-                )
-                ->count(),
+            'critical' => $orders->where('ops_level', 'critical')->count(),
             'attention' => $orders
-                ->whereIn(
-                    'ops_level',
-                    ['attention', 'watch'],
-                )
+                ->whereIn('ops_level', ['attention', 'watch'])
                 ->count(),
-            'execution' => $orders
-                ->where(
-                    'stage',
-                    'execution',
-                )
-                ->count(),
-            'invoice' => $orders
-                ->where(
-                    'stage',
-                    'invoiced',
-                )
-                ->count(),
+            'execution' => $orders->where('stage', 'execution')->count(),
+            'invoice' => $orders->where('stage', 'invoiced')->count(),
             'total' => $orders->count(),
         ];
 
-        return view(
-            'service-orders-ops',
-            compact(
-                'now',
-                'orders',
-                'organizations',
-                'stageOptions',
-                'selectedScope',
-                'selectedStage',
-                'focus',
-                'finance',
-                'search',
-                'summary',
-                'financialSummary',
-            ),
-        );
+        return view('service-orders-ops', compact(
+            'now',
+            'orders',
+            'organizations',
+            'stageOptions',
+            'selectedScope',
+            'selectedStage',
+            'focus',
+            'finance',
+            'search',
+            'summary',
+            'financialSummary',
+            'writableOrganizationIds',
+        ));
     }
 }

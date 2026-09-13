@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark">
+<title>Obligaciones recurrentes · Central ARPYNET</title>
+<style>
+:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:light dark}*{box-sizing:border-box}body{margin:0;background:#0b1020;color:#f8fafc}a{color:inherit;text-decoration:none}button,input,select{font:inherit}.shell{width:min(100%,1200px);margin:0 auto;padding:24px 16px 80px}.topbar,.hero,.card-head,.card-foot{display:flex;align-items:center;justify-content:space-between;gap:12px}.topbar{margin-bottom:24px}.brand{font-weight:850}.hero{align-items:end;margin-bottom:18px}h1{margin:0;font-size:clamp(30px,7vw,46px);letter-spacing:-.05em}.subtitle,.meta,.empty{color:#94a3b8}.subtitle{margin-top:7px;font-size:13px}.primary{padding:10px 13px;border-radius:11px;background:#2563eb;color:#fff;font-size:12px;font-weight:850}.filters{display:grid;grid-template-columns:1fr minmax(180px,2fr) auto;gap:8px;margin-bottom:18px}.filters select,.filters input{min-width:0;min-height:40px;padding:8px 10px;border:1px solid #334155;border-radius:10px;background:#11182b;color:#f8fafc}.filters button{border:0;border-radius:10px;background:#2563eb;color:#fff;font-weight:850;padding:0 14px}.list{display:grid;gap:10px}.card{padding:14px;border:1px solid #24304b;border-radius:16px;background:#11182b}.card-head{align-items:start}.title{font-weight:850}.meta{margin-top:4px;font-size:12px;line-height:1.45}.pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}.pill{padding:4px 8px;border-radius:999px;background:#1e293b;color:#cbd5e1;font-size:10px;font-weight:800}.pill.active{background:#052e16;color:#bbf7d0}.pill.inactive{background:#1e293b;color:#94a3b8}.pill.critical{background:#450a0a;color:#fecaca}.card-foot{margin-top:12px;padding-top:10px;border-top:1px solid #24304b}.link{color:#93c5fd;font-size:11px;font-weight:850}.empty{padding:28px 18px;border:1px dashed #334155;border-radius:16px;text-align:center}.secondary{color:#93c5fd;font-size:12px;font-weight:800}@media(min-width:760px){.list{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:620px){.topbar,.hero,.card-head,.card-foot{align-items:flex-start;flex-direction:column}.filters{grid-template-columns:1fr}.filters button{min-height:40px}}@media(prefers-color-scheme:light){body{background:#f8fafc;color:#0f172a}.subtitle,.meta,.empty{color:#64748b}.card{background:#fff;border-color:#e2e8f0}.filters select,.filters input{background:#fff;color:#0f172a;border-color:#cbd5e1}.pill{background:#f1f5f9;color:#475569}.pill.active{background:#f0fdf4;color:#166534}.pill.critical{background:#fef2f2;color:#b91c1c}}
+</style>
+</head>
+<body>
+@php
+$createScope=$selectedScope && in_array($selectedScope,$writableOrganizationIds,true)?$selectedScope:($writableOrganizationIds[0]??null);
+@endphp
+<div class="shell">
+<header class="topbar"><a class="brand" href="{{ route('daily-ops.show') }}">Central ARPYNET</a><x-operational-nav active="obligations" /></header>
+<section class="hero"><div><h1>Obligaciones recurrentes</h1><div class="subtitle">Definiciones que generan automáticamente los vencimientos operativos.</div></div>@if($createScope)<a class="primary" href="{{ route('recurring-obligation-front.create',['scope'=>$createScope]) }}">Nueva obligación</a>@endif</section>
+<form class="filters" method="get" action="{{ route('recurring-obligation-front.index') }}">
+<select name="scope"><option value="">Todos los ámbitos</option>@foreach($organizations as $organization)<option value="{{ $organization->id }}" @selected($selectedScope===(int)$organization->id)>{{ $organization->name }}</option>@endforeach</select>
+<input name="q" maxlength="120" value="{{ $search }}" placeholder="Buscar obligación, proveedor o referencia"><button type="submit">Buscar</button>
+</form>
+<div style="margin-bottom:14px"><a class="secondary" href="{{ route('obligation-ops.show',array_filter(['scope'=>$selectedScope])) }}">← Volver a vencimientos</a></div>
+<section class="list">
+@forelse($obligations as $obligation)
+@php $canWrite=in_array((int)$obligation->organization_id,$writableOrganizationIds,true); @endphp
+<article class="card">
+<div class="card-head"><div><div class="title">{{ $obligation->name }}</div><div class="meta">{{ $obligation->organization?->name ?? 'Sin ámbito' }}@if($obligation->provider) · {{ $obligation->provider }}@endif</div></div><span class="pill {{ $obligation->is_active?'active':'inactive' }}">{{ $obligation->is_active?'Activa':'Inactiva' }}</span></div>
+<div class="pills"><span class="pill">{{ \App\Models\RecurringObligation::categoryOptions()[$obligation->category] ?? $obligation->category }}</span><span class="pill">{{ \App\Models\RecurringObligation::frequencyOptions()[$obligation->frequency] ?? $obligation->frequency }}</span>@if($obligation->is_critical)<span class="pill critical">Crítica</span>@endif</div>
+<div class="meta">Ancla: {{ $obligation->anchor_date?->format('d/m/Y') }}@if($obligation->end_date) · Hasta {{ $obligation->end_date->format('d/m/Y') }}@endif</div>
+@if($obligation->expected_amount!==null)<div class="meta">Esperado: {{ $obligation->currency }} {{ number_format((float)$obligation->expected_amount,2,'.',',') }}</div>@endif
+@if($obligation->reference)<div class="meta">Ref.: {{ $obligation->reference }}</div>@endif
+<div class="card-foot"><span class="meta">Aviso {{ $obligation->reminder_days_before }} días antes</span><a class="link" href="{{ route('recurring-obligation-front.edit',$obligation) }}">{{ $canWrite?'Editar':'Ver' }} →</a></div>
+</article>
+@empty<div class="empty">No hay obligaciones recurrentes para los filtros seleccionados.</div>@endforelse
+</section>
+</div>
+<x-operational-theme /><x-operational-interactions />
+</body></html>

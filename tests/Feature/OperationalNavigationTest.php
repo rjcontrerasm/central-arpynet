@@ -21,6 +21,8 @@ class OperationalNavigationTest extends TestCase
             '/captura',
             '/servicios',
             '/vencimientos',
+            '/clientes',
+            '/proyectos',
             '/360',
             '/incidentes',
             '/seguimiento',
@@ -44,6 +46,8 @@ class OperationalNavigationTest extends TestCase
                 )
                 ->assertSee('Mi día')
                 ->assertSee('Captura')
+                ->assertSee('Clientes')
+                ->assertSee('Proyectos')
                 ->assertSee('Incidentes 360')
                 ->assertSee('Colaboración')
                 ->assertSee('Administración avanzada')
@@ -59,6 +63,8 @@ class OperationalNavigationTest extends TestCase
             ->get('/mi-dia')
             ->assertOk()
             ->assertSee('Más')
+            ->assertSee('Clientes')
+            ->assertSee('Proyectos')
             ->assertSee('Vista 360')
             ->assertSee('Incidentes 360')
             ->assertSee('Seguimiento')

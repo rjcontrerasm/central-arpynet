@@ -25,17 +25,23 @@ class VisualSystemConsistencyTest extends TestCase
             '/notificaciones',
             '/historial',
         ] as $page) {
-            $this->actingAs($user)
+            $response = $this->actingAs($user)
                 ->get($page)
-                ->assertOk()
-                ->assertSee(
-                    'width: min(100%, 1200px)',
-                    false,
-                )
-                ->assertSee(
-                    '--central-primary: #245fd7',
-                    false,
-                );
+                ->assertOk();
+
+            $css = $this->compactCss($response->getContent());
+
+            $this->assertStringContainsString(
+                'width:min(100%,1200px)',
+                $css,
+                'El shell operativo debe conservar el ancho desktop común en '.$page,
+            );
+
+            $this->assertStringContainsString(
+                '--central-primary:#245fd7',
+                $css,
+                'La página debe cargar el tema operacional compartido en '.$page,
+            );
         }
     }
 
@@ -43,21 +49,23 @@ class VisualSystemConsistencyTest extends TestCase
     {
         [$user] = $this->context();
 
-        $this->actingAs($user)
+        $capture = $this->actingAs($user)
             ->get('/captura')
-            ->assertOk()
-            ->assertSee(
-                'width: min(100%, 760px)',
-                false,
-            );
+            ->assertOk();
 
-        $this->actingAs($user)
+        $this->assertStringContainsString(
+            'width:min(100%,760px)',
+            $this->compactCss($capture->getContent()),
+        );
+
+        $notifications = $this->actingAs($user)
             ->get('/notificaciones')
-            ->assertOk()
-            ->assertSee(
-                'width: min(100%, 860px)',
-                false,
-            );
+            ->assertOk();
+
+        $this->assertStringContainsString(
+            'width:min(100%,860px)',
+            $this->compactCss($notifications->getContent()),
+        );
     }
 
     public function test_operational_lists_use_stable_two_column_geometry_on_desktop(): void
@@ -71,17 +79,26 @@ class VisualSystemConsistencyTest extends TestCase
         ] as $page) {
             $response = $this->actingAs($user)
                 ->get($page)
-                ->assertOk()
-                ->assertSee(
-                    'repeat(2, minmax(0, 1fr))',
-                    false,
-                );
+                ->assertOk();
+
+            $css = $this->compactCss($response->getContent());
+
+            $this->assertStringContainsString(
+                'repeat(2,minmax(0,1fr))',
+                $css,
+                'La lista debe conservar dos columnas estables en '.$page,
+            );
 
             $this->assertStringNotContainsString(
                 'auto-fit',
                 $response->getContent(),
             );
         }
+    }
+
+    private function compactCss(string $html): string
+    {
+        return preg_replace('/\s+/', '', $html) ?? $html;
     }
 
     private function context(): array

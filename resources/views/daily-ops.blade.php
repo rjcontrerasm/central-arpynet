@@ -1330,7 +1330,7 @@
 
                         <a
                             class="section-link"
-                            href="{{ url('/admin/tareas') }}"
+                            href="{{ route('global-tracking.show') }}"
                         >
                             Ver tareas
                         </a>
@@ -1660,9 +1660,7 @@
                                         @if ($task->recurrence_label)
                                             <a
                                                 class="convert-link"
-                                                href="{{ url(
-                                                    '/admin/tareas-recurrentes',
-                                                ) }}"
+                                                href="{{ route('recurring-task-front.index') }}"
                                             >
                                                 Administrar recurrencia →
                                             </a>
@@ -2068,7 +2066,7 @@
 
                     <a
                         class="section-link"
-                        href="{{ url('/admin/ordenes-servicio') }}"
+                        href="{{ route('service-orders-ops.show') }}"
                     >
                         Ver todos
                     </a>
@@ -2078,7 +2076,7 @@
                     @forelse ($serviceOrders as $order)
                         <a
                             class="item"
-                            href="{{ url('/admin/ordenes-servicio') }}"
+                            href="{{ route('service-orders-ops.show') }}"
                         >
                             <div class="item-title">
                                 {{ $order->title }}
@@ -2149,7 +2147,7 @@
                     )
                         <a
                             class="item"
-                            href="{{ url('/admin/vencimientos') }}"
+                            href="{{ route('obligation-ops.show') }}"
                         >
                             <div class="item-title">
                                 {{ $occurrence->obligation?->name
@@ -2179,7 +2177,7 @@
 
                     <a
                         class="section-link"
-                        href="{{ url('/admin/incidentes') }}"
+                        href="{{ route('incident-360.index') }}"
                     >
                         Ver todos
                     </a>
@@ -2189,7 +2187,7 @@
                     @forelse ($openIncidents as $incident)
                         <a
                             class="item"
-                            href="{{ url('/admin/incidentes') }}"
+                            href="{{ route('incident-360.index') }}"
                         >
                             <div class="item-title">
                                 {{ $incident->title }}

@@ -128,6 +128,7 @@ class ProjectOpsController extends Controller
             'statusOptions' => Project::statusOptions(),
             'typeOptions' => Project::typeOptions(),
             'horizonOptions' => Project::horizonOptions(),
+            'writableOrganizationIds' => $user->writableOrganizationIds(),
         ]);
     }
 }
