@@ -167,6 +167,8 @@ class ClientFrontTest extends TestCase
             'is_active' => true,
         ]);
 
+        $this->actingAs($foreignUser);
+
         $foreign = Organization::query()->create([
             'name' => 'Ámbito ajeno',
             'slug' => 'client-front-foreign',
@@ -174,12 +176,6 @@ class ClientFrontTest extends TestCase
             'timezone' => 'America/Lima',
             'is_active' => true,
             'created_by' => $foreignUser->id,
-        ]);
-
-        $foreign->users()->attach($foreignUser->id, [
-            'role' => 'owner',
-            'is_default' => true,
-            'is_active' => true,
         ]);
 
         Client::query()->create([
