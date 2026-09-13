@@ -46,6 +46,10 @@ class DailyTaskEditController extends Controller
                 'nullable',
                 'in:critical,today,week,planned',
             ],
+            'view' => [
+                'nullable',
+                'in:mine,team,unassigned',
+            ],
         ]);
 
         foreach (['urgency', 'impact'] as $field) {
@@ -132,6 +136,10 @@ class DailyTaskEditController extends Controller
         if (! empty($validated['priority'])) {
             $params['priority'] =
                 $validated['priority'];
+        }
+
+        if (! empty($validated['view'])) {
+            $params['view'] = $validated['view'];
         }
 
         $undo->rememberTaskMutation(
