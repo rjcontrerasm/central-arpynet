@@ -6,7 +6,6 @@ use App\Models\ServiceOrder;
 use App\Support\GlobalUndoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class ServiceOrderOpsActionController extends Controller
 {
@@ -49,26 +48,12 @@ class ServiceOrderOpsActionController extends Controller
             ],
         ]);
 
-        $userId = $request->user()->id;
-
-        $allowed = DB::table(
-            'organization_user',
-        )
-            ->where(
-                'user_id',
-                $userId,
-            )
-            ->where(
-                'organization_id',
-                $serviceOrder->organization_id,
-            )
-            ->where(
-                'is_active',
-                true,
-            )
-            ->exists();
-
-        abort_unless($allowed, 403);
+        abort_unless(
+            $request->user()->canWriteToOrganization(
+                (int) $serviceOrder->organization_id,
+            ),
+            403,
+        );
 
         $stageOptions =
             ServiceOrder::stageOptions();
@@ -139,24 +124,10 @@ class ServiceOrderOpsActionController extends Controller
             ?? null;
 
         if ($scope) {
-            $allowed = DB::table(
-                'organization_user',
-            )
-                ->where(
-                    'user_id',
-                    $request->user()->id,
-                )
-                ->where(
-                    'organization_id',
-                    $scope,
-                )
-                ->where(
-                    'is_active',
-                    true,
-                )
-                ->exists();
-
-            abort_unless($allowed, 403);
+            abort_unless(
+                $request->user()->canAccessOrganization((int) $scope),
+                403,
+            );
 
             $params['scope'] = $scope;
         }
