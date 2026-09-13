@@ -6,7 +6,6 @@ use App\Models\ObligationOccurrence;
 use App\Support\GlobalUndoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class ObligationOpsActionController extends Controller
 {
@@ -54,28 +53,12 @@ class ObligationOpsActionController extends Controller
             ],
         ]);
 
-        $userId =
-            $request->user()->id;
-
-        $allowed = DB::table(
-            'organization_user',
-        )
-            ->where(
-                'user_id',
-                $userId,
-            )
-            ->where(
-                'organization_id',
-                $obligationOccurrence
-                    ->organization_id,
-            )
-            ->where(
-                'is_active',
-                true,
-            )
-            ->exists();
-
-        abort_unless($allowed, 403);
+        abort_unless(
+            $request->user()->canWriteToOrganization(
+                (int) $obligationOccurrence->organization_id,
+            ),
+            403,
+        );
 
         $filters = $this->filters(
             $request,
@@ -198,24 +181,10 @@ class ObligationOpsActionController extends Controller
             ?? null;
 
         if ($scope) {
-            $allowed = DB::table(
-                'organization_user',
-            )
-                ->where(
-                    'user_id',
-                    $request->user()->id,
-                )
-                ->where(
-                    'organization_id',
-                    $scope,
-                )
-                ->where(
-                    'is_active',
-                    true,
-                )
-                ->exists();
-
-            abort_unless($allowed, 403);
+            abort_unless(
+                $request->user()->canAccessOrganization((int) $scope),
+                403,
+            );
 
             $params['scope'] = $scope;
         }
