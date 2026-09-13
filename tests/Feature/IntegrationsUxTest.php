@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -12,9 +13,7 @@ class IntegrationsUxTest extends TestCase
 
     public function test_integrations_page_explains_operational_state(): void
     {
-        $user = User::factory()->create([
-            'email' => 'rcontreras@arpynet.com',
-        ]);
+        $user = $this->userWithPanelAccess();
 
         config()->set(
             'whatsapp.enabled',
@@ -74,9 +73,7 @@ class IntegrationsUxTest extends TestCase
 
     public function test_integrations_page_never_renders_secret_values(): void
     {
-        $user = User::factory()->create([
-            'email' => 'rcontreras@arpynet.com',
-        ]);
+        $user = $this->userWithPanelAccess();
 
         config()->set(
             'whatsapp.verify_token',
@@ -107,5 +104,32 @@ class IntegrationsUxTest extends TestCase
             ->assertDontSee(
                 'never-render-this-access-token',
             );
+    }
+
+    private function userWithPanelAccess(): User
+    {
+        $user = User::factory()->create([
+            'email' => 'rcontreras@arpynet.com',
+        ]);
+
+        $organization = Organization::query()->create([
+            'name' => 'ARPYNET',
+            'slug' => 'arpynet',
+            'category' => 'company',
+            'timezone' => 'America/Lima',
+            'is_active' => true,
+            'created_by' => $user->id,
+        ]);
+
+        $organization->users()->attach(
+            $user->id,
+            [
+                'role' => 'owner',
+                'is_default' => true,
+                'is_active' => true,
+            ],
+        );
+
+        return $user;
     }
 }
