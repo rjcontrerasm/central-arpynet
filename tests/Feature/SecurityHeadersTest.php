@@ -34,10 +34,14 @@ class SecurityHeadersTest extends TestCase
     public function test_https_response_adds_hsts(): void
     {
         $user = $this->userWithOrganization();
+        $path = route(
+            'safety-recovery.index',
+            [],
+            false,
+        );
 
         $this->actingAs($user)
-            ->withServerVariables(['HTTPS' => 'on'])
-            ->get(route('safety-recovery.index'))
+            ->get('https://localhost'.$path)
             ->assertOk()
             ->assertHeader(
                 'Strict-Transport-Security',
