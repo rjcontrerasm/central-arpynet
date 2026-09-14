@@ -19,6 +19,7 @@ class AutomationRuleCatalog
         'project.create_alert',
         'decision.prepare_task_start_proposal',
         'decision.execute_task_start',
+        'decision.create_collection_task',
     ];
 
     public function triggers(): array
@@ -132,6 +133,15 @@ class AutomationRuleCatalog
                 'subject' => 'task',
                 'actions' => [
                     'decision.execute_task_start',
+                ],
+            ],
+
+            'decision.level3_invoice_collection' => [
+                'label' =>
+                    'Autonomía L3: factura vencida sin siguiente acción',
+                'subject' => 'service_order',
+                'actions' => [
+                    'decision.create_collection_task',
                 ],
             ],
         ];
@@ -263,6 +273,18 @@ class AutomationRuleCatalog
                     true,
                     'bounded_reversible_task_start',
                 ),
+
+            'decision.create_collection_task' =>
+                $this->buildAction(
+                    'Autonomía L3: crear tarea interna de cobranza',
+                    [
+                        'preview',
+                        'automatic',
+                    ],
+                    true,
+                    true,
+                    'bounded_reversible_cross_module_task_create',
+                ),
         ];
     }
 
@@ -342,7 +364,7 @@ class AutomationRuleCatalog
     {
         return [
             'contract' =>
-                'central-automation-contract-v3',
+                'central-automation-contract-v4',
             'public_api' => false,
             'network_calls' => false,
             'external_channels' => false,
@@ -356,13 +378,22 @@ class AutomationRuleCatalog
             'manual_execution_enabled' =>
                 true,
             'automatic_execution_scope' =>
-                'internal_notifications_pending_proposals_and_bounded_task_start',
+                'internal_notifications_pending_proposals_bounded_task_start_and_bounded_collection_task_create',
             'automatic_pending_proposals_enabled' =>
                 true,
             'autonomy_level_one_enabled' =>
                 true,
             'autonomy_level_two_enabled' =>
                 true,
+            'autonomy_level_three_enabled' =>
+                true,
+            'bounded_autonomous_cross_module_task_creation_enabled' =>
+                true,
+            'bounded_autonomous_cross_module_scope' => [
+                'service_invoice.collection_task_create',
+            ],
+            'bounded_autonomous_cross_module_daily_limit' =>
+                AutonomyLevelThreePolicy::DAILY_EXECUTION_LIMIT,
             'autonomous_subject_mutations_enabled' =>
                 true,
             'autonomous_subject_mutation_scope' => [

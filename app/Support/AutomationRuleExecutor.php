@@ -19,6 +19,7 @@ class AutomationRuleExecutor
         private readonly AutomationRuleEngine $engine,
         private readonly AutonomyLevelOneService $autonomyLevelOne,
         private readonly AutonomyLevelTwoService $autonomyLevelTwo,
+        private readonly AutonomyLevelThreeService $autonomyLevelThree,
     ) {
     }
 
@@ -287,6 +288,16 @@ class AutomationRuleExecutor
             );
         }
 
+        if (
+            $rule->action_key
+            === 'decision.create_collection_task'
+        ) {
+            return $this->executeAutonomyLevelThree(
+                $rule,
+                $candidate,
+            );
+        }
+
         $recipient =
             $this->resolveRecipient(
                 $rule,
@@ -441,6 +452,74 @@ class AutomationRuleExecutor
             $result = $this->autonomyLevelTwo->execute(
                 $actor,
                 $task,
+                $rule,
+            );
+        } catch (
+            \Illuminate\Auth\Access\AuthorizationException
+            | \Illuminate\Validation\ValidationException
+            | \Illuminate\Database\Eloquent\ModelNotFoundException
+        ) {
+            return 'blocked';
+        }
+
+        return ($result['executed'] ?? false)
+            ? 'executed'
+            : 'blocked';
+    }
+
+
+    private function executeAutonomyLevelThree(
+        AutomationRule $rule,
+        array $candidate,
+    ): string {
+        if (
+            ($candidate['subject_type'] ?? null)
+                !== 'service_order'
+        ) {
+            return 'blocked';
+        }
+
+        $actorId = (int) (
+            $rule->created_by ?? 0
+        );
+
+        if ($actorId < 1) {
+            return 'blocked';
+        }
+
+        $actor = User::query()->find(
+            $actorId,
+        );
+
+        if (
+            ! $actor
+            || ! $actor->is_active
+            || ! $actor->canWriteToOrganization(
+                (int) $rule->organization_id,
+            )
+        ) {
+            return 'blocked';
+        }
+
+        $order = \App\Models\ServiceOrder::query()->find(
+            (int) (
+                $candidate['subject_id']
+                ?? 0
+            ),
+        );
+
+        if (
+            ! $order
+            || (int) $order->organization_id
+                !== (int) $rule->organization_id
+        ) {
+            return 'blocked';
+        }
+
+        try {
+            $result = $this->autonomyLevelThree->execute(
+                $actor,
+                $order,
                 $rule,
             );
         } catch (
