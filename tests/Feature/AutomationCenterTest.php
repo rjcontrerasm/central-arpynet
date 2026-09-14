@@ -171,7 +171,8 @@ class AutomationCenterTest extends TestCase
             ->assertOk()
             ->assertSee('Automatizaciones')
             ->assertSee('Regla visible')
-            ->assertSee('El scheduler y los canales externos siguen deshabilitados.');
+            ->assertSee('El scheduler evalúa reglas activas')
+            ->assertSee('Autonomía L1');
     }
 
     private function context(bool $withClient = false): array
