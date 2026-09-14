@@ -24,6 +24,7 @@ class FrontNavigationGuardTest extends TestCase
             'global-tracking.blade.php',
             'operational-360.blade.php',
             'operational-agenda.blade.php',
+            'safety-recovery.blade.php',
         ];
 
         foreach ($views as $view) {

@@ -33,6 +33,7 @@ class OperationalNavigationTest extends TestCase
             '/colaboracion',
             '/jarvis',
             '/automatizaciones',
+            '/estado-recuperacion',
             '/historial',
         ];
 
@@ -50,6 +51,7 @@ class OperationalNavigationTest extends TestCase
                 ->assertSee('Proyectos')
                 ->assertSee('Incidentes 360')
                 ->assertSee('Colaboración')
+                ->assertSee('Estado y recuperación')
                 ->assertSee('Administración avanzada')
                 ->assertDontSee('Panel administrativo');
         }
@@ -72,6 +74,7 @@ class OperationalNavigationTest extends TestCase
             ->assertSee('Decisiones')
             ->assertSee('Resumen')
             ->assertSee('Colaboración')
+            ->assertSee('Estado y recuperación')
             ->assertSee('Historial')
             ->assertSee('Administración avanzada')
             ->assertDontSee('Panel administrativo');
