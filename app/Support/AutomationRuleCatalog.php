@@ -17,6 +17,7 @@ class AutomationRuleCatalog
         'service.create_collection_reminder',
         'obligation.create_alert',
         'project.create_alert',
+        'decision.prepare_task_start_proposal',
     ];
 
     public function triggers(): array
@@ -112,6 +113,15 @@ class AutomationRuleCatalog
                 'subject' => 'task',
                 'actions' => [
                     'waiting.return_to_daily',
+                ],
+            ],
+
+            'decision.level1_task' => [
+                'label' =>
+                    'Autonomía L1: decisión crítica de tarea',
+                'subject' => 'task',
+                'actions' => [
+                    'decision.prepare_task_start_proposal',
                 ],
             ],
         ];
@@ -219,6 +229,18 @@ class AutomationRuleCatalog
                     true,
                     'confirmed_task_mutation',
                 ),
+
+            'decision.prepare_task_start_proposal' =>
+                $this->buildAction(
+                    'Autonomía L1: preparar propuesta “En curso”',
+                    [
+                        'preview',
+                        'automatic',
+                    ],
+                    true,
+                    false,
+                    'pending_agent_proposal',
+                ),
         ];
     }
 
@@ -312,7 +334,13 @@ class AutomationRuleCatalog
             'manual_execution_enabled' =>
                 true,
             'automatic_execution_scope' =>
-                'database_notifications_only',
+                'internal_notifications_and_pending_proposals',
+            'automatic_pending_proposals_enabled' =>
+                true,
+            'autonomy_level_one_enabled' =>
+                true,
+            'autonomous_subject_mutations_enabled' =>
+                false,
             'subject_mutations_enabled' =>
                 false,
             'confirmed_subject_mutations_enabled' =>

@@ -38,7 +38,7 @@
     <header class="automation-header">
         <div>
             <h1>Automatizaciones</h1>
-            <p>Reglas internas, controladas y auditables. El scheduler y los canales externos siguen deshabilitados.</p>
+            <p>Reglas internas, controladas y auditables. El scheduler evalúa reglas activas; los canales externos no forman parte de la ejecución automática.</p>
         </div>
         <x-operational-nav active="automations" />
     </header>
@@ -136,7 +136,7 @@
                 </div>
             </form>
             <div class="automation-safety">
-                Las reglas nuevas nacen inactivas. El modo automático solo está permitido para notificaciones internas seguras. La creación de tareas entre módulos exige siempre confirmación humana.
+                Las reglas nuevas nacen inactivas. Autonomía L1 puede preparar una propuesta pendiente para una tarea crítica inequívoca, pero nunca la aprueba ni ejecuta. Las mutaciones de entidades y la creación de tareas entre módulos mantienen confirmación humana.
             </div>
         </section>
 

@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\AutomationRule;
 use App\Models\AutomationRuleRun;
+use App\Models\Task;
 use App\Models\User;
 use App\Notifications\AutomationInternalNotification;
 use Carbon\CarbonImmutable;
@@ -16,6 +17,7 @@ class AutomationRuleExecutor
     public function __construct(
         private readonly AutomationRuleCatalog $catalog,
         private readonly AutomationRuleEngine $engine,
+        private readonly AutonomyLevelOneService $autonomyLevelOne,
     ) {
     }
 
@@ -264,6 +266,16 @@ class AutomationRuleExecutor
             return 'blocked';
         }
 
+        if (
+            $rule->action_key
+            === 'decision.prepare_task_start_proposal'
+        ) {
+            return $this->executeAutonomyLevelOne(
+                $rule,
+                $candidate,
+            );
+        }
+
         $recipient =
             $this->resolveRecipient(
                 $rule,
@@ -297,6 +309,71 @@ class AutomationRuleExecutor
                 ],
             ),
         );
+
+        return 'executed';
+    }
+
+    private function executeAutonomyLevelOne(
+        AutomationRule $rule,
+        array $candidate,
+    ): string {
+        if (
+            ($candidate['subject_type'] ?? null)
+                !== 'task'
+        ) {
+            return 'blocked';
+        }
+
+        $actorId = (int) (
+            $rule->created_by ?? 0
+        );
+
+        if ($actorId < 1) {
+            return 'blocked';
+        }
+
+        $actor = User::query()->find(
+            $actorId,
+        );
+
+        if (
+            ! $actor
+            || ! $actor->is_active
+            || ! $actor->canWriteToOrganization(
+                (int) $rule->organization_id,
+            )
+        ) {
+            return 'blocked';
+        }
+
+        $task = Task::query()->find(
+            (int) (
+                $candidate['subject_id']
+                ?? 0
+            ),
+        );
+
+        if (
+            ! $task
+            || (int) $task->organization_id
+                !== (int) $rule->organization_id
+        ) {
+            return 'blocked';
+        }
+
+        try {
+            $this->autonomyLevelOne->prepare(
+                $actor,
+                $task,
+                $rule,
+            );
+        } catch (
+            \Illuminate\Auth\Access\AuthorizationException
+            | \Illuminate\Validation\ValidationException
+            | \Illuminate\Database\Eloquent\ModelNotFoundException
+        ) {
+            return 'blocked';
+        }
 
         return 'executed';
     }
