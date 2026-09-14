@@ -44,6 +44,7 @@ class FinalUxFoundationTest extends TestCase
         $contents = file_get_contents($path);
 
         $this->assertIsString($contents);
+        $this->assertStringContainsString('@once', $contents);
         $this->assertStringContainsString(
             '<x-operational-polish />',
             $contents,
@@ -51,6 +52,14 @@ class FinalUxFoundationTest extends TestCase
         $this->assertStringContainsString('textarea', $contents);
         $this->assertStringContainsString(
             'prefers-reduced-motion: reduce',
+            $contents,
+        );
+        $this->assertStringContainsString(
+            "'DOMContentLoaded'",
+            $contents,
+        );
+        $this->assertStringContainsString(
+            '__centralOperationalInteractionsInstalled',
             $contents,
         );
         $this->assertStringContainsString(
@@ -67,8 +76,20 @@ class FinalUxFoundationTest extends TestCase
         );
     }
 
-    public function test_operational_front_views_with_navigation_share_theme_and_interactions(): void
+    public function test_operational_front_views_with_navigation_inherit_shared_ux_contract(): void
     {
+        $themePath = resource_path(
+            'views/components/operational-theme.blade.php',
+        );
+        $theme = file_get_contents($themePath);
+
+        $this->assertIsString($theme);
+        $this->assertStringContainsString(
+            '<x-operational-interactions />',
+            $theme,
+            'The operational theme must install the final shared interactions.',
+        );
+
         $paths = glob(resource_path('views/*.blade.php')) ?: [];
         $checked = 0;
 
@@ -88,11 +109,6 @@ class FinalUxFoundationTest extends TestCase
                 '<x-operational-theme',
                 $contents,
                 basename($path).' must use the shared operational theme.',
-            );
-            $this->assertStringContainsString(
-                '<x-operational-interactions',
-                $contents,
-                basename($path).' must use the shared operational interactions.',
             );
         }
 
