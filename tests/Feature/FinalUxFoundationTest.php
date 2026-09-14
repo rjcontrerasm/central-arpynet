@@ -36,6 +36,24 @@ class FinalUxFoundationTest extends TestCase
         );
     }
 
+    public function test_shared_operational_theme_owns_typography_contract(): void
+    {
+        $path = resource_path(
+            'views/components/operational-theme.blade.php',
+        );
+        $contents = file_get_contents($path);
+
+        $this->assertIsString($contents);
+        $this->assertStringContainsString('font-family:', $contents);
+        $this->assertStringContainsString('Inter,', $contents);
+        $this->assertStringContainsString('ui-sans-serif,', $contents);
+        $this->assertStringContainsString('system-ui,', $contents);
+        $this->assertStringContainsString('"Segoe UI",', $contents);
+        $this->assertStringContainsString('button,', $contents);
+        $this->assertStringContainsString('textarea {', $contents);
+        $this->assertStringContainsString('font: inherit;', $contents);
+    }
+
     public function test_shared_interactions_cover_keyboard_motion_and_bfcache(): void
     {
         $path = resource_path(

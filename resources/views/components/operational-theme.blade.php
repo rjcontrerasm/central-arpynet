@@ -1,5 +1,14 @@
 <style>
     :root {
+        font-family:
+            Inter,
+            ui-sans-serif,
+            system-ui,
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            sans-serif;
+
         --central-bg: #f2f5f9;
         --central-surface: #ffffff;
         --central-surface-soft: #f7f9fc;
@@ -48,6 +57,13 @@
     body {
         background: var(--central-bg) !important;
         color: var(--central-text) !important;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+        font: inherit;
     }
 
     .brand {
