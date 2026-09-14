@@ -1,19 +1,25 @@
+<x-operational-polish />
+
 <style>
     :where(
         button,
         input,
         select,
+        textarea,
         summary,
-        a
+        a,
+        [role="button"]
     ):focus-visible {
-        outline: 3px solid rgba(96, 165, 250, .45);
+        outline: 3px solid rgba(96, 165, 250, .48);
         outline-offset: 2px;
     }
 
     button,
     summary,
-    a {
+    a,
+    [role="button"] {
         -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
     }
 
     button[disabled],
@@ -45,6 +51,20 @@
             animation-iteration-count: 1 !important;
         }
     }
+
+    @media (forced-colors: active) {
+        :where(
+            button,
+            input,
+            select,
+            textarea,
+            summary,
+            a,
+            [role="button"]
+        ):focus-visible {
+            outline: 2px solid Highlight;
+        }
+    }
 </style>
 
 <script>
@@ -53,9 +73,35 @@
             'form[method="POST"], form[method="post"]'
         );
 
+        const restoreSubmittingForms = () => {
+            forms.forEach((form) => {
+                if (form.dataset.submitting !== 'yes') {
+                    return;
+                }
+
+                delete form.dataset.submitting;
+                form.removeAttribute('aria-busy');
+
+                form.querySelectorAll(
+                    'button[data-original-html]'
+                ).forEach((button) => {
+                    if (button.dataset.wasDisabled !== 'yes') {
+                        button.disabled = false;
+                    }
+
+                    button.classList.remove('is-busy');
+                    button.innerHTML = button.dataset.originalHtml;
+
+                    delete button.dataset.originalHtml;
+                    delete button.dataset.wasDisabled;
+                });
+            });
+        };
+
         forms.forEach((form) => {
             form.addEventListener('submit', (event) => {
                 if (form.dataset.submitting === 'yes') {
+                    event.preventDefault();
                     return;
                 }
 
@@ -78,8 +124,10 @@
                 );
 
                 buttons.forEach((button) => {
-                    button.dataset.originalLabel =
-                        button.textContent.trim();
+                    button.dataset.originalHtml =
+                        button.innerHTML;
+                    button.dataset.wasDisabled =
+                        button.disabled ? 'yes' : 'no';
 
                     button.disabled = true;
                     button.classList.add('is-busy');
@@ -93,9 +141,31 @@
             });
         });
 
+        window.addEventListener(
+            'pageshow',
+            restoreSubmittingForms,
+        );
+
         const menus = document.querySelectorAll(
             '[data-operational-nav] details'
         );
+
+        menus.forEach((menu) => {
+            menu.addEventListener('toggle', () => {
+                if (!menu.open) {
+                    return;
+                }
+
+                menus.forEach((otherMenu) => {
+                    if (
+                        otherMenu !== menu
+                        && otherMenu.open
+                    ) {
+                        otherMenu.removeAttribute('open');
+                    }
+                });
+            });
+        });
 
         document.addEventListener('click', (event) => {
             menus.forEach((menu) => {
@@ -114,7 +184,12 @@
             }
 
             menus.forEach((menu) => {
+                if (!menu.open) {
+                    return;
+                }
+
                 menu.removeAttribute('open');
+                menu.querySelector('summary')?.focus();
             });
         });
     })();
