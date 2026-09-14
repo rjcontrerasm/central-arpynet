@@ -14,9 +14,14 @@ class SecurityHeadersTest extends TestCase
     public function test_front_response_has_defensive_headers(): void
     {
         $user = $this->userWithOrganization();
+        $path = route(
+            'safety-recovery.index',
+            [],
+            false,
+        );
 
         $this->actingAs($user)
-            ->get(route('safety-recovery.index'))
+            ->get('http://localhost'.$path)
             ->assertOk()
             ->assertHeader('X-Content-Type-Options', 'nosniff')
             ->assertHeader('X-Frame-Options', 'SAMEORIGIN')
