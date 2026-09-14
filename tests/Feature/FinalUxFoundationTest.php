@@ -92,6 +92,7 @@ class FinalUxFoundationTest extends TestCase
 
         $paths = glob(resource_path('views/*.blade.php')) ?: [];
         $checked = 0;
+        $missingTheme = [];
 
         foreach ($paths as $path) {
             $contents = file_get_contents($path);
@@ -105,12 +106,17 @@ class FinalUxFoundationTest extends TestCase
 
             $checked++;
 
-            $this->assertStringContainsString(
-                '<x-operational-theme',
-                $contents,
-                basename($path).' must use the shared operational theme.',
-            );
+            if (! str_contains($contents, '<x-operational-theme')) {
+                $missingTheme[] = basename($path);
+            }
         }
+
+        $this->assertSame(
+            [],
+            $missingTheme,
+            'Operational FRONT views missing the shared theme: '
+                .implode(', ', $missingTheme),
+        );
 
         $this->assertGreaterThanOrEqual(
             12,
