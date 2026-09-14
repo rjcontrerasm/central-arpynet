@@ -45,6 +45,7 @@ class AutomationRuleEngine
             'waiting.followup_overdue' => $this->waitingOverdue($rule, $now),
             'decision.level1_task' => $this->levelOneTasks($rule, $now),
             'decision.level2_task_start' => $this->levelTwoTasks($rule, $now),
+            'decision.level3_invoice_collection' => $this->levelThreeInvoices($rule, $now),
         };
     }
 
@@ -520,6 +521,108 @@ class AutomationRuleEngine
             ->filter()
             ->take(
                 AutonomyLevelTwoPolicy::DAILY_EXECUTION_LIMIT,
+            )
+            ->values();
+    }
+
+
+    private function levelThreeInvoices(
+        AutomationRule $rule,
+        CarbonImmutable $now,
+    ): Collection {
+        $decisionEngine = app(
+            DecisionEngine::class,
+        );
+        $policy = app(
+            AutonomyLevelThreePolicy::class,
+        );
+
+        return ServiceOrder::query()
+            ->with([
+                'organization',
+                'client',
+            ])
+            ->where(
+                'organization_id',
+                $rule->organization_id,
+            )
+            ->where('stage', 'invoiced')
+            ->whereNull('paid_date')
+            ->whereNotNull('invoice_due_date')
+            ->whereDate(
+                'invoice_due_date',
+                '<',
+                $now->toDateString(),
+            )
+            ->where(function ($query): void {
+                $query
+                    ->whereNull('next_action')
+                    ->orWhere('next_action', '');
+            })
+            ->where(function ($query): void {
+                $query
+                    ->whereNotNull('invoice_number')
+                    ->orWhereNotNull('invoice_date')
+                    ->orWhere('invoice_amount', '>', 0);
+            })
+            ->limit(250)
+            ->get()
+            ->map(function (ServiceOrder $order) use (
+                $rule,
+                $now,
+                $decisionEngine,
+                $policy,
+            ): ?array {
+                $item = GlobalTrackingItemFactory::serviceOrder(
+                    $order,
+                    $now,
+                );
+
+                $decision = collect(
+                    $decisionEngine->evaluate(
+                        [$item],
+                    )['decisions'] ?? [],
+                )->first();
+
+                if (! is_array($decision)) {
+                    return null;
+                }
+
+                $autonomy = $policy->evaluate(
+                    $decision,
+                    $order,
+                    $now,
+                );
+
+                if (! $autonomy['eligible']) {
+                    return null;
+                }
+
+                return $this->candidate(
+                    $rule,
+                    'service_order',
+                    $order->id,
+                    $order->title,
+                    'Autonomía L3 · '
+                        .($decision['why_now']
+                            ?? 'cobranza vencida sin siguiente acción'),
+                    $order->updated_at,
+                ) + [
+                    'decision_score' =>
+                        $decision['decision_score'],
+                    'decision_band' =>
+                        $decision['decision_band'],
+                    'evidence_quality' =>
+                        $decision['evidence_quality'],
+                    'autonomy_policy_version' =>
+                        $autonomy['policy_version'],
+                    'autonomous_mutation' =>
+                        'cross_module.collection_task_create',
+                ];
+            })
+            ->filter()
+            ->take(
+                AutonomyLevelThreePolicy::DAILY_EXECUTION_LIMIT,
             )
             ->values();
     }

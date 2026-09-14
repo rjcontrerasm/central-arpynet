@@ -38,7 +38,7 @@
     <header class="automation-header">
         <div>
             <h1>Automatizaciones</h1>
-            <p>Reglas internas, controladas y auditables. L1 prepara propuestas; L2 solo puede iniciar tareas críticas pendientes bajo límites y undo. Los canales externos permanecen fuera de la autonomía.</p>
+            <p>Reglas internas, controladas y auditables. L1 prepara propuestas; L2 puede iniciar tareas críticas pendientes; L3 puede crear una tarea interna de cobranza desde una factura vencida sin siguiente acción. Cada nivel conserva límites, audit y undo; los canales externos permanecen fuera de la autonomía.</p>
         </div>
         <x-operational-nav active="automations" />
     </header>
@@ -136,7 +136,7 @@
                 </div>
             </form>
             <div class="automation-safety">
-                Las reglas nuevas nacen inactivas. Autonomía L1 solo prepara propuestas. Autonomía L2 requiere opt-in explícito y puede ejecutar únicamente pending → in_progress en tareas críticas con evidencia alta, score ≥92, máximo 3 veces por organización y día y siempre con undo. Completar, reprogramar, crear entidades, proyectos, servicios, obligaciones y canales externos siguen fuera de L2.
+                Las reglas nuevas nacen inactivas. L1 solo prepara propuestas. L2 requiere opt-in explícito y puede ejecutar únicamente pending → in_progress en tareas críticas con evidencia alta y score ≥92, máximo 3 veces por organización y día. L3 requiere su propio opt-in y solo puede crear una tarea interna de cobranza para un servicio facturado, impago, vencido y sin siguiente acción, con evidencia alta, score ≥95, máximo 2 veces por organización y día. L3 no modifica el servicio ni sus datos financieros. Todos los writes autónomos exigen undo y los canales externos siguen fuera de la autonomía.
             </div>
         </section>
 
