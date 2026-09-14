@@ -301,6 +301,10 @@ class AutonomyLevelTwoService
         Task $task,
     ): void {
         $changes = $proposal->proposed_changes;
+        $changeKeys = is_array($changes)
+            ? array_keys($changes)
+            : [];
+        sort($changeKeys);
 
         $valid =
             $proposal->subject_type === 'task'
@@ -310,9 +314,11 @@ class AutonomyLevelTwoService
             && $proposal->action_key === 'start'
             && $proposal->risk === 'state_change'
             && is_array($changes)
-            && array_keys($changes) === ['status', 'completed_at']
-            && ($changes['status'] ?? null) === 'in_progress'
-            && ($changes['completed_at'] ?? 'not-null') === null;
+            && $changeKeys === ['completed_at', 'status']
+            && array_key_exists('status', $changes)
+            && array_key_exists('completed_at', $changes)
+            && $changes['status'] === 'in_progress'
+            && $changes['completed_at'] === null;
 
         if (! $valid) {
             throw ValidationException::withMessages([
