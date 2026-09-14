@@ -19,7 +19,7 @@
 <div class="copilot">
 <header class="topbar">
 <a class="brand" href="{{ route('daily-ops.show') }}">Central ARPYNET</a>
-<x-operational-nav active="agent" />
+<x-operational-nav active="copilot" />
 </header>
 
 <section class="hero">
