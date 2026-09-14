@@ -30,6 +30,7 @@
         'summary' => 'Resumen',
         'notifications' => 'Notificaciones',
         'collaboration' => 'Colaboración',
+        'copilot' => 'Copilot',
         'agent' => 'Jarvis',
         'automations' => 'Automatizaciones',
         'safety' => 'Estado y recuperación',
@@ -435,6 +436,13 @@
                 href="{{ route('collaboration.index') }}"
             >
                 Colaboración
+            </a>
+
+            <a
+                class="{{ $active === 'copilot' ? 'is-active' : '' }}"
+                href="{{ route('central-copilot.index') }}"
+            >
+                Copilot
             </a>
 
             <a
