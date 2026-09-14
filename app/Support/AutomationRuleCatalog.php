@@ -18,6 +18,7 @@ class AutomationRuleCatalog
         'obligation.create_alert',
         'project.create_alert',
         'decision.prepare_task_start_proposal',
+        'decision.execute_task_start',
     ];
 
     public function triggers(): array
@@ -122,6 +123,15 @@ class AutomationRuleCatalog
                 'subject' => 'task',
                 'actions' => [
                     'decision.prepare_task_start_proposal',
+                ],
+            ],
+
+            'decision.level2_task_start' => [
+                'label' =>
+                    'Autonomía L2: iniciar tarea crítica pendiente',
+                'subject' => 'task',
+                'actions' => [
+                    'decision.execute_task_start',
                 ],
             ],
         ];
@@ -241,6 +251,18 @@ class AutomationRuleCatalog
                     false,
                     'pending_agent_proposal',
                 ),
+
+            'decision.execute_task_start' =>
+                $this->buildAction(
+                    'Autonomía L2: iniciar tarea crítica',
+                    [
+                        'preview',
+                        'automatic',
+                    ],
+                    true,
+                    true,
+                    'bounded_reversible_task_start',
+                ),
         ];
     }
 
@@ -334,13 +356,20 @@ class AutomationRuleCatalog
             'manual_execution_enabled' =>
                 true,
             'automatic_execution_scope' =>
-                'internal_notifications_and_pending_proposals',
+                'internal_notifications_pending_proposals_and_bounded_task_start',
             'automatic_pending_proposals_enabled' =>
                 true,
             'autonomy_level_one_enabled' =>
                 true,
+            'autonomy_level_two_enabled' =>
+                true,
             'autonomous_subject_mutations_enabled' =>
-                false,
+                true,
+            'autonomous_subject_mutation_scope' => [
+                'task.start',
+            ],
+            'autonomous_subject_mutation_daily_limit' =>
+                AutonomyLevelTwoPolicy::DAILY_EXECUTION_LIMIT,
             'subject_mutations_enabled' =>
                 false,
             'confirmed_subject_mutations_enabled' =>

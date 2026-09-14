@@ -38,7 +38,7 @@
     <header class="automation-header">
         <div>
             <h1>Automatizaciones</h1>
-            <p>Reglas internas, controladas y auditables. El scheduler evalúa reglas activas; los canales externos no forman parte de la ejecución automática.</p>
+            <p>Reglas internas, controladas y auditables. L1 prepara propuestas; L2 solo puede iniciar tareas críticas pendientes bajo límites y undo. Los canales externos permanecen fuera de la autonomía.</p>
         </div>
         <x-operational-nav active="automations" />
     </header>
@@ -136,7 +136,7 @@
                 </div>
             </form>
             <div class="automation-safety">
-                Las reglas nuevas nacen inactivas. Autonomía L1 puede preparar una propuesta pendiente para una tarea crítica inequívoca, pero nunca la aprueba ni ejecuta. Las mutaciones de entidades y la creación de tareas entre módulos mantienen confirmación humana.
+                Las reglas nuevas nacen inactivas. Autonomía L1 solo prepara propuestas. Autonomía L2 requiere opt-in explícito y puede ejecutar únicamente pending → in_progress en tareas críticas con evidencia alta, score ≥92, máximo 3 veces por organización y día y siempre con undo. Completar, reprogramar, crear entidades, proyectos, servicios, obligaciones y canales externos siguen fuera de L2.
             </div>
         </section>
 

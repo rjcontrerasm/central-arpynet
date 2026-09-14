@@ -44,6 +44,7 @@ class AutomationRuleEngine
             'obligation.due_soon' => $this->obligationsDueSoon($rule, $now),
             'waiting.followup_overdue' => $this->waitingOverdue($rule, $now),
             'decision.level1_task' => $this->levelOneTasks($rule, $now),
+            'decision.level2_task_start' => $this->levelTwoTasks($rule, $now),
         };
     }
 
@@ -441,6 +442,85 @@ class AutomationRuleEngine
             })
             ->filter()
             ->take(100)
+            ->values();
+    }
+
+    private function levelTwoTasks(
+        AutomationRule $rule,
+        CarbonImmutable $now,
+    ): Collection {
+        $decisionEngine = app(
+            DecisionEngine::class,
+        );
+        $policy = app(
+            AutonomyLevelTwoPolicy::class,
+        );
+
+        return Task::query()
+            ->with('organization')
+            ->where(
+                'organization_id',
+                $rule->organization_id,
+            )
+            ->where('status', 'pending')
+            ->limit(250)
+            ->get()
+            ->map(function (Task $task) use (
+                $rule,
+                $now,
+                $decisionEngine,
+                $policy,
+            ): ?array {
+                $item = GlobalTrackingItemFactory::task(
+                    $task,
+                    $now,
+                );
+
+                $decision = collect(
+                    $decisionEngine->evaluate(
+                        [$item],
+                    )['decisions'] ?? [],
+                )->first();
+
+                if (! is_array($decision)) {
+                    return null;
+                }
+
+                $autonomy = $policy->evaluate(
+                    $decision,
+                    (string) $task->status,
+                );
+
+                if (! $autonomy['eligible']) {
+                    return null;
+                }
+
+                return $this->candidate(
+                    $rule,
+                    'task',
+                    $task->id,
+                    $task->title,
+                    'Autonomía L2 · '
+                        .($decision['why_now']
+                            ?? 'decisión crítica vigente'),
+                    $task->updated_at,
+                ) + [
+                    'decision_score' =>
+                        $decision['decision_score'],
+                    'decision_band' =>
+                        $decision['decision_band'],
+                    'evidence_quality' =>
+                        $decision['evidence_quality'],
+                    'autonomy_policy_version' =>
+                        $autonomy['policy_version'],
+                    'autonomous_mutation' =>
+                        'task.start',
+                ];
+            })
+            ->filter()
+            ->take(
+                AutonomyLevelTwoPolicy::DAILY_EXECUTION_LIMIT,
+            )
             ->values();
     }
 
