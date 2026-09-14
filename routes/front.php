@@ -8,11 +8,15 @@ use App\Http\Controllers\RecurringObligationFrontActionController;
 use App\Http\Controllers\RecurringObligationFrontController;
 use App\Http\Controllers\RecurringTaskFrontActionController;
 use App\Http\Controllers\RecurringTaskFrontController;
+use App\Http\Controllers\SafetyRecoveryController;
 use App\Http\Controllers\ServiceOrderFrontActionController;
 use App\Http\Controllers\ServiceOrderFrontController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function (): void {
+    Route::get('/estado-recuperacion', [SafetyRecoveryController::class, 'index'])
+        ->name('safety-recovery.index');
+
     Route::get('/clientes', [ClientOpsController::class, 'index'])
         ->name('client-ops.index');
     Route::post('/clientes', [ClientOpsActionController::class, 'store'])
