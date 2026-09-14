@@ -32,6 +32,7 @@
         'collaboration' => 'Colaboración',
         'agent' => 'Jarvis',
         'automations' => 'Automatizaciones',
+        'safety' => 'Estado y recuperación',
         'history' => 'Historial',
         'trash' => 'Papelera',
     ];
@@ -447,6 +448,13 @@
                 href="{{ route('automation-center.index') }}"
             >
                 Automatizaciones
+            </a>
+
+            <a
+                class="{{ $active === 'safety' ? 'is-active' : '' }}"
+                href="{{ route('safety-recovery.index') }}"
+            >
+                Estado y recuperación
             </a>
 
             <a
