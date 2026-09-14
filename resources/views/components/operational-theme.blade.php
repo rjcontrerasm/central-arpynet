@@ -236,6 +236,115 @@
         background: var(--central-surface-soft) !important;
     }
 
+    /*
+     * 2.36.2 — Jarvis readability contract.
+     *
+     * Jarvis concentra mucha información operativa en una sola superficie.
+     * La primera versión utilizaba varios textos auxiliares entre 8 y 10 px,
+     * que resultaban demasiado densos en escritorio. Estos overrides están
+     * deliberadamente acotados a .jarvis para mejorar lectura sin alterar la
+     * geometría de las demás pantallas FRONT.
+     */
+    .jarvis .safety span,
+    .jarvis .metric span {
+        font-size: 11px !important;
+        line-height: 1.4 !important;
+    }
+
+    .jarvis .executive-org strong,
+    .jarvis .executive-title,
+    .jarvis .daily-section h3,
+    .jarvis .daily-title,
+    .jarvis .review-column h3,
+    .jarvis .review-item-title,
+    .jarvis .priority-name,
+    .jarvis .attention-title {
+        font-size: 12px !important;
+        line-height: 1.4 !important;
+    }
+
+    .jarvis .executive-org-meta,
+    .jarvis .executive-reason,
+    .jarvis .daily-section-hint,
+    .jarvis .daily-reason,
+    .jarvis .daily-move,
+    .jarvis .review-item-meta,
+    .jarvis .priority-why,
+    .jarvis .priority-move,
+    .jarvis .attention-meta,
+    .jarvis .prepare-note {
+        font-size: 10.5px !important;
+        line-height: 1.55 !important;
+    }
+
+    .jarvis .executive-scope,
+    .jarvis .daily-scope,
+    .jarvis .review-item-scope,
+    .jarvis .proposal-compatible,
+    .jarvis .proposal-field label,
+    .jarvis .driver,
+    .jarvis .daily-focus span,
+    .jarvis .review-step,
+    .jarvis .context-count span {
+        font-size: 10px !important;
+        line-height: 1.4 !important;
+    }
+
+    .jarvis .priority-rank,
+    .jarvis .quick-link,
+    .jarvis .review-link,
+    .jarvis .prepare-button,
+    .jarvis .badge,
+    .jarvis .button {
+        font-size: 11px !important;
+        line-height: 1.35 !important;
+    }
+
+    .jarvis .proposal-input,
+    .jarvis .meta,
+    .jarvis .guard,
+    .jarvis .empty {
+        font-size: 12px !important;
+        line-height: 1.5 !important;
+    }
+
+    .jarvis .daily-item,
+    .jarvis .review-item {
+        padding: 10px !important;
+    }
+
+    .jarvis .daily-items,
+    .jarvis .review-items {
+        gap: 9px !important;
+    }
+
+    .jarvis .daily-plan-grid,
+    .jarvis .review-grid {
+        gap: 10px !important;
+    }
+
+    @media (max-width: 620px) {
+        .jarvis .executive-org-meta,
+        .jarvis .executive-reason,
+        .jarvis .daily-section-hint,
+        .jarvis .daily-reason,
+        .jarvis .daily-move,
+        .jarvis .review-item-meta,
+        .jarvis .priority-why,
+        .jarvis .priority-move,
+        .jarvis .attention-meta,
+        .jarvis .prepare-note {
+            font-size: 11px !important;
+        }
+
+        .jarvis .daily-title,
+        .jarvis .review-item-title,
+        .jarvis .priority-name,
+        .jarvis .attention-title {
+            font-size: 12.5px !important;
+        }
+    }
+
     @media (hover: hover) and (pointer: fine) {
         .stat:hover,
         .item:hover,

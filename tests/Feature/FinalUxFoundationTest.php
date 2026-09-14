@@ -54,6 +54,48 @@ class FinalUxFoundationTest extends TestCase
         $this->assertStringContainsString('font: inherit;', $contents);
     }
 
+    public function test_shared_operational_theme_guards_jarvis_readability_contract(): void
+    {
+        $path = resource_path(
+            'views/components/operational-theme.blade.php',
+        );
+        $contents = file_get_contents($path);
+
+        $this->assertIsString($contents);
+        $this->assertStringContainsString(
+            '2.36.2 — Jarvis readability contract',
+            $contents,
+        );
+        $this->assertStringContainsString(
+            '.jarvis .executive-org-meta',
+            $contents,
+        );
+        $this->assertStringContainsString(
+            '.jarvis .daily-title',
+            $contents,
+        );
+        $this->assertStringContainsString(
+            '.jarvis .review-item-meta',
+            $contents,
+        );
+        $this->assertStringContainsString(
+            '.jarvis .priority-why',
+            $contents,
+        );
+        $this->assertStringContainsString(
+            'font-size: 10.5px !important',
+            $contents,
+        );
+        $this->assertStringContainsString(
+            'font-size: 12px !important',
+            $contents,
+        );
+        $this->assertStringContainsString(
+            '@media (max-width: 620px)',
+            $contents,
+        );
+    }
+
     public function test_shared_interactions_cover_keyboard_motion_and_bfcache(): void
     {
         $path = resource_path(
