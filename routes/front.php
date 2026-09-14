@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CentralCopilotController;
 use App\Http\Controllers\ClientOpsActionController;
 use App\Http\Controllers\ClientOpsController;
 use App\Http\Controllers\ProjectFrontActionController;
@@ -14,6 +15,9 @@ use App\Http\Controllers\ServiceOrderFrontController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function (): void {
+    Route::get('/copilot', [CentralCopilotController::class, 'index'])
+        ->name('central-copilot.index');
+
     Route::get('/estado-recuperacion', [SafetyRecoveryController::class, 'index'])
         ->name('safety-recovery.index');
 
