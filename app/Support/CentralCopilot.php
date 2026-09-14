@@ -49,7 +49,6 @@ class CentralCopilot
 
         if ($this->containsAny($normalized, [
             'hoy',
-            'ahora',
             'primero',
             'prioridad',
             'prioridades',
