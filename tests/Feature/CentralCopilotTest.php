@@ -70,7 +70,7 @@ class CentralCopilotTest extends TestCase
             ->assertOk()
             ->assertSee('No puedo responder eso con evidencia suficiente')
             ->assertSee('No inventará una respuesta')
-            ->assertSee('no consultará una red externa');
+            ->assertSee('ni consultará una red externa');
 
         $this->assertSame(
             $beforeProposals,
