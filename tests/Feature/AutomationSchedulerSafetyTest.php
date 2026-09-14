@@ -32,8 +32,22 @@ class AutomationSchedulerSafetyTest extends TestCase
             $contract['subject_mutations_enabled'],
         );
 
-        $this->assertFalse(
+        $this->assertTrue(
             $contract['autonomous_subject_mutations_enabled'],
+        );
+
+        $this->assertTrue(
+            $contract['autonomy_level_two_enabled'],
+        );
+
+        $this->assertSame(
+            ['task.start'],
+            $contract['autonomous_subject_mutation_scope'],
+        );
+
+        $this->assertSame(
+            3,
+            $contract['autonomous_subject_mutation_daily_limit'],
         );
 
         $this->assertTrue(
@@ -53,8 +67,16 @@ class AutomationSchedulerSafetyTest extends TestCase
         );
 
         $this->assertSame(
-            'internal_notifications_and_pending_proposals',
+            'internal_notifications_pending_proposals_and_bounded_task_start',
             $contract['automatic_execution_scope'],
+        );
+
+        $this->assertFalse(
+            $contract['automatic_cross_module_task_creation_enabled'],
+        );
+
+        $this->assertFalse(
+            $contract['external_channels'],
         );
     }
 

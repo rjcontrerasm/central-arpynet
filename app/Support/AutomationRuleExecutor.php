@@ -18,6 +18,7 @@ class AutomationRuleExecutor
         private readonly AutomationRuleCatalog $catalog,
         private readonly AutomationRuleEngine $engine,
         private readonly AutonomyLevelOneService $autonomyLevelOne,
+        private readonly AutonomyLevelTwoService $autonomyLevelTwo,
     ) {
     }
 
@@ -276,6 +277,16 @@ class AutomationRuleExecutor
             );
         }
 
+        if (
+            $rule->action_key
+            === 'decision.execute_task_start'
+        ) {
+            return $this->executeAutonomyLevelTwo(
+                $rule,
+                $candidate,
+            );
+        }
+
         $recipient =
             $this->resolveRecipient(
                 $rule,
@@ -376,6 +387,73 @@ class AutomationRuleExecutor
         }
 
         return 'executed';
+    }
+
+    private function executeAutonomyLevelTwo(
+        AutomationRule $rule,
+        array $candidate,
+    ): string {
+        if (
+            ($candidate['subject_type'] ?? null)
+                !== 'task'
+        ) {
+            return 'blocked';
+        }
+
+        $actorId = (int) (
+            $rule->created_by ?? 0
+        );
+
+        if ($actorId < 1) {
+            return 'blocked';
+        }
+
+        $actor = User::query()->find(
+            $actorId,
+        );
+
+        if (
+            ! $actor
+            || ! $actor->is_active
+            || ! $actor->canWriteToOrganization(
+                (int) $rule->organization_id,
+            )
+        ) {
+            return 'blocked';
+        }
+
+        $task = Task::query()->find(
+            (int) (
+                $candidate['subject_id']
+                ?? 0
+            ),
+        );
+
+        if (
+            ! $task
+            || (int) $task->organization_id
+                !== (int) $rule->organization_id
+        ) {
+            return 'blocked';
+        }
+
+        try {
+            $result = $this->autonomyLevelTwo->execute(
+                $actor,
+                $task,
+                $rule,
+            );
+        } catch (
+            \Illuminate\Auth\Access\AuthorizationException
+            | \Illuminate\Validation\ValidationException
+            | \Illuminate\Database\Eloquent\ModelNotFoundException
+        ) {
+            return 'blocked';
+        }
+
+        return ($result['executed'] ?? false)
+            ? 'executed'
+            : 'blocked';
     }
 
     private function resolveRecipient(

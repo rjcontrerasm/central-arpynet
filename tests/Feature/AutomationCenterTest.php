@@ -171,8 +171,8 @@ class AutomationCenterTest extends TestCase
             ->assertOk()
             ->assertSee('Automatizaciones')
             ->assertSee('Regla visible')
-            ->assertSee('El scheduler evalúa reglas activas')
-            ->assertSee('Autonomía L1');
+            ->assertSee('Autonomía L1')
+            ->assertSee('Autonomía L2');
     }
 
     private function context(bool $withClient = false): array
