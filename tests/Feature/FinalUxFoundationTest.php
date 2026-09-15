@@ -54,6 +54,40 @@ class FinalUxFoundationTest extends TestCase
         $this->assertStringContainsString('font: inherit;', $contents);
     }
 
+    public function test_shared_operational_theme_guards_front_link_consistency_contract(): void
+    {
+        $path = resource_path(
+            'views/components/operational-theme.blade.php',
+        );
+        $contents = file_get_contents($path);
+
+        $this->assertIsString($contents);
+        $this->assertStringContainsString(
+            '2.36.3 — FRONT link consistency contract',
+            $contents,
+        );
+        $this->assertStringContainsString(
+            ':where(a:any-link) {',
+            $contents,
+        );
+        $this->assertStringContainsString(
+            'color: inherit;',
+            $contents,
+        );
+        $this->assertStringContainsString(
+            'text-decoration: none;',
+            $contents,
+        );
+        $this->assertStringContainsString(
+            ':where(a:any-link:focus-visible) {',
+            $contents,
+        );
+        $this->assertStringContainsString(
+            'outline: 2px solid var(--central-primary);',
+            $contents,
+        );
+    }
+
     public function test_shared_operational_theme_guards_jarvis_readability_contract(): void
     {
         $path = resource_path(

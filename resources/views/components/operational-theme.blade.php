@@ -59,6 +59,30 @@
         color: var(--central-text) !important;
     }
 
+    /*
+     * 2.36.3 — FRONT link consistency contract.
+     *
+     * Las vistas operativas no deben caer al estilo nativo del navegador
+     * (azul/morado y subrayado) cuando un enlace no declara una variante
+     * propia. :where() mantiene especificidad cero para que clases como
+     * .section-link, .admin-link o los enlaces de navegación puedan conservar
+     * sus colores y tratamientos deliberados.
+     */
+    :where(a:any-link) {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    :where(a:any-link:hover) {
+        text-decoration: none;
+    }
+
+    :where(a:any-link:focus-visible) {
+        outline: 2px solid var(--central-primary);
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+
     button,
     input,
     select,
