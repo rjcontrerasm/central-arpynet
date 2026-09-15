@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Client;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class ClientOpsActionController extends Controller
@@ -12,62 +13,140 @@ class ClientOpsActionController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $this->validatePayload($request);
-        $organizationId = (int) $validated['organization_id'];
+        $organizationIds = $this->organizationIds($validated);
 
-        abort_unless(
-            $request->user()->canWriteToOrganization($organizationId),
-            403,
-        );
+        $this->assertWritableOrganizations($request, $organizationIds);
 
-        $client = Client::query()->create(
-            $this->attributes($request, $validated),
-        );
+        $client = DB::transaction(function () use (
+            $request,
+            $validated,
+            $organizationIds,
+        ): Client {
+            $attributes = $this->attributes($request, $validated);
+            $attributes['organization_id'] = $organizationIds[0];
+            $attributes['created_by'] = $request->user()->id;
+
+            $client = Client::query()->create($attributes);
+
+            $client->organizations()->sync(
+                $this->pivotPayload(
+                    $organizationIds,
+                    $request->user()->id,
+                ),
+            );
+
+            return $client;
+        });
+
+        $scope = $this->redirectScope($validated, $organizationIds);
 
         return redirect()
             ->route('client-ops.index', [
-                'scope' => $organizationId,
+                'scope' => $scope,
                 'client' => $client->id,
             ])
-            ->with('client_success', 'Cliente creado.');
+            ->with('client_success', 'Cliente compartido creado.');
     }
 
     public function update(
         Request $request,
         Client $client,
     ): RedirectResponse {
-        abort_unless(
-            $request->user()->canWriteToOrganization(
-                (int) $client->organization_id,
-            ),
-            403,
+        $client->load('organizations:id');
+
+        $existingOrganizationIds = $client->organizations
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
+            ->values()
+            ->all();
+
+        if ($existingOrganizationIds === [] && $client->organization_id) {
+            $existingOrganizationIds = [(int) $client->organization_id];
+        }
+
+        $this->assertWritableOrganizations(
+            $request,
+            $existingOrganizationIds,
         );
 
         $validated = $this->validatePayload($request);
-        $organizationId = (int) $validated['organization_id'];
+        $usesSharedPayload = isset($validated['organization_ids']);
 
-        if ($organizationId !== (int) $client->organization_id) {
+        if (
+            ! $usesSharedPayload
+            && isset($validated['organization_id'])
+            && (int) $validated['organization_id'] !== (int) $client->organization_id
+        ) {
             throw ValidationException::withMessages([
                 'organization_id' =>
-                    'El ámbito de un cliente existente no se cambia desde Clientes.',
+                    'El payload legado no puede mover un cliente. Usa Empresas asociadas para compartirlo.',
             ]);
         }
 
-        $client->forceFill(
-            $this->attributes($request, $validated),
-        )->save();
+        // Un formulario legado puede actualizar datos maestros, pero nunca debe
+        // reducir silenciosamente una ficha ya compartida a una sola empresa.
+        $organizationIds = $usesSharedPayload
+            ? $this->organizationIds($validated)
+            : $existingOrganizationIds;
+
+        $this->assertWritableOrganizations($request, $organizationIds);
+        $this->guardOrganizationDetaches(
+            $client,
+            $existingOrganizationIds,
+            $organizationIds,
+        );
+
+        DB::transaction(function () use (
+            $request,
+            $client,
+            $validated,
+            $organizationIds,
+        ): void {
+            $attributes = $this->attributes($request, $validated);
+            $attributes['organization_id'] = $organizationIds[0];
+
+            $client->forceFill($attributes)->save();
+
+            $client->organizations()->sync(
+                $this->pivotPayload(
+                    $organizationIds,
+                    $request->user()->id,
+                ),
+            );
+        });
+
+        $scope = $this->redirectScope($validated, $organizationIds);
 
         return redirect()
             ->route('client-ops.index', [
-                'scope' => $organizationId,
+                'scope' => $scope,
                 'client' => $client->id,
             ])
-            ->with('client_success', 'Cliente actualizado.');
+            ->with('client_success', 'Cliente compartido actualizado.');
     }
 
     private function validatePayload(Request $request): array
     {
         return $request->validate([
-            'organization_id' => ['required', 'integer'],
+            'organization_ids' => [
+                'nullable',
+                'array',
+                'min:1',
+                'required_without:organization_id',
+            ],
+            'organization_ids.*' => [
+                'required',
+                'integer',
+                'distinct',
+                'exists:organizations,id',
+            ],
+            'organization_id' => [
+                'nullable',
+                'integer',
+                'exists:organizations,id',
+                'required_without:organization_ids',
+            ],
+            'scope' => ['nullable', 'integer'],
             'name' => ['required', 'string', 'max:255'],
             'legal_name' => ['nullable', 'string', 'max:255'],
             'tax_id' => ['nullable', 'string', 'max:20'],
@@ -80,10 +159,103 @@ class ClientOpsActionController extends Controller
         ]);
     }
 
+    private function organizationIds(array $validated): array
+    {
+        $ids = $validated['organization_ids']
+            ?? [$validated['organization_id'] ?? null];
+
+        return collect($ids)
+            ->filter(fn ($id): bool => $id !== null)
+            ->map(fn ($id): int => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function assertWritableOrganizations(
+        Request $request,
+        array $organizationIds,
+    ): void {
+        abort_if($organizationIds === [], 403);
+
+        foreach ($organizationIds as $organizationId) {
+            abort_unless(
+                $request->user()->canWriteToOrganization(
+                    (int) $organizationId,
+                ),
+                403,
+            );
+        }
+    }
+
+    private function guardOrganizationDetaches(
+        Client $client,
+        array $existingOrganizationIds,
+        array $organizationIds,
+    ): void {
+        $removed = array_values(array_diff(
+            $existingOrganizationIds,
+            $organizationIds,
+        ));
+
+        if ($removed === []) {
+            return;
+        }
+
+        $usedOrganizationIds = $client->serviceOrders()
+            ->whereIn('organization_id', $removed)
+            ->distinct()
+            ->pluck('organization_id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+
+        if ($usedOrganizationIds !== []) {
+            throw ValidationException::withMessages([
+                'organization_ids' =>
+                    'No se puede desvincular una empresa que ya tiene servicios asociados a este cliente.',
+            ]);
+        }
+    }
+
+    private function pivotPayload(
+        array $organizationIds,
+        int $userId,
+    ): array {
+        $payload = [];
+
+        foreach ($organizationIds as $organizationId) {
+            $payload[(int) $organizationId] = [
+                'is_active' => true,
+                'created_by' => $userId,
+            ];
+        }
+
+        return $payload;
+    }
+
+    private function redirectScope(
+        array $validated,
+        array $organizationIds,
+    ): int {
+        $scope = isset($validated['scope'])
+            ? (int) $validated['scope']
+            : 0;
+
+        return in_array($scope, $organizationIds, true)
+            ? $scope
+            : $organizationIds[0];
+    }
+
     private function attributes(
         Request $request,
         array $validated,
     ): array {
+        unset(
+            $validated['organization_ids'],
+            $validated['organization_id'],
+            $validated['scope'],
+        );
+
         foreach ([
             'legal_name',
             'tax_id',

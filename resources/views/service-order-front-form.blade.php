@@ -21,26 +21,11 @@
         <x-operational-nav active="services" />
     </div>
 
-    @if(session('service_front_success'))
-        <div class="success">{{ session('service_front_success') }}</div>
-    @endif
+    @if(session('service_front_success'))<div class="success">{{ session('service_front_success') }}</div>@endif
+    @if($errors->any())<div class="errors">@foreach($errors->all() as $error)<div>{{ $error }}</div>@endforeach</div>@endif
 
-    @if($errors->any())
-        <div class="errors">
-            @foreach($errors->all() as $error)<div>{{ $error }}</div>@endforeach
-        </div>
-    @endif
-
-    <section class="hero">
-        <div>
-            <h1>{{ $serviceOrder ? 'Editar servicio' : 'Nuevo servicio' }}</h1>
-            <div class="subtitle">Seguimiento comercial, ejecución y finanzas desde CENTRAL Front.</div>
-        </div>
-    </section>
-
-    @if(! $canWrite)
-        <div class="readonly">Tienes acceso de solo lectura a este servicio.</div>
-    @endif
+    <section class="hero"><div><h1>{{ $serviceOrder ? 'Editar servicio' : 'Nuevo servicio' }}</h1><div class="subtitle">Seguimiento comercial, ejecución y finanzas desde CENTRAL Front.</div></div></section>
+    @if(! $canWrite)<div class="readonly">Tienes acceso de solo lectura a este servicio.</div>@endif
 
     @php
         $organizationId=(int)old('organization_id',$serviceOrder?->organization_id ?? $defaultOrganizationId);
@@ -51,20 +36,14 @@
     <section class="panel">
         <form method="POST" action="{{ $serviceOrder ? route('service-order-front.update',$serviceOrder) : route('service-order-front.store') }}">
             @csrf
-
             <div class="section-title">Servicio</div>
             <div class="grid">
                 <div class="field">
                     <label for="organization_id">Empresa / ámbito</label>
                     <select id="organization_id" name="organization_id" {{ $serviceOrder || ! $canWrite ? 'disabled' : '' }} required>
-                        @foreach($writableOrganizations as $organization)
-                            <option value="{{ $organization->id }}" @selected($organizationId === (int)$organization->id)>{{ $organization->name }}</option>
-                        @endforeach
+                        @foreach($writableOrganizations as $organization)<option value="{{ $organization->id }}" @selected($organizationId === (int)$organization->id)>{{ $organization->name }}</option>@endforeach
                     </select>
-                    @if($serviceOrder)
-                        <input type="hidden" name="organization_id" value="{{ $serviceOrder->organization_id }}">
-                        <div class="help">El ámbito de un servicio existente no se cambia desde esta ficha.</div>
-                    @endif
+                    @if($serviceOrder)<input type="hidden" name="organization_id" value="{{ $serviceOrder->organization_id }}"><div class="help">El ámbito de un servicio existente no se cambia desde esta ficha.</div>@endif
                 </div>
 
                 <div class="field">
@@ -72,47 +51,18 @@
                     <select id="client_id" name="client_id" {{ ! $canWrite ? 'disabled' : '' }} required>
                         <option value="">Seleccionar cliente</option>
                         @foreach($clientOptions as $id=>$client)
-                            <option value="{{ $id }}" data-organization="{{ $client['organization_id'] }}" @selected($selectedClient === (int)$id)>{{ $client['name'] }} — {{ $client['organization_name'] }}</option>
+                            <option value="{{ $id }}" data-organizations="{{ implode(',',$client['organization_ids']) }}" @selected($selectedClient === (int)$id)>{{ $client['name'] }} — {{ implode(' · ',$client['organization_names']) }}</option>
                         @endforeach
                     </select>
+                    <div class="help">Solo se habilitan clientes asociados a la empresa seleccionada.</div>
                 </div>
 
-                <div class="field span-2">
-                    <label for="title">Servicio / asunto</label>
-                    <input id="title" name="title" maxlength="255" required value="{{ old('title',$serviceOrder?->title) }}" {{ ! $canWrite ? 'disabled' : '' }}>
-                </div>
-
-                <div class="field">
-                    <label for="stage">Etapa</label>
-                    <select id="stage" name="stage" {{ ! $canWrite ? 'disabled' : '' }} required>
-                        @foreach(\App\Models\ServiceOrder::stageOptions() as $value=>$label)
-                            <option value="{{ $value }}" @selected(old('stage',$serviceOrder?->stage ?? 'opportunity') === $value)>{{ $label }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="field">
-                    <label for="assigned_to">Responsable</label>
-                    <select id="assigned_to" name="assigned_to" {{ ! $canWrite ? 'disabled' : '' }}>
-                        <option value="">Sin asignar</option>
-                        @foreach($assigneeOptions as $id=>$assignee)
-                            <option value="{{ $id }}" data-organizations="{{ implode(',',$assignee['organization_ids']) }}" @selected($selectedAssignee === (int)$id)>{{ $assignee['name'] }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="field span-2">
-                    <label for="description">Descripción</label>
-                    <textarea id="description" name="description" {{ ! $canWrite ? 'disabled' : '' }}>{{ old('description',$serviceOrder?->description) }}</textarea>
-                </div>
-                <div class="field">
-                    <label for="next_action">Próxima acción</label>
-                    <input id="next_action" name="next_action" maxlength="255" value="{{ old('next_action',$serviceOrder?->next_action) }}" {{ ! $canWrite ? 'disabled' : '' }}>
-                </div>
-                <div class="field">
-                    <label for="next_action_at">Fecha de seguimiento</label>
-                    <input id="next_action_at" type="datetime-local" name="next_action_at" value="{{ old('next_action_at',$serviceOrder?->next_action_at?->format('Y-m-d\TH:i')) }}" {{ ! $canWrite ? 'disabled' : '' }}>
-                </div>
+                <div class="field span-2"><label for="title">Servicio / asunto</label><input id="title" name="title" maxlength="255" required value="{{ old('title',$serviceOrder?->title) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
+                <div class="field"><label for="stage">Etapa</label><select id="stage" name="stage" {{ ! $canWrite ? 'disabled' : '' }} required>@foreach(\App\Models\ServiceOrder::stageOptions() as $value=>$label)<option value="{{ $value }}" @selected(old('stage',$serviceOrder?->stage ?? 'opportunity') === $value)>{{ $label }}</option>@endforeach</select></div>
+                <div class="field"><label for="assigned_to">Responsable</label><select id="assigned_to" name="assigned_to" {{ ! $canWrite ? 'disabled' : '' }}><option value="">Sin asignar</option>@foreach($assigneeOptions as $id=>$assignee)<option value="{{ $id }}" data-organizations="{{ implode(',',$assignee['organization_ids']) }}" @selected($selectedAssignee === (int)$id)>{{ $assignee['name'] }}</option>@endforeach</select></div>
+                <div class="field span-2"><label for="description">Descripción</label><textarea id="description" name="description" {{ ! $canWrite ? 'disabled' : '' }}>{{ old('description',$serviceOrder?->description) }}</textarea></div>
+                <div class="field"><label for="next_action">Próxima acción</label><input id="next_action" name="next_action" maxlength="255" value="{{ old('next_action',$serviceOrder?->next_action) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
+                <div class="field"><label for="next_action_at">Fecha de seguimiento</label><input id="next_action_at" type="datetime-local" name="next_action_at" value="{{ old('next_action_at',$serviceOrder?->next_action_at?->format('Y-m-d\TH:i')) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
             </div>
 
             <div class="section-title">Cotización y orden</div>
@@ -153,7 +103,6 @@
         </form>
     </section>
 </div>
-
 <script>
 (() => {
     const organization = document.getElementById('organization_id');
@@ -162,8 +111,8 @@
     if (!organization || organization.disabled) return;
     const filter = () => {
         const id = organization.value;
-        client?.querySelectorAll('option[data-organization]').forEach((option) => {
-            option.disabled = option.dataset.organization !== id;
+        client?.querySelectorAll('option[data-organizations]').forEach((option) => {
+            option.disabled = !option.dataset.organizations.split(',').includes(id);
         });
         assignee?.querySelectorAll('option[data-organizations]').forEach((option) => {
             option.disabled = !option.dataset.organizations.split(',').includes(id);

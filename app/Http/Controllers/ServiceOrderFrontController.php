@@ -81,14 +81,25 @@ class ServiceOrderFrontController extends Controller
         return Client::query()
             ->visibleTo($request->user())
             ->where('is_active', true)
-            ->with('organization:id,name')
+            ->with([
+                'organizations' => fn ($query) => $query
+                    ->where('organizations.is_active', true)
+                    ->wherePivot('is_active', true)
+                    ->orderBy('organizations.name'),
+            ])
             ->orderBy('name')
-            ->get(['id', 'organization_id', 'name'])
+            ->get(['id', 'name'])
             ->mapWithKeys(fn (Client $client): array => [
                 $client->id => [
                     'name' => $client->name,
-                    'organization_id' => (int) $client->organization_id,
-                    'organization_name' => $client->organization?->name ?? 'Sin ámbito',
+                    'organization_ids' => $client->organizations
+                        ->pluck('id')
+                        ->map(fn ($id): int => (int) $id)
+                        ->all(),
+                    'organization_names' => $client->organizations
+                        ->pluck('name')
+                        ->values()
+                        ->all(),
                 ],
             ])
             ->all();
