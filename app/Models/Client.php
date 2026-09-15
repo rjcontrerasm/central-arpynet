@@ -43,22 +43,14 @@ class Client extends Model
             $client->created_by ??= auth()->id();
         });
 
-        // Compatibilidad para código legado/tests que todavía crean un cliente
-        // indicando organization_id. Las nuevas pantallas administran el pivote.
         static::created(function (Client $client): void {
-            if (
-                ! $client->organization_id
-                || ! Schema::hasTable('client_organization')
-            ) {
-                return;
-            }
+            $client->syncLegacyOrganizationLink();
+        });
 
-            $client->organizations()->syncWithoutDetaching([
-                (int) $client->organization_id => [
-                    'is_active' => true,
-                    'created_by' => $client->created_by,
-                ],
-            ]);
+        static::updated(function (Client $client): void {
+            if ($client->wasChanged('organization_id')) {
+                $client->syncLegacyOrganizationLink();
+            }
         });
     }
 
@@ -99,18 +91,9 @@ class Client extends Model
             'organizations',
             fn (Builder $organizationQuery): Builder =>
                 $organizationQuery
-                    ->where(
-                        'organizations.id',
-                        $organizationId,
-                    )
-                    ->where(
-                        'organizations.is_active',
-                        true,
-                    )
-                    ->where(
-                        'client_organization.is_active',
-                        true,
-                    ),
+                    ->where('organizations.id', $organizationId)
+                    ->where('organizations.is_active', true)
+                    ->where('client_organization.is_active', true),
         );
     }
 
@@ -122,26 +105,14 @@ class Client extends Model
             'organizations',
             fn (Builder $organizationQuery): Builder =>
                 $organizationQuery
-                    ->where(
-                        'organizations.is_active',
-                        true,
-                    )
-                    ->where(
-                        'client_organization.is_active',
-                        true,
-                    )
+                    ->where('organizations.is_active', true)
+                    ->where('client_organization.is_active', true)
                     ->whereHas(
                         'users',
                         fn (Builder $membershipQuery): Builder =>
                             $membershipQuery
-                                ->where(
-                                    'users.id',
-                                    $user->id,
-                                )
-                                ->where(
-                                    'organization_user.is_active',
-                                    true,
-                                ),
+                                ->where('users.id', $user->id)
+                                ->where('organization_user.is_active', true),
                     ),
         );
     }
@@ -152,5 +123,22 @@ class Client extends Model
             ->where('organizations.id', $organizationId)
             ->wherePivot('is_active', true)
             ->exists();
+    }
+
+    private function syncLegacyOrganizationLink(): void
+    {
+        if (
+            ! $this->organization_id
+            || ! Schema::hasTable('client_organization')
+        ) {
+            return;
+        }
+
+        $this->organizations()->syncWithoutDetaching([
+            (int) $this->organization_id => [
+                'is_active' => true,
+                'created_by' => $this->created_by,
+            ],
+        ]);
     }
 }
