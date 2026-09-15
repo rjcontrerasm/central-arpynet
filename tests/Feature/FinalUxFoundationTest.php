@@ -170,6 +170,40 @@ class FinalUxFoundationTest extends TestCase
         );
     }
 
+    public function test_operational_navigation_exposes_recurring_workflows(): void
+    {
+        $path = resource_path(
+            'views/components/operational-nav.blade.php',
+        );
+        $contents = file_get_contents($path);
+
+        $this->assertIsString($contents);
+        $this->assertStringContainsString(
+            "request()->routeIs('recurring-task-front.*')",
+            $contents,
+        );
+        $this->assertStringContainsString(
+            "request()->routeIs('recurring-obligation-front.*')",
+            $contents,
+        );
+        $this->assertStringContainsString(
+            "'recurring-tasks' => 'Tareas recurrentes'",
+            $contents,
+        );
+        $this->assertStringContainsString(
+            "'recurring-obligations' => 'Vencimientos recurrentes'",
+            $contents,
+        );
+        $this->assertStringContainsString(
+            "route('recurring-task-front.index')",
+            $contents,
+        );
+        $this->assertStringContainsString(
+            "route('recurring-obligation-front.index')",
+            $contents,
+        );
+    }
+
     public function test_operational_front_views_with_navigation_inherit_shared_ux_contract(): void
     {
         $themePath = resource_path(
