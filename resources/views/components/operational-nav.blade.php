@@ -17,6 +17,12 @@
         ? request()->query('view', 'mine')
         : null;
 
+    $active = match (true) {
+        request()->routeIs('recurring-task-front.*') => 'recurring-tasks',
+        request()->routeIs('recurring-obligation-front.*') => 'recurring-obligations',
+        default => $active,
+    };
+
     $secondaryLabels = [
         'agenda' => 'Agenda',
         'clients' => 'Clientes',
@@ -33,6 +39,8 @@
         'copilot' => 'Copilot',
         'agent' => 'Jarvis',
         'automations' => 'Automatizaciones',
+        'recurring-tasks' => 'Tareas recurrentes',
+        'recurring-obligations' => 'Vencimientos recurrentes',
         'safety' => 'Estado y recuperación',
         'history' => 'Historial',
         'trash' => 'Papelera',
@@ -361,6 +369,20 @@
                 href="{{ route('obligation-ops.show') }}"
             >
                 Vencimientos
+            </a>
+
+            <a
+                class="{{ $active === 'recurring-tasks' ? 'is-active' : '' }}"
+                href="{{ route('recurring-task-front.index') }}"
+            >
+                Tareas recurrentes
+            </a>
+
+            <a
+                class="{{ $active === 'recurring-obligations' ? 'is-active' : '' }}"
+                href="{{ route('recurring-obligation-front.index') }}"
+            >
+                Vencimientos recurrentes
             </a>
 
             <a
