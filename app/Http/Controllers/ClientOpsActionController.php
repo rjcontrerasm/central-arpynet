@@ -70,6 +70,18 @@ class ClientOpsActionController extends Controller
         );
 
         $validated = $this->validatePayload($request);
+
+        if (
+            ! isset($validated['organization_ids'])
+            && isset($validated['organization_id'])
+            && (int) $validated['organization_id'] !== (int) $client->organization_id
+        ) {
+            throw ValidationException::withMessages([
+                'organization_id' =>
+                    'El payload legado no puede mover un cliente. Usa Empresas asociadas para compartirlo.',
+            ]);
+        }
+
         $organizationIds = $this->organizationIds($validated);
 
         $this->assertWritableOrganizations($request, $organizationIds);
@@ -86,9 +98,6 @@ class ClientOpsActionController extends Controller
             $organizationIds,
         ): void {
             $attributes = $this->attributes($request, $validated);
-
-            // Compatibilidad transitoria para código legado. La relación real
-            // queda en client_organization.
             $attributes['organization_id'] = $organizationIds[0];
 
             $client->forceFill($attributes)->save();
@@ -114,12 +123,23 @@ class ClientOpsActionController extends Controller
     private function validatePayload(Request $request): array
     {
         return $request->validate([
-            'organization_ids' => ['required', 'array', 'min:1'],
+            'organization_ids' => [
+                'nullable',
+                'array',
+                'min:1',
+                'required_without:organization_id',
+            ],
             'organization_ids.*' => [
                 'required',
                 'integer',
                 'distinct',
                 'exists:organizations,id',
+            ],
+            'organization_id' => [
+                'nullable',
+                'integer',
+                'exists:organizations,id',
+                'required_without:organization_ids',
             ],
             'scope' => ['nullable', 'integer'],
             'name' => ['required', 'string', 'max:255'],
@@ -136,7 +156,11 @@ class ClientOpsActionController extends Controller
 
     private function organizationIds(array $validated): array
     {
-        return collect($validated['organization_ids'])
+        $ids = $validated['organization_ids']
+            ?? [$validated['organization_id'] ?? null];
+
+        return collect($ids)
+            ->filter(fn ($id): bool => $id !== null)
             ->map(fn ($id): int => (int) $id)
             ->unique()
             ->values()
@@ -223,6 +247,7 @@ class ClientOpsActionController extends Controller
     ): array {
         unset(
             $validated['organization_ids'],
+            $validated['organization_id'],
             $validated['scope'],
         );
 
