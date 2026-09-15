@@ -134,14 +134,14 @@ class ServiceOrderFrontActionController extends Controller
     ): void {
         $clientIsValid = Client::query()
             ->whereKey($clientId)
-            ->where('organization_id', $organizationId)
+            ->forOrganization($organizationId)
             ->where('is_active', true)
             ->exists();
 
         if (! $clientIsValid) {
             throw ValidationException::withMessages([
                 'client_id' =>
-                    'El cliente debe estar activo y pertenecer al ámbito del servicio.',
+                    'El cliente debe estar activo y asociado al ámbito del servicio.',
             ]);
         }
 
@@ -178,14 +178,8 @@ class ServiceOrderFrontActionController extends Controller
         array $validated,
     ): array {
         foreach ([
-            'title',
-            'description',
-            'quotation_number',
-            'order_number',
-            'invoice_number',
-            'next_action',
-            'drive_url',
-            'notes',
+            'title', 'description', 'quotation_number', 'order_number',
+            'invoice_number', 'next_action', 'drive_url', 'notes',
         ] as $field) {
             if (! array_key_exists($field, $validated)) {
                 continue;
