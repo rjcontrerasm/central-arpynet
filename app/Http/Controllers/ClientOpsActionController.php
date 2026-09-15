@@ -70,9 +70,10 @@ class ClientOpsActionController extends Controller
         );
 
         $validated = $this->validatePayload($request);
+        $usesSharedPayload = isset($validated['organization_ids']);
 
         if (
-            ! isset($validated['organization_ids'])
+            ! $usesSharedPayload
             && isset($validated['organization_id'])
             && (int) $validated['organization_id'] !== (int) $client->organization_id
         ) {
@@ -82,7 +83,11 @@ class ClientOpsActionController extends Controller
             ]);
         }
 
-        $organizationIds = $this->organizationIds($validated);
+        // Un formulario legado puede actualizar datos maestros, pero nunca debe
+        // reducir silenciosamente una ficha ya compartida a una sola empresa.
+        $organizationIds = $usesSharedPayload
+            ? $this->organizationIds($validated)
+            : $existingOrganizationIds;
 
         $this->assertWritableOrganizations($request, $organizationIds);
         $this->guardOrganizationDetaches(
