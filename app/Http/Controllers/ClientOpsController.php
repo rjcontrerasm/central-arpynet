@@ -51,12 +51,16 @@ class ClientOpsController extends Controller
 
         $clients = Client::query()
             ->visibleTo($user)
-            ->with('organization')
+            ->with([
+                'organizations' => fn ($query) => $query
+                    ->where('organizations.is_active', true)
+                    ->wherePivot('is_active', true)
+                    ->orderBy('organizations.name'),
+            ])
             ->when(
                 $selectedScope,
-                fn ($query) => $query->where(
-                    'organization_id',
-                    $selectedScope,
+                fn ($query) => $query->forOrganization(
+                    (int) $selectedScope,
                 ),
             )
             ->when($search !== '', function ($query) use ($search): void {

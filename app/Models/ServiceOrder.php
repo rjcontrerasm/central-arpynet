@@ -75,7 +75,6 @@ class ServiceOrder extends Model
             $order->assigned_to ??= auth()->id();
             $order->stage_changed_at ??= now();
             $order->last_activity_at ??= now();
-
             $order->validateClientOwnership();
         });
 
@@ -87,32 +86,13 @@ class ServiceOrder extends Model
             }
 
             $activityFields = [
-                'organization_id',
-                'client_id',
-                'title',
-                'description',
-                'stage',
-                'quotation_number',
-                'quotation_date',
-                'order_number',
-                'order_received_date',
-                'start_date',
-                'end_date',
-                'report_submitted_date',
-                'conformity_date',
-                'invoice_number',
-                'invoice_date',
-                'invoice_due_date',
-                'paid_date',
-                'closed_date',
-                'amount',
-                'invoice_amount',
-                'currency',
-                'includes_tax',
-                'next_action',
-                'next_action_at',
-                'drive_url',
-                'notes',
+                'organization_id', 'client_id', 'title', 'description', 'stage',
+                'quotation_number', 'quotation_date', 'order_number',
+                'order_received_date', 'start_date', 'end_date',
+                'report_submitted_date', 'conformity_date', 'invoice_number',
+                'invoice_date', 'invoice_due_date', 'paid_date', 'closed_date',
+                'amount', 'invoice_amount', 'currency', 'includes_tax',
+                'next_action', 'next_action_at', 'drive_url', 'notes',
                 'assigned_to',
             ];
 
@@ -161,38 +141,27 @@ class ServiceOrder extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function scopeVisibleTo(
-        Builder $query,
-        User $user,
-    ): Builder {
+    public function scopeVisibleTo(Builder $query, User $user): Builder
+    {
         return $query->whereHas(
             'organization.users',
             fn (Builder $membershipQuery): Builder =>
                 $membershipQuery
                     ->where('users.id', $user->id)
-                    ->where(
-                        'organization_user.is_active',
-                        true,
-                    ),
+                    ->where('organization_user.is_active', true),
         );
     }
 
     public function getDaysInStageAttribute(): int
     {
-        $from = $this->stage_changed_at
-            ?? $this->created_at
-            ?? now();
+        $from = $this->stage_changed_at ?? $this->created_at ?? now();
 
         return $from->diffInDays(now());
     }
 
     public function getAttentionLabelAttribute(): string
     {
-        if (in_array(
-            $this->stage,
-            ['closed', 'cancelled'],
-            true,
-        )) {
+        if (in_array($this->stage, ['closed', 'cancelled'], true)) {
             return 'Cerrado';
         }
 
@@ -205,35 +174,22 @@ class ServiceOrder extends Model
             return 'Cobranza vencida';
         }
 
-        if (
-            $this->next_action_at
-            && $this->next_action_at->isPast()
-        ) {
+        if ($this->next_action_at && $this->next_action_at->isPast()) {
             return 'Seguimiento vencido';
         }
 
         if (
-            in_array(
-                $this->stage,
-                ['opportunity', 'quotation'],
-                true,
-            )
+            in_array($this->stage, ['opportunity', 'quotation'], true)
             && $this->days_in_stage >= 7
         ) {
             return 'Sin seguimiento';
         }
 
-        if (
-            $this->stage === 'report_submitted'
-            && $this->days_in_stage >= 5
-        ) {
+        if ($this->stage === 'report_submitted' && $this->days_in_stage >= 5) {
             return 'Esperar conformidad';
         }
 
-        if (
-            $this->stage === 'conformity'
-            && $this->days_in_stage >= 2
-        ) {
+        if ($this->stage === 'conformity' && $this->days_in_stage >= 2) {
             return 'Facturar';
         }
 
@@ -247,16 +203,10 @@ class ServiceOrder extends Model
     public function getAttentionColorAttribute(): string
     {
         return match ($this->attention_label) {
-            'Cobranza vencida',
-            'Seguimiento vencido' => 'danger',
-
-            'Sin seguimiento',
-            'Esperar conformidad',
-            'Facturar',
+            'Cobranza vencida', 'Seguimiento vencido' => 'danger',
+            'Sin seguimiento', 'Esperar conformidad', 'Facturar',
             'Sin movimiento' => 'warning',
-
             'Al día' => 'success',
-
             default => 'gray',
         };
     }
@@ -269,13 +219,13 @@ class ServiceOrder extends Model
 
         $belongs = Client::query()
             ->whereKey($this->client_id)
-            ->where('organization_id', $this->organization_id)
+            ->forOrganization((int) $this->organization_id)
             ->exists();
 
         if (! $belongs) {
             throw ValidationException::withMessages([
                 'client_id' =>
-                    'El cliente no pertenece a la empresa seleccionada.',
+                    'El cliente no está asociado a la empresa seleccionada.',
             ]);
         }
     }

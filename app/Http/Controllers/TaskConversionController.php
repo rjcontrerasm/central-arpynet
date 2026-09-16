@@ -20,80 +20,46 @@ use Illuminate\View\View;
 
 class TaskConversionController extends Controller
 {
-    public function show(
-        Request $request,
-        Task $task,
-    ): View {
-        $this->authorizeTask(
-            $request,
-            $task,
-        );
+    public function show(Request $request, Task $task): View
+    {
+        $this->authorizeTask($request, $task);
 
         $clients = Client::query()
-            ->where(
-                'organization_id',
-                $task->organization_id,
-            )
+            ->forOrganization((int) $task->organization_id)
             ->where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        $frequencies =
-            RecurringTaskRule::frequencyOptions();
+        $frequencies = RecurringTaskRule::frequencyOptions();
 
         $selectedTarget = in_array(
-            (string) $request->query(
-                'target',
-                'project',
-            ),
-            [
-                'project',
-                'service',
-                'recurring',
-                'waiting',
-            ],
+            (string) $request->query('target', 'project'),
+            ['project', 'service', 'recurring', 'waiting'],
             true,
         )
-            ? (string) $request->query(
-                'target',
-                'project',
-            )
+            ? (string) $request->query('target', 'project')
             : 'project';
 
-        $selectedFrequency =
-            array_key_exists(
-                (string) $request->query(
-                    'frequency',
-                    'monthly',
-                ),
-                $frequencies,
-            )
-                ? (string) $request->query(
-                    'frequency',
-                    'monthly',
-                )
-                : 'monthly';
+        $selectedFrequency = array_key_exists(
+            (string) $request->query('frequency', 'monthly'),
+            $frequencies,
+        )
+            ? (string) $request->query('frequency', 'monthly')
+            : 'monthly';
 
-        $suggestedAnchor =
-            $this->suggestedNextAnchor(
-                $task,
-                $selectedFrequency,
-            );
-
-        return view(
-            'task-convert',
-            [
-                'task' => $task,
-                'clients' => $clients,
-                'frequencies' => $frequencies,
-                'selectedTarget' =>
-                    $selectedTarget,
-                'selectedFrequency' =>
-                    $selectedFrequency,
-                'suggestedAnchor' =>
-                    $suggestedAnchor,
-            ],
+        $suggestedAnchor = $this->suggestedNextAnchor(
+            $task,
+            $selectedFrequency,
         );
+
+        return view('task-convert', [
+            'task' => $task,
+            'clients' => $clients,
+            'frequencies' => $frequencies,
+            'selectedTarget' => $selectedTarget,
+            'selectedFrequency' => $selectedFrequency,
+            'suggestedAnchor' => $suggestedAnchor,
+        ]);
     }
 
     public function store(
@@ -101,33 +67,17 @@ class TaskConversionController extends Controller
         Task $task,
         GlobalUndoService $undo,
     ): RedirectResponse {
-        $this->authorizeTask(
-            $request,
-            $task,
-        );
+        $this->authorizeTask($request, $task);
 
         $validated = $request->validate([
             'target' => [
                 'required',
-                Rule::in([
-                    'project',
-                    'service',
-                    'recurring',
-                    'waiting',
-                ]),
+                Rule::in(['project', 'service', 'recurring', 'waiting']),
             ],
-            'client_id' => [
-                'nullable',
-                'integer',
-                'required_if:target,service',
-            ],
+            'client_id' => ['nullable', 'integer', 'required_if:target,service'],
             'frequency' => [
                 'nullable',
-                Rule::in(
-                    array_keys(
-                        RecurringTaskRule::frequencyOptions(),
-                    ),
-                ),
+                Rule::in(array_keys(RecurringTaskRule::frequencyOptions())),
                 'required_if:target,recurring',
             ],
             'anchor_date' => [
@@ -148,73 +98,39 @@ class TaskConversionController extends Controller
                 'regex:/^(?:[01]\d|2[0-3]):[0-5]\d$/',
                 'required_if:target,recurring',
             ],
-            'waiting_until' => [
-                'nullable',
-                'date',
-            ],
-            'waiting_reason' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
+            'waiting_until' => ['nullable', 'date'],
+            'waiting_reason' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $before = $undo->captureTask(
-            $task,
-        );
+        $before = $undo->captureTask($task);
 
-        $result = DB::transaction(
-            function () use (
-                $request,
-                $task,
-                $validated,
-            ): array {
-                return match (
-                    $validated['target']
-                ) {
-                    'project' =>
-                        $this->toProject(
-                            $request,
-                            $task,
-                        ),
-                    'service' =>
-                        $this->toService(
-                            $request,
-                            $task,
-                            (int) $validated[
-                                'client_id'
-                            ],
-                        ),
-                    'recurring' =>
-                        $this->toRecurring(
-                            $request,
-                            $task,
-                            (string) $validated[
-                                'frequency'
-                            ],
-                            (string) $validated[
-                                'anchor_date'
-                            ],
-                            (int) $validated[
-                                'create_days_before'
-                            ],
-                            (string) $validated[
-                                'due_time'
-                            ],
-                        ),
-                    'waiting' =>
-                        $this->toWaiting(
-                            $task,
-                            $validated[
-                                'waiting_until'
-                            ] ?? null,
-                            $validated[
-                                'waiting_reason'
-                            ] ?? null,
-                        ),
-                };
-            },
-        );
+        $result = DB::transaction(function () use (
+            $request,
+            $task,
+            $validated,
+        ): array {
+            return match ($validated['target']) {
+                'project' => $this->toProject($request, $task),
+                'service' => $this->toService(
+                    $request,
+                    $task,
+                    (int) $validated['client_id'],
+                ),
+                'recurring' => $this->toRecurring(
+                    $request,
+                    $task,
+                    (string) $validated['frequency'],
+                    (string) $validated['anchor_date'],
+                    (int) $validated['create_days_before'],
+                    (string) $validated['due_time'],
+                ),
+                'waiting' => $this->toWaiting(
+                    $task,
+                    $validated['waiting_until'] ?? null,
+                    $validated['waiting_reason'] ?? null,
+                ),
+            };
+        });
 
         $task->refresh();
 
@@ -223,71 +139,47 @@ class TaskConversionController extends Controller
             $task,
             $before,
             $result['label'],
-            route(
-                'daily-ops.show',
-                [],
-                false,
-            ),
-            $result['cleanup']
-                ?? [],
+            route('daily-ops.show', [], false),
+            $result['cleanup'] ?? [],
         );
 
         return redirect()
             ->route('daily-ops.show')
-            ->with(
-                'daily_action_success',
-                $result['message'],
-            );
+            ->with('daily_action_success', $result['message']);
     }
 
-    private function toProject(
-        Request $request,
-        Task $task,
-    ): array {
-        $project = Project::query()
-            ->create([
-                'organization_id' =>
-                    $task->organization_id,
-                'name' => $task->title,
-                'description' =>
-                    $task->description,
-                'type' => 'project',
-                'horizon' => 'short',
-                'status' => 'active',
-                'start_date' =>
-                    now()->toDateString(),
-                'target_date' =>
-                    $task->due_at
-                        ?->toDateString(),
-                'next_action' =>
-                    $task->next_action,
-                'created_by' =>
-                    $request->user()->id,
-                'is_private' =>
-                    (bool) $task->is_private,
-            ]);
+    private function toProject(Request $request, Task $task): array
+    {
+        $project = Project::query()->create([
+            'organization_id' => $task->organization_id,
+            'name' => $task->title,
+            'description' => $task->description,
+            'type' => 'project',
+            'horizon' => 'short',
+            'status' => 'active',
+            'start_date' => now()->toDateString(),
+            'target_date' => $task->due_at?->toDateString(),
+            'next_action' => $task->next_action,
+            'created_by' => $request->user()->id,
+            'is_private' => (bool) $task->is_private,
+        ]);
 
         $task->forceFill([
             'project_id' => $project->id,
-            'status' =>
-                $task->status === 'pending'
-                    ? 'in_progress'
-                    : $task->status,
+            'status' => $task->status === 'pending'
+                ? 'in_progress'
+                : $task->status,
         ])->save();
 
         $project->refresh();
 
         return [
-            'message' =>
-                'Tarea convertida en proyecto y vinculada como primera tarea.',
-            'label' =>
-                'Tarea convertida en proyecto',
+            'message' => 'Tarea convertida en proyecto y vinculada como primera tarea.',
+            'label' => 'Tarea convertida en proyecto',
             'cleanup' => [
                 'kind' => 'project',
                 'id' => $project->id,
-                'updated_at' =>
-                    $project->updated_at
-                        ?->toIso8601String(),
+                'updated_at' => $project->updated_at?->toIso8601String(),
             ],
         ];
     }
@@ -299,61 +191,43 @@ class TaskConversionController extends Controller
     ): array {
         $client = Client::query()
             ->whereKey($clientId)
-            ->where(
-                'organization_id',
-                $task->organization_id,
-            )
+            ->forOrganization((int) $task->organization_id)
             ->where('is_active', true)
             ->first();
 
         if (! $client) {
             throw ValidationException::withMessages([
                 'client_id' =>
-                    'El cliente no pertenece al ámbito de la tarea.',
+                    'El cliente no está asociado al ámbito de la tarea.',
             ]);
         }
 
-        $service = ServiceOrder::query()
-            ->create([
-                'organization_id' =>
-                    $task->organization_id,
-                'client_id' =>
-                    $client->id,
-                'title' =>
-                    $task->title,
-                'description' =>
-                    $task->description,
-                'stage' =>
-                    'opportunity',
-                'next_action' =>
-                    $task->next_action,
-                'next_action_at' =>
-                    $task->due_at,
-                'created_by' =>
-                    $request->user()->id,
-            ]);
+        $service = ServiceOrder::query()->create([
+            'organization_id' => $task->organization_id,
+            'client_id' => $client->id,
+            'title' => $task->title,
+            'description' => $task->description,
+            'stage' => 'opportunity',
+            'next_action' => $task->next_action,
+            'next_action_at' => $task->due_at,
+            'created_by' => $request->user()->id,
+        ]);
 
         $task->forceFill([
             'status' => 'completed',
-            'external_system' =>
-                'central_conversion',
-            'external_id' =>
-                'service:'.$service->id,
+            'external_system' => 'central_conversion',
+            'external_id' => 'service:'.$service->id,
         ])->save();
 
         $service->refresh();
 
         return [
-            'message' =>
-                'Tarea convertida en servicio/oportunidad.',
-            'label' =>
-                'Tarea convertida en servicio',
+            'message' => 'Tarea convertida en servicio/oportunidad.',
+            'label' => 'Tarea convertida en servicio',
             'cleanup' => [
                 'kind' => 'service',
                 'id' => $service->id,
-                'updated_at' =>
-                    $service->updated_at
-                        ?->toIso8601String(),
+                'updated_at' => $service->updated_at?->toIso8601String(),
             ],
         ];
     }
@@ -366,18 +240,11 @@ class TaskConversionController extends Controller
         int $createDaysBefore,
         string $dueTime,
     ): array {
-        $timezone = config(
-            'app.timezone',
-            'America/Lima',
-        );
+        $timezone = config('app.timezone', 'America/Lima');
 
-        if (
-            $task->recurringRun()
-                ->exists()
-        ) {
+        if ($task->recurringRun()->exists()) {
             throw ValidationException::withMessages([
-                'target' =>
-                    'Esta tarea ya pertenece a una recurrencia.',
+                'target' => 'Esta tarea ya pertenece a una recurrencia.',
             ]);
         }
 
@@ -387,89 +254,57 @@ class TaskConversionController extends Controller
         )->startOfDay();
 
         $rule = RecurringTaskRule::withoutEvents(
-            fn (): RecurringTaskRule =>
-                RecurringTaskRule::query()
-                    ->create([
-                'organization_id' =>
-                    $task->organization_id,
-                'project_id' =>
-                    $task->project_id,
-                'title' =>
-                    $task->title,
-                'description' =>
-                    $task->description,
-                'next_action' =>
-                    $task->next_action,
-                'frequency' =>
-                    $frequency,
-                        'anchor_date' =>
-                            $anchor->toDateString(),
-                        'create_days_before' =>
-                            $createDaysBefore,
-                        'due_time' => $dueTime,
-                        'urgency' =>
-                            $task->urgency,
-                        'impact' =>
-                            $task->impact,
-                        'is_private' =>
-                            (bool) $task->is_private,
-                        'is_active' => true,
-                        'assigned_to' =>
-                            $task->assigned_to
-                            ?? $request->user()->id,
-                        'created_by' =>
-                            $request->user()->id,
-                    ]),
+            fn (): RecurringTaskRule => RecurringTaskRule::query()->create([
+                'organization_id' => $task->organization_id,
+                'project_id' => $task->project_id,
+                'title' => $task->title,
+                'description' => $task->description,
+                'next_action' => $task->next_action,
+                'frequency' => $frequency,
+                'anchor_date' => $anchor->toDateString(),
+                'create_days_before' => $createDaysBefore,
+                'due_time' => $dueTime,
+                'urgency' => $task->urgency,
+                'impact' => $task->impact,
+                'is_private' => (bool) $task->is_private,
+                'is_active' => true,
+                'assigned_to' => $task->assigned_to ?? $request->user()->id,
+                'created_by' => $request->user()->id,
+            ]),
         );
 
         $seedDate = $task->due_at
-            ? CarbonImmutable::parse(
-                $task->due_at,
-                $timezone,
-            )->startOfDay()
-            : CarbonImmutable::now(
-                $timezone,
-            )->startOfDay();
+            ? CarbonImmutable::parse($task->due_at, $timezone)->startOfDay()
+            : CarbonImmutable::now($timezone)->startOfDay();
 
         RecurringTaskRun::query()->create([
-            'recurring_task_rule_id' =>
-                $rule->id,
-            'organization_id' =>
-                $rule->organization_id,
-            'scheduled_for' =>
-                $seedDate->toDateString(),
+            'recurring_task_rule_id' => $rule->id,
+            'organization_id' => $rule->organization_id,
+            'scheduled_for' => $seedDate->toDateString(),
             'task_id' => $task->id,
             'generated_at' => now(),
         ]);
 
-        app(
-            RecurringTaskGenerator::class,
-        )->generateFor(
+        app(RecurringTaskGenerator::class)->generateFor(
             $rule->fresh(),
             now(),
         );
 
         $rule->refresh();
 
-        $frequencyLabel =
-            RecurringTaskRule::frequencyOptions()[
-                $frequency
-            ] ?? $frequency;
+        $frequencyLabel = RecurringTaskRule::frequencyOptions()[$frequency]
+            ?? $frequency;
 
         return [
-            'message' =>
-                'Recurrencia '.$frequencyLabel
+            'message' => 'Recurrencia '.$frequencyLabel
                 .' creada. Próxima ocurrencia: '
                 .$anchor->format('d/m/Y')
                 .'. La tarea actual se conserva.',
-            'label' =>
-                'Recurrencia creada desde tarea',
+            'label' => 'Recurrencia creada desde tarea',
             'cleanup' => [
                 'kind' => 'recurring',
                 'id' => $rule->id,
-                'updated_at' =>
-                    $rule->updated_at
-                        ?->toIso8601String(),
+                'updated_at' => $rule->updated_at?->toIso8601String(),
             ],
         ];
     }
@@ -479,40 +314,25 @@ class TaskConversionController extends Controller
         ?string $waitingUntil,
         ?string $reason,
     ): array {
-        $timezone = config(
-            'app.timezone',
-            'America/Lima',
-        );
+        $timezone = config('app.timezone', 'America/Lima');
 
         $until = $waitingUntil
-            ? CarbonImmutable::parse(
-                $waitingUntil,
-                $timezone,
-            )->setTime(17, 0)
+            ? CarbonImmutable::parse($waitingUntil, $timezone)->setTime(17, 0)
             : $task->due_at;
 
         $task->forceFill([
             'status' => 'waiting',
-            'waiting_since' =>
-                CarbonImmutable::now(
-                    $timezone,
-                ),
+            'waiting_since' => CarbonImmutable::now($timezone),
             'waiting_until' => $until,
-            'waiting_reason' =>
-                trim((string) $reason)
-                    !== ''
-                    ? trim(
-                        (string) $reason,
-                    )
-                    : 'Seguimiento pendiente',
+            'waiting_reason' => trim((string) $reason) !== ''
+                ? trim((string) $reason)
+                : 'Seguimiento pendiente',
             'due_at' => null,
         ])->save();
 
         return [
-            'message' =>
-                'Tarea convertida en seguimiento en espera.',
-            'label' =>
-                'Tarea convertida en espera',
+            'message' => 'Tarea convertida en seguimiento en espera.',
+            'label' => 'Tarea convertida en espera',
             'cleanup' => [],
         ];
     }
@@ -521,36 +341,21 @@ class TaskConversionController extends Controller
         Task $task,
         string $frequency,
     ): CarbonImmutable {
-        $timezone = config(
-            'app.timezone',
-            'America/Lima',
-        );
-
-        $today = CarbonImmutable::now(
-            $timezone,
-        )->startOfDay();
-
+        $timezone = config('app.timezone', 'America/Lima');
+        $today = CarbonImmutable::now($timezone)->startOfDay();
         $base = $task->due_at
-            ? CarbonImmutable::parse(
-                $task->due_at,
-                $timezone,
-            )->startOfDay()
+            ? CarbonImmutable::parse($task->due_at, $timezone)->startOfDay()
             : $today;
 
-        $candidate = $this->nextAnchor(
-            $base,
-            $frequency,
-        );
+        $candidate = $this->nextAnchor($base, $frequency);
 
         while ($candidate->lt($today)) {
-            $candidate = $this->nextAnchor(
-                $candidate,
-                $frequency,
-            );
+            $candidate = $this->nextAnchor($candidate, $frequency);
         }
 
         return $candidate;
     }
+
     private function nextAnchor(
         CarbonImmutable $now,
         string $frequency,
@@ -558,43 +363,22 @@ class TaskConversionController extends Controller
         return (match ($frequency) {
             'daily' => $now->addDay(),
             'weekly' => $now->addWeek(),
-            'bimonthly' =>
-                $now->addMonthsNoOverflow(2),
-            'quarterly' =>
-                $now->addMonthsNoOverflow(3),
-            'semiannual' =>
-                $now->addMonthsNoOverflow(6),
-            'annual' =>
-                $now->addYearNoOverflow(),
-            default =>
-                $now->addMonthNoOverflow(),
+            'bimonthly' => $now->addMonthsNoOverflow(2),
+            'quarterly' => $now->addMonthsNoOverflow(3),
+            'semiannual' => $now->addMonthsNoOverflow(6),
+            'annual' => $now->addYearNoOverflow(),
+            default => $now->addMonthNoOverflow(),
         })->startOfDay();
     }
 
-    private function authorizeTask(
-        Request $request,
-        Task $task,
-    ): void {
-        $allowed = DB::table(
-            'organization_user',
-        )
-            ->where(
-                'user_id',
-                $request->user()->id,
-            )
-            ->where(
-                'organization_id',
-                $task->organization_id,
-            )
-            ->where(
-                'is_active',
-                true,
-            )
+    private function authorizeTask(Request $request, Task $task): void
+    {
+        $allowed = DB::table('organization_user')
+            ->where('user_id', $request->user()->id)
+            ->where('organization_id', $task->organization_id)
+            ->where('is_active', true)
             ->exists();
 
-        abort_unless(
-            $allowed,
-            403,
-        );
+        abort_unless($allowed, 403);
     }
 }

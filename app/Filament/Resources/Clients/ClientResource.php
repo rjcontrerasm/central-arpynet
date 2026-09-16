@@ -28,91 +28,80 @@ class ClientResource extends Resource
         Heroicon::OutlinedRectangleStack;
 
     protected static ?string $navigationLabel = 'Clientes';
-
     protected static ?string $modelLabel = 'cliente';
-
     protected static ?string $pluralModelLabel = 'clientes';
-
     protected static ?string $recordTitleAttribute = 'name';
-
     protected static ?string $slug = 'clientes';
-
     protected static ?int $navigationSort = 40;
 
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->components([
-                Section::make('Cliente')
-                    ->schema([
-                        Select::make('organization_id')
-                            ->label('Empresa que atiende')
-                            ->options(
-                                fn (): array => auth()->user()
-                                    ?->organizations()
-                                    ->wherePivot('is_active', true)
-                                    ->orderBy('organizations.name')
-                                    ->pluck(
-                                        'organizations.name',
-                                        'organizations.id',
-                                    )
-                                    ->all() ?? [],
-                            )
-                            ->default(
-                                fn (): ?int => auth()->user()
-                                    ?->current_organization_id,
-                            )
-                            ->searchable()
-                            ->native(false)
-                            ->required(),
+        return $schema->components([
+            Section::make('Cliente')
+                ->description(
+                    'La ficha es maestra y puede compartirse entre empresas. Las asociaciones múltiples se administran desde CENTRAL Front.',
+                )
+                ->schema([
+                    Select::make('organization_id')
+                        ->label('Empresa inicial / compatibilidad')
+                        ->options(fn (): array => auth()->user()
+                            ?->organizations()
+                            ->wherePivot('is_active', true)
+                            ->orderBy('organizations.name')
+                            ->pluck('organizations.name', 'organizations.id')
+                            ->all() ?? [])
+                        ->default(fn (): ?int => auth()->user()
+                            ?->current_organization_id)
+                        ->helperText(
+                            'Al crear o cambiar este valor se añade la empresa a la ficha compartida; no elimina asociaciones existentes.',
+                        )
+                        ->searchable()
+                        ->native(false)
+                        ->required(),
 
-                        TextInput::make('name')
-                            ->label('Nombre comercial')
-                            ->required()
-                            ->maxLength(255),
+                    TextInput::make('name')
+                        ->label('Nombre comercial')
+                        ->required()
+                        ->maxLength(255),
 
-                        TextInput::make('legal_name')
-                            ->label('Razón social')
-                            ->maxLength(255),
+                    TextInput::make('legal_name')
+                        ->label('Razón social')
+                        ->maxLength(255),
 
-                        TextInput::make('tax_id')
-                            ->label('RUC')
-                            ->maxLength(20),
+                    TextInput::make('tax_id')
+                        ->label('RUC')
+                        ->maxLength(20),
 
-                        Toggle::make('is_active')
-                            ->label('Activo')
-                            ->default(true)
-                            ->required(),
-                    ])
-                    ->columns(2),
+                    Toggle::make('is_active')
+                        ->label('Activo')
+                        ->default(true)
+                        ->required(),
+                ])
+                ->columns(2),
 
-                Section::make('Contacto y documentos')
-                    ->schema([
-                        TextInput::make('contact_name')
-                            ->label('Contacto')
-                            ->maxLength(255),
-
-                        TextInput::make('email')
-                            ->label('Correo')
-                            ->email()
-                            ->maxLength(255),
-
-                        TextInput::make('phone')
-                            ->label('Teléfono')
-                            ->maxLength(40),
-
-                        TextInput::make('drive_url')
-                            ->label('Carpeta de Google Drive')
-                            ->url()
-                            ->maxLength(255),
-
-                        Textarea::make('notes')
-                            ->label('Notas')
-                            ->rows(3)
-                            ->columnSpanFull(),
-                    ])
-                    ->columns(2),
-            ]);
+            Section::make('Contacto y documentos')
+                ->schema([
+                    TextInput::make('contact_name')
+                        ->label('Contacto')
+                        ->maxLength(255),
+                    TextInput::make('email')
+                        ->label('Correo')
+                        ->email()
+                        ->maxLength(255),
+                    TextInput::make('phone')
+                        ->label('Teléfono')
+                        ->maxLength(40),
+                    TextInput::make('drive_url')
+                        ->label('Carpeta de Google Drive')
+                        ->url()
+                        ->maxLength(255),
+                    Textarea::make('notes')
+                        ->label('Notas')
+                        ->rows(3)
+                        ->columnSpanFull(),
+                ])
+                ->columns(2),
+        ]);
     }
 
     public static function table(Table $table): Table
@@ -122,17 +111,13 @@ class ClientResource extends Resource
             ->columns([
                 TextColumn::make('name')
                     ->label('Cliente')
-                    ->description(
-                        fn (Client $record): ?string =>
-                            $record->legal_name,
-                    )
+                    ->description(fn (Client $record): ?string => $record->legal_name)
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('organization.name')
-                    ->label('Empresa')
-                    ->badge()
-                    ->sortable(),
+                TextColumn::make('organizations.name')
+                    ->label('Empresas')
+                    ->badge(),
 
                 TextColumn::make('tax_id')
                     ->label('RUC')
@@ -149,23 +134,24 @@ class ClientResource extends Resource
                     ->boolean(),
             ])
             ->filters([
-                SelectFilter::make('organization_id')
+                SelectFilter::make('organization')
                     ->label('Empresa')
-                    ->options(
-                        fn (): array => auth()->user()
-                            ?->organizations()
-                            ->wherePivot('is_active', true)
-                            ->orderBy('organizations.name')
-                            ->pluck(
-                                'organizations.name',
-                                'organizations.id',
-                            )
-                            ->all() ?? [],
-                    ),
+                    ->options(fn (): array => auth()->user()
+                        ?->organizations()
+                        ->wherePivot('is_active', true)
+                        ->orderBy('organizations.name')
+                        ->pluck('organizations.name', 'organizations.id')
+                        ->all() ?? [])
+                    ->query(function (Builder $query, array $data): Builder {
+                        $organizationId = (int) ($data['value'] ?? 0);
+
+                        return $organizationId > 0
+                            ? $query->forOrganization($organizationId)
+                            : $query;
+                    }),
             ])
             ->recordActions([
-                EditAction::make()
-                    ->label('Editar'),
+                EditAction::make()->label('Editar'),
             ]);
     }
 
@@ -174,12 +160,12 @@ class ClientResource extends Resource
         $user = auth()->user();
 
         if (! $user) {
-            return parent::getEloquentQuery()
-                ->whereRaw('1 = 0');
+            return parent::getEloquentQuery()->whereRaw('1 = 0');
         }
 
         return parent::getEloquentQuery()
-            ->visibleTo($user);
+            ->visibleTo($user)
+            ->with('organizations');
     }
 
     public static function getPages(): array

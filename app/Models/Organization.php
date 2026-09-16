@@ -95,9 +95,11 @@ class Organization extends Model
         return $this->hasMany(ObligationOccurrence::class);
     }
 
-    public function clients(): HasMany
+    public function clients(): BelongsToMany
     {
-        return $this->hasMany(Client::class);
+        return $this->belongsToMany(Client::class)
+            ->withPivot(['is_active', 'created_by'])
+            ->withTimestamps();
     }
 
     public function serviceOrders(): HasMany
