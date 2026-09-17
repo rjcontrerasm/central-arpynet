@@ -16,13 +16,14 @@
         .safety-kpi{padding:14px}.safety-kpi strong{display:block;margin-top:5px;font-size:22px}.safety-kpi span{font-size:11px;color:var(--op-muted,#94a3b8);font-weight:780}
         .safety-grid{display:grid;grid-template-columns:1fr;gap:14px}.safety-card{padding:16px}.safety-card h2{margin:0 0 11px;font-size:17px}.safety-card h3{margin:16px 0 8px;font-size:13px}
         .safety-row{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:12px;padding:11px 0;border-top:1px solid var(--op-border,#334155);font-size:12px}.safety-row:first-of-type{border-top:0}.safety-row strong{display:block;margin-bottom:4px}.safety-row-meta{color:var(--op-muted,#94a3b8);line-height:1.45}.safety-right{text-align:right}
-        .safety-pill{display:inline-flex;border:1px solid var(--op-border,#334155);border-radius:999px;padding:4px 8px;font-size:10px;font-weight:850}.safety-pill.failed{border-color:#dc2626;color:#fca5a5}.safety-pill.blocked,.safety-pill.stale{border-color:#d97706;color:#fcd34d}.safety-pill.pending{border-color:#2563eb;color:#bfdbfe}
-        .safety-contract{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.safety-contract div{border:1px solid var(--op-border,#334155);border-radius:12px;padding:11px}.safety-contract strong{display:block;margin-bottom:4px;font-size:12px}.safety-contract span{font-size:11px;color:var(--op-muted,#94a3b8)}
+        .safety-pill{display:inline-flex;border:1px solid var(--op-border,#334155);border-radius:999px;padding:4px 8px;font-size:10px;font-weight:850}.safety-pill.healthy{border-color:#16a34a;color:#86efac}.safety-pill.failed,.safety-pill.attention,.safety-pill.stale{border-color:#dc2626;color:#fca5a5}.safety-pill.blocked,.safety-pill.watch,.safety-pill.missing,.safety-pill.invalid{border-color:#d97706;color:#fcd34d}.safety-pill.pending{border-color:#2563eb;color:#bfdbfe}
+        .safety-contract,.runtime-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.safety-contract div,.runtime-metric{border:1px solid var(--op-border,#334155);border-radius:12px;padding:11px}.safety-contract strong,.runtime-metric strong{display:block;margin-bottom:4px;font-size:12px}.safety-contract span,.runtime-metric span{font-size:11px;color:var(--op-muted,#94a3b8)}
+        .runtime-metric b{display:block;margin-bottom:3px;font-size:20px}.runtime-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}.runtime-head h2{margin:0}.runtime-note{margin-top:10px;color:var(--op-muted,#94a3b8);font-size:11px;line-height:1.5}
         .safety-action{display:inline-flex;align-items:center;min-height:36px;border:1px solid var(--op-border,#334155);border-radius:10px;padding:7px 10px;color:inherit;text-decoration:none;font-size:12px;font-weight:800}.safety-action:hover{border-color:#3b82f6}
         .safety-empty{padding:8px 0;color:var(--op-muted,#94a3b8);font-size:12px}.safety-note{margin-top:12px;border:1px solid var(--op-border,#334155);border-radius:12px;padding:11px 12px;color:var(--op-muted,#94a3b8);font-size:11px;line-height:1.5}
         @media(min-width:900px){.safety-grid{grid-template-columns:minmax(0,1.2fr) minmax(320px,.8fr)}}
-        @media(max-width:720px){.safety-header{display:grid}.safety-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.safety-row{grid-template-columns:1fr}.safety-right{text-align:left}.safety-contract{grid-template-columns:1fr}}
-        @media(prefers-color-scheme:light){.safety-status.healthy{color:#15803d}.safety-status.watch{color:#a16207}.safety-status.attention{color:#b91c1c}.safety-pill.failed{color:#b91c1c}.safety-pill.blocked,.safety-pill.stale{color:#a16207}.safety-pill.pending{color:#1d4ed8}}
+        @media(max-width:720px){.safety-header{display:grid}.safety-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.safety-row{grid-template-columns:1fr}.safety-right{text-align:left}.safety-contract,.runtime-grid{grid-template-columns:1fr}.runtime-head{display:grid}}
+        @media(prefers-color-scheme:light){.safety-status.healthy,.safety-pill.healthy{color:#15803d}.safety-status.watch,.safety-pill.watch,.safety-pill.missing,.safety-pill.invalid{color:#a16207}.safety-status.attention,.safety-pill.attention,.safety-pill.stale{color:#b91c1c}.safety-pill.failed{color:#b91c1c}.safety-pill.blocked{color:#a16207}.safety-pill.pending{color:#1d4ed8}}
     </style>
 </head>
 <body>
@@ -93,6 +94,92 @@
                 <a class="safety-action" href="{{ route('operational-agenda.show') }}">Abrir Agenda</a>
             </section>
         </div>
+    </div>
+
+    <div class="safety-grid" style="margin-top:14px">
+        <section class="safety-card" data-runtime-scheduler>
+            <div class="runtime-head">
+                <div>
+                    <h2>Scheduler</h2>
+                    <p class="safety-muted">Heartbeat independiente de MySQL para confirmar que cron está invocando CENTRAL.</p>
+                </div>
+                <span class="safety-pill {{ $snapshot['scheduler']['heartbeat_status'] }}">
+                    @switch($snapshot['scheduler']['heartbeat_status'])
+                        @case('healthy') Operativo @break
+                        @case('watch') Retrasado @break
+                        @case('stale') Sin ejecución reciente @break
+                        @case('missing') Sin heartbeat @break
+                        @default No válido
+                    @endswitch
+                </span>
+            </div>
+
+            <div class="runtime-grid">
+                <div class="runtime-metric">
+                    <strong>Última señal</strong>
+                    <b>{{ $snapshot['scheduler']['last_seen_at']?->format('H:i:s') ?? '—' }}</b>
+                    <span>{{ $snapshot['scheduler']['last_seen_at']?->format('d/m/Y') ?? 'Aún no registrada' }}</span>
+                </div>
+                <div class="runtime-metric">
+                    <strong>Antigüedad</strong>
+                    <b>{{ $snapshot['scheduler']['age_seconds'] !== null ? $snapshot['scheduler']['age_seconds'].' s' : '—' }}</b>
+                    <span>Saludable hasta 180 s · alerta desde 300 s</span>
+                </div>
+            </div>
+            <div class="runtime-note">El heartbeat no usa locks de cache ni consultas de aplicación. Si queda stale, el problema está antes de los jobs programados o en la invocación del scheduler.</div>
+        </section>
+
+        <section class="safety-card" data-runtime-database>
+            <div class="runtime-head">
+                <div>
+                    <h2>Base de datos</h2>
+                    <p class="safety-muted">Presión de conexiones y dependencias operativas. No se muestran host, usuario, base, consultas ni credenciales.</p>
+                </div>
+                @if($snapshot['database']['metrics_available'])
+                    <span class="safety-pill {{ $snapshot['database']['pressure'] }}">
+                        {{ $snapshot['database']['pressure'] === 'attention' ? 'Presión alta' : ($snapshot['database']['pressure'] === 'watch' ? 'Vigilar' : 'Estable') }}
+                    </span>
+                @else
+                    <span class="safety-pill watch">Sin métricas</span>
+                @endif
+            </div>
+
+            @if($snapshot['database']['metrics_available'])
+                <div class="runtime-grid">
+                    <div class="runtime-metric">
+                        <strong>Conexiones actuales</strong>
+                        <b>{{ $snapshot['database']['threads_connected'] }} / {{ $snapshot['database']['max_connections'] }}</b>
+                        <span>{{ $snapshot['database']['current_utilization_pct'] ?? '—' }}% utilizado ahora</span>
+                    </div>
+                    <div class="runtime-metric">
+                        <strong>Pico desde inicio MySQL</strong>
+                        <b>{{ $snapshot['database']['max_used_connections'] }}</b>
+                        <span>{{ $snapshot['database']['max_used_utilization_pct'] ?? '—' }}% del límite</span>
+                    </div>
+                    <div class="runtime-metric">
+                        <strong>Threads ejecutando</strong>
+                        <b>{{ $snapshot['database']['threads_running'] }}</b>
+                        <span>Conexiones ejecutando trabajo en este instante</span>
+                    </div>
+                    <div class="runtime-metric">
+                        <strong>Rechazos por límite</strong>
+                        <b>{{ $snapshot['database']['connection_errors_max_connections'] }}</b>
+                        <span>Connection_errors_max_connections registrado por el servidor</span>
+                    </div>
+                </div>
+            @else
+                <div class="safety-empty">Las métricas de conexiones no están disponibles para el driver actual o el servidor no permite consultar estos contadores.</div>
+            @endif
+
+            <div class="runtime-note">
+                Driver: {{ $snapshot['database']['driver'] }} · Cache: {{ $snapshot['database']['cache_store'] }} · Sesiones: {{ $snapshot['database']['session_driver'] }} · Cola: {{ $snapshot['database']['queue_connection'] }}.
+                @if($snapshot['database']['database_backed_services'] !== [])
+                    Dependencias sobre DB: {{ implode(', ', $snapshot['database']['database_backed_services']) }}.
+                @else
+                    No se detectan cache, sesiones o cola configuradas sobre DB.
+                @endif
+            </div>
+        </section>
     </div>
 
     <div class="safety-grid" style="margin-top:14px">
