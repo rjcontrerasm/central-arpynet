@@ -52,6 +52,14 @@ class TaskConversionController extends Controller
             $selectedFrequency,
         );
 
+        $suggestedAnchors = [];
+
+        foreach (array_keys($frequencies) as $frequency) {
+            $suggestedAnchors[$frequency] = $this
+                ->suggestedNextAnchor($task, $frequency)
+                ->format('Y-m-d');
+        }
+
         return view('task-convert', [
             'task' => $task,
             'clients' => $clients,
@@ -59,6 +67,7 @@ class TaskConversionController extends Controller
             'selectedTarget' => $selectedTarget,
             'selectedFrequency' => $selectedFrequency,
             'suggestedAnchor' => $suggestedAnchor,
+            'suggestedAnchors' => $suggestedAnchors,
         ]);
     }
 
@@ -373,12 +382,11 @@ class TaskConversionController extends Controller
 
     private function authorizeTask(Request $request, Task $task): void
     {
-        $allowed = DB::table('organization_user')
-            ->where('user_id', $request->user()->id)
-            ->where('organization_id', $task->organization_id)
-            ->where('is_active', true)
-            ->exists();
-
-        abort_unless($allowed, 403);
+        abort_unless(
+            $request->user()->canWriteToOrganization(
+                (int) $task->organization_id,
+            ),
+            403,
+        );
     }
 }
