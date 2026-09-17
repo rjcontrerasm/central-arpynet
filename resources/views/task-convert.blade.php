@@ -7,27 +7,27 @@
     <title>Convertir tarea · Central ARPYNET</title>
     <style>
         :root { font-family: Inter, ui-sans-serif, system-ui, sans-serif; color-scheme: light dark; }
-        * { box-sizing: border-box; }
-        body { margin: 0; background: #0b1020; color: #f8fafc; }
-        a { color: inherit; }
-        .shell { width: min(100%, 760px); margin: 0 auto; padding: 28px 16px 60px; }
-        .back { color: #93c5fd; text-decoration: none; font-size: 13px; font-weight: 750; }
-        h1 { margin: 20px 0 6px; font-size: 34px; letter-spacing: -.04em; }
-        .subtitle, .meta, .hint { color: #94a3b8; }
-        .subtitle { font-size: 13px; }
-        .task, .form { margin-top: 18px; padding: 16px; border: 1px solid #24304b; border-radius: 16px; background: #11182b; }
-        .task-title { font-weight: 820; }
-        .meta { margin-top: 5px; font-size: 12px; }
-        .form { display: grid; gap: 14px; }
-        label { display: grid; gap: 7px; font-size: 13px; font-weight: 750; }
-        select, input { width: 100%; min-height: 46px; padding: 10px 12px; border: 1px solid #334155; border-radius: 11px; background: #0f172a; color: #f8fafc; font: inherit; }
-        .hint { margin-top: 5px; font-size: 11px; }
-        button { min-height: 50px; border: 0; border-radius: 12px; background: #2563eb; color: #fff; font: inherit; font-weight: 850; cursor: pointer; }
-        .errors { margin-top: 14px; padding: 12px; border: 1px solid #991b1b; border-radius: 12px; background: #450a0a; color: #fecaca; }
+        * { box-sizing:border-box; }
+        body { margin:0; background:#0b1020; color:#f8fafc; }
+        a { color:inherit; }
+        .shell { width:min(100%,760px); margin:0 auto; padding:28px 16px 60px; }
+        .back { color:#93c5fd; text-decoration:none; font-size:13px; font-weight:750; }
+        h1 { margin:20px 0 6px; font-size:34px; letter-spacing:-.04em; }
+        .subtitle, .meta, .hint { color:#94a3b8; }
+        .subtitle { font-size:13px; }
+        .task, .form { margin-top:18px; padding:16px; border:1px solid #24304b; border-radius:16px; background:#11182b; }
+        .task-title { font-weight:820; }
+        .meta { margin-top:5px; font-size:12px; }
+        .form { display:grid; gap:14px; }
+        label { display:grid; gap:7px; font-size:13px; font-weight:750; }
+        select, input { width:100%; min-height:46px; padding:10px 12px; border:1px solid #334155; border-radius:11px; background:#0f172a; color:#f8fafc; font:inherit; }
+        .hint { margin-top:5px; font-size:11px; }
+        button { min-height:50px; border:0; border-radius:12px; background:#2563eb; color:#fff; font:inherit; font-weight:850; cursor:pointer; }
+        .errors { margin-top:14px; padding:12px; border:1px solid #991b1b; border-radius:12px; background:#450a0a; color:#fecaca; }
         @media (prefers-color-scheme: light) {
-            body { background: #f8fafc; color: #0f172a; }
-            .task, .form { background: #fff; border-color: #e2e8f0; }
-            select, input { background: #fff; color: #0f172a; border-color: #cbd5e1; }
+            body { background:#f8fafc; color:#0f172a; }
+            .task, .form { background:#fff; border-color:#e2e8f0; }
+            select, input { background:#fff; color:#0f172a; border-color:#cbd5e1; }
         }
     </style>
 </head>
@@ -79,7 +79,7 @@
         <div id="recurring-fields" hidden>
             <label>
                 Frecuencia
-                <select name="frequency">
+                <select name="frequency" id="conversion-frequency">
                     @foreach ($frequencies as $value => $label)
                         <option
                             value="{{ $value }}"
@@ -101,11 +101,16 @@
                 <input
                     type="date"
                     name="anchor_date"
+                    id="conversion-anchor"
                     value="{{ old(
                         'anchor_date',
                         $suggestedAnchor->format('Y-m-d'),
                     ) }}"
                 >
+                <span class="hint">
+                    Se actualiza automáticamente al cambiar la frecuencia;
+                    puedes modificarla manualmente después.
+                </span>
             </label>
 
             <label>
@@ -165,6 +170,9 @@
 <script>
 (() => {
     const target = document.getElementById('conversion-target');
+    const frequency = document.getElementById('conversion-frequency');
+    const anchor = document.getElementById('conversion-anchor');
+    const suggestedAnchors = @json($suggestedAnchors);
     const groups = {
         service: document.getElementById('service-fields'),
         recurring: document.getElementById('recurring-fields'),
@@ -177,7 +185,16 @@
         });
     };
 
+    const refreshAnchor = () => {
+        const suggested = suggestedAnchors[frequency.value];
+
+        if (suggested) {
+            anchor.value = suggested;
+        }
+    };
+
     target.addEventListener('change', refresh);
+    frequency.addEventListener('change', refreshAnchor);
     refresh();
 })();
 </script>
