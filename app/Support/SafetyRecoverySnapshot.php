@@ -13,6 +13,8 @@ class SafetyRecoverySnapshot
     public function __construct(
         private readonly AutomationRuleCatalog $catalog,
         private readonly GlobalUndoService $undo,
+        private readonly SchedulerHeartbeat $schedulerHeartbeat,
+        private readonly DatabaseRuntimeSnapshot $databaseRuntime,
     ) {
     }
 
@@ -24,6 +26,8 @@ class SafetyRecoverySnapshot
             config('app.timezone', 'America/Lima'),
         );
 
+        $schedulerHeartbeat = $this->schedulerHeartbeat->snapshot($now);
+        $database = $this->databaseRuntime->build();
         $organizationIds = $user->activeOrganizationIds();
 
         $runIssues = AutomationRuleRun::query()
@@ -111,10 +115,19 @@ class SafetyRecoverySnapshot
         ];
 
         $status = match (true) {
-            $counts['failed_runs'] > 0 || $calendarDegraded => 'attention',
+            $counts['failed_runs'] > 0
+                || $calendarDegraded
+                || $schedulerHeartbeat['status'] === 'stale'
+                || $database['pressure'] === 'attention' => 'attention',
             $counts['blocked_runs'] > 0
                 || $counts['stale_runs'] > 0
-                || $counts['stale_proposals'] > 0 => 'watch',
+                || $counts['stale_proposals'] > 0
+                || in_array(
+                    $schedulerHeartbeat['status'],
+                    ['watch', 'missing', 'invalid'],
+                    true,
+                )
+                || $database['pressure'] === 'watch' => 'watch',
             default => 'healthy',
         };
 
@@ -188,7 +201,12 @@ class SafetyRecoverySnapshot
                 'automatic_scope' => (string) (
                     $contract['automatic_execution_scope'] ?? 'unknown'
                 ),
+                'heartbeat_status' => $schedulerHeartbeat['status'],
+                'heartbeat_healthy' => $schedulerHeartbeat['healthy'],
+                'last_seen_at' => $schedulerHeartbeat['last_seen_at'],
+                'age_seconds' => $schedulerHeartbeat['age_seconds'],
             ],
+            'database' => $database,
             'sensitive_details_exposed' => false,
         ];
     }
