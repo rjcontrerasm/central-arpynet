@@ -6,9 +6,11 @@ use App\Models\AutomationRule;
 use App\Models\AutomationRuleRun;
 use App\Models\GoogleCalendarConnection;
 use App\Models\Organization;
+use App\Models\RecurringTaskRule;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\File;
 use Tests\TestCase;
 
 class SafetyRecoveryTest extends TestCase
@@ -18,6 +20,7 @@ class SafetyRecoveryTest extends TestCase
     protected function tearDown(): void
     {
         CarbonImmutable::setTestNow();
+        File::delete($this->heartbeatPath());
         parent::tearDown();
     }
 
@@ -133,6 +136,75 @@ class SafetyRecoveryTest extends TestCase
             ->assertDontSee('oauth-secret-detail');
     }
 
+    public function test_scheduler_heartbeat_is_visible_without_database_state(): void
+    {
+        CarbonImmutable::setTestNow('2026-09-17 12:00:00');
+        [$user] = $this->context();
+
+        File::ensureDirectoryExists(
+            dirname($this->heartbeatPath()),
+        );
+        File::put(
+            $this->heartbeatPath(),
+            "{\"recorded_at\":\"2026-09-17T12:00:00-05:00\"}\n",
+        );
+        touch(
+            $this->heartbeatPath(),
+            CarbonImmutable::now()->timestamp,
+        );
+
+        $this->actingAs($user)
+            ->get(route('safety-recovery.index'))
+            ->assertOk()
+            ->assertSee('Scheduler activo')
+            ->assertSee('Última señal')
+            ->assertSee('0 min');
+    }
+
+    public function test_recovery_center_reports_missing_recurring_occurrence(): void
+    {
+        CarbonImmutable::setTestNow('2026-09-17 12:00:00');
+        [$user, $organization] = $this->context();
+
+        RecurringTaskRule::withoutEvents(
+            fn () => RecurringTaskRule::query()->create([
+                'organization_id' => $organization->id,
+                'title' => 'Checklist sin generar',
+                'frequency' => 'daily',
+                'anchor_date' => '2026-09-17',
+                'create_days_before' => 0,
+                'due_time' => '18:00',
+                'urgency' => 'normal',
+                'impact' => 'medium',
+                'is_private' => false,
+                'is_active' => true,
+                'assigned_to' => $user->id,
+                'created_by' => $user->id,
+            ]),
+        );
+
+        $this->actingAs($user)
+            ->get(route('safety-recovery.index'))
+            ->assertOk()
+            ->assertSee('Checklist sin generar')
+            ->assertSee('Sin generar')
+            ->assertSee('Recurrencias sin generar');
+    }
+
+    public function test_scheduler_heartbeat_command_creates_filesystem_signal(): void
+    {
+        File::delete($this->heartbeatPath());
+
+        $this->artisan('central:scheduler-heartbeat')
+            ->assertSuccessful();
+
+        $this->assertFileExists($this->heartbeatPath());
+        $this->assertStringContainsString(
+            'recorded_at',
+            File::get($this->heartbeatPath()),
+        );
+    }
+
     private function context(): array
     {
         $user = User::factory()->create([
@@ -176,5 +248,12 @@ class SafetyRecoveryTest extends TestCase
             'is_active' => true,
             'created_by' => $user->id,
         ]);
+    }
+
+    private function heartbeatPath(): string
+    {
+        return storage_path(
+            'app/central/scheduler-heartbeat.json',
+        );
     }
 }
