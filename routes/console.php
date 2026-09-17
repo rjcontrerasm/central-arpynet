@@ -12,11 +12,42 @@ use App\Models\Task;
 use App\Support\TaskPriorityCalculator;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function (): void {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+Artisan::command(
+    'central:scheduler-heartbeat',
+    function (): void {
+        $path = storage_path(
+            'app/central/scheduler-heartbeat.json',
+        );
+
+        File::ensureDirectoryExists(
+            dirname($path),
+        );
+
+        File::put(
+            $path,
+            json_encode(
+                [
+                    'recorded_at' => now()->toIso8601String(),
+                ],
+                JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES,
+            ).PHP_EOL,
+        );
+
+        $this->info('Scheduler heartbeat registrado.');
+    },
+)->purpose(
+    'Record a filesystem heartbeat for scheduler observability',
+);
+
+Schedule::command('central:scheduler-heartbeat')
+    ->everyMinute();
 
 Artisan::command(
     'tasks:recalculate-priority',
