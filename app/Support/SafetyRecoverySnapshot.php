@@ -5,6 +5,8 @@ namespace App\Support;
 use App\Models\AgentActionProposal;
 use App\Models\AutomationRuleRun;
 use App\Models\GoogleCalendarConnection;
+use App\Models\RecurringTaskRule;
+use App\Models\RecurringTaskRun;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 
@@ -13,6 +15,7 @@ class SafetyRecoverySnapshot
     public function __construct(
         private readonly AutomationRuleCatalog $catalog,
         private readonly GlobalUndoService $undo,
+        private readonly RecurringTaskGenerator $recurringTaskGenerator,
     ) {
     }
 
@@ -89,6 +92,11 @@ class SafetyRecoverySnapshot
 
         $currentUndo = $this->undo->current($user);
         $contract = $this->catalog->contract();
+        $schedulerHealth = $this->schedulerHealth($now);
+        $recurringHealth = $this->recurringHealth(
+            $user,
+            $now,
+        );
 
         $counts = [
             'run_issues' => $runIssues->count(),
@@ -108,13 +116,19 @@ class SafetyRecoverySnapshot
             'stale_proposals' => $proposalIssues
                 ->where('status', 'stale')
                 ->count(),
+            'recurring_active' => $recurringHealth['active_rules'],
+            'recurring_missing' => $recurringHealth['missing_rules'],
         ];
 
         $status = match (true) {
-            $counts['failed_runs'] > 0 || $calendarDegraded => 'attention',
+            $counts['failed_runs'] > 0
+                || $calendarDegraded
+                || $schedulerHealth['status'] === 'attention'
+                || $counts['recurring_missing'] > 0 => 'attention',
             $counts['blocked_runs'] > 0
                 || $counts['stale_runs'] > 0
-                || $counts['stale_proposals'] > 0 => 'watch',
+                || $counts['stale_proposals'] > 0
+                || $schedulerHealth['status'] === 'watch' => 'watch',
             default => 'healthy',
         };
 
@@ -188,8 +202,185 @@ class SafetyRecoverySnapshot
                 'automatic_scope' => (string) (
                     $contract['automatic_execution_scope'] ?? 'unknown'
                 ),
+                ...$schedulerHealth,
             ],
+            'recurring' => $recurringHealth,
             'sensitive_details_exposed' => false,
+        ];
+    }
+
+    private function schedulerHealth(
+        CarbonImmutable $now,
+    ): array {
+        $path = storage_path(
+            'app/central/scheduler-heartbeat.json',
+        );
+
+        if (! is_file($path)) {
+            return [
+                'status' => 'attention',
+                'status_label' => 'Heartbeat no registrado',
+                'last_seen_at' => null,
+                'age_minutes' => null,
+            ];
+        }
+
+        $modifiedAt = filemtime($path);
+
+        if ($modifiedAt === false) {
+            return [
+                'status' => 'attention',
+                'status_label' => 'Heartbeat no legible',
+                'last_seen_at' => null,
+                'age_minutes' => null,
+            ];
+        }
+
+        $lastSeenAt = CarbonImmutable::createFromTimestamp(
+            $modifiedAt,
+            config('app.timezone', 'America/Lima'),
+        );
+
+        $ageMinutes = max(
+            0,
+            (int) floor(
+                $lastSeenAt->diffInSeconds($now) / 60,
+            ),
+        );
+
+        $status = match (true) {
+            $ageMinutes <= 3 => 'healthy',
+            $ageMinutes <= 10 => 'watch',
+            default => 'attention',
+        };
+
+        return [
+            'status' => $status,
+            'status_label' => match ($status) {
+                'healthy' => 'Scheduler activo',
+                'watch' => 'Scheduler con retraso',
+                default => 'Scheduler sin señal reciente',
+            },
+            'last_seen_at' => $lastSeenAt,
+            'age_minutes' => $ageMinutes,
+        ];
+    }
+
+    private function recurringHealth(
+        User $user,
+        CarbonImmutable $now,
+    ): array {
+        $rules = RecurringTaskRule::query()
+            ->with('organization')
+            ->visibleTo($user)
+            ->where('is_active', true)
+            ->orderBy('id')
+            ->get();
+
+        if ($rules->isEmpty()) {
+            return [
+                'active_rules' => 0,
+                'missing_rules' => 0,
+                'issues' => collect(),
+                'last_generated_at' => null,
+            ];
+        }
+
+        $today = $now->startOfDay();
+        $maximumHorizon = $today->addDays(90);
+        $ruleIds = $rules->pluck('id')->all();
+
+        $runs = RecurringTaskRun::query()
+            ->whereIn('recurring_task_rule_id', $ruleIds)
+            ->whereBetween(
+                'scheduled_for',
+                [$today, $maximumHorizon],
+            )
+            ->get()
+            ->keyBy(
+                fn (RecurringTaskRun $run): string =>
+                    $run->recurring_task_rule_id
+                    .'|'
+                    .$run->scheduled_for?->format('Y-m-d'),
+            );
+
+        $lastGeneratedValue = RecurringTaskRun::query()
+            ->whereIn('recurring_task_rule_id', $ruleIds)
+            ->whereNotNull('generated_at')
+            ->max('generated_at');
+
+        $issues = collect();
+
+        foreach ($rules as $rule) {
+            if (! $rule->anchor_date) {
+                continue;
+            }
+
+            $cursor = CarbonImmutable::parse(
+                $rule->anchor_date->toDateString(),
+                config('app.timezone', 'America/Lima'),
+            )->startOfDay();
+
+            $endDate = $rule->end_date
+                ? CarbonImmutable::parse(
+                    $rule->end_date->toDateString(),
+                    config('app.timezone', 'America/Lima'),
+                )->endOfDay()
+                : null;
+
+            if ($endDate && $endDate->lt($today)) {
+                continue;
+            }
+
+            while ($cursor->lt($today)) {
+                $cursor = $this->recurringTaskGenerator
+                    ->nextScheduledDate($rule, $cursor);
+            }
+
+            $horizon = $today->addDays(
+                max(
+                    0,
+                    min(
+                        90,
+                        (int) $rule->create_days_before,
+                    ),
+                ),
+            );
+
+            while ($cursor->lte($horizon)) {
+                if ($endDate && $cursor->gt($endDate)) {
+                    break;
+                }
+
+                $key = $rule->id.'|'.$cursor->format('Y-m-d');
+
+                if (! $runs->has($key)) {
+                    $issues->push([
+                        'rule_id' => $rule->id,
+                        'title' => $rule->title,
+                        'organization' => $rule->organization?->name
+                            ?? 'Sin ámbito',
+                        'scheduled_for' => $cursor,
+                    ]);
+
+                    break;
+                }
+
+                $cursor = $this->recurringTaskGenerator
+                    ->nextScheduledDate($rule, $cursor);
+            }
+        }
+
+        return [
+            'active_rules' => $rules->count(),
+            'missing_rules' => $issues->count(),
+            'issues' => $issues->take(20)->values(),
+            'last_generated_at' => $lastGeneratedValue
+                ? CarbonImmutable::parse(
+                    $lastGeneratedValue,
+                    config('app.timezone', 'America/Lima'),
+                )
+                : null,
         ];
     }
 
