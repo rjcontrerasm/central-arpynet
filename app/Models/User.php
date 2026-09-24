@@ -168,9 +168,6 @@ class User extends Authenticatable implements FilamentUser
             return false;
         }
 
-        return $this->organizations()
-            ->wherePivot('is_active', true)
-            ->where('organizations.is_active', true)
-            ->exists();
+        return $this->manageableOrganizationIds() !== [];
     }
 }
