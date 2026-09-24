@@ -63,8 +63,15 @@ test('captura rápida crea una tarea desde FRONT', async (
         .click();
 
     await expect(page).toHaveURL(
-        /\/mi-dia/,
+        /\/captura/,
     );
+
+    await expect(
+        page.getByText(
+            'Tarea registrada correctamente.',
+            { exact: true },
+        ),
+    ).toBeVisible();
 
     await expect(
         page.getByText(
