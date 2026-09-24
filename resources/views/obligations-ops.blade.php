@@ -102,7 +102,7 @@ $obligationFocusMeta =
 @empty<div class="empty">No hay vencimientos que coincidan con estos filtros.</div>@endforelse
 </div>
 
-<div class="filter-label" style="margin-top:24px;">Contexto financiero</div>
+<div class="operational-context-heading">Contexto financiero</div>
 @foreach($moneySummary as $currency=>$money)<div class="money-currency">Resumen {{ $currency }}</div><section class="money-grid">@foreach(['Esperado'=>$money['expected'],'Pendiente'=>$money['pending'],'Vencido'=>$money['overdue'],'Pagado'=>$money['paid']] as $label=>$value)<div class="money"><div class="money-value">{{ $currency }} {{ number_format($value,2,'.',',') }}</div><div class="money-label">{{ $label }}</div></div>@endforeach</section>@endforeach
 </div>
 <x-operational-theme /><x-operational-interactions />
