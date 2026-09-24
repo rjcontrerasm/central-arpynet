@@ -21,7 +21,11 @@ class ServiceOrderOpsTest extends TestCase
             ->get('/servicios')
             ->assertOk()
             ->assertSee('Servicios')
-            ->assertSee('Órdenes, siguiente acción y estancamiento');
+            ->assertSee('Órdenes, siguiente acción y estancamiento')
+            ->assertSeeInOrder([
+                'Foco operativo',
+                'Contexto financiero de la vista actual',
+            ]);
     }
 
     public function test_overdue_next_action_is_critical(): void
