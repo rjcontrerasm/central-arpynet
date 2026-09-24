@@ -29,15 +29,15 @@ class VisualSystemConsistencyTest extends TestCase
         );
 
         foreach ([
-            '/mi-dia' => 'daily-ops',
-            '/captura' => 'quick-capture',
-            '/servicios' => 'service-orders-ops',
-            '/vencimientos' => null,
-            '/seguimiento' => null,
-            '/resumen' => null,
-            '/notificaciones' => null,
-            '/historial' => null,
-        ] as $page => $asset) {
+            '/mi-dia' => ['daily-ops', '2.39.1'],
+            '/captura' => ['quick-capture', '2.39.1'],
+            '/servicios' => ['service-orders-ops', '2.39.1'],
+            '/vencimientos' => ['obligations-ops', '2.39.2'],
+            '/seguimiento' => ['global-tracking', '2.39.2'],
+            '/resumen' => ['executive-summary', '2.39.2'],
+            '/notificaciones' => ['notification-center', '2.39.2'],
+            '/historial' => ['audit-history', '2.39.2'],
+        ] as $page => [$asset, $version]) {
             $response = $this->actingAs($user)
                 ->get($page)
                 ->assertOk()
@@ -46,12 +46,10 @@ class VisualSystemConsistencyTest extends TestCase
                     false,
                 );
 
-            if ($asset !== null) {
-                $response->assertSee(
-                    "central-assets/pages/{$asset}.css?v=2.39.1",
-                    false,
-                );
-            }
+            $response->assertSee(
+                "central-assets/pages/{$asset}.css?v={$version}",
+                false,
+            );
 
             $css = $this->pageCss(
                 $response->getContent(),
@@ -90,7 +88,7 @@ class VisualSystemConsistencyTest extends TestCase
             'width:min(100%,860px)',
             $this->pageCss(
                 $notifications->getContent(),
-                null,
+                'notification-center',
             ),
         );
     }
@@ -101,8 +99,8 @@ class VisualSystemConsistencyTest extends TestCase
 
         foreach ([
             '/servicios' => 'service-orders-ops',
-            '/vencimientos' => null,
-            '/seguimiento' => null,
+            '/vencimientos' => 'obligations-ops',
+            '/seguimiento' => 'global-tracking',
         ] as $page => $asset) {
             $response = $this->actingAs($user)
                 ->get($page)
