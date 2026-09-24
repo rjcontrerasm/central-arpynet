@@ -59,6 +59,80 @@ jobs:
       - name: Run test suite
         run: php artisan test
 
+
+  mariadb:
+    name: MariaDB compatibility (11.4)
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    needs: tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      APP_ENV: testing
+      DB_CONNECTION: mysql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: central_test
+      DB_USERNAME: central
+      DB_PASSWORD: central_test_password
+      CACHE_STORE: file
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+      MAIL_MAILER: array
+
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_DATABASE: central_test
+          MARIADB_USER: central
+          MARIADB_PASSWORD: central_test_password
+          MARIADB_ROOT_PASSWORD: central_root_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_mysql
+          coverage: none
+          tools: composer:v2
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer/files
+          key: ${{ runner.os }}-php84-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php84-composer-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Prepare MariaDB test environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          php artisan migrate:fresh --force
+
+      - name: Verify MariaDB driver
+        run: |
+          php artisan tinker --execute="if (DB::connection()->getDriverName() !== 'mysql') { throw new RuntimeException('MariaDB CI no está usando el driver mysql.'); } echo DB::selectOne('select version() as version')->version.PHP_EOL;"
+
+      - name: Run critical MariaDB tests
+        run: |
+          php artisan test             tests/Feature/FrontWriteAuthorizationTest.php             tests/Feature/SharedClientOrganizationTest.php             tests/Feature/RecurringTaskGenerationTest.php             tests/Feature/TaskConversionHardeningTest.php             tests/Feature/QuickCaptureTest.php             tests/Feature/SafetyRecoveryTest.php
+
+
   e2e:
     name: Browser E2E (Playwright)
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
