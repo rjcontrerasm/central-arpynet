@@ -298,6 +298,16 @@ Route::middleware('auth')->group(function (): void {
 });
 Route::middleware('auth')->group(function (): void {
     Route::get(
+        '/buscar',
+        [
+            \App\Http\Controllers\GlobalSearchController::class,
+            'index',
+        ],
+    )->name('global-search.index');
+});
+
+Route::middleware('auth')->group(function (): void {
+    Route::get(
         '/seguimiento',
         [
             \App\Http\Controllers\GlobalTrackingController::class,

@@ -25,6 +25,7 @@
 
     $secondaryLabels = [
         'agenda' => 'Agenda',
+        'search' => 'Buscar',
         'clients' => 'Clientes',
         'projects' => 'Proyectos',
         'overview360' => 'Vista 360',
@@ -327,6 +328,14 @@
         @if ($active === 'capture') aria-current="page" @endif
     >
         Captura
+    </a>
+
+    <a
+        class="op-nav-link {{ $active === 'search' ? 'is-active' : '' }}"
+        href="{{ route('global-search.index') }}"
+        @if ($active === 'search') aria-current="page" @endif
+    >
+        Buscar
     </a>
 
     <a
