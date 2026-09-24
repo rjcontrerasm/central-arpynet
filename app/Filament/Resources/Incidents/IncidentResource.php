@@ -67,8 +67,8 @@ class IncidentResource extends Resource
                                     ->all() ?? [],
                             )
                             ->default(
-                                fn (): ?int => auth()->user()
-                                    ?->current_organization_id,
+                                fn (): ?int =>
+                                    static::defaultManageableOrganizationId(),
                             )
                             ->live()
                             ->searchable()
@@ -154,13 +154,12 @@ class IncidentResource extends Resource
                         Select::make('client_id')
                             ->label('Cliente')
                             ->options(
-                                fn (): array => auth()->user()
-                                    ? Client::query()
-                                        ->visibleTo(auth()->user())
-                                        ->orderBy('name')
-                                        ->pluck('name', 'id')
-                                        ->all()
-                                    : [],
+                                fn ($get): array =>
+                                    static::clientOptionsForOrganization(
+                                        (int) (
+                                            $get('organization_id') ?? 0
+                                        ),
+                                    ),
                             )
                             ->searchable()
                             ->native(false),
@@ -168,13 +167,12 @@ class IncidentResource extends Resource
                         Select::make('service_order_id')
                             ->label('Orden / servicio')
                             ->options(
-                                fn (): array => auth()->user()
-                                    ? ServiceOrder::query()
-                                        ->visibleTo(auth()->user())
-                                        ->orderByDesc('updated_at')
-                                        ->pluck('title', 'id')
-                                        ->all()
-                                    : [],
+                                fn ($get): array =>
+                                    static::serviceOptionsForOrganization(
+                                        (int) (
+                                            $get('organization_id') ?? 0
+                                        ),
+                                    ),
                             )
                             ->searchable()
                             ->native(false),
@@ -182,13 +180,12 @@ class IncidentResource extends Resource
                         Select::make('project_id')
                             ->label('Proyecto')
                             ->options(
-                                fn (): array => auth()->user()
-                                    ? Project::query()
-                                        ->visibleTo(auth()->user())
-                                        ->orderBy('name')
-                                        ->pluck('name', 'id')
-                                        ->all()
-                                    : [],
+                                fn ($get): array =>
+                                    static::projectOptionsForOrganization(
+                                        (int) (
+                                            $get('organization_id') ?? 0
+                                        ),
+                                    ),
                             )
                             ->searchable()
                             ->native(false),
@@ -463,6 +460,80 @@ class IncidentResource extends Resource
         return [
             'index' => ManageIncidents::route('/'),
         ];
+    }
+
+    public static function clientOptionsForOrganization(
+        int $organizationId,
+    ): array {
+        $user = auth()->user();
+
+        if (
+            ! $user
+            || $organizationId < 1
+            || ! $user->canManageOrganization($organizationId)
+        ) {
+            return [];
+        }
+
+        return Client::query()
+            ->visibleTo($user)
+            ->forOrganization($organizationId)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->pluck('name', 'id')
+            ->all();
+    }
+
+    public static function serviceOptionsForOrganization(
+        int $organizationId,
+    ): array {
+        $user = auth()->user();
+
+        if (
+            ! $user
+            || $organizationId < 1
+            || ! $user->canManageOrganization($organizationId)
+        ) {
+            return [];
+        }
+
+        return ServiceOrder::query()
+            ->where('organization_id', $organizationId)
+            ->orderByDesc('updated_at')
+            ->pluck('title', 'id')
+            ->all();
+    }
+
+    public static function projectOptionsForOrganization(
+        int $organizationId,
+    ): array {
+        $user = auth()->user();
+
+        if (
+            ! $user
+            || $organizationId < 1
+            || ! $user->canManageOrganization($organizationId)
+        ) {
+            return [];
+        }
+
+        return Project::query()
+            ->where('organization_id', $organizationId)
+            ->orderBy('name')
+            ->pluck('name', 'id')
+            ->all();
+    }
+
+    public static function defaultManageableOrganizationId(): ?int
+    {
+        $ids = auth()->user()?->manageableOrganizationIds() ?? [];
+        $currentId = (int) (
+            auth()->user()?->current_organization_id ?? 0
+        );
+
+        return in_array($currentId, $ids, true)
+            ? $currentId
+            : ($ids[0] ?? null);
     }
 
     public static function visibleAssigneeOptions(): array
