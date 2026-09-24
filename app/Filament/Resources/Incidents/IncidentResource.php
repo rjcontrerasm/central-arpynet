@@ -55,6 +55,10 @@ class IncidentResource extends Resource
                                 fn (): array => auth()->user()
                                     ?->organizations()
                                     ->wherePivot('is_active', true)
+                            ->whereIn(
+                                'organizations.id',
+                                auth()->user()?->manageableOrganizationIds() ?? [],
+                            )
                                     ->orderBy('organizations.name')
                                     ->pluck(
                                         'organizations.name',
@@ -385,6 +389,10 @@ class IncidentResource extends Resource
                         fn (): array => auth()->user()
                             ?->organizations()
                             ->wherePivot('is_active', true)
+                            ->whereIn(
+                                'organizations.id',
+                                auth()->user()?->manageableOrganizationIds() ?? [],
+                            )
                             ->orderBy('organizations.name')
                             ->pluck(
                                 'organizations.name',
@@ -414,20 +422,20 @@ class IncidentResource extends Resource
                     ->label('Editar')
                     ->visible(
                         fn (Incident $record): bool => auth()->user()
-                            ?->canWriteToOrganization((int) $record->organization_id) ?? false,
+                            ?->canManageOrganization((int) $record->organization_id) ?? false,
                     ),
             ]);
     }
 
     public static function canCreate(): bool
     {
-        return auth()->user()?->writableOrganizationIds() !== [];
+        return auth()->user()?->manageableOrganizationIds() !== [];
     }
 
     public static function canEdit($record): bool
     {
         return auth()->user()
-            ?->canWriteToOrganization((int) $record->organization_id) ?? false;
+            ?->canManageOrganization((int) $record->organization_id) ?? false;
     }
 
     public static function getEloquentQuery(): Builder
@@ -440,7 +448,7 @@ class IncidentResource extends Resource
         }
 
         return parent::getEloquentQuery()
-            ->visibleTo($user)
+            ->whereIn('organization_id', $user->manageableOrganizationIds())
             ->with([
                 'organization',
                 'client',
