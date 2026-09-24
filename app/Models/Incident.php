@@ -382,10 +382,7 @@ class Incident extends Model
             $this->client_id
             && ! Client::query()
                 ->whereKey($this->client_id)
-                ->where(
-                    'organization_id',
-                    $this->organization_id,
-                )
+                ->forOrganization((int) $this->organization_id)
                 ->exists()
         ) {
             throw ValidationException::withMessages([
