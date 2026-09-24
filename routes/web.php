@@ -300,7 +300,7 @@ Route::middleware('auth')->group(function (): void {
     Route::get(
         '/buscar',
         [
-            \\App\\Http\\Controllers\\GlobalSearchController::class,
+            \App\Http\Controllers\GlobalSearchController::class,
             'index',
         ],
     )->name('global-search.index');
