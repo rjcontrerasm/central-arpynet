@@ -41,6 +41,10 @@ class ProjectResource extends Resource
                     ->label('Empresa o ámbito')
                     ->options(fn (): array => auth()->user()?->organizations()
                         ->wherePivot('is_active', true)
+                            ->whereIn(
+                                'organizations.id',
+                                auth()->user()?->manageableOrganizationIds() ?? [],
+                            )
                         ->orderBy('organizations.name')
                         ->pluck('organizations.name', 'organizations.id')
                         ->all() ?? [])
@@ -112,6 +116,10 @@ class ProjectResource extends Resource
             SelectFilter::make('organization_id')->label('Empresa o ámbito')
                 ->options(fn (): array => auth()->user()?->organizations()
                     ->wherePivot('is_active', true)
+                            ->whereIn(
+                                'organizations.id',
+                                auth()->user()?->manageableOrganizationIds() ?? [],
+                            )
                     ->orderBy('organizations.name')
                     ->pluck('organizations.name', 'organizations.id')->all() ?? []),
             SelectFilter::make('type')->label('Tipo')->options(Project::typeOptions()),
@@ -145,26 +153,26 @@ class ProjectResource extends Resource
                 })
                 ->visible(
                     fn (Project $record): bool => auth()->user()
-                        ?->canWriteToOrganization((int) $record->organization_id) ?? false,
+                        ?->canManageOrganization((int) $record->organization_id) ?? false,
                 ),
             EditAction::make()
                 ->label('Editar')
                 ->visible(
                     fn (Project $record): bool => auth()->user()
-                        ?->canWriteToOrganization((int) $record->organization_id) ?? false,
+                        ?->canManageOrganization((int) $record->organization_id) ?? false,
                 ),
         ]);
     }
 
     public static function canCreate(): bool
     {
-        return auth()->user()?->writableOrganizationIds() !== [];
+        return auth()->user()?->manageableOrganizationIds() !== [];
     }
 
     public static function canEdit($record): bool
     {
         return auth()->user()
-            ?->canWriteToOrganization((int) $record->organization_id) ?? false;
+            ?->canManageOrganization((int) $record->organization_id) ?? false;
     }
 
     public static function getEloquentQuery(): Builder
@@ -174,7 +182,7 @@ class ProjectResource extends Resource
             return parent::getEloquentQuery()->whereRaw('1 = 0');
         }
 
-        return parent::getEloquentQuery()->visibleTo($user)->withCount([
+        return parent::getEloquentQuery()->whereIn('organization_id', $user->manageableOrganizationIds())->withCount([
             'tasks',
             'participants',
             'tasks as completed_tasks_count' => fn (Builder $query) => $query->where('status', 'completed'),
