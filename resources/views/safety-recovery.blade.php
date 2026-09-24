@@ -137,6 +137,37 @@
             </section>
 
             <section class="safety-card">
+                <h2>Base de datos</h2>
+                <div class="safety-health-line">
+                    <span class="safety-status {{ in_array($snapshot['database']['status'], ['healthy', 'watch', 'attention'], true) ? $snapshot['database']['status'] : 'watch' }}">{{ $snapshot['database']['status_label'] }}</span>
+                    <div class="safety-health-meta">
+                        @if($snapshot['database']['version'])
+                            {{ $snapshot['database']['version'] }}
+                        @else
+                            Driver {{ $snapshot['database']['driver'] }}
+                        @endif
+                    </div>
+                </div>
+
+                @if($snapshot['database']['available'])
+                    <div class="safety-contract">
+                        <div><strong>Conexiones actuales</strong><span>{{ $snapshot['database']['threads_connected'] }} / {{ $snapshot['database']['max_connections'] }} · {{ number_format($snapshot['database']['current_percent'], 1) }}%</span></div>
+                        <div><strong>Conexiones ejecutando</strong><span>{{ $snapshot['database']['threads_running'] }}</span></div>
+                        <div><strong>Máximo observado</strong><span>{{ $snapshot['database']['max_used_connections'] }} / {{ $snapshot['database']['max_connections'] }} · {{ number_format($snapshot['database']['peak_percent'], 1) }}%</span></div>
+                        <div><strong>Ámbito de la métrica</strong><span>Servidor MariaDB/MySQL completo</span></div>
+                    </div>
+
+                    @if($snapshot['database']['historical_near_limit'])
+                        <div class="safety-note">El servidor alcanzó al menos 90% de su límite de conexiones desde el último arranque. Esto confirma presión histórica, pero no atribuye por sí solo el origen a CENTRAL.</div>
+                    @else
+                        <div class="safety-note">Estas métricas son globales del servidor y sirven para detectar presión de conexiones. No exponen credenciales ni identifican por sí solas qué aplicación consumió las conexiones.</div>
+                    @endif
+                @else
+                    <div class="safety-empty">CENTRAL no pudo obtener métricas avanzadas de conexiones. La vista continúa operativa sin mostrar detalles internos del error.</div>
+                @endif
+            </section>
+
+            <section class="safety-card">
                 <h2>Recuperación disponible</h2>
                 @if($snapshot['undo'])
                     <strong>{{ $snapshot['undo']['label'] }}</strong>
