@@ -44,14 +44,14 @@ class ClientResource extends Resource
                 ->schema([
                     Select::make('organization_id')
                         ->label('Empresa inicial / compatibilidad')
-                        ->options(fn (): array => auth()->user()
-                            ?->organizations()
-                            ->wherePivot('is_active', true)
-                            ->orderBy('organizations.name')
-                            ->pluck('organizations.name', 'organizations.id')
-                            ->all() ?? [])
-                        ->default(fn (): ?int => auth()->user()
-                            ?->current_organization_id)
+                        ->options(
+                            fn (): array =>
+                                static::manageableOrganizationOptions(),
+                        )
+                        ->default(
+                            fn (): ?int =>
+                                static::defaultManageableOrganizationId(),
+                        )
                         ->helperText(
                             'Al crear o cambiar este valor se añade la empresa a la ficha compartida; no elimina asociaciones existentes.',
                         )
@@ -136,12 +136,10 @@ class ClientResource extends Resource
             ->filters([
                 SelectFilter::make('organization')
                     ->label('Empresa')
-                    ->options(fn (): array => auth()->user()
-                        ?->organizations()
-                        ->wherePivot('is_active', true)
-                        ->orderBy('organizations.name')
-                        ->pluck('organizations.name', 'organizations.id')
-                        ->all() ?? [])
+                    ->options(
+                        fn (): array =>
+                            static::manageableOrganizationOptions(),
+                    )
                     ->query(function (Builder $query, array $data): Builder {
                         $organizationId = (int) ($data['value'] ?? 0);
 
@@ -151,21 +149,99 @@ class ClientResource extends Resource
                     }),
             ])
             ->recordActions([
-                EditAction::make()->label('Editar'),
+                EditAction::make()
+                    ->label('Editar')
+                    ->visible(
+                        fn (Client $record): bool =>
+                            static::canEdit($record),
+                    ),
             ]);
+    }
+
+    public static function canCreate(): bool
+    {
+        return static::manageableOrganizationIds() !== [];
+    }
+
+    public static function canEdit($record): bool
+    {
+        $manageableIds = static::manageableOrganizationIds();
+
+        if ($manageableIds === []) {
+            return false;
+        }
+
+        $linkedIds = $record->organizations()
+            ->wherePivot('is_active', true)
+            ->where('organizations.is_active', true)
+            ->pluck('organizations.id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+
+        if ($linkedIds === [] && $record->organization_id) {
+            $linkedIds = [(int) $record->organization_id];
+        }
+
+        return $linkedIds !== []
+            && array_diff($linkedIds, $manageableIds) === [];
     }
 
     public static function getEloquentQuery(): Builder
     {
-        $user = auth()->user();
+        $manageableIds = static::manageableOrganizationIds();
 
-        if (! $user) {
+        if ($manageableIds === []) {
             return parent::getEloquentQuery()->whereRaw('1 = 0');
         }
 
         return parent::getEloquentQuery()
-            ->visibleTo($user)
-            ->with('organizations');
+            ->whereHas(
+                'organizations',
+                fn (Builder $query): Builder => $query
+                    ->whereIn('organizations.id', $manageableIds)
+                    ->where('organizations.is_active', true)
+                    ->where('client_organization.is_active', true),
+            )
+            ->with([
+                'organizations' => fn ($query) => $query
+                    ->whereIn('organizations.id', $manageableIds)
+                    ->where('organizations.is_active', true)
+                    ->wherePivot('is_active', true)
+                    ->orderBy('organizations.name'),
+            ]);
+    }
+
+    public static function manageableOrganizationIds(): array
+    {
+        return auth()->user()?->manageableOrganizationIds() ?? [];
+    }
+
+    public static function manageableOrganizationOptions(): array
+    {
+        $ids = static::manageableOrganizationIds();
+
+        if ($ids === []) {
+            return [];
+        }
+
+        return auth()->user()
+            ->organizations()
+            ->whereIn('organizations.id', $ids)
+            ->wherePivot('is_active', true)
+            ->where('organizations.is_active', true)
+            ->orderBy('organizations.name')
+            ->pluck('organizations.name', 'organizations.id')
+            ->all();
+    }
+
+    public static function defaultManageableOrganizationId(): ?int
+    {
+        $ids = static::manageableOrganizationIds();
+        $currentId = (int) (auth()->user()?->current_organization_id ?? 0);
+
+        return in_array($currentId, $ids, true)
+            ? $currentId
+            : ($ids[0] ?? null);
     }
 
     public static function getPages(): array
