@@ -76,27 +76,28 @@ class ServiceOrderResource extends Resource
 
                         Select::make('client_id')
                             ->label('Cliente')
-                            ->options(function (): array {
+                            ->options(function ($get): array {
                                 $user = auth()->user();
+                                $organizationId = (int) (
+                                    $get('organization_id') ?? 0
+                                );
 
-                                if (! $user) {
+                                if (
+                                    ! $user
+                                    || $organizationId < 1
+                                    || ! $user->canManageOrganization(
+                                        $organizationId,
+                                    )
+                                ) {
                                     return [];
                                 }
 
                                 return Client::query()
-                                    ->whereIn('organization_id', $user->manageableOrganizationIds())
+                                    ->visibleTo($user)
+                                    ->forOrganization($organizationId)
                                     ->where('is_active', true)
-                                    ->with('organization')
                                     ->orderBy('name')
-                                    ->get()
-                                    ->mapWithKeys(
-                                        fn (Client $client): array => [
-                                            $client->id =>
-                                                $client->name
-                                                .' — '
-                                                .$client->organization->name,
-                                        ],
-                                    )
+                                    ->pluck('name', 'id')
                                     ->all();
                             })
                             ->searchable()
