@@ -176,16 +176,33 @@ DEPLOYED_SHA="$(git rev-parse HEAD)"
 log "Verificación Laravel"
 "$PHP_BIN" artisan about --only=environment 2>/dev/null || true
 "$PHP_BIN" artisan migrate:status | tail -n 15
+"$PHP_BIN" artisan route:list --path=mi-dia --except-vendor >/dev/null \
+    || fail "No se pudo resolver la ruta crítica /mi-dia"
+"$PHP_BIN" artisan schedule:list >/dev/null \
+    || fail "Laravel no pudo construir el scheduler después del despliegue"
 
 if command -v curl >/dev/null 2>&1; then
-    log "Verificando respuesta HTTP directa del origen"
+    log "Verificando health check directo del origen"
+    HEALTH_CODE="$(curl -k -sS \
+        --resolve "$APP_HOST:443:$ORIGIN_IP" \
+        -o /dev/null \
+        -w '%{http_code}' \
+        "$APP_URL/up" || true)"
+
+    printf 'Health HTTP %s\n' "$HEALTH_CODE"
+
+    if [[ "$HEALTH_CODE" != "200" ]]; then
+        fail "El health check /up respondió HTTP $HEALTH_CODE después del despliegue."
+    fi
+
+    log "Verificando respuesta HTTP directa del FRONT"
     HTTP_CODE="$(curl -k -sS \
         --resolve "$APP_HOST:443:$ORIGIN_IP" \
         -o /dev/null \
         -w '%{http_code}' \
         "$APP_URL/mi-dia" || true)"
 
-    printf 'Origin HTTP %s\n' "$HTTP_CODE"
+    printf 'FRONT HTTP %s\n' "$HTTP_CODE"
 
     if [[ ! "$HTTP_CODE" =~ ^(200|302)$ ]]; then
         fail "El origen de Central respondió HTTP $HTTP_CODE después del despliegue."

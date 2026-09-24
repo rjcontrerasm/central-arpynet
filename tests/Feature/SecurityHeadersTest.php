@@ -33,6 +33,10 @@ class SecurityHeadersTest extends TestCase
                 'Permissions-Policy',
                 'camera=(), microphone=(), geolocation=()',
             )
+            ->assertHeader(
+                'Content-Security-Policy',
+                "base-uri 'self'; frame-ancestors 'self'; object-src 'none'; form-action 'self'",
+            )
             ->assertHeaderMissing('Strict-Transport-Security');
     }
 

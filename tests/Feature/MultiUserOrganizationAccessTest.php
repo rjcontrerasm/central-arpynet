@@ -64,6 +64,19 @@ class MultiUserOrganizationAccessTest extends TestCase
         $this->assertTrue($admin->canManageTeam());
         $this->assertFalse($member->canManageTeam());
         $this->assertFalse($viewer->canManageTeam());
+
+        $this->assertTrue(
+            $owner->canManageOrganization($organization->id),
+        );
+        $this->assertTrue(
+            $admin->canManageOrganization($organization->id),
+        );
+        $this->assertFalse(
+            $member->canManageOrganization($organization->id),
+        );
+        $this->assertFalse(
+            $viewer->canManageOrganization($organization->id),
+        );
     }
 
     public function test_viewer_cannot_create_an_organization_scoped_record(): void

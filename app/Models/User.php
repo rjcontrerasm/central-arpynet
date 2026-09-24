@@ -157,6 +157,15 @@ class User extends Authenticatable implements FilamentUser
         );
     }
 
+    public function canManageOrganization(int $organizationId): bool
+    {
+        return in_array(
+            $organizationId,
+            $this->manageableOrganizationIds(),
+            true,
+        );
+    }
+
     public function canManageTeam(): bool
     {
         return $this->manageableOrganizationIds() !== [];
@@ -168,9 +177,6 @@ class User extends Authenticatable implements FilamentUser
             return false;
         }
 
-        return $this->organizations()
-            ->wherePivot('is_active', true)
-            ->where('organizations.is_active', true)
-            ->exists();
+        return $this->manageableOrganizationIds() !== [];
     }
 }

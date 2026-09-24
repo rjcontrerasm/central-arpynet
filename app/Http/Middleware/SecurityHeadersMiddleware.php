@@ -30,6 +30,10 @@ class SecurityHeadersMiddleware
             'Permissions-Policy',
             'camera=(), microphone=(), geolocation=()',
         );
+        $response->headers->set(
+            'Content-Security-Policy',
+            "base-uri 'self'; frame-ancestors 'self'; object-src 'none'; form-action 'self'",
+        );
 
         if ($request->isSecure()) {
             $response->headers->set(

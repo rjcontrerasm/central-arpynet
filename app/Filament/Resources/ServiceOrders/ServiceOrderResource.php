@@ -54,6 +54,10 @@ class ServiceOrderResource extends Resource
                                 fn (): array => auth()->user()
                                     ?->organizations()
                                     ->wherePivot('is_active', true)
+                            ->whereIn(
+                                'organizations.id',
+                                auth()->user()?->manageableOrganizationIds() ?? [],
+                            )
                                     ->orderBy('organizations.name')
                                     ->pluck(
                                         'organizations.name',
@@ -62,8 +66,8 @@ class ServiceOrderResource extends Resource
                                     ->all() ?? [],
                             )
                             ->default(
-                                fn (): ?int => auth()->user()
-                                    ?->current_organization_id,
+                                fn (): ?int =>
+                                    static::defaultManageableOrganizationId(),
                             )
                             ->live()
                             ->searchable()
@@ -72,29 +76,14 @@ class ServiceOrderResource extends Resource
 
                         Select::make('client_id')
                             ->label('Cliente')
-                            ->options(function (): array {
-                                $user = auth()->user();
-
-                                if (! $user) {
-                                    return [];
-                                }
-
-                                return Client::query()
-                                    ->visibleTo($user)
-                                    ->where('is_active', true)
-                                    ->with('organization')
-                                    ->orderBy('name')
-                                    ->get()
-                                    ->mapWithKeys(
-                                        fn (Client $client): array => [
-                                            $client->id =>
-                                                $client->name
-                                                .' — '
-                                                .$client->organization->name,
-                                        ],
-                                    )
-                                    ->all();
-                            })
+                            ->options(
+                                fn ($get): array =>
+                                    static::clientOptionsForOrganization(
+                                        (int) (
+                                            $get('organization_id') ?? 0
+                                        ),
+                                    ),
+                            )
                             ->searchable()
                             ->native(false)
                             ->required(),
@@ -391,6 +380,10 @@ class ServiceOrderResource extends Resource
                         fn (): array => auth()->user()
                             ?->organizations()
                             ->wherePivot('is_active', true)
+                            ->whereIn(
+                                'organizations.id',
+                                auth()->user()?->manageableOrganizationIds() ?? [],
+                            )
                             ->orderBy('organizations.name')
                             ->pluck(
                                 'organizations.name',
@@ -426,20 +419,20 @@ class ServiceOrderResource extends Resource
                     ->label('Editar')
                     ->visible(
                         fn (ServiceOrder $record): bool => auth()->user()
-                            ?->canWriteToOrganization((int) $record->organization_id) ?? false,
+                            ?->canManageOrganization((int) $record->organization_id) ?? false,
                     ),
             ]);
     }
 
     public static function canCreate(): bool
     {
-        return auth()->user()?->writableOrganizationIds() !== [];
+        return auth()->user()?->manageableOrganizationIds() !== [];
     }
 
     public static function canEdit($record): bool
     {
         return auth()->user()
-            ?->canWriteToOrganization((int) $record->organization_id) ?? false;
+            ?->canManageOrganization((int) $record->organization_id) ?? false;
     }
 
     public static function getEloquentQuery(): Builder
@@ -452,7 +445,7 @@ class ServiceOrderResource extends Resource
         }
 
         return parent::getEloquentQuery()
-            ->visibleTo($user)
+            ->whereIn('organization_id', $user->manageableOrganizationIds())
             ->with([
                 'organization',
                 'client',
@@ -465,6 +458,40 @@ class ServiceOrderResource extends Resource
         return [
             'index' => ManageServiceOrders::route('/'),
         ];
+    }
+
+    public static function clientOptionsForOrganization(
+        int $organizationId,
+    ): array {
+        $user = auth()->user();
+
+        if (
+            ! $user
+            || $organizationId < 1
+            || ! $user->canManageOrganization($organizationId)
+        ) {
+            return [];
+        }
+
+        return Client::query()
+            ->visibleTo($user)
+            ->forOrganization($organizationId)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->pluck('name', 'id')
+            ->all();
+    }
+
+    public static function defaultManageableOrganizationId(): ?int
+    {
+        $ids = auth()->user()?->manageableOrganizationIds() ?? [];
+        $currentId = (int) (
+            auth()->user()?->current_organization_id ?? 0
+        );
+
+        return in_array($currentId, $ids, true)
+            ? $currentId
+            : ($ids[0] ?? null);
     }
 
     public static function visibleAssigneeOptions(): array

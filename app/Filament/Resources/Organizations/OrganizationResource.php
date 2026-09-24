@@ -187,6 +187,18 @@ class OrganizationResource extends Resource
             ]);
     }
 
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->canManageTeam() ?? false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()
+            ?->canManageOrganization((int) $record->id)
+            ?? false;
+    }
+
     public static function getEloquentQuery(): Builder
     {
         $user = auth()->user();
@@ -196,12 +208,7 @@ class OrganizationResource extends Resource
         }
 
         return parent::getEloquentQuery()
-            ->whereHas(
-                'users',
-                fn (Builder $query): Builder => $query
-                    ->where('users.id', $user->id)
-                    ->where('organization_user.is_active', true),
-            );
+            ->whereIn('id', $user->manageableOrganizationIds());
     }
 
     public static function getPages(): array
