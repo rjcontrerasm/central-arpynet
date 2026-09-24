@@ -187,6 +187,10 @@ class ObligationOccurrenceResource extends Resource
                         fn (): array => auth()->user()
                             ?->organizations()
                             ->wherePivot('is_active', true)
+                            ->whereIn(
+                                'organizations.id',
+                                auth()->user()?->manageableOrganizationIds() ?? [],
+                            )
                             ->orderBy('organizations.name')
                             ->pluck(
                                 'organizations.name',
@@ -207,6 +211,13 @@ class ObligationOccurrenceResource extends Resource
             ]);
     }
 
+    public static function canEdit($record): bool
+    {
+        return auth()->user()
+            ?->canManageOrganization((int) $record->organization_id)
+            ?? false;
+    }
+
     public static function getEloquentQuery(): Builder
     {
         $user = auth()->user();
@@ -217,7 +228,10 @@ class ObligationOccurrenceResource extends Resource
         }
 
         return parent::getEloquentQuery()
-            ->visibleTo($user)
+            ->whereIn(
+                'organization_id',
+                $user->manageableOrganizationIds(),
+            )
             ->with([
                 'obligation',
                 'organization',
