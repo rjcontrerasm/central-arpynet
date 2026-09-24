@@ -8,8 +8,8 @@ class FinalUxFoundationTest extends TestCase
 {
     public function test_operational_polish_has_mobile_and_accessibility_contract(): void
     {
-        $path = resource_path(
-            'views/components/operational-polish.blade.php',
+        $path = public_path(
+            'central-assets/operational.css',
         );
         $contents = file_get_contents($path);
 
@@ -38,8 +38,8 @@ class FinalUxFoundationTest extends TestCase
 
     public function test_shared_operational_theme_owns_typography_contract(): void
     {
-        $path = resource_path(
-            'views/components/operational-theme.blade.php',
+        $path = public_path(
+            'central-assets/operational.css',
         );
         $contents = file_get_contents($path);
 
@@ -56,8 +56,8 @@ class FinalUxFoundationTest extends TestCase
 
     public function test_shared_operational_theme_guards_front_link_consistency_contract(): void
     {
-        $path = resource_path(
-            'views/components/operational-theme.blade.php',
+        $path = public_path(
+            'central-assets/operational.css',
         );
         $contents = file_get_contents($path);
 
@@ -90,8 +90,8 @@ class FinalUxFoundationTest extends TestCase
 
     public function test_shared_operational_theme_guards_jarvis_readability_contract(): void
     {
-        $path = resource_path(
-            'views/components/operational-theme.blade.php',
+        $path = public_path(
+            'central-assets/operational.css',
         );
         $contents = file_get_contents($path);
 
@@ -132,41 +132,59 @@ class FinalUxFoundationTest extends TestCase
 
     public function test_shared_interactions_cover_keyboard_motion_and_bfcache(): void
     {
-        $path = resource_path(
-            'views/components/operational-interactions.blade.php',
+        $css = file_get_contents(
+            public_path(
+                'central-assets/operational.css',
+            ),
         );
-        $contents = file_get_contents($path);
+        $js = file_get_contents(
+            public_path(
+                'central-assets/operational.js',
+            ),
+        );
+        $loader = file_get_contents(
+            resource_path(
+                'views/components/operational-assets.blade.php',
+            ),
+        );
 
-        $this->assertIsString($contents);
-        $this->assertStringContainsString('@once', $contents);
+        $this->assertIsString($css);
+        $this->assertIsString($js);
+        $this->assertIsString($loader);
+
+        $this->assertStringContainsString('@once', $loader);
         $this->assertStringContainsString(
-            '<x-operational-polish />',
-            $contents,
+            'central-assets/operational.css',
+            $loader,
         );
-        $this->assertStringContainsString('textarea', $contents);
+        $this->assertStringContainsString(
+            'central-assets/operational.js',
+            $loader,
+        );
+        $this->assertStringContainsString('textarea', $css);
         $this->assertStringContainsString(
             'prefers-reduced-motion: reduce',
-            $contents,
+            $css,
         );
         $this->assertStringContainsString(
             "'DOMContentLoaded'",
-            $contents,
+            $js,
         );
         $this->assertStringContainsString(
             '__centralOperationalInteractionsInstalled',
-            $contents,
+            $js,
         );
         $this->assertStringContainsString(
             "'pageshow'",
-            $contents,
+            $js,
         );
         $this->assertStringContainsString(
             'data-original-html',
-            $contents,
+            $js,
         );
         $this->assertStringContainsString(
             "querySelector('summary')?.focus()",
-            $contents,
+            $js,
         );
     }
 
@@ -213,9 +231,9 @@ class FinalUxFoundationTest extends TestCase
 
         $this->assertIsString($theme);
         $this->assertStringContainsString(
-            '<x-operational-interactions />',
+            '<x-operational-assets />',
             $theme,
-            'The operational theme must install the final shared interactions.',
+            'The operational theme must load the shared static assets.',
         );
 
         $paths = glob(resource_path('views/*.blade.php')) ?: [];

@@ -15,6 +15,19 @@ class VisualSystemConsistencyTest extends TestCase
     {
         [$user] = $this->context();
 
+        $sharedCss = $this->compactCss(
+            (string) file_get_contents(
+                public_path(
+                    'central-assets/operational.css',
+                ),
+            ),
+        );
+
+        $this->assertStringContainsString(
+            '--central-primary:#245fd7',
+            $sharedCss,
+        );
+
         foreach ([
             '/mi-dia',
             '/captura',
@@ -27,7 +40,11 @@ class VisualSystemConsistencyTest extends TestCase
         ] as $page) {
             $response = $this->actingAs($user)
                 ->get($page)
-                ->assertOk();
+                ->assertOk()
+                ->assertSee(
+                    'central-assets/operational.css?v=2.39.0',
+                    false,
+                );
 
             $css = $this->compactCss($response->getContent());
 
@@ -35,12 +52,6 @@ class VisualSystemConsistencyTest extends TestCase
                 'width:min(100%,1200px)',
                 $css,
                 'El shell operativo debe conservar el ancho desktop común en '.$page,
-            );
-
-            $this->assertStringContainsString(
-                '--central-primary:#245fd7',
-                $css,
-                'La página debe cargar el tema operacional compartido en '.$page,
             );
         }
     }
