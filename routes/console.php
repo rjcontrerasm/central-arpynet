@@ -4,6 +4,7 @@ use App\Services\GoogleCalendarSyncService;
 
 use App\Models\GoogleCalendarConnection;
 
+use App\Support\DatabaseConnectionHealth;
 use App\Support\ObligationOccurrenceGenerator;
 
 use App\Models\RecurringObligation;
@@ -48,6 +49,63 @@ Artisan::command(
 
 Schedule::command('central:scheduler-heartbeat')
     ->everyMinute();
+
+Artisan::command(
+    'central:db-health',
+    function (): int {
+        $health = app(DatabaseConnectionHealth::class)
+            ->snapshot();
+
+        $this->line(
+            'Base de datos: '
+            .($health['version'] ?: $health['driver']),
+        );
+        $this->line(
+            'Estado: '.$health['status_label'],
+        );
+
+        if (! $health['available']) {
+            $this->warn(
+                'Métricas avanzadas de conexiones no disponibles.',
+            );
+
+            return self::SUCCESS;
+        }
+
+        $this->line(
+            'Conexiones actuales: '
+            .$health['threads_connected']
+            .' / '.$health['max_connections']
+            .' ('.$health['current_percent'].'%)',
+        );
+        $this->line(
+            'Conexiones ejecutando: '
+            .$health['threads_running'],
+        );
+        $this->line(
+            'Máximo observado: '
+            .$health['max_used_connections']
+            .' / '.$health['max_connections']
+            .' ('.$health['peak_percent'].'%)',
+        );
+
+        if ($health['historical_near_limit']) {
+            $this->warn(
+                'El servidor alcanzó al menos 90% del límite '
+                .'desde su último arranque.',
+            );
+        }
+
+        $this->comment(
+            'Las métricas son globales del servidor; '
+            .'no atribuyen el consumo a CENTRAL por sí solas.',
+        );
+
+        return self::SUCCESS;
+    },
+)->purpose(
+    'Show sanitized MariaDB/MySQL connection pressure metrics',
+);
 
 Artisan::command(
     'tasks:recalculate-priority',
