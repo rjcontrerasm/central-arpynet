@@ -157,6 +157,15 @@ class User extends Authenticatable implements FilamentUser
         );
     }
 
+    public function canManageOrganization(int $organizationId): bool
+    {
+        return in_array(
+            $organizationId,
+            $this->manageableOrganizationIds(),
+            true,
+        );
+    }
+
     public function canManageTeam(): bool
     {
         return $this->manageableOrganizationIds() !== [];
