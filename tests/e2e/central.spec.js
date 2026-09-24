@@ -1,12 +1,5 @@
 import { test, expect } from '@playwright/test';
-import {
-    expectNoHorizontalOverflow,
-    login,
-} from './helpers.js';
-
-test.beforeEach(async ({ page }) => {
-    await login(page);
-});
+import { expectNoHorizontalOverflow } from './helpers.js';
 
 test('Mi Día muestra foco operativo sin overflow', async ({ page }) => {
     await page.goto('/mi-dia');
