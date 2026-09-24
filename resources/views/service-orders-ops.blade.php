@@ -31,22 +31,24 @@
         : ($writableOrganizationIds[0] ?? null);
 @endphp
 <div class="shell">
-    <div class="topbar">
-        <div class="brand">Central ARPYNET</div>
-        <x-operational-nav active="services" />
-    </div>
+    <x-operational-page-header
+        active="services"
+        title="Servicios"
+        subtitle="Órdenes, siguiente acción y estancamiento"
+    >
+        <x-slot:actions>
+            @if($createScope)
+                <a
+                    class="primary-link"
+                    href="{{ route('service-order-front.create', ['scope' => $createScope]) }}"
+                >
+                    + Nuevo servicio
+                </a>
+            @endif
+        </x-slot:actions>
+    </x-operational-page-header>
 
     @if(session('ops_success'))<div class="success">{{ session('ops_success') }}</div>@endif
-
-    <section class="hero">
-        <div>
-            <h1>Servicios</h1>
-            <div class="subtitle">Órdenes, siguiente acción y estancamiento</div>
-        </div>
-        @if($createScope)
-            <a class="primary-link" href="{{ route('service-order-front.create', ['scope' => $createScope]) }}">+ Nuevo servicio</a>
-        @endif
-    </section>
 
     <section class="filters">
         <div class="filter-label">Ámbito</div>
