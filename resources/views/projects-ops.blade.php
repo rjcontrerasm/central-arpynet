@@ -36,17 +36,22 @@ $createScope = $selectedScope && in_array($selectedScope, $writableOrganizationI
     : ($writableOrganizationIds[0] ?? null);
 @endphp
 <div class="shell">
-<header class="topbar">
-<a class="brand" href="{{ route('daily-ops.show') }}">Central ARPYNET</a>
-<x-operational-nav active="projects" />
-</header>
-
-<section class="hero">
-<div><h1>Proyectos</h1><div class="subtitle">Avance, bloqueos, siguiente acción y señales de estancamiento.</div></div>
-@if($createScope)
-<a class="primary-link" href="{{ route('project-front.create', ['scope' => $createScope]) }}">Nuevo proyecto</a>
-@endif
-</section>
+<x-operational-page-header
+    active="projects"
+    title="Proyectos"
+    subtitle="Avance, bloqueos, siguiente acción y señales de estancamiento."
+>
+    <x-slot:actions>
+        @if($createScope)
+            <a
+                class="primary-link"
+                href="{{ route('project-front.create', ['scope' => $createScope]) }}"
+            >
+                Nuevo proyecto
+            </a>
+        @endif
+    </x-slot:actions>
+</x-operational-page-header>
 
 @if(session('project_action_success'))
 <div class="success">{{ session('project_action_success') }}</div>
