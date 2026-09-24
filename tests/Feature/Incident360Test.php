@@ -112,6 +112,7 @@ class Incident360Test extends TestCase
             ->get('/incidentes?focus=all')
             ->assertOk()
             ->assertSee('Incidentes 360')
+            ->assertSee('Foco operativo')
             ->assertSee('Incidente visible 360')
             ->assertSee('SLA respuesta vencido')
             ->assertSee('SLA solución vencido')

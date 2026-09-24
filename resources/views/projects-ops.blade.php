@@ -57,6 +57,41 @@ $createScope = $selectedScope && in_array($selectedScope, $writableOrganizationI
 <div class="success">{{ session('project_action_success') }}</div>
 @endif
 
+@php
+$projectFocusTitle = match (true) {
+    $summary['critical'] > 0 =>
+        $summary['critical'].' proyectos críticos requieren decisión',
+    $summary['attention'] > 0 =>
+        $summary['attention'].' proyectos requieren revisión',
+    default => 'Sin proyectos en alerta inmediata',
+};
+$projectFocusTone = $summary['critical'] > 0
+    ? 'danger'
+    : ($summary['attention'] > 0 ? 'warning' : 'success');
+$projectFocusMeta =
+    $summary['stagnant'].' estancados · '
+    .$summary['no_next_action'].' sin próxima acción';
+@endphp
+
+<x-operational-focus-banner
+    :title="$projectFocusTitle"
+    :meta="$projectFocusMeta"
+    :tone="$projectFocusTone"
+>
+    <x-slot:actions>
+        <a
+            class="primary-link"
+            href="{{ route('project-ops.show', array_filter([
+                'scope' => $selectedScope,
+                'focus' => 'attention',
+                'q' => $search !== '' ? $search : null,
+            ])) }}"
+        >
+            Ver atención
+        </a>
+    </x-slot:actions>
+</x-operational-focus-banner>
+
 <form class="filters" method="get" action="{{ route('project-ops.show') }}">
 <select name="scope" aria-label="Ámbito">
 <option value="">Todos los ámbitos</option>

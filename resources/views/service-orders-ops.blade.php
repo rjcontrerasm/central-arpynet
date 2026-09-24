@@ -50,6 +50,41 @@
 
     @if(session('ops_success'))<div class="success">{{ session('ops_success') }}</div>@endif
 
+    @php
+        $serviceFocusTitle = match (true) {
+            $summary['critical'] > 0 =>
+                $summary['critical'].' servicios requieren atención crítica',
+            $summary['attention'] > 0 =>
+                $summary['attention'].' servicios requieren seguimiento',
+            default => 'Servicios sin alertas operativas inmediatas',
+        };
+        $serviceFocusTone = $summary['critical'] > 0
+            ? 'danger'
+            : ($summary['attention'] > 0 ? 'warning' : 'success');
+        $serviceFocusMeta =
+            $summary['execution'].' en ejecución · '
+            .$summary['invoice'].' facturados · '
+            .$summary['total'].' mostrados';
+    @endphp
+
+    <x-operational-focus-banner
+        :title="$serviceFocusTitle"
+        :meta="$serviceFocusMeta"
+        :tone="$serviceFocusTone"
+    >
+        <x-slot:actions>
+            <a
+                class="primary-link"
+                href="{{ route('service-orders-ops.show', array_merge(
+                    $base,
+                    ['focus' => 'attention'],
+                )) }}"
+            >
+                Ver atención
+            </a>
+        </x-slot:actions>
+    </x-operational-focus-banner>
+
     <section class="filters">
         <div class="filter-label">Ámbito</div>
         <div class="scroll">
@@ -83,12 +118,6 @@
             <input type="search" name="q" value="{{ $search }}" placeholder="Buscar título, orden o cotización...">
             <button type="submit">Buscar</button>
         </form>
-    </section>
-
-    <section class="money-grid">
-        @foreach(['Monto servicios'=>$financialSummary['service_amount'],'Facturado'=>$financialSummary['invoiced'],'Por cobrar'=>$financialSummary['outstanding'],'Vencido'=>$financialSummary['overdue'],'Pagado'=>$financialSummary['paid']] as $label=>$value)
-            <div class="money"><div class="money-value">S/ {{ number_format($value,2,'.',',') }}</div><div class="money-label">{{ $label }}</div></div>
-        @endforeach
     </section>
 
     <section class="stats">
@@ -179,7 +208,18 @@
             <div class="empty">No hay órdenes que coincidan con estos filtros. @if($createScope) Usa “Nuevo servicio” para registrar la primera. @endif</div>
         @endforelse
     </div>
-</div>
+
+    <div class="operational-context-heading">
+        Contexto financiero de la vista actual
+    </div>
+
+    <section class="money-grid">
+        @foreach(['Monto servicios'=>$financialSummary['service_amount'],'Facturado'=>$financialSummary['invoiced'],'Por cobrar'=>$financialSummary['outstanding'],'Vencido'=>$financialSummary['overdue'],'Pagado'=>$financialSummary['paid']] as $label=>$value)
+            <div class="money"><div class="money-value">S/ {{ number_format($value,2,'.',',') }}</div><div class="money-label">{{ $label }}</div></div>
+        @endforeach
+    </section>
+
+ </div>
 <x-operational-theme />
 <x-operational-interactions />
 </body>

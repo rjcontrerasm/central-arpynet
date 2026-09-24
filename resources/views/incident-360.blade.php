@@ -99,20 +99,22 @@
 </head>
 <body>
 <div class="shell">
-    <div class="topbar">
-        <div class="brand">Central ARPYNET</div>
-        <x-operational-nav active="incidents" />
-    </div>
-
-    <section class="hero">
-        <div>
-            <h1>Incidentes 360</h1>
-            <div class="subtitle">SLA, prioridad, contexto y ciclo de vida en una sola vista.</div>
-        </div>
-        @if ($writableOrganizations->isNotEmpty())
-            <a class="admin-link" href="#nuevo-incidente">+ Nuevo incidente</a>
-        @endif
-    </section>
+    <x-operational-page-header
+        active="incidents"
+        title="Incidentes 360"
+        subtitle="SLA, prioridad, contexto y ciclo de vida en una sola vista."
+    >
+        <x-slot:actions>
+            @if ($writableOrganizations->isNotEmpty())
+                <a
+                    class="admin-link"
+                    href="#nuevo-incidente"
+                >
+                    + Nuevo incidente
+                </a>
+            @endif
+        </x-slot:actions>
+    </x-operational-page-header>
 
     @if(session('incident_success'))
         <div class="incident-flash">{{ session('incident_success') }}</div>
@@ -121,6 +123,54 @@
     @if($errors->any())
         <div class="incident-flash error">{{ $errors->first() }}</div>
     @endif
+
+    @php
+        $incidentFocusTitle = match (true) {
+            $summary['critical'] > 0 =>
+                $summary['critical'].' incidentes críticos abiertos',
+            (
+                $summary['response_breached']
+                + $summary['resolution_breached']
+            ) > 0 =>
+                (
+                    $summary['response_breached']
+                    + $summary['resolution_breached']
+                ).' incumplimientos SLA requieren atención',
+            $summary['open'] > 0 =>
+                $summary['open'].' incidentes permanecen abiertos',
+            default => 'Sin incidentes abiertos',
+        };
+
+        $incidentFocusTone = $summary['critical'] > 0
+            || (
+                $summary['response_breached']
+                + $summary['resolution_breached']
+            ) > 0
+                ? 'danger'
+                : ($summary['open'] > 0 ? 'warning' : 'success');
+
+        $incidentFocusMeta =
+            $summary['monitoring'].' en observación · '
+            .$summary['resolved_7d'].' resueltos en 7 días';
+    @endphp
+
+    <x-operational-focus-banner
+        :title="$incidentFocusTitle"
+        :meta="$incidentFocusMeta"
+        :tone="$incidentFocusTone"
+    >
+        <x-slot:actions>
+            <a
+                class="admin-link"
+                href="{{ route('incident-360.index', array_filter([
+                    'scope' => $selectedScope,
+                    'focus' => 'attention',
+                ])) }}"
+            >
+                Ver atención
+            </a>
+        </x-slot:actions>
+    </x-operational-focus-banner>
 
     @if ($writableOrganizations->isNotEmpty())
         <details

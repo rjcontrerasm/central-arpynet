@@ -14,12 +14,66 @@ $focuses=['attention'=>'Requieren atención','overdue'=>'Vencidos','today'=>'Hoy
 $createScope=$selectedScope && in_array($selectedScope,$writableOrganizationIds,true)?$selectedScope:($writableOrganizationIds[0]??null);
 @endphp
 <div class="shell">
-<header class="topbar"><div class="brand">Central ARPYNET</div><x-operational-nav active="obligations" /></header>
+<x-operational-page-header
+    active="obligations"
+    title="Vencimientos"
+    subtitle="Obligaciones recurrentes, pagos y alertas"
+>
+    <x-slot:actions>
+        <a
+            class="secondary-link"
+            href="{{ route('recurring-obligation-front.index', array_filter(['scope' => $selectedScope])) }}"
+        >
+            Administrar recurrentes
+        </a>
+
+        @if($createScope)
+            <a
+                class="primary-link"
+                href="{{ route('recurring-obligation-front.create', ['scope' => $createScope]) }}"
+            >
+                + Nueva obligación
+            </a>
+        @endif
+    </x-slot:actions>
+</x-operational-page-header>
+
 @if(session('obligation_success'))<div class="success">{{ session('obligation_success') }}</div>@endif
-<section class="hero">
-<div><h1>Vencimientos</h1><div class="subtitle">Obligaciones recurrentes, pagos y alertas</div></div>
-<div class="hero-actions"><a class="secondary-link" href="{{ route('recurring-obligation-front.index',array_filter(['scope'=>$selectedScope])) }}">Administrar recurrentes</a>@if($createScope)<a class="primary-link" href="{{ route('recurring-obligation-front.create',['scope'=>$createScope]) }}">+ Nueva obligación</a>@endif</div>
-</section>
+
+@php
+$obligationFocusTitle = match (true) {
+    $summary['overdue'] > 0 =>
+        $summary['overdue'].' vencimientos atrasados requieren acción',
+    $summary['today'] > 0 =>
+        $summary['today'].' vencimientos deben resolverse hoy',
+    default => 'Sin vencimientos urgentes en la vista actual',
+};
+$obligationFocusTone = $summary['overdue'] > 0
+    ? 'danger'
+    : ($summary['today'] > 0 ? 'warning' : 'success');
+$obligationFocusMeta =
+    $summary['pending'].' pendientes · '
+    .$summary['upcoming'].' próximos';
+@endphp
+
+<x-operational-focus-banner
+    :title="$obligationFocusTitle"
+    :meta="$obligationFocusMeta"
+    :tone="$obligationFocusTone"
+>
+    <x-slot:actions>
+        <a
+            class="primary-link"
+            href="{{ route('obligation-ops.show', array_merge(
+                $base,
+                ['focus' => 'attention'],
+            )) }}"
+        >
+            Ver atención
+        </a>
+    </x-slot:actions>
+</x-operational-focus-banner>
+
 <section class="filters">
 <div class="filter-label">Ámbito</div><div class="scroll"><a class="chip {{ $selectedScope?'':'active' }}" href="{{ route('obligation-ops.show',array_filter(['focus'=>$focus,'q'=>$search!==''?$search:null])) }}">Todos los ámbitos</a>@foreach($organizations as $organization)<a class="chip {{ $selectedScope===(int)$organization->id?'active':'' }}" href="{{ route('obligation-ops.show',array_filter(['scope'=>$organization->id,'focus'=>$focus,'q'=>$search!==''?$search:null])) }}">{{ $organization->name }}</a>@endforeach</div>
 <div class="filter-label">Estado</div><div class="scroll">@foreach($focuses as $value=>$label)<a class="chip {{ $focus===$value?'active':'' }}" href="{{ route('obligation-ops.show',array_merge($base,['focus'=>$value])) }}">{{ $label }}</a>@endforeach</div>
@@ -28,7 +82,6 @@ $createScope=$selectedScope && in_array($selectedScope,$writableOrganizationIds,
 <section class="stats">
 @foreach(['Vencidos'=>$summary['overdue'],'Hoy'=>$summary['today'],'Próximos'=>$summary['upcoming'],'Pendientes'=>$summary['pending'],'Mostrados'=>$summary['total']] as $label=>$value)<div class="stat"><div class="stat-value">{{ $value }}</div><div class="stat-label">{{ $label }}</div></div>@endforeach
 </section>
-@foreach($moneySummary as $currency=>$money)<div class="money-currency">Resumen {{ $currency }}</div><section class="money-grid">@foreach(['Esperado'=>$money['expected'],'Pendiente'=>$money['pending'],'Vencido'=>$money['overdue'],'Pagado'=>$money['paid']] as $label=>$value)<div class="money"><div class="money-value">{{ $currency }} {{ number_format($value,2,'.',',') }}</div><div class="money-label">{{ $label }}</div></div>@endforeach</section>@endforeach
 <div class="list">
 @forelse($occurrences as $occurrence)
 @php $canWrite=in_array((int)$occurrence->organization_id,$writableOrganizationIds,true); @endphp
@@ -48,6 +101,9 @@ $createScope=$selectedScope && in_array($selectedScope,$writableOrganizationIds,
 </article>
 @empty<div class="empty">No hay vencimientos que coincidan con estos filtros.</div>@endforelse
 </div>
+
+<div class="operational-context-heading">Contexto financiero</div>
+@foreach($moneySummary as $currency=>$money)<div class="money-currency">Resumen {{ $currency }}</div><section class="money-grid">@foreach(['Esperado'=>$money['expected'],'Pendiente'=>$money['pending'],'Vencido'=>$money['overdue'],'Pagado'=>$money['paid']] as $label=>$value)<div class="money"><div class="money-value">{{ $currency }} {{ number_format($value,2,'.',',') }}</div><div class="money-label">{{ $label }}</div></div>@endforeach</section>@endforeach
 </div>
 <x-operational-theme /><x-operational-interactions />
 </body></html>

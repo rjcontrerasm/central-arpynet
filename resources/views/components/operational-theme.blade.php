@@ -356,7 +356,87 @@
         gap: 10px !important;
     }
 
+    .operational-focus-banner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 18px;
+        padding: 14px 16px;
+        border: 1px solid var(--central-border);
+        border-left-width: 4px;
+        border-radius: var(--central-radius);
+        background: var(--central-surface);
+        box-shadow: var(--central-shadow);
+    }
+
+    .operational-focus-banner.is-danger {
+        border-left-color: var(--central-danger);
+    }
+
+    .operational-focus-banner.is-warning {
+        border-left-color: var(--central-warning);
+    }
+
+    .operational-focus-banner.is-success {
+        border-left-color: var(--central-success);
+    }
+
+    .operational-focus-banner.is-info {
+        border-left-color: var(--central-info);
+    }
+
+    .operational-focus-eyebrow {
+        color: var(--central-muted);
+        font-size: 10px;
+        font-weight: 850;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+
+    .operational-focus-title {
+        margin-top: 3px;
+        color: var(--central-text);
+        font-size: 16px;
+        font-weight: 850;
+        line-height: 1.3;
+    }
+
+    .operational-focus-meta {
+        margin-top: 4px;
+        color: var(--central-muted);
+        font-size: 11px;
+        line-height: 1.45;
+    }
+
+    .operational-focus-actions {
+        display: flex;
+        flex: 0 0 auto;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+
+    .operational-context-heading {
+        margin: 24px 0 8px;
+        color: var(--central-muted);
+        font-size: 11px;
+        font-weight: 820;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+    }
+
     @media (max-width: 620px) {
+        .operational-focus-banner {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .operational-focus-actions {
+            width: 100%;
+            justify-content: flex-start;
+        }
+
         .operational-header-actions {
             width: 100%;
             justify-content: flex-start;

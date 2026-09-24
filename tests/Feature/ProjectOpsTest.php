@@ -56,6 +56,7 @@ class ProjectOpsTest extends TestCase
         $this->actingAs($user)
             ->get('/proyectos?focus=all')
             ->assertOk()
+            ->assertSee('Foco operativo')
             ->assertSee('Renovar plataforma CENTRAL')
             ->assertSee('Avance 50%')
             ->assertSee('Estancado')
