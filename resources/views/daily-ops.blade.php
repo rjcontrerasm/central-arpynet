@@ -308,6 +308,68 @@
             font-weight: 750;
         }
 
+        .focus-panel {
+            display: grid;
+            gap: 14px;
+            margin-bottom: 14px;
+            padding: 16px;
+            border: 1px solid #1d4ed8;
+            border-radius: 18px;
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(30, 64, 175, .2),
+                    rgba(15, 23, 42, .92)
+                );
+        }
+
+        .focus-eyebrow {
+            color: #93c5fd;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+        }
+
+        .focus-title {
+            margin: 5px 0 0;
+            font-size: clamp(21px, 4vw, 29px);
+            line-height: 1.08;
+            letter-spacing: -.035em;
+        }
+
+        .focus-meta {
+            margin-top: 7px;
+            color: #cbd5e1;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .focus-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .focus-action {
+            display: inline-flex;
+            align-items: center;
+            min-height: 38px;
+            padding: 8px 11px;
+            border: 1px solid #3b82f6;
+            border-radius: 10px;
+            background: #172554;
+            color: #dbeafe;
+            font-size: 12px;
+            font-weight: 820;
+        }
+
+        .focus-action.secondary {
+            border-color: #334155;
+            background: #0f172a;
+            color: #cbd5e1;
+        }
+
         .stats {
             display: grid;
             grid-template-columns:
@@ -773,18 +835,29 @@
             .quick { display: inline-flex; }
             .fab { display: none; }
 
+            .focus-panel {
+                grid-template-columns:
+                    minmax(0, 1fr) auto;
+                align-items: center;
+                padding: 18px 20px;
+            }
+
+            .focus-actions {
+                justify-content: flex-end;
+            }
+
             .two-column {
                 display: flex;
                 flex-direction: column;
             }
 
             .two-column > aside {
-                order: -1;
                 display: grid;
                 grid-template-columns:
                     repeat(2, minmax(0, 1fr));
                 gap: 18px;
-                margin-bottom: 24px;
+                margin-top: 24px;
+                margin-bottom: 0;
             }
 
             .two-column > aside > .section {
@@ -818,6 +891,36 @@
             .empty,
             .edit-field {
                 color: #64748b;
+            }
+
+            .focus-panel {
+                border-color: #bfdbfe;
+                background:
+                    linear-gradient(
+                        135deg,
+                        #eff6ff,
+                        #ffffff
+                    );
+            }
+
+            .focus-eyebrow {
+                color: #1d4ed8;
+            }
+
+            .focus-meta {
+                color: #475569;
+            }
+
+            .focus-action {
+                border-color: #60a5fa;
+                background: #dbeafe;
+                color: #1e3a8a;
+            }
+
+            .focus-action.secondary {
+                border-color: #cbd5e1;
+                background: #ffffff;
+                color: #334155;
             }
 
             .stat,
@@ -1227,6 +1330,80 @@
         @endif
     </section>
 
+    <section class="focus-panel" aria-label="Foco del día">
+        <div>
+            <div class="focus-eyebrow">Foco del día</div>
+
+            @if ($criticalCount > 0)
+                <h2 class="focus-title">
+                    {{ $criticalCount }}
+                    {{ $criticalCount === 1 ? 'elemento requiere' : 'elementos requieren' }}
+                    atención inmediata
+                </h2>
+            @elseif ($priorityTodayCount > 0)
+                <h2 class="focus-title">
+                    {{ $priorityTodayCount }}
+                    {{ $priorityTodayCount === 1 ? 'tarea para resolver' : 'tareas para resolver' }}
+                    hoy
+                </h2>
+            @else
+                <h2 class="focus-title">
+                    Sin urgencias en tu bandeja
+                </h2>
+            @endif
+
+            <div class="focus-meta">
+                {{ $waitingCount }} en espera
+                · {{ $projectsAttentionCount }} proyectos a revisar
+                · {{ $upcomingObligations->count() }} vencimientos próximos
+            </div>
+        </div>
+
+        <div class="focus-actions">
+            @if ($criticalCount > 0)
+                <a
+                    class="focus-action"
+                    href="{{ route('daily-ops.show', array_filter([
+                        'view' => $selectedWorkView,
+                        'scope' => $selectedScope,
+                        'q' => $search !== '' ? $search : null,
+                        'priority' => 'critical',
+                    ])) }}"
+                >
+                    Ver críticos
+                </a>
+            @elseif ($priorityTodayCount > 0)
+                <a
+                    class="focus-action"
+                    href="{{ route('daily-ops.show', array_filter([
+                        'view' => $selectedWorkView,
+                        'scope' => $selectedScope,
+                        'q' => $search !== '' ? $search : null,
+                        'priority' => 'today',
+                    ])) }}"
+                >
+                    Ver tareas de hoy
+                </a>
+            @endif
+
+            <a
+                class="focus-action secondary"
+                href="{{ route('operational-agenda.show') }}"
+            >
+                Abrir agenda
+            </a>
+
+            @if ($canQuickCapture)
+                <a
+                    class="focus-action secondary"
+                    href="{{ route('quick-capture.show') }}"
+                >
+                    + Capturar
+                </a>
+            @endif
+        </div>
+    </section>
+
     <section class="stats" aria-label="Resumen de prioridades">
         <a
             class="stat"
@@ -1299,21 +1476,25 @@
     @php
         $taskSections = [
             [
+                'id' => 'prioridad-ahora',
                 'title' => 'Prioridad ahora',
                 'tasks' => $nowTasks,
                 'empty' => 'Nada requiere atención inmediata.',
             ],
             [
+                'id' => 'hoy',
                 'title' => 'Hoy',
                 'tasks' => $todayTasks,
                 'empty' => 'No quedan tareas para hoy.',
             ],
             [
+                'id' => 'esta-semana',
                 'title' => 'Esta semana',
                 'tasks' => $upcomingTasks,
                 'empty' => 'Sin tareas en los próximos 7 días.',
             ],
             [
+                'id' => 'planificados',
                 'title' => 'Planificados',
                 'tasks' => $noDateTasks,
                 'empty' => 'No hay tareas pendientes sin fecha.',
@@ -1324,7 +1505,10 @@
     <div class="two-column">
         <main>
             @foreach ($taskSections as $section)
-                <section class="section">
+                <section
+                    class="section"
+                    id="{{ $section['id'] }}"
+                >
                     <div class="section-head">
                         <h2>{{ $section['title'] }}</h2>
 

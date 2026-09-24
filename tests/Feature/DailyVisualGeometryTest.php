@@ -11,7 +11,7 @@ class DailyVisualGeometryTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_daily_desktop_uses_stable_context_and_task_grids(): void
+    public function test_daily_desktop_prioritizes_tasks_before_supporting_context(): void
     {
         [$user] = $this->context();
 
@@ -24,8 +24,12 @@ class DailyVisualGeometryTest extends TestCase
                 '.two-column > aside',
                 false,
             )
-            ->assertSee(
+            ->assertDontSee(
                 'order: -1',
+                false,
+            )
+            ->assertSee(
+                'margin-top: 24px',
                 false,
             )
             ->assertSee(
