@@ -277,6 +277,18 @@ class RecurringObligationResource extends Resource
             ]);
     }
 
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->manageableOrganizationIds() !== [];
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()
+            ?->canManageOrganization((int) $record->organization_id)
+            ?? false;
+    }
+
     public static function getEloquentQuery(): Builder
     {
         $user = auth()->user();
