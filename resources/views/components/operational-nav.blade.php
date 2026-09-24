@@ -168,6 +168,16 @@
         color: #dbeafe;
     }
 
+    .op-nav-group-title {
+        padding: 9px 10px 5px;
+        color: var(--op-nav-muted);
+        font-size: 10px;
+        font-weight: 850;
+        letter-spacing: .08em;
+        line-height: 1;
+        text-transform: uppercase;
+    }
+
     .op-nav-divider {
         height: 1px;
         margin: 6px 4px;
@@ -341,6 +351,8 @@
         </summary>
 
         <div class="op-nav-menu">
+            <div class="op-nav-group-title">Hoy</div>
+
             <a
                 class="{{ $active === 'daily' && $dailyWorkView === 'team' ? 'is-active' : '' }}"
                 href="{{ route('daily-ops.show', ['view' => 'team']) }}"
@@ -356,6 +368,7 @@
             </a>
 
             <div class="op-nav-divider"></div>
+            <div class="op-nav-group-title">Trabajo</div>
 
             <a
                 class="{{ $active === 'services' ? 'is-active' : '' }}"
@@ -418,6 +431,9 @@
                 Seguimiento
             </a>
 
+            <div class="op-nav-divider"></div>
+            <div class="op-nav-group-title">Control</div>
+
             <a
                 class="{{ $active === 'review' ? 'is-active' : '' }}"
                 href="{{ route('daily-review.show') }}"
@@ -431,6 +447,9 @@
             >
                 Revisión semanal
             </a>
+
+            <div class="op-nav-divider"></div>
+            <div class="op-nav-group-title">Inteligencia</div>
 
             <a
                 class="{{ $active === 'decisions' ? 'is-active' : '' }}"
@@ -479,6 +498,9 @@
             >
                 Automatizaciones
             </a>
+
+            <div class="op-nav-divider"></div>
+            <div class="op-nav-group-title">Sistema</div>
 
             <a
                 class="{{ $active === 'safety' ? 'is-active' : '' }}"
