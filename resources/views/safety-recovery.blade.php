@@ -38,12 +38,12 @@
     </header>
 
     <section class="safety-kpis">
-        <div class="safety-kpi"><span>Fallidas recientes</span><strong>{{ $snapshot['counts']['failed_runs'] }}</strong></div>
-        <div class="safety-kpi"><span>Bloqueadas / stale</span><strong>{{ $snapshot['counts']['blocked_runs'] + $snapshot['counts']['stale_runs'] }}</strong></div>
-        <div class="safety-kpi"><span>Propuestas pendientes</span><strong>{{ $snapshot['counts']['pending_proposals'] }}</strong></div>
-        <div class="safety-kpi"><span>Propuestas stale</span><strong>{{ $snapshot['counts']['stale_proposals'] }}</strong></div>
-        <div class="safety-kpi"><span>Recurrencias activas</span><strong>{{ $snapshot['counts']['recurring_active'] }}</strong></div>
+        <div class="safety-kpi"><span>Automatizaciones activas</span><strong>{{ $snapshot['counts']['automation_active'] }}</strong></div>
+        <div class="safety-kpi"><span>Fallas automatización 24 h</span><strong>{{ $snapshot['counts']['automation_failed_24h'] }}</strong></div>
         <div class="safety-kpi"><span>Recurrencias sin generar</span><strong>{{ $snapshot['counts']['recurring_missing'] }}</strong></div>
+        <div class="safety-kpi"><span>Vencimientos sin generar</span><strong>{{ $snapshot['counts']['obligation_missing'] }}</strong></div>
+        <div class="safety-kpi"><span>Fallas WhatsApp 24 h</span><strong>{{ $snapshot['counts']['whatsapp_failed_24h'] }}</strong></div>
+        <div class="safety-kpi"><span>Propuestas pendientes / stale</span><strong>{{ $snapshot['counts']['pending_proposals'] + $snapshot['counts']['stale_proposals'] }}</strong></div>
     </section>
 
     <div class="safety-grid">
@@ -86,10 +86,12 @@
                 </div>
 
                 <div class="safety-contract">
-                    <div><strong>Reglas recurrentes activas</strong><span>{{ $snapshot['recurring']['active_rules'] }}</span></div>
-                    <div><strong>Reglas con generación pendiente</strong><span>{{ $snapshot['recurring']['missing_rules'] }}</span></div>
-                    <div><strong>Última tarea recurrente generada</strong><span>{{ $snapshot['recurring']['last_generated_at']?->format('d/m/Y H:i') ?? 'Aún no registrada' }}</span></div>
-                    <div><strong>Automatizaciones programadas</strong><span>{{ $snapshot['scheduler']['automation_enabled'] ? 'Habilitadas' : 'Deshabilitadas' }}</span></div>
+                    <div><strong>Tareas recurrentes activas</strong><span>{{ $snapshot['recurring']['active_rules'] }}</span></div>
+                    <div><strong>Tareas sin generar</strong><span>{{ $snapshot['recurring']['missing_rules'] }}</span></div>
+                    <div><strong>Vencimientos recurrentes activos</strong><span>{{ $snapshot['obligations']['active_rules'] }}</span></div>
+                    <div><strong>Vencimientos sin generar</strong><span>{{ $snapshot['obligations']['missing_rules'] }}</span></div>
+                    <div><strong>Última tarea recurrente</strong><span>{{ $snapshot['recurring']['last_generated_at']?->format('d/m/Y H:i') ?? 'Aún no registrada' }}</span></div>
+                    <div><strong>Último vencimiento generado</strong><span>{{ $snapshot['obligations']['last_generated_at']?->format('d/m/Y H:i') ?? 'Aún no registrado' }}</span></div>
                 </div>
 
                 @if($snapshot['recurring']['issues']->isNotEmpty())
@@ -110,7 +112,28 @@
                     <div class="safety-empty">Las recurrencias activas visibles tienen sus ocurrencias esperadas generadas.</div>
                 @endif
 
-                <a class="safety-action" href="{{ route('recurring-task-front.index') }}">Abrir Tareas recurrentes</a>
+                @if($snapshot['obligations']['issues']->isNotEmpty())
+                    <h3>Vencimientos recurrentes que requieren revisión</h3>
+                    @foreach($snapshot['obligations']['issues'] as $issue)
+                        <article class="safety-row">
+                            <div>
+                                <strong>{{ $issue['title'] }}</strong>
+                                <div class="safety-row-meta">{{ $issue['organization'] }}</div>
+                            </div>
+                            <div class="safety-right">
+                                <span class="safety-pill stale">Sin generar</span>
+                                <div class="safety-row-meta">{{ $issue['due_date']->format('d/m/Y') }}</div>
+                            </div>
+                        </article>
+                    @endforeach
+                @else
+                    <div class="safety-empty">Los vencimientos recurrentes visibles tienen su siguiente ocurrencia generada.</div>
+                @endif
+
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <a class="safety-action" href="{{ route('recurring-task-front.index') }}">Tareas recurrentes</a>
+                    <a class="safety-action" href="{{ route('recurring-obligation-front.index') }}">Vencimientos recurrentes</a>
+                </div>
             </section>
 
             <section class="safety-card">
@@ -125,19 +148,93 @@
             </section>
 
             <section class="safety-card">
-                <h2>Integraciones</h2>
-                @if(!$snapshot['calendar']['connected'])
-                    <div class="safety-empty">Google Calendar no está conectado.</div>
-                @elseif($snapshot['calendar']['degraded'])
-                    <strong>Google Calendar requiere revisión</strong>
-                    <p class="safety-muted">Último error registrado: {{ $snapshot['calendar']['last_error_at']?->format('d/m/Y H:i') }}. El detalle técnico permanece oculto.</p>
-                @else
-                    <strong>Google Calendar sin error activo</strong>
-                    <p class="safety-muted">Última sincronización: {{ $snapshot['calendar']['last_sync_at']?->format('d/m/Y H:i') ?? 'Aún no registrada' }}.</p>
+                <h2>Canales e integraciones</h2>
+
+                <div class="safety-health-line">
+                    <span class="safety-status {{ $snapshot['calendar']['status'] }}">{{ $snapshot['calendar']['status_label'] }}</span>
+                    <div class="safety-health-meta">
+                        @if($snapshot['calendar']['last_sync_at'])
+                            Última sincronización {{ $snapshot['calendar']['last_sync_at']->format('d/m/Y H:i') }}
+                        @else
+                            Sin sincronización registrada
+                        @endif
+                    </div>
+                </div>
+
+                <div class="safety-health-line">
+                    <span class="safety-status {{ $snapshot['whatsapp']['status'] }}">{{ $snapshot['whatsapp']['status_label'] }}</span>
+                    <div class="safety-health-meta">
+                        {{ $snapshot['whatsapp']['sent_24h'] }} enviados ·
+                        {{ $snapshot['whatsapp']['failed_24h'] }} fallidos en 24 h
+                    </div>
+                </div>
+
+                @if($snapshot['external_monitor']['visible'])
+                    <div class="safety-health-line">
+                        <span class="safety-status {{ $snapshot['external_monitor']['status'] }}">{{ $snapshot['external_monitor']['status_label'] }}</span>
+                        <div class="safety-health-meta">
+                            @if($snapshot['external_monitor']['last_success_at'])
+                                Último éxito {{ $snapshot['external_monitor']['last_success_at']->format('d/m/Y H:i') }}
+                                · {{ $snapshot['external_monitor']['last_item_count'] ?? 0 }} elementos
+                            @else
+                                Sin éxito registrado
+                            @endif
+                        </div>
+                    </div>
                 @endif
+
                 <a class="safety-action" href="{{ route('operational-agenda.show') }}">Abrir Agenda</a>
             </section>
         </div>
+    </div>
+
+    <div class="safety-grid" style="margin-top:14px">
+        <section class="safety-card">
+            <h2>Automatizaciones</h2>
+            <div class="safety-health-line">
+                <span class="safety-status {{ $snapshot['automations']['status'] }}">{{ $snapshot['automations']['status_label'] }}</span>
+                <div class="safety-health-meta">
+                    Última evaluación {{ $snapshot['automations']['last_evaluated_at']?->format('d/m/Y H:i') ?? 'no registrada' }}
+                </div>
+            </div>
+            <div class="safety-contract">
+                <div><strong>Reglas activas</strong><span>{{ $snapshot['automations']['active_rules'] }}</span></div>
+                <div><strong>Ejecuciones 24 h</strong><span>{{ $snapshot['automations']['runs_24h'] }}</span></div>
+                <div><strong>Fallidas 24 h</strong><span>{{ $snapshot['automations']['failed_24h'] }}</span></div>
+                <div><strong>Bloqueadas / stale 24 h</strong><span>{{ $snapshot['automations']['blocked_24h'] + $snapshot['automations']['stale_24h'] }}</span></div>
+            </div>
+            <a class="safety-action" href="{{ route('automation-center.index') }}">Abrir Automatizaciones</a>
+        </section>
+
+        <section class="safety-card">
+            <h2>Entregas de resumen</h2>
+            <div class="safety-health-line">
+                <span class="safety-status {{ $snapshot['summaries']['status'] }}">{{ $snapshot['summaries']['status_label'] }}</span>
+            </div>
+            <div class="safety-contract">
+                <div>
+                    <strong>Email</strong>
+                    <span>
+                        {{ $snapshot['summaries']['email_enabled'] ? 'Habilitado' : 'Deshabilitado' }}
+                        · {{ $snapshot['summaries']['email']['status'] ?? 'sin entrega' }}
+                        @if($snapshot['summaries']['email']['updated_at'] ?? null)
+                            · {{ $snapshot['summaries']['email']['updated_at']->format('d/m H:i') }}
+                        @endif
+                    </span>
+                </div>
+                <div>
+                    <strong>WhatsApp</strong>
+                    <span>
+                        {{ $snapshot['summaries']['whatsapp_enabled'] ? 'Habilitado' : 'Deshabilitado' }}
+                        · {{ $snapshot['summaries']['whatsapp']['status'] ?? 'sin entrega' }}
+                        @if($snapshot['summaries']['whatsapp']['updated_at'] ?? null)
+                            · {{ $snapshot['summaries']['whatsapp']['updated_at']->format('d/m H:i') }}
+                        @endif
+                    </span>
+                </div>
+            </div>
+            <a class="safety-action" href="{{ route('executive-summary.show') }}">Abrir Resumen</a>
+        </section>
     </div>
 
     <div class="safety-grid" style="margin-top:14px">
