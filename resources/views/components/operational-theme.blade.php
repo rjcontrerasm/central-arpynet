@@ -94,6 +94,15 @@
         color: var(--central-text);
     }
 
+    .operational-header-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 8px;
+        min-width: 0;
+    }
+
     .subtitle,
     .date,
     .meta,
@@ -348,6 +357,11 @@
     }
 
     @media (max-width: 620px) {
+        .operational-header-actions {
+            width: 100%;
+            justify-content: flex-start;
+        }
+
         .jarvis .executive-org-meta,
         .jarvis .executive-reason,
         .jarvis .daily-section-hint,
