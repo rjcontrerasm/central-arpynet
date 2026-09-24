@@ -91,7 +91,7 @@ class GlobalSearchTest extends TestCase
             ->assertSee('Alpha cliente')
             ->assertSee('Alpha servicio')
             ->assertSee('Alpha incidente')
-            ->assertSee('5 resultados visibles');
+            ->assertViewHas('total', 5);
     }
 
     public function test_search_never_returns_foreign_scope_records(): void
