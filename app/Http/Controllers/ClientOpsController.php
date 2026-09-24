@@ -53,6 +53,7 @@ class ClientOpsController extends Controller
             ->visibleTo($user)
             ->with([
                 'organizations' => fn ($query) => $query
+                    ->whereIn('organizations.id', $organizationIds)
                     ->where('organizations.is_active', true)
                     ->wherePivot('is_active', true)
                     ->orderBy('organizations.name'),
