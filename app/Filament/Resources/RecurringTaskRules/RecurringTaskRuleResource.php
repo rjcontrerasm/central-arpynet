@@ -73,6 +73,12 @@ class RecurringTaskRuleResource
                                             'is_active',
                                             true,
                                         )
+                                        ->whereIn(
+                                            'organizations.id',
+                                            auth()->user()
+                                                ?->manageableOrganizationIds()
+                                                ?? [],
+                                        )
                                         ->orderBy(
                                             'organizations.name',
                                         )
@@ -408,6 +414,18 @@ class RecurringTaskRuleResource
             ]);
     }
 
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->manageableOrganizationIds() !== [];
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()
+            ?->canManageOrganization((int) $record->organization_id)
+            ?? false;
+    }
+
     public static function getEloquentQuery(): Builder
     {
         $user = auth()->user();
@@ -422,7 +440,10 @@ class RecurringTaskRuleResource
 
         return parent::
             getEloquentQuery()
-            ->visibleTo($user);
+            ->whereIn(
+                'organization_id',
+                $user->manageableOrganizationIds(),
+            );
     }
 
     public static function getPages(): array
