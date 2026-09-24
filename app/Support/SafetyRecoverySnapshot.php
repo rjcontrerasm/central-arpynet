@@ -3,12 +3,18 @@
 namespace App\Support;
 
 use App\Models\AgentActionProposal;
+use App\Models\AutomationRule;
 use App\Models\AutomationRuleRun;
+use App\Models\ExternalMonitorSyncState;
 use App\Models\GoogleCalendarConnection;
+use App\Models\Organization;
+use App\Models\RecurringObligation;
 use App\Models\RecurringTaskRule;
 use App\Models\RecurringTaskRun;
 use App\Models\User;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class SafetyRecoverySnapshot
 {
@@ -81,15 +87,6 @@ class SafetyRecoverySnapshot
             ->where('user_id', $user->id)
             ->first();
 
-        $calendarDegraded = $calendar
-            && $calendar->last_error_at
-            && (
-                ! $calendar->last_sync_at
-                || $calendar->last_error_at->greaterThanOrEqualTo(
-                    $calendar->last_sync_at,
-                )
-            );
-
         $currentUndo = $this->undo->current($user);
         $contract = $this->catalog->contract();
         $schedulerHealth = $this->schedulerHealth($now);
@@ -97,6 +94,28 @@ class SafetyRecoverySnapshot
             $user,
             $now,
         );
+        $obligationHealth = $this->obligationHealth(
+            $user,
+            $now,
+        );
+        $calendarHealth = $this->calendarHealth(
+            $calendar,
+            $now,
+        );
+        $automationHealth = $this->automationHealth(
+            $organizationIds->all(),
+            $now,
+        );
+        $whatsappHealth = $this->whatsappHealth($now);
+        $summaryHealth = $this->summaryHealth(
+            $user,
+            $now,
+        );
+        $externalMonitorHealth =
+            $this->externalMonitorHealth(
+                $organizationIds->all(),
+                $now,
+            );
 
         $counts = [
             'run_issues' => $runIssues->count(),
@@ -118,17 +137,34 @@ class SafetyRecoverySnapshot
                 ->count(),
             'recurring_active' => $recurringHealth['active_rules'],
             'recurring_missing' => $recurringHealth['missing_rules'],
+            'obligation_active' => $obligationHealth['active_rules'],
+            'obligation_missing' => $obligationHealth['missing_rules'],
+            'automation_active' => $automationHealth['active_rules'],
+            'automation_failed_24h' => $automationHealth['failed_24h'],
+            'whatsapp_failed_24h' => $whatsappHealth['failed_24h'],
         ];
 
         $status = match (true) {
             $counts['failed_runs'] > 0
-                || $calendarDegraded
                 || $schedulerHealth['status'] === 'attention'
-                || $counts['recurring_missing'] > 0 => 'attention',
+                || $counts['recurring_missing'] > 0
+                || $counts['obligation_missing'] > 0
+                || $calendarHealth['status'] === 'attention'
+                || $automationHealth['status'] === 'attention'
+                || $whatsappHealth['status'] === 'attention'
+                || $summaryHealth['status'] === 'attention'
+                || $externalMonitorHealth['status'] === 'attention'
+                => 'attention',
             $counts['blocked_runs'] > 0
                 || $counts['stale_runs'] > 0
                 || $counts['stale_proposals'] > 0
-                || $schedulerHealth['status'] === 'watch' => 'watch',
+                || $schedulerHealth['status'] === 'watch'
+                || $calendarHealth['status'] === 'watch'
+                || $automationHealth['status'] === 'watch'
+                || $whatsappHealth['status'] === 'watch'
+                || $summaryHealth['status'] === 'watch'
+                || $externalMonitorHealth['status'] === 'watch'
+                => 'watch',
             default => 'healthy',
         };
 
@@ -151,13 +187,7 @@ class SafetyRecoverySnapshot
                     'expires_at' => $currentUndo->expires_at,
                 ]
                 : null,
-            'calendar' => [
-                'connected' => (bool) $calendar?->isConnected(),
-                'degraded' => (bool) $calendarDegraded,
-                'last_sync_at' => $calendar?->last_sync_at,
-                'last_error_at' => $calendar?->last_error_at,
-                'error_details_exposed' => false,
-            ],
+            'calendar' => $calendarHealth,
             'autonomy' => [
                 'level_one' => (bool) (
                     $contract['autonomy_level_one_enabled'] ?? false
@@ -205,6 +235,11 @@ class SafetyRecoverySnapshot
                 ...$schedulerHealth,
             ],
             'recurring' => $recurringHealth,
+            'obligations' => $obligationHealth,
+            'automations' => $automationHealth,
+            'whatsapp' => $whatsappHealth,
+            'summaries' => $summaryHealth,
+            'external_monitor' => $externalMonitorHealth,
             'sensitive_details_exposed' => false,
         ];
     }
