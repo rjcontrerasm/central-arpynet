@@ -21,20 +21,14 @@
 </head>
 <body>
 <div class="shell">
-    <div class="topbar">
-        <div class="brand">Central ARPYNET</div>
-        <x-operational-nav active="clients" />
-    </div>
+    <x-operational-page-header
+        active="clients"
+        title="Clientes"
+        subtitle="Base maestra compartida: una ficha puede atenderse desde varias empresas."
+    />
 
     @if(session('client_success'))<div class="success">{{ session('client_success') }}</div>@endif
     @if($errors->any())<div class="errors">@foreach($errors->all() as $error)<div>{{ $error }}</div>@endforeach</div>@endif
-
-    <section class="hero">
-        <div>
-            <h1>Clientes</h1>
-            <div class="subtitle">Base maestra compartida: una ficha puede atenderse desde varias empresas.</div>
-        </div>
-    </section>
 
     <div class="scopes">
         <a class="chip {{ $selectedScope ? '' : 'active' }}" href="{{ route('client-ops.index') }}">Todos los ámbitos</a>
