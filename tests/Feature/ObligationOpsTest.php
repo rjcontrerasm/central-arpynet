@@ -23,7 +23,11 @@ class ObligationOpsTest extends TestCase
             ->assertSee('Vencimientos')
             ->assertSee(
                 'Obligaciones recurrentes, pagos y alertas',
-            );
+            )
+            ->assertSeeInOrder([
+                'Foco operativo',
+                'Contexto financiero',
+            ]);
     }
 
     public function test_overdue_occurrence_is_visible_as_overdue(): void
