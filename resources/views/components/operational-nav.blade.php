@@ -532,11 +532,13 @@
                 Papelera
             </a>
 
-            <div class="op-nav-divider"></div>
+            @if (auth()->user()?->canManageTeam())
+                <div class="op-nav-divider"></div>
 
-            <a href="{{ url('/admin') }}">
-                Administración avanzada →
-            </a>
+                <a href="{{ url('/admin') }}">
+                    Administración avanzada →
+                </a>
+            @endif
         </div>
     </details>
 </nav>
