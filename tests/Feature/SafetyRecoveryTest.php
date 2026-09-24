@@ -6,8 +6,10 @@ use App\Models\AutomationRule;
 use App\Models\AutomationRuleRun;
 use App\Models\GoogleCalendarConnection;
 use App\Models\Organization;
+use App\Models\RecurringObligation;
 use App\Models\RecurringTaskRule;
 use App\Models\User;
+use App\Models\WhatsappOutboundAttempt;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
@@ -189,6 +191,94 @@ class SafetyRecoveryTest extends TestCase
             ->assertSee('Checklist sin generar')
             ->assertSee('Sin generar')
             ->assertSee('Recurrencias sin generar');
+    }
+
+    public function test_recovery_center_reports_missing_recurring_obligation(): void
+    {
+        CarbonImmutable::setTestNow('2026-09-24 10:00:00');
+        [$user, $organization] = $this->context();
+
+        RecurringObligation::withoutEvents(
+            fn () => RecurringObligation::query()->create([
+                'organization_id' => $organization->id,
+                'name' => 'Licencia crítica sin ocurrencia',
+                'category' => 'license',
+                'frequency' => 'monthly',
+                'anchor_date' => '2026-09-24',
+                'expected_amount' => 100,
+                'currency' => 'PEN',
+                'reminder_days_before' => 7,
+                'is_critical' => true,
+                'is_active' => true,
+                'created_by' => $user->id,
+            ]),
+        );
+
+        $this->actingAs($user)
+            ->get(route('safety-recovery.index'))
+            ->assertOk()
+            ->assertSee('Licencia crítica sin ocurrencia')
+            ->assertSee('Vencimientos sin generar')
+            ->assertSee('Vencimientos recurrentes que requieren revisión');
+    }
+
+    public function test_whatsapp_health_is_visible_without_sensitive_failure_details(): void
+    {
+        CarbonImmutable::setTestNow('2026-09-24 10:00:00');
+        [$user] = $this->context();
+
+        config()->set('whatsapp.outbound_enabled', true);
+
+        WhatsappOutboundAttempt::query()->create([
+            'purpose' => 'critical_alert',
+            'request_kind' => 'template',
+            'recipient_sha256' => hash(
+                'sha256',
+                '51999999999',
+            ),
+            'status' => 'failed',
+            'error_code' => '131000',
+            'error_message' => 'SECRET_PROVIDER_DETAIL',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('safety-recovery.index'))
+            ->assertOk()
+            ->assertSee('Último envío WhatsApp falló')
+            ->assertSee('Fallas WhatsApp 24 h')
+            ->assertDontSee('51999999999')
+            ->assertDontSee('SECRET_PROVIDER_DETAIL');
+    }
+
+    public function test_automation_health_exposes_counts_without_internal_error(): void
+    {
+        CarbonImmutable::setTestNow('2026-09-24 10:00:00');
+        [$user, $organization] = $this->context();
+        $rule = $this->rule($user, $organization);
+
+        AutomationRuleRun::query()->create([
+            'automation_rule_id' => $rule->id,
+            'organization_id' => $organization->id,
+            'subject_type' => 'task',
+            'subject_id' => 45,
+            'fingerprint' => hash(
+                'sha256',
+                'observability-run',
+            ),
+            'outcome' => 'failed',
+            'payload' => [
+                'title' => 'Revisión observable',
+            ],
+            'evaluated_at' => now(),
+            'error' => 'PRIVATE_AUTOMATION_ERROR',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('safety-recovery.index'))
+            ->assertOk()
+            ->assertSee('Automatizaciones con fallas recientes')
+            ->assertSee('Ejecuciones 24 h')
+            ->assertDontSee('PRIVATE_AUTOMATION_ERROR');
     }
 
     public function test_scheduler_heartbeat_command_creates_filesystem_signal(): void
