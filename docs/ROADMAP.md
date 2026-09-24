@@ -34,3 +34,34 @@ Cada hito debe pasar por desarrollo, pruebas, CI, revisión, integración a `mai
 ## Nota de re-baseline
 
 La base existente ya contiene implementaciones relacionadas con propuestas de Jarvis, priorización ejecutiva, plan diario, revisiones asistidas y automatizaciones. Por ello, los hitos 2.17–2.23 deben auditarse contra el código actual antes de crear funcionalidad duplicada. El criterio será cerrar brechas y formalizar cada capacidad existente, no reescribirla sin necesidad.
+
+
+## Re-baseline operativo — 2026-09-24
+
+La línea posterior a 2.36 cerró deuda técnica y de confiabilidad antes de
+continuar con nuevos módulos.
+
+| Hito | Objetivo | Estado |
+| --- | --- | --- |
+| 2.37.0 | Hardening de conversión y recurrencias | Completado |
+| 2.37.1 | Observabilidad de scheduler y recurrencias | Completado |
+| 2.37.2 | Resiliencia de cache ante saturación MariaDB | Completado |
+| 2.37.3 | Arquitectura de navegación operacional | Completado |
+| 2.37.4 | Mi Día como centro operativo | Completado |
+| 2.37.5 | Cabecera operacional reutilizable | Completado |
+| 2.37.6 | Búsqueda global | Completado |
+| 2.37.7 | Jerarquía action-first | Completado |
+| 2.37.8 | Observabilidad completa en FRONT | Completado |
+| 2.38.0 | Browser E2E con Playwright | Completado |
+| 2.38.1 | CI de compatibilidad MariaDB 11.4 | Completado |
+| 2.38.2 | Hardening de administración y multiempresa | Completado |
+| 2.38.3 | Observabilidad de conexiones MariaDB | Completado |
+| 2.38.4 | Cierre de segunda auditoría y E2E críticos | En producción |
+| 2.39 | Consolidación de assets FRONT y CSP más estricto | Siguiente frente |
+
+### Regla para 2.39
+
+No externalizar CSS/JS ni endurecer `script-src` / `style-src` hasta
+confirmar el pipeline de construcción disponible en cPanel. El objetivo es
+reducir deuda frontend sin introducir una dependencia de despliegue que no
+pueda reproducirse o revertirse en producción.
