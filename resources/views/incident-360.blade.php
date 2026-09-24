@@ -7,95 +7,10 @@
     <title>Incidentes 360 · Central ARPYNET</title>
     <x-operational-theme />
 
-    <style>
-        :root {
-            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            color-scheme: light dark;
-        }
-        * { box-sizing: border-box; }
-        body { margin:0; background:#0b1020; color:#f8fafc; }
-        a { color:inherit; text-decoration:none; }
-        input, button { font:inherit; }
-        .shell { width:min(100%, 1320px); margin:0 auto; padding:24px 16px 80px; }
-        .topbar,.hero,.section-head,.item-head,.detail-head { display:flex; justify-content:space-between; align-items:center; gap:12px; }
-        .topbar { margin-bottom:24px; }
-        .brand { font-weight:850; letter-spacing:-.03em; }
-        .hero { align-items:end; margin-bottom:18px; }
-        h1 { margin:0; font-size:clamp(30px,7vw,46px); line-height:.98; letter-spacing:-.05em; }
-        h2,h3 { margin:0; }
-        .subtitle,.meta { color:#94a3b8; font-size:12px; line-height:1.45; }
-        .subtitle { margin-top:7px; font-size:13px; }
-        .admin-link { padding:10px 13px; border-radius:11px; background:#2563eb; color:#fff; font-size:12px; font-weight:850; }
-        .stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; margin-bottom:18px; }
-        .stat,.panel,.item,.detail-card { border:1px solid #24304b; background:#11182b; }
-        .stat { padding:13px; border-radius:15px; }
-        .stat-value { font-size:27px; font-weight:850; letter-spacing:-.05em; }
-        .stat-label { color:#94a3b8; font-size:11px; margin-top:5px; }
-        .filters { display:grid; gap:9px; margin-bottom:18px; }
-        .filter-label { color:#64748b; font-size:10px; font-weight:850; letter-spacing:.06em; text-transform:uppercase; }
-        .scroll { display:flex; gap:7px; overflow-x:auto; padding-bottom:2px; }
-        .chip { flex:0 0 auto; padding:7px 10px; border:1px solid #334155; border-radius:999px; background:#0f172a; color:#cbd5e1; font-size:12px; font-weight:750; }
-        .chip.active { border-color:#60a5fa; background:#172554; color:#dbeafe; }
-        .search { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; }
-        .search input { min-height:40px; width:100%; padding:8px 10px; border:1px solid #334155; border-radius:10px; background:#11182b; color:#f8fafc; }
-        .search button { border:0; border-radius:10px; padding:8px 13px; background:#2563eb; color:#fff; font-weight:850; cursor:pointer; }
-        .layout { display:grid; gap:16px; }
-        .panel { border-radius:17px; padding:14px; min-width:0; }
-        .section-head { margin-bottom:12px; }
-        .list { display:grid; gap:9px; }
-        .item { display:block; padding:13px; border-radius:14px; }
-        .item:hover,.item.selected { border-color:#3b82f6; background:#111c35; }
-        .item-title { font-weight:820; line-height:1.3; }
-        .pills { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
-        .pill { display:inline-flex; align-items:center; gap:4px; padding:4px 8px; border-radius:999px; background:#1e293b; color:#cbd5e1; font-size:10px; font-weight:820; }
-        .pill.critical,.pill.breached,.reason.critical { background:#450a0a; color:#fecaca; }
-        .pill.high,.pill.overdue { background:#431407; color:#fed7aa; }
-        .pill.medium,.pill.pending { background:#422006; color:#fde68a; }
-        .pill.met,.pill.resolved { background:#052e16; color:#bbf7d0; }
-        .reason { margin-top:7px; color:#fbbf24; font-size:11px; }
-        .detail-head { align-items:start; margin-bottom:14px; }
-        .detail-title { font-size:22px; font-weight:850; letter-spacing:-.03em; }
-        .detail-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
-        .detail-card { padding:12px; border-radius:13px; }
-        .detail-label { color:#64748b; font-size:10px; font-weight:850; text-transform:uppercase; letter-spacing:.05em; }
-        .detail-value { margin-top:5px; font-size:13px; font-weight:760; overflow-wrap:anywhere; }
-        .full { grid-column:1/-1; }
-        .timeline { display:grid; gap:8px; margin-top:10px; }
-        .timeline-item { display:grid; grid-template-columns:16px minmax(0,1fr); gap:8px; align-items:start; }
-        .dot { width:9px; height:9px; margin-top:4px; border-radius:999px; background:#60a5fa; }
-        .empty { padding:28px 15px; border:1px dashed #334155; border-radius:15px; color:#94a3b8; text-align:center; font-size:13px; }
-        .external { color:#93c5fd; text-decoration:underline; text-underline-offset:2px; }
-        .incident-flash { margin:0 0 14px; padding:11px 13px; border:1px solid #93c5fd; border-radius:12px; background:var(--op-card,#fff); color:var(--op-text,#10213a); font-size:12px; }
-        .incident-flash.error { border-color:#ef9a9a; }
-        .incident-compose,.incident-editor { margin:0 0 16px; border:1px solid var(--op-border,#d2dde9); border-radius:16px; background:var(--op-card,#fff); overflow:hidden; }
-        .incident-compose > summary,.incident-editor > summary { cursor:pointer; list-style:none; padding:12px 14px; font-size:12px; font-weight:850; color:var(--op-text,#10213a); }
-        .incident-compose > summary::-webkit-details-marker,.incident-editor > summary::-webkit-details-marker { display:none; }
-        .incident-form { padding:0 14px 14px; }
-        .incident-form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
-        .incident-field { display:grid; gap:5px; min-width:0; }
-        .incident-field.full { grid-column:1/-1; }
-        .incident-field label { color:var(--op-muted,#5e6f85); font-size:10px; font-weight:850; text-transform:uppercase; letter-spacing:.04em; }
-        .incident-field input,.incident-field select,.incident-field textarea { width:100%; min-height:40px; padding:8px 10px; border:1px solid var(--op-border-strong,#bdcad9); border-radius:10px; background:var(--op-card,#fff); color:inherit; font:inherit; font-size:12px; }
-        .incident-field textarea { min-height:78px; resize:vertical; }
-        .incident-actions { display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-top:12px; }
-        .incident-save { min-height:38px; padding:8px 13px; border:0; border-radius:10px; background:var(--op-primary,#245fd7); color:#fff; font:inherit; font-size:12px; font-weight:850; cursor:pointer; }
-        .incident-checkbox { display:flex; align-items:center; gap:8px; min-height:40px; font-size:12px; }
-        .incident-checkbox input { width:auto; min-height:auto; }
-        .admin-hint { color:var(--op-muted,#5e6f85); font-size:10px; }
-        @media(max-width:720px){ .incident-form-grid{grid-template-columns:1fr}.incident-field.full{grid-column:auto} }
-        @media (min-width:760px) { .stats { grid-template-columns:repeat(6,minmax(0,1fr)); } }
-        @media (min-width:980px) { .layout { grid-template-columns:minmax(360px,.9fr) minmax(0,1.35fr); align-items:start; } .detail-panel { position:sticky; top:16px; } }
-        @media (prefers-color-scheme:light) {
-            body { background:#f8fafc; color:#0f172a; }
-            .subtitle,.meta,.stat-label { color:#64748b; }
-            .stat,.panel,.item,.detail-card { background:#fff; border-color:#e2e8f0; }
-            .item:hover,.item.selected { background:#eff6ff; border-color:#60a5fa; }
-            .chip { background:#fff; color:#475569; border-color:#cbd5e1; }
-            .chip.active { background:#eff6ff; color:#1d4ed8; }
-            .search input { background:#fff; color:#0f172a; border-color:#cbd5e1; }
-            .pill { background:#f1f5f9; color:#475569; }
-        }
-    </style>
+    <link
+        rel="stylesheet"
+        href="{{ asset('central-assets/pages/incident-360.css') }}?v=2.39.1"
+    >
 </head>
 <body>
 <div class="shell">
@@ -565,27 +480,6 @@
         </section>
     </div>
 </div>
-<script>
-document.querySelectorAll('[data-incident-create]').forEach((form) => {
-    const organization = form.querySelector('[data-incident-organization]');
-    if (!organization) return;
-
-    const sync = () => {
-        const organizationId = organization.value;
-        form.querySelectorAll('[data-incident-scoped]').forEach((select) => {
-            Array.from(select.options).forEach((option) => {
-                const optionOrganization = option.dataset.org;
-                const visible = !optionOrganization || optionOrganization === organizationId;
-                option.hidden = !visible;
-                option.disabled = !visible;
-                if (!visible && option.selected) select.value = '';
-            });
-        });
-    };
-
-    organization.addEventListener('change', sync);
-    sync();
-});
-</script>
+<script src="{{ asset('central-assets/pages/incident-360.js') }}?v=2.39.1"></script>
 </body>
 </html>
