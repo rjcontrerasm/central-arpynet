@@ -55,6 +55,25 @@ class E2ETestSeeder extends Seeder
             ],
         ]);
 
+        $secondaryOrganization = Organization::query()->updateOrCreate(
+            ['slug' => 'arpynet-e2e-secondary'],
+            [
+                'name' => 'ARPYNET E2E Secundaria',
+                'category' => 'company',
+                'timezone' => 'America/Lima',
+                'is_active' => true,
+                'created_by' => $user->id,
+            ],
+        );
+
+        $secondaryOrganization->users()->syncWithoutDetaching([
+            $user->id => [
+                'role' => 'owner',
+                'is_default' => false,
+                'is_active' => true,
+            ],
+        ]);
+
         $user->forceFill([
             'current_organization_id' => $organization->id,
         ])->save();
