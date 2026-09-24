@@ -21,23 +21,7 @@ class DailyVisualGeometryTest extends TestCase
 
         $response
             ->assertSee(
-                '.two-column > aside',
-                false,
-            )
-            ->assertDontSee(
-                'order: -1',
-                false,
-            )
-            ->assertSee(
-                'margin-top: 24px',
-                false,
-            )
-            ->assertSee(
-                '.two-column > main > .section > .list',
-                false,
-            )
-            ->assertSee(
-                'repeat(2, minmax(0, 1fr))',
+                'central-assets/pages/daily-ops.css?v=2.39.1',
                 false,
             )
             ->assertSee(
@@ -45,9 +29,35 @@ class DailyVisualGeometryTest extends TestCase
                 false,
             );
 
+        $css = (string) file_get_contents(
+            public_path(
+                'central-assets/pages/daily-ops.css',
+            ),
+        );
+
+        $this->assertStringContainsString(
+            '.two-column > aside',
+            $css,
+        );
+        $this->assertStringNotContainsString(
+            'order: -1',
+            $css,
+        );
+        $this->assertStringContainsString(
+            'margin-top: 24px',
+            $css,
+        );
+        $this->assertStringContainsString(
+            '.two-column > main > .section > .list',
+            $css,
+        );
+        $this->assertStringContainsString(
+            'repeat(2, minmax(0, 1fr))',
+            $css,
+        );
         $this->assertStringNotContainsString(
             'minmax(0, 1.35fr)',
-            $response->getContent(),
+            $css,
         );
     }
 
@@ -59,17 +69,28 @@ class DailyVisualGeometryTest extends TestCase
             ->get('/mi-dia')
             ->assertOk()
             ->assertSee(
-                '@media (max-width: 719px)',
-                false,
-            )
-            ->assertSee(
-                'repeat(3, minmax(0, 1fr))',
-                false,
-            )
-            ->assertSee(
-                'min-width: 164px',
+                'central-assets/pages/daily-ops.css?v=2.39.1',
                 false,
             );
+
+        $css = (string) file_get_contents(
+            public_path(
+                'central-assets/pages/daily-ops.css',
+            ),
+        );
+
+        $this->assertStringContainsString(
+            '@media (max-width: 719px)',
+            $css,
+        );
+        $this->assertStringContainsString(
+            'repeat(3, minmax(0, 1fr))',
+            $css,
+        );
+        $this->assertStringContainsString(
+            'min-width: 164px',
+            $css,
+        );
     }
 
     private function context(): array

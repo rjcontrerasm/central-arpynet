@@ -29,15 +29,15 @@ class VisualSystemConsistencyTest extends TestCase
         );
 
         foreach ([
-            '/mi-dia',
-            '/captura',
-            '/servicios',
-            '/vencimientos',
-            '/seguimiento',
-            '/resumen',
-            '/notificaciones',
-            '/historial',
-        ] as $page) {
+            '/mi-dia' => 'daily-ops',
+            '/captura' => 'quick-capture',
+            '/servicios' => 'service-orders-ops',
+            '/vencimientos' => null,
+            '/seguimiento' => null,
+            '/resumen' => null,
+            '/notificaciones' => null,
+            '/historial' => null,
+        ] as $page => $asset) {
             $response = $this->actingAs($user)
                 ->get($page)
                 ->assertOk()
@@ -46,7 +46,17 @@ class VisualSystemConsistencyTest extends TestCase
                     false,
                 );
 
-            $css = $this->compactCss($response->getContent());
+            if ($asset !== null) {
+                $response->assertSee(
+                    "central-assets/pages/{$asset}.css?v=2.39.1",
+                    false,
+                );
+            }
+
+            $css = $this->pageCss(
+                $response->getContent(),
+                $asset,
+            );
 
             $this->assertStringContainsString(
                 'width:min(100%,1200px)',
@@ -66,7 +76,10 @@ class VisualSystemConsistencyTest extends TestCase
 
         $this->assertStringContainsString(
             'width:min(100%,760px)',
-            $this->compactCss($capture->getContent()),
+            $this->pageCss(
+                $capture->getContent(),
+                'quick-capture',
+            ),
         );
 
         $notifications = $this->actingAs($user)
@@ -75,7 +88,10 @@ class VisualSystemConsistencyTest extends TestCase
 
         $this->assertStringContainsString(
             'width:min(100%,860px)',
-            $this->compactCss($notifications->getContent()),
+            $this->pageCss(
+                $notifications->getContent(),
+                null,
+            ),
         );
     }
 
@@ -84,15 +100,18 @@ class VisualSystemConsistencyTest extends TestCase
         [$user] = $this->context();
 
         foreach ([
-            '/servicios',
-            '/vencimientos',
-            '/seguimiento',
-        ] as $page) {
+            '/servicios' => 'service-orders-ops',
+            '/vencimientos' => null,
+            '/seguimiento' => null,
+        ] as $page => $asset) {
             $response = $this->actingAs($user)
                 ->get($page)
                 ->assertOk();
 
-            $css = $this->compactCss($response->getContent());
+            $css = $this->pageCss(
+                $response->getContent(),
+                $asset,
+            );
 
             $this->assertStringContainsString(
                 'repeat(2,minmax(0,1fr))',
@@ -102,14 +121,33 @@ class VisualSystemConsistencyTest extends TestCase
 
             $this->assertStringNotContainsString(
                 'auto-fit',
-                $response->getContent(),
+                $css,
             );
         }
     }
 
-    private function compactCss(string $html): string
+    private function pageCss(
+        string $html,
+        ?string $asset,
+    ): string {
+        if ($asset === null) {
+            return $this->compactCss($html);
+        }
+
+        $contents = file_get_contents(
+            public_path(
+                "central-assets/pages/{$asset}.css",
+            ),
+        );
+
+        $this->assertIsString($contents);
+
+        return $this->compactCss($contents);
+    }
+
+    private function compactCss(string $css): string
     {
-        return preg_replace('/\s+/', '', $html) ?? $html;
+        return preg_replace('/\s+/', '', $css) ?? $css;
     }
 
     private function context(): array

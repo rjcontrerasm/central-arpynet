@@ -33,8 +33,23 @@ class ClientBulkOrganizationSelectionTest extends TestCase
             ->assertSee('data-org-selector', false)
             ->assertSee('data-org-toggle', false)
             ->assertSee('data-org-checks', false)
-            ->assertSee("toggle.textContent = allSelected ? 'Limpiar' : 'Seleccionar todas';", false)
-            ->assertSee('aria-pressed="false"', false);
+            ->assertSee('aria-pressed="false"', false)
+            ->assertSee(
+                'central-assets/pages/clients-ops.js?v=2.39.1',
+                false,
+            );
+
+        $javascript = file_get_contents(
+            public_path(
+                'central-assets/pages/clients-ops.js',
+            ),
+        );
+
+        $this->assertIsString($javascript);
+        $this->assertStringContainsString(
+            "toggle.textContent = allSelected ? 'Limpiar' : 'Seleccionar todas';",
+            $javascript,
+        );
     }
 
     private function organizationFor(
