@@ -15,23 +15,32 @@ class MobileVisualPolishTest extends TestCase
     {
         [$user] = $this->context();
 
-        $response = $this->actingAs($user)
+        $this->actingAs($user)
             ->get('/mi-dia')
-            ->assertOk();
-
-        $response
+            ->assertOk()
             ->assertSee(
-                'repeat(3, minmax(0, 1fr))',
-                false,
-            )
-            ->assertSee(
-                'min-width: 164px',
-                false,
-            )
-            ->assertSee(
-                'scrollbar-width: none',
+                'central-assets/pages/daily-ops.css?v=2.39.1',
                 false,
             );
+
+        $css = (string) file_get_contents(
+            public_path(
+                'central-assets/pages/daily-ops.css',
+            ),
+        );
+
+        $this->assertStringContainsString(
+            'repeat(3, minmax(0, 1fr))',
+            $css,
+        );
+        $this->assertStringContainsString(
+            'min-width: 164px',
+            $css,
+        );
+        $this->assertStringContainsString(
+            'scrollbar-width: none',
+            $css,
+        );
     }
 
     public function test_capture_uses_non_overlapping_mobile_submit_button(): void
@@ -42,16 +51,27 @@ class MobileVisualPolishTest extends TestCase
             ->get('/captura')
             ->assertOk()
             ->assertSee(
-                'position: static',
-                false,
-            )
-            ->assertSee(
-                'min-height: 52px',
+                'central-assets/pages/quick-capture.css?v=2.39.1',
                 false,
             )
             ->assertSee(
                 'Guardando tarea…',
             );
+
+        $css = (string) file_get_contents(
+            public_path(
+                'central-assets/pages/quick-capture.css',
+            ),
+        );
+
+        $this->assertStringContainsString(
+            'position: static',
+            $css,
+        );
+        $this->assertStringContainsString(
+            'min-height: 52px',
+            $css,
+        );
     }
 
     private function context(): array
