@@ -5,14 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <title>{{ $serviceOrder ? 'Editar servicio' : 'Nuevo servicio' }} · Central ARPYNET</title>
-    <style>
-        :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:light dark}
-        *{box-sizing:border-box}body{margin:0;background:#0b1020;color:#f8fafc}a{color:inherit;text-decoration:none}button,input,select,textarea{font:inherit}
-        .shell{width:min(100%,1040px);margin:0 auto;padding:24px 16px 80px}.topbar,.hero,.actions{display:flex;align-items:center;justify-content:space-between;gap:12px}.topbar{margin-bottom:24px}.brand{font-weight:850;letter-spacing:-.03em}.hero{align-items:end;margin-bottom:18px}h1{margin:0;font-size:clamp(31px,7vw,46px);line-height:1;letter-spacing:-.05em}.subtitle,.help{color:#94a3b8}.subtitle{margin-top:7px;font-size:13px}
-        .panel{padding:16px;border:1px solid #24304b;border-radius:17px;background:#11182b}.grid{display:grid;gap:11px}.field{display:grid;gap:5px}.field label{color:#cbd5e1;font-size:11px;font-weight:820}.field input,.field select,.field textarea{width:100%;min-height:42px;padding:9px 10px;border:1px solid #334155;border-radius:10px;background:#0f172a;color:#f8fafc}.field textarea{min-height:90px;resize:vertical}.check{display:flex;align-items:center;gap:8px;min-height:42px}.check input{width:auto;min-height:auto}.help{font-size:10px;line-height:1.4}.section-title{margin:18px 0 10px;color:#93c5fd;font-size:12px;font-weight:850;text-transform:uppercase;letter-spacing:.05em}.actions{justify-content:flex-start;flex-wrap:wrap;margin-top:15px}.primary,.secondary{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:9px 13px;border-radius:10px;font-size:12px;font-weight:820;cursor:pointer}.primary{border:0;background:#2563eb;color:#fff}.secondary{border:1px solid #334155;background:#0f172a;color:#cbd5e1}.success,.errors,.readonly{margin-bottom:14px;padding:11px 13px;border-radius:12px;font-size:12px}.success{border:1px solid #166534;background:#052e16;color:#bbf7d0}.errors{border:1px solid #991b1b;background:#450a0a;color:#fecaca}.readonly{border:1px solid #475569;background:#0f172a;color:#cbd5e1}
-        @media(min-width:760px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.span-2{grid-column:1/-1}.span-3{grid-column:1/-1}}
-        @media(prefers-color-scheme:light){body{background:#f8fafc;color:#0f172a}.panel{background:#fff;border-color:#e2e8f0}.field input,.field select,.field textarea,.secondary{background:#fff;color:#0f172a;border-color:#cbd5e1}.field label{color:#334155}.readonly{background:#fff;border-color:#cbd5e1;color:#475569}}
-    </style>
+    <link
+        rel="stylesheet"
+        href="{{ asset('central-assets/pages/service-order-front-form.css') }}?v=2.39.2"
+    >
 </head>
 <body>
 <div class="shell">
@@ -103,25 +99,7 @@
         </form>
     </section>
 </div>
-<script>
-(() => {
-    const organization = document.getElementById('organization_id');
-    const client = document.getElementById('client_id');
-    const assignee = document.getElementById('assigned_to');
-    if (!organization || organization.disabled) return;
-    const filter = () => {
-        const id = organization.value;
-        client?.querySelectorAll('option[data-organizations]').forEach((option) => {
-            option.disabled = !option.dataset.organizations.split(',').includes(id);
-        });
-        assignee?.querySelectorAll('option[data-organizations]').forEach((option) => {
-            option.disabled = !option.dataset.organizations.split(',').includes(id);
-        });
-    };
-    organization.addEventListener('change', filter);
-    filter();
-})();
-</script>
+<script src="{{ asset('central-assets/pages/service-order-front-form.js') }}?v=2.39.2"></script>
 <x-operational-theme />
 <x-operational-interactions />
 </body>
