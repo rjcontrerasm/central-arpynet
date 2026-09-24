@@ -56,6 +56,10 @@ class RecurringObligationResource extends Resource
                                 fn (): array => auth()->user()
                                     ?->organizations()
                                     ->wherePivot('is_active', true)
+                            ->whereIn(
+                                'organizations.id',
+                                auth()->user()?->manageableOrganizationIds() ?? [],
+                            )
                                     ->orderBy('organizations.name')
                                     ->pluck(
                                         'organizations.name',
@@ -243,6 +247,10 @@ class RecurringObligationResource extends Resource
                         fn (): array => auth()->user()
                             ?->organizations()
                             ->wherePivot('is_active', true)
+                            ->whereIn(
+                                'organizations.id',
+                                auth()->user()?->manageableOrganizationIds() ?? [],
+                            )
                             ->orderBy('organizations.name')
                             ->pluck(
                                 'organizations.name',
@@ -279,7 +287,7 @@ class RecurringObligationResource extends Resource
         }
 
         return parent::getEloquentQuery()
-            ->visibleTo($user);
+            ->whereIn('organization_id', $user->manageableOrganizationIds());
     }
 
     public static function getPages(): array
