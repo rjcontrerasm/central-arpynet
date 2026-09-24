@@ -10,6 +10,7 @@ use App\Models\ServiceOrder;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 use RuntimeException;
 
 class E2ETestSeeder extends Seeder
@@ -29,7 +30,8 @@ class E2ETestSeeder extends Seeder
             ['email' => self::EMAIL],
             [
                 'name' => 'Central E2E',
-                'password' => self::PASSWORD,
+                'password' => Hash::make(self::PASSWORD),
+                'email_verified_at' => now(),
                 'is_active' => true,
             ],
         );
