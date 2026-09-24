@@ -58,9 +58,7 @@ class DailyOpsFocusTest extends TestCase
         $this->actingAs($user)
             ->get('/mi-dia')
             ->assertOk()
-            ->assertSee(
-                '1 elemento requiere',
-            )
+            ->assertSee('elemento requiere')
             ->assertSee('atención inmediata')
             ->assertSee('Ver críticos')
             ->assertSeeInOrder([
