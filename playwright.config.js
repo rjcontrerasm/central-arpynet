@@ -2,6 +2,7 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
     testDir: './tests/e2e',
+    globalSetup: './tests/e2e/global-setup.js',
     timeout: 30_000,
     expect: {
         timeout: 7_000,
@@ -19,6 +20,7 @@ export default defineConfig({
         trace: 'retain-on-failure',
         screenshot: 'only-on-failure',
         video: 'retain-on-failure',
+        storageState: '.playwright/.auth/e2e.json',
     },
     webServer: {
         command:
