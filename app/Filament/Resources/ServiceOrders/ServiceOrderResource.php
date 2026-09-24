@@ -66,8 +66,8 @@ class ServiceOrderResource extends Resource
                                     ->all() ?? [],
                             )
                             ->default(
-                                fn (): ?int => auth()->user()
-                                    ?->current_organization_id,
+                                fn (): ?int =>
+                                    static::defaultManageableOrganizationId(),
                             )
                             ->live()
                             ->searchable()
@@ -76,30 +76,14 @@ class ServiceOrderResource extends Resource
 
                         Select::make('client_id')
                             ->label('Cliente')
-                            ->options(function ($get): array {
-                                $user = auth()->user();
-                                $organizationId = (int) (
-                                    $get('organization_id') ?? 0
-                                );
-
-                                if (
-                                    ! $user
-                                    || $organizationId < 1
-                                    || ! $user->canManageOrganization(
-                                        $organizationId,
-                                    )
-                                ) {
-                                    return [];
-                                }
-
-                                return Client::query()
-                                    ->visibleTo($user)
-                                    ->forOrganization($organizationId)
-                                    ->where('is_active', true)
-                                    ->orderBy('name')
-                                    ->pluck('name', 'id')
-                                    ->all();
-                            })
+                            ->options(
+                                fn ($get): array =>
+                                    static::clientOptionsForOrganization(
+                                        (int) (
+                                            $get('organization_id') ?? 0
+                                        ),
+                                    ),
+                            )
                             ->searchable()
                             ->native(false)
                             ->required(),
@@ -474,6 +458,40 @@ class ServiceOrderResource extends Resource
         return [
             'index' => ManageServiceOrders::route('/'),
         ];
+    }
+
+    public static function clientOptionsForOrganization(
+        int $organizationId,
+    ): array {
+        $user = auth()->user();
+
+        if (
+            ! $user
+            || $organizationId < 1
+            || ! $user->canManageOrganization($organizationId)
+        ) {
+            return [];
+        }
+
+        return Client::query()
+            ->visibleTo($user)
+            ->forOrganization($organizationId)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->pluck('name', 'id')
+            ->all();
+    }
+
+    public static function defaultManageableOrganizationId(): ?int
+    {
+        $ids = auth()->user()?->manageableOrganizationIds() ?? [];
+        $currentId = (int) (
+            auth()->user()?->current_organization_id ?? 0
+        );
+
+        return in_array($currentId, $ids, true)
+            ? $currentId
+            : ($ids[0] ?? null);
     }
 
     public static function visibleAssigneeOptions(): array
