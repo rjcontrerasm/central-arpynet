@@ -128,6 +128,12 @@ jobs:
         run: |
           php artisan tinker --execute="if (DB::connection()->getDriverName() !== 'mysql') { throw new RuntimeException('MariaDB CI no está usando el driver mysql.'); } echo DB::selectOne('select version() as version')->version.PHP_EOL;"
 
+      - name: Verify connection observability
+        run: |
+          php artisan central:db-health | tee /tmp/central-db-health.txt
+          grep -q 'Conexiones actuales:' /tmp/central-db-health.txt
+          grep -q 'Máximo observado:' /tmp/central-db-health.txt
+
       - name: Run critical MariaDB tests
         run: |
           php artisan test             tests/Feature/FrontWriteAuthorizationTest.php             tests/Feature/SharedClientOrganizationTest.php             tests/Feature/RecurringTaskGenerationTest.php             tests/Feature/TaskConversionHardeningTest.php             tests/Feature/QuickCaptureTest.php             tests/Feature/SafetyRecoveryTest.php
