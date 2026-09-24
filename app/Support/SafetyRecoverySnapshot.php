@@ -23,6 +23,7 @@ class SafetyRecoverySnapshot
         private readonly AutomationRuleCatalog $catalog,
         private readonly GlobalUndoService $undo,
         private readonly RecurringTaskGenerator $recurringTaskGenerator,
+        private readonly DatabaseConnectionHealth $databaseConnectionHealth,
     ) {
     }
 
@@ -117,6 +118,8 @@ class SafetyRecoverySnapshot
                 $organizationIds,
                 $now,
             );
+        $databaseHealth =
+            $this->databaseConnectionHealth->snapshot();
 
         $counts = [
             'run_issues' => $runIssues->count(),
@@ -155,6 +158,7 @@ class SafetyRecoverySnapshot
                 || $whatsappHealth['status'] === 'attention'
                 || $summaryHealth['status'] === 'attention'
                 || $externalMonitorHealth['status'] === 'attention'
+                || $databaseHealth['status'] === 'attention'
                 => 'attention',
             $counts['blocked_runs'] > 0
                 || $counts['stale_runs'] > 0
@@ -165,6 +169,7 @@ class SafetyRecoverySnapshot
                 || $whatsappHealth['status'] === 'watch'
                 || $summaryHealth['status'] === 'watch'
                 || $externalMonitorHealth['status'] === 'watch'
+                || $databaseHealth['status'] === 'watch'
                 => 'watch',
             default => 'healthy',
         };
@@ -241,6 +246,7 @@ class SafetyRecoverySnapshot
             'whatsapp' => $whatsappHealth,
             'summaries' => $summaryHealth,
             'external_monitor' => $externalMonitorHealth,
+            'database' => $databaseHealth,
             'sensitive_details_exposed' => false,
         ];
     }
