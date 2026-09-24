@@ -856,7 +856,8 @@
                 grid-template-columns:
                     repeat(2, minmax(0, 1fr));
                 gap: 18px;
-                margin-bottom: 24px;
+                margin-top: 24px;
+                margin-bottom: 0;
             }
 
             .two-column > aside > .section {
@@ -890,6 +891,36 @@
             .empty,
             .edit-field {
                 color: #64748b;
+            }
+
+            .focus-panel {
+                border-color: #bfdbfe;
+                background:
+                    linear-gradient(
+                        135deg,
+                        #eff6ff,
+                        #ffffff
+                    );
+            }
+
+            .focus-eyebrow {
+                color: #1d4ed8;
+            }
+
+            .focus-meta {
+                color: #475569;
+            }
+
+            .focus-action {
+                border-color: #60a5fa;
+                background: #dbeafe;
+                color: #1e3a8a;
+            }
+
+            .focus-action.secondary {
+                border-color: #cbd5e1;
+                background: #ffffff;
+                color: #334155;
             }
 
             .stat,
