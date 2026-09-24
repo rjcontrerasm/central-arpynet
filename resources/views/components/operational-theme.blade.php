@@ -417,6 +417,15 @@
         gap: 8px;
     }
 
+    .operational-context-heading {
+        margin: 24px 0 8px;
+        color: var(--central-muted);
+        font-size: 11px;
+        font-weight: 820;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+    }
+
     @media (max-width: 620px) {
         .operational-focus-banner {
             align-items: flex-start;
