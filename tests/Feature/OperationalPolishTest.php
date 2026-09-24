@@ -29,7 +29,7 @@ class OperationalPolishTest extends TestCase
                 ->get($page)
                 ->assertOk()
                 ->assertSee(
-                    'aria-busy',
+                    'central-assets/operational.js?v=2.39.0',
                     false,
                 )
                 ->assertSee(
@@ -50,9 +50,21 @@ class OperationalPolishTest extends TestCase
                 'Guardando tarea…',
             )
             ->assertSee(
-                'prefers-reduced-motion',
+                'central-assets/operational.css?v=2.39.0',
                 false,
             );
+
+        $css = file_get_contents(
+            public_path(
+                'central-assets/operational.css',
+            ),
+        );
+
+        $this->assertIsString($css);
+        $this->assertStringContainsString(
+            'prefers-reduced-motion: reduce',
+            $css,
+        );
     }
 
     private function context(): array
