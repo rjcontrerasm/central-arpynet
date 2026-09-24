@@ -209,7 +209,7 @@
         @endforelse
     </div>
 
-    <div class="filter-label" style="margin-top: 24px;">
+    <div class="operational-context-heading">
         Contexto financiero de la vista actual
     </div>
 
