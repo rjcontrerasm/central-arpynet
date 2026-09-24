@@ -19,8 +19,26 @@ class ExecutiveSummaryNotificationTest extends TestCase
         $this->actingAs($user)
             ->get('/notificaciones')
             ->assertOk()
-            ->assertSee('pageshow', false)
-            ->assertSee('event.persisted', false);
+            ->assertSee(
+                'central-assets/pages/notification-center.js?v=2.39.2',
+                false,
+            );
+
+        $javascript = file_get_contents(
+            public_path(
+                'central-assets/pages/notification-center.js',
+            ),
+        );
+
+        $this->assertIsString($javascript);
+        $this->assertStringContainsString(
+            'pageshow',
+            $javascript,
+        );
+        $this->assertStringContainsString(
+            'event.persisted',
+            $javascript,
+        );
     }
 
     public function test_notification_center_is_available(): void
