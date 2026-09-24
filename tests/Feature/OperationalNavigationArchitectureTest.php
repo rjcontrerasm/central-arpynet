@@ -59,4 +59,34 @@ class OperationalNavigationArchitectureTest extends TestCase
                 'Administración avanzada',
             ]);
     }
+
+    public function test_non_admin_roles_do_not_see_advanced_administration_link(): void
+    {
+        foreach (['member', 'viewer'] as $role) {
+            $user = User::factory()->create([
+                'email' => $role.'-navigation@arpynet.test',
+            ]);
+
+            $organization = Organization::query()->create([
+                'name' => 'ARPYNET Navigation '.ucfirst($role),
+                'slug' => 'arpynet-navigation-'.$role,
+                'category' => 'company',
+                'timezone' => 'America/Lima',
+                'is_active' => true,
+                'created_by' => $user->id,
+            ]);
+
+            $organization->users()->attach($user->id, [
+                'role' => $role,
+                'is_default' => true,
+                'is_active' => true,
+            ]);
+
+            $this->actingAs($user)
+                ->get('/mi-dia')
+                ->assertOk()
+                ->assertDontSee('Administración avanzada');
+        }
+    }
+
 }
