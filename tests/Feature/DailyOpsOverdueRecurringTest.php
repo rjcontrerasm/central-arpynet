@@ -127,6 +127,75 @@ class DailyOpsOverdueRecurringTest extends TestCase
         );
     }
 
+    public function test_selected_recurrence_reveals_each_overdue_occurrence_individually(): void
+    {
+        CarbonImmutable::setTestNow(
+            '2026-09-25 09:00:00',
+        );
+
+        [$user, $organization] = $this->context();
+
+        $rule = RecurringTaskRule::withoutEvents(
+            fn () => RecurringTaskRule::query()->create([
+                'organization_id' => $organization->id,
+                'title' => 'Checklist Casa Andina',
+                'frequency' => 'daily',
+                'anchor_date' => '2026-09-22',
+                'create_days_before' => 0,
+                'due_time' => '08:00',
+                'urgency' => 'normal',
+                'impact' => 'normal',
+                'is_active' => true,
+                'assigned_to' => $user->id,
+                'created_by' => $user->id,
+            ]),
+        );
+
+        foreach ([
+            '2026-09-22',
+            '2026-09-23',
+            '2026-09-24',
+        ] as $date) {
+            $task = Task::query()->create([
+                'organization_id' => $organization->id,
+                'title' => 'Checklist Casa Andina',
+                'status' => 'pending',
+                'urgency' => 'normal',
+                'impact' => 'normal',
+                'due_at' => $date.' 08:00:00',
+                'assigned_to' => $user->id,
+                'created_by' => $user->id,
+            ]);
+
+            RecurringTaskRun::query()->create([
+                'recurring_task_rule_id' => $rule->id,
+                'organization_id' => $organization->id,
+                'scheduled_for' => $date,
+                'task_id' => $task->id,
+                'generated_at' => now(),
+            ]);
+        }
+
+        $response = $this->actingAs($user)
+            ->get(
+                '/mi-dia?priority=overdue&recurring_rule='
+                .$rule->id,
+            )
+            ->assertOk()
+            ->assertDontSee('Vencidas × 3')
+            ->assertSee('22/09/2026')
+            ->assertSee('23/09/2026')
+            ->assertSee('24/09/2026');
+
+        $this->assertSame(
+            3,
+            substr_count(
+                $response->getContent(),
+                'Checklist Casa Andina',
+            ),
+        );
+    }
+
     public function test_overdue_filter_reveals_items_hidden_by_default_limit(): void
     {
         CarbonImmutable::setTestNow(
