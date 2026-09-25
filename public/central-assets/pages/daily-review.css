@@ -114,6 +114,12 @@
             background: #2563eb;
         }
 
+        .progress-bar-0 { width: 0; }
+        .progress-bar-1 { width: 25%; }
+        .progress-bar-2 { width: 50%; }
+        .progress-bar-3 { width: 75%; }
+        .progress-bar-4 { width: 100%; }
+
         .complete-note {
             margin-top: 10px;
             color: #86efac;
