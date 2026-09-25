@@ -5,7 +5,7 @@
 <title>Obligaciones recurrentes · Central ARPYNET</title>
 <link
         rel="stylesheet"
-        href="{{ asset('central-assets/pages/recurring-obligations-front.css') }}?v=2.39.2"
+        href="{{ asset('central-assets/pages/recurring-obligations-front.css') }}?v={{ filemtime(public_path('central-assets/pages/recurring-obligations-front.css')) }}"
     >
 </head>
 <body>
@@ -19,7 +19,7 @@ $createScope=$selectedScope && in_array($selectedScope,$writableOrganizationIds,
 <select name="scope"><option value="">Todos los ámbitos</option>@foreach($organizations as $organization)<option value="{{ $organization->id }}" @selected($selectedScope===(int)$organization->id)>{{ $organization->name }}</option>@endforeach</select>
 <input name="q" maxlength="120" value="{{ $search }}" placeholder="Buscar obligación, proveedor o referencia"><button type="submit">Buscar</button>
 </form>
-<div style="margin-bottom:14px"><a class="secondary" href="{{ route('obligation-ops.show',array_filter(['scope'=>$selectedScope])) }}">← Volver a vencimientos</a></div>
+<div class="back-row"><a class="secondary" href="{{ route('obligation-ops.show',array_filter(['scope'=>$selectedScope])) }}">← Volver a vencimientos</a></div>
 <section class="list">
 @forelse($obligations as $obligation)
 @php $canWrite=in_array((int)$obligation->organization_id,$writableOrganizationIds,true); @endphp
