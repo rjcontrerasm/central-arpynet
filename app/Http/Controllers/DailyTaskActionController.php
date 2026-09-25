@@ -32,6 +32,10 @@ class DailyTaskActionController extends Controller
                 'nullable',
                 'in:mine,team,unassigned',
             ],
+            'recurring_rule' => [
+                'nullable',
+                'integer',
+            ],
         ]);
 
         $actions->preview(
@@ -133,6 +137,11 @@ class DailyTaskActionController extends Controller
 
         if (! empty($validated['view'])) {
             $params['view'] = $validated['view'];
+        }
+
+        if (! empty($validated['recurring_rule'])) {
+            $params['recurring_rule'] =
+                (int) $validated['recurring_rule'];
         }
 
         return $params;
