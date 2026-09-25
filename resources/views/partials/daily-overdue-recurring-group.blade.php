@@ -65,6 +65,7 @@
                 array_filter([
                     'view' => $selectedWorkView,
                     'scope' => $selectedScope,
+                    'priority' => 'overdue',
                     'recurring_rule' => $ruleId,
                 ]),
             ) }}"
