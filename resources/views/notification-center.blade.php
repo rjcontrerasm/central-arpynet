@@ -73,17 +73,11 @@
 
                 <button
                     type="submit"
-                    class="notification {{
+                    class="notification notification-action {{
                         $notification->read_at
                             ? ''
                             : 'unread'
                     }}"
-                    style="
-                        width:100%;
-                        color:inherit;
-                        text-align:left;
-                        cursor:pointer;
-                    "
                 >
                     <div class="notification-head">
                         <div class="title">
