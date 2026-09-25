@@ -35,9 +35,19 @@ class SecurityHeadersTest extends TestCase
             )
             ->assertHeader(
                 'Content-Security-Policy',
-                "base-uri 'self'; frame-ancestors 'self'; object-src 'none'; form-action 'self'",
+                "base-uri 'self'; frame-ancestors 'self'; object-src 'none'; form-action 'self'; script-src 'self'; style-src 'self'",
             )
             ->assertHeaderMissing('Strict-Transport-Security');
+    }
+
+    public function test_admin_keeps_framework_compatible_csp(): void
+    {
+        $this->get('/admin/login')
+            ->assertOk()
+            ->assertHeader(
+                'Content-Security-Policy',
+                "base-uri 'self'; frame-ancestors 'self'; object-src 'none'; form-action 'self'",
+            );
     }
 
     public function test_https_response_adds_hsts(): void
