@@ -21,7 +21,7 @@ class DailyVisualGeometryTest extends TestCase
 
         $response
             ->assertSee(
-                'central-assets/pages/daily-ops.css?v=2.39.1',
+                'central-assets/pages/daily-ops.css?v=2.39.3',
                 false,
             )
             ->assertSee(
@@ -69,7 +69,7 @@ class DailyVisualGeometryTest extends TestCase
             ->get('/mi-dia')
             ->assertOk()
             ->assertSee(
-                'central-assets/pages/daily-ops.css?v=2.39.1',
+                'central-assets/pages/daily-ops.css?v=2.39.3',
                 false,
             );
 
