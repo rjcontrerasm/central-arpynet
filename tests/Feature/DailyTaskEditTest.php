@@ -67,9 +67,11 @@ class DailyTaskEditTest extends TestCase
                     'recurring_rule' => 77,
                 ],
             )
-            ->assertRedirect(
-                '/mi-dia?priority=overdue&view=mine&recurring_rule=77',
-            );
+            ->assertRedirect(route('daily-ops.show', [
+                'priority' => 'overdue',
+                'view' => 'mine',
+                'recurring_rule' => 77,
+            ]));
 
         $this->assertSame(
             '2026-09-05 17:00:00',
