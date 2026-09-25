@@ -17,16 +17,17 @@
         {{ $task->title }}
     </div>
 
-    <div class="meta">
-        {{ $task->organization?->name
-            ?? 'Sin ámbito' }}
-        · {{ $row['count'] }}
-        {{ $row['count'] === 1
-            ? 'pendiente vencida'
-            : 'pendientes vencidas' }}
-    </div>
+    <div class="recurring-overdue-summary-row">
+        <div class="meta">
+            {{ $task->organization?->name
+                ?? 'Sin ámbito' }}
+            · {{ $row['count'] }}
+            {{ $row['count'] === 1
+                ? 'pendiente vencida'
+                : 'pendientes vencidas' }}
+        </div>
 
-    <div class="pills">
+        <div class="pills recurring-overdue-pills">
         <span class="pill overdue">
             Vencidas × {{ $row['count'] }}
         </span>
@@ -36,9 +37,10 @@
                 ↻ {{ $task->recurrence_label }}
             </span>
         @endif
+        </div>
     </div>
 
-    <div class="recurrence-note">
+    <div class="recurrence-note recurring-overdue-note">
         <strong>Acumuladas:</strong>
         {{ $row['oldest_due_at']?->format('d/m/Y') }}
         @if (
@@ -55,7 +57,7 @@
         @endif
     </div>
 
-    <div class="actions">
+    <div class="actions recurring-overdue-actions">
         <a
             class="action"
             href="{{ route(
@@ -135,7 +137,7 @@
         @endif
     </div>
 
-    <div class="secondary-links">
+    <div class="secondary-links recurring-overdue-secondary">
         <a
             href="{{ route(
                 'recurring-task-front.edit',
