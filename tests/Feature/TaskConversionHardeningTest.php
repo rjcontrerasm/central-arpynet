@@ -62,7 +62,11 @@ class TaskConversionHardeningTest extends TestCase
             ->assertSee('"daily":"2026-09-10"', false)
             ->assertSee('"monthly":"2026-10-09"', false)
             ->assertSee(
-                "frequency.addEventListener('change', refreshAnchor);",
+                'central-assets/pages/task-convert.js?v=',
+                false,
+            )
+            ->assertSee(
+                'data-suggested-anchors=',
                 false,
             );
     }
