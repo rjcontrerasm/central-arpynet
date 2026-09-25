@@ -42,11 +42,13 @@ class TaskNextActionQuickEditTest extends TestCase
                 'scope' => $organization->id,
                 'priority' => 'overdue',
                 'view' => 'mine',
+                'recurring_rule' => 77,
             ])
             ->assertRedirect(route('daily-ops.show', [
                 'scope' => $organization->id,
                 'priority' => 'overdue',
                 'view' => 'mine',
+                'recurring_rule' => 77,
             ]));
 
         $this->assertSame(
