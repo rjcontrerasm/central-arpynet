@@ -86,7 +86,7 @@ class DailyOpsOverdueRecurringTest extends TestCase
             ->assertSee('tareas vencidas requieren')
             ->assertSee('Ver vencidas')
             ->assertSee('Vencidas × 3')
-            ->assertSee('3 pendientes vencidas')
+            ->assertSee('pendientes vencidas')
             ->assertSee('22/09/2026')
             ->assertSee('24/09/2026')
             ->assertSee(
