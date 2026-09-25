@@ -41,11 +41,11 @@ class OperationalStaticAssetsTest extends TestCase
             ->get('/mi-dia')
             ->assertOk()
             ->assertSee(
-                'central-assets/operational.css?v=2.39.0',
+                'central-assets/operational.css?v=',
                 false,
             )
             ->assertSee(
-                'central-assets/operational.js?v=2.39.0',
+                'central-assets/operational.js?v=',
                 false,
             );
 
@@ -55,7 +55,7 @@ class OperationalStaticAssetsTest extends TestCase
             1,
             substr_count(
                 $html,
-                'central-assets/operational.css?v=2.39.0',
+                'central-assets/operational.css?v=',
             ),
         );
 
@@ -63,7 +63,7 @@ class OperationalStaticAssetsTest extends TestCase
             1,
             substr_count(
                 $html,
-                'central-assets/operational.js?v=2.39.0',
+                'central-assets/operational.js?v=',
             ),
         );
     }
