@@ -54,6 +54,37 @@ class OperationalFrontAssetsCompletionTest extends TestCase
         }
     }
 
+    public function test_front_blade_views_are_compatible_with_strict_script_and_style_csp(): void
+    {
+        $paths = array_merge(
+            glob(resource_path('views/*.blade.php')) ?: [],
+            glob(resource_path('views/components/*.blade.php')) ?: [],
+            glob(resource_path('views/partials/*.blade.php')) ?: [],
+            glob(resource_path('views/collaboration/*.blade.php')) ?: [],
+        );
+
+        foreach ($paths as $path) {
+            $contents = file_get_contents($path);
+
+            $this->assertIsString($contents);
+            $this->assertStringNotContainsString(
+                '<style',
+                $contents,
+                $path,
+            );
+            $this->assertDoesNotMatchRegularExpression(
+                '/\\sstyle\\s*=\\s*["\\\']/i',
+                $contents,
+                $path,
+            );
+            $this->assertDoesNotMatchRegularExpression(
+                '/<script(?![^>]*\\bsrc\\s*=)[^>]*>/i',
+                $contents,
+                $path,
+            );
+        }
+    }
+
     public function test_operational_scripts_are_externalized(): void
     {
         foreach ([
