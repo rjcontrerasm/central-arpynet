@@ -44,7 +44,7 @@ class DailyTaskEditController extends Controller
             ],
             'priority' => [
                 'nullable',
-                'in:critical,today,week,planned',
+                'in:overdue,critical,today,week,planned',
             ],
             'view' => [
                 'nullable',
