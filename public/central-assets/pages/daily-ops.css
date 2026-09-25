@@ -399,7 +399,16 @@
         }
 
         .danger-value { color: #fca5a5; }
+        .critical-value { color: #fdba74; }
         .today-value { color: #93c5fd; }
+
+        .overdue-summary {
+            margin-top: 10px;
+        }
+
+        .recurring-overdue-group {
+            border-color: #7f1d1d;
+        }
 
         .section { margin-top: 24px; }
 
@@ -819,7 +828,7 @@
 
             .stats {
                 grid-template-columns:
-                    repeat(5, minmax(0, 1fr));
+                    repeat(3, minmax(0, 1fr));
             }
 
             .quick { display: inline-flex; }
@@ -865,6 +874,13 @@
 
             .two-column > main > .section > .list > .empty {
                 grid-column: 1 / -1;
+            }
+        }
+
+        @media (min-width: 1000px) {
+            .stats {
+                grid-template-columns:
+                    repeat(6, minmax(0, 1fr));
             }
         }
 
