@@ -359,7 +359,13 @@ class DailyOpsController extends Controller
 
         $overdueGroups = $overdueTasks
             ->groupBy(
-                function (Task $task): string {
+                function (Task $task) use (
+                    $selectedRecurringRule,
+                ): string {
+                    if ($selectedRecurringRule) {
+                        return 'task:'.$task->id;
+                    }
+
                     $ruleId = $task
                         ->recurringRun
                         ?->recurring_task_rule_id;
