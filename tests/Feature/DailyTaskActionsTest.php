@@ -109,9 +109,12 @@ class DailyTaskActionsTest extends TestCase
                     'action' => 'complete',
                     'priority' => 'overdue',
                     'view' => 'mine',
+                    'recurring_rule' => 77,
                 ],
             )
-            ->assertRedirect('/mi-dia?priority=overdue&view=mine');
+            ->assertRedirect(
+                '/mi-dia?priority=overdue&view=mine&recurring_rule=77',
+            );
 
         $this->assertSame(
             'completed',
