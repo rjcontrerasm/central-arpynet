@@ -54,6 +54,63 @@ class OperationalFrontAssetsCompletionTest extends TestCase
         }
     }
 
+    public function test_front_views_do_not_require_inline_csp_exceptions(): void
+    {
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator(
+                resource_path('views'),
+            ),
+        );
+
+        foreach ($iterator as $file) {
+            if (! $file->isFile()
+                || ! str_ends_with($file->getFilename(), '.blade.php')) {
+                continue;
+            }
+
+            $path = $file->getPathname();
+            $relative = str_replace(
+                resource_path('views').DIRECTORY_SEPARATOR,
+                '',
+                $path,
+            );
+
+            if (str_starts_with($relative, 'filament'.DIRECTORY_SEPARATOR)
+                || str_starts_with($relative, 'emails'.DIRECTORY_SEPARATOR)) {
+                continue;
+            }
+
+            $contents = file_get_contents($path);
+
+            $this->assertIsString($contents);
+            $this->assertDoesNotMatchRegularExpression(
+                '/<style\\b/i',
+                $contents,
+                $relative,
+            );
+            $this->assertDoesNotMatchRegularExpression(
+                '/<script(?![^>]*\\bsrc=)[^>]*>/i',
+                $contents,
+                $relative,
+            );
+            $this->assertDoesNotMatchRegularExpression(
+                '/\\sstyle\\s*=/i',
+                $contents,
+                $relative,
+            );
+            $this->assertDoesNotMatchRegularExpression(
+                '/\\son[a-z]+\\s*=/i',
+                $contents,
+                $relative,
+            );
+            $this->assertStringNotContainsString(
+                'javascript:',
+                strtolower($contents),
+                $relative,
+            );
+        }
+    }
+
     public function test_operational_scripts_are_externalized(): void
     {
         foreach ([
