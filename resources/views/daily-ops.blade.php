@@ -11,7 +11,7 @@
 
     <link
         rel="stylesheet"
-        href="{{ asset('central-assets/pages/daily-ops.css') }}?v=2.39.3"
+        href="{{ asset('central-assets/pages/daily-ops.css') }}?v={{ filemtime(public_path('central-assets/pages/daily-ops.css')) }}"
     >
 </head>
 
@@ -789,6 +789,14 @@
                                             type="hidden"
                                             name="priority"
                                             value="{{ $selectedPriority }}"
+                                        >
+                                    @endif
+
+                                    @if ($selectedRecurringRule)
+                                        <input
+                                            type="hidden"
+                                            name="recurring_rule"
+                                            value="{{ $selectedRecurringRule }}"
                                         >
                                     @endif
 

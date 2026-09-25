@@ -66,9 +66,14 @@ class DailyTaskWaitingTest extends TestCase
                     'waiting_reason' => 'Esperando respuesta',
                     'priority' => 'overdue',
                     'view' => 'mine',
+                    'recurring_rule' => 77,
                 ],
             )
-            ->assertRedirect('/mi-dia?priority=overdue&view=mine');
+            ->assertRedirect(route('daily-ops.show', [
+                'priority' => 'overdue',
+                'view' => 'mine',
+                'recurring_rule' => 77,
+            ]));
 
         $this->assertNotNull(
             $task->fresh()->waiting_since,

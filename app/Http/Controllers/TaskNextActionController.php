@@ -22,6 +22,7 @@ class TaskNextActionController extends Controller
             'q' => ['nullable', 'string', 'max:120'],
             'priority' => ['nullable', 'in:overdue,critical,today,week,planned'],
             'view' => ['nullable', 'in:mine,team,unassigned'],
+            'recurring_rule' => ['nullable', 'integer'],
             'focus' => ['nullable', 'in:attention,stagnant,no_next_action,all'],
             'type' => ['nullable', 'in:all,task,project,service,obligation'],
         ]);
@@ -76,6 +77,8 @@ class TaskNextActionController extends Controller
                 'q' => trim((string) ($validated['q'] ?? '')) ?: null,
                 'priority' => $validated['priority'] ?? null,
                 'view' => $validated['view'] ?? null,
+                'recurring_rule' =>
+                    $validated['recurring_rule'] ?? null,
             ])),
         };
 

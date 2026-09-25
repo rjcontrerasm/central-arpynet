@@ -43,6 +43,10 @@ class DailyTaskWaitingController extends Controller
                 'nullable',
                 'in:mine,team,unassigned',
             ],
+            'recurring_rule' => [
+                'nullable',
+                'integer',
+            ],
         ]);
 
         $this->authorizeTask($request, $task);
@@ -116,6 +120,10 @@ class DailyTaskWaitingController extends Controller
             'view' => [
                 'nullable',
                 'in:mine,team,unassigned',
+            ],
+            'recurring_rule' => [
+                'nullable',
+                'integer',
             ],
         ]);
 
@@ -216,6 +224,11 @@ class DailyTaskWaitingController extends Controller
 
         if (! empty($validated['view'])) {
             $params['view'] = $validated['view'];
+        }
+
+        if (! empty($validated['recurring_rule'])) {
+            $params['recurring_rule'] =
+                (int) $validated['recurring_rule'];
         }
 
         return $params;
