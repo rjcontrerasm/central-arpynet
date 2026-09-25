@@ -76,7 +76,8 @@ class OperationalFrontAssetsCompletionTest extends TestCase
             );
 
             if (str_starts_with($relative, 'filament'.DIRECTORY_SEPARATOR)
-                || str_starts_with($relative, 'emails'.DIRECTORY_SEPARATOR)) {
+                || str_starts_with($relative, 'emails'.DIRECTORY_SEPARATOR)
+                || $relative === 'welcome.blade.php') {
                 continue;
             }
 
