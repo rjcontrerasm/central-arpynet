@@ -903,7 +903,7 @@
                 </div>
 
                 @if ($projectsAttentionCount > $projectsAttention->count())
-                    <div class="meta" style="margin-top:8px">
+                    <div class="meta meta-spaced">
                         Mostrando {{ $projectsAttention->count() }}
                         de {{ $projectsAttentionCount }} proyecto(s)
                         con señales operativas.
