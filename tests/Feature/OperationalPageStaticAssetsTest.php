@@ -6,6 +6,23 @@ use Tests\TestCase;
 
 class OperationalPageStaticAssetsTest extends TestCase
 {
+    public function test_daily_ops_css_uses_automatic_cache_busting(): void
+    {
+        $contents = file_get_contents(
+            resource_path('views/daily-ops.blade.php'),
+        );
+
+        $this->assertIsString($contents);
+        $this->assertStringContainsString(
+            "filemtime(public_path('central-assets/pages/daily-ops.css'))",
+            $contents,
+        );
+        $this->assertStringNotContainsString(
+            '?v=2.39.3',
+            $contents,
+        );
+    }
+
     public function test_primary_operational_views_use_external_page_assets(): void
     {
         $pages = [
