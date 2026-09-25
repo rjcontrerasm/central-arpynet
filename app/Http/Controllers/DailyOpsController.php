@@ -38,7 +38,11 @@ class DailyOpsController extends Controller
             ],
             'priority' => [
                 'nullable',
-                'in:critical,today,week,planned',
+                'in:overdue,critical,today,week,planned',
+            ],
+            'recurring_rule' => [
+                'nullable',
+                'integer',
             ],
             'view' => [
                 'nullable',
@@ -77,6 +81,12 @@ class DailyOpsController extends Controller
 
         $selectedPriority =
             $validated['priority'] ?? null;
+
+        $selectedRecurringRule = isset(
+            $validated['recurring_rule'],
+        )
+            ? (int) $validated['recurring_rule']
+            : null;
 
         $timezone = config(
             'app.timezone',
@@ -121,6 +131,17 @@ class DailyOpsController extends Controller
                 'title',
                 'like',
                 '%'.$search.'%',
+            );
+        }
+
+        if ($selectedRecurringRule) {
+            $tasksQuery->whereHas(
+                'recurringRun',
+                fn (Builder $runQuery): Builder =>
+                    $runQuery->where(
+                        'recurring_task_rule_id',
+                        $selectedRecurringRule,
+                    ),
             );
         }
 
@@ -202,15 +223,18 @@ class DailyOpsController extends Controller
                         $todayStart,
                     ): bool {
                         if (
-                            $selectedPriority === 'critical'
+                            $selectedPriority === 'overdue'
                         ) {
-                            return (
-                                $task->due_at
+                            return $task->due_at
                                 && $task->due_at->isBefore(
                                     $todayStart,
-                                )
-                            )
-                            || $task->display_priority_band
+                                );
+                        }
+
+                        if (
+                            $selectedPriority === 'critical'
+                        ) {
+                            return $task->display_priority_band
                                 === 'critical';
                         }
 
@@ -248,7 +272,7 @@ class DailyOpsController extends Controller
             )
             ->values();
 
-        $overdueCount = $activeTasks
+        $overdueTasks = $activeTasks
             ->filter(
                 fn (Task $task): bool =>
                     $task->due_at
@@ -256,7 +280,22 @@ class DailyOpsController extends Controller
                         $todayStart,
                     ),
             )
-            ->count();
+            ->sortBy(
+                fn (Task $task): string =>
+                    sprintf(
+                        '%s|%03d',
+                        $task->due_at?->format(
+                            'Y-m-d H:i:s',
+                        ) ?? '9999-12-31 23:59:59',
+                        100 - (int) (
+                            $task->display_priority_score
+                            ?? 0
+                        ),
+                    ),
+            )
+            ->values();
+
+        $overdueCount = $overdueTasks->count();
 
         $todayCount = $activeTasks
             ->filter(
@@ -289,13 +328,7 @@ class DailyOpsController extends Controller
         $criticalCount = $activeTasks
             ->filter(
                 fn (Task $task): bool =>
-                    (
-                        $task->due_at
-                        && $task->due_at->isBefore(
-                            $todayStart,
-                        )
-                    )
-                    || $task->display_priority_band
+                    $task->display_priority_band
                         === 'critical',
             )
             ->count();
@@ -324,27 +357,112 @@ class DailyOpsController extends Controller
             )
             ->count();
 
-        $nowTasks = $activeTasks
+        $overdueGroups = $overdueTasks
+            ->groupBy(
+                function (Task $task): string {
+                    $ruleId = $task
+                        ->recurringRun
+                        ?->recurring_task_rule_id;
+
+                    return $ruleId
+                        ? 'recurring:'.$ruleId
+                        : 'task:'.$task->id;
+                },
+            )
+            ->map(
+                function (Collection $group) use (
+                    $activeTasks,
+                    $now,
+                ): array {
+                    $sorted = $group
+                        ->sortBy('due_at')
+                        ->values();
+
+                    /** @var Task $oldest */
+                    $oldest = $sorted->first();
+
+                    /** @var Task $latest */
+                    $latest = $sorted->last();
+
+                    $ruleId = $oldest
+                        ->recurringRun
+                        ?->recurring_task_rule_id;
+
+                    $isRecurringGroup =
+                        $ruleId
+                        && $sorted->count() > 1;
+
+                    $hasToday = $ruleId
+                        ? $activeTasks->contains(
+                            fn (Task $task): bool =>
+                                $task
+                                    ->recurringRun
+                                    ?->recurring_task_rule_id
+                                    === $ruleId
+                                && $task->due_at
+                                && $task->due_at
+                                    ->isSameDay($now),
+                        )
+                        : false;
+
+                    return [
+                        'type' => $isRecurringGroup
+                            ? 'recurring'
+                            : 'task',
+                        'task' => $oldest,
+                        'oldest_task' => $oldest,
+                        'count' => $sorted->count(),
+                        'rule_id' => $ruleId,
+                        'oldest_due_at' =>
+                            $oldest->due_at,
+                        'latest_due_at' =>
+                            $latest->due_at,
+                        'has_today' => $hasToday,
+                    ];
+                },
+            )
+            ->sortBy(
+                fn (array $row): string =>
+                    $row['oldest_due_at']
+                        ?->format('Y-m-d H:i:s')
+                    ?? '9999-12-31 23:59:59',
+            )
+            ->values();
+
+        $showAllOverdue =
+            $selectedPriority === 'overdue'
+            || $search !== ''
+            || $selectedRecurringRule;
+
+        $visibleOverdueGroups = $showAllOverdue
+            ? $overdueGroups
+            : $overdueGroups->take(8)->values();
+
+        $criticalNowTasks = $activeTasks
             ->filter(
                 fn (Task $task): bool =>
-                    (
+                    ! (
                         $task->due_at
                         && $task->due_at->isBefore(
                             $todayStart,
                         )
                     )
-                    || $task->display_priority_score >= 85,
+                    && $task->display_priority_band
+                        === 'critical',
             )
             ->sortByDesc('display_priority_score')
             ->take(8)
             ->values();
 
-        $nowIds = $nowTasks->pluck('id');
+        $criticalNowIds =
+            $criticalNowTasks->pluck('id');
 
         $todayTasks = $activeTasks
             ->filter(
                 fn (Task $task): bool =>
-                    ! $nowIds->contains($task->id)
+                    ! $criticalNowIds->contains(
+                        $task->id,
+                    )
                     && $task->due_at
                     && $task->due_at->isSameDay($now),
             )
@@ -352,7 +470,7 @@ class DailyOpsController extends Controller
             ->take(8)
             ->values();
 
-        $usedIds = $nowIds
+        $usedIds = $criticalNowIds
             ->merge($todayTasks->pluck('id'));
 
         $upcomingTasks = $activeTasks
@@ -616,7 +734,11 @@ class DailyOpsController extends Controller
                 'selectedWorkView',
                 'search',
                 'selectedPriority',
+                'selectedRecurringRule',
                 'overdueCount',
+                'overdueGroups',
+                'visibleOverdueGroups',
+                'showAllOverdue',
                 'todayCount',
                 'weekCount',
                 'noDateCount',
@@ -626,7 +748,7 @@ class DailyOpsController extends Controller
                 'plannedCount',
                 'waitingCount',
                 'waitingTasks',
-                'nowTasks',
+                'criticalNowTasks',
                 'todayTasks',
                 'upcomingTasks',
                 'noDateTasks',
