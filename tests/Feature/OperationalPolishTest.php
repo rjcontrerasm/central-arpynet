@@ -29,7 +29,7 @@ class OperationalPolishTest extends TestCase
                 ->get($page)
                 ->assertOk()
                 ->assertSee(
-                    'central-assets/operational.js?v=2.39.0',
+                    'central-assets/operational.js?v=',
                     false,
                 )
                 ->assertSee(
@@ -50,7 +50,7 @@ class OperationalPolishTest extends TestCase
                 'Guardando tarea…',
             )
             ->assertSee(
-                'central-assets/operational.css?v=2.39.0',
+                'central-assets/operational.css?v=',
                 false,
             );
 

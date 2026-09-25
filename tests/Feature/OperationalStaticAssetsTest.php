@@ -11,6 +11,29 @@ class OperationalStaticAssetsTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_shared_operational_assets_use_automatic_cache_busting(): void
+    {
+        $contents = file_get_contents(
+            resource_path(
+                'views/components/operational-assets.blade.php',
+            ),
+        );
+
+        $this->assertIsString($contents);
+        $this->assertStringContainsString(
+            "filemtime(public_path('central-assets/operational.css'))",
+            $contents,
+        );
+        $this->assertStringContainsString(
+            "filemtime(public_path('central-assets/operational.js'))",
+            $contents,
+        );
+        $this->assertStringNotContainsString(
+            '?v=2.39.0',
+            $contents,
+        );
+    }
+
     public function test_operational_shell_loads_shared_static_assets_once(): void
     {
         $user = User::factory()->create([
@@ -41,11 +64,11 @@ class OperationalStaticAssetsTest extends TestCase
             ->get('/mi-dia')
             ->assertOk()
             ->assertSee(
-                'central-assets/operational.css?v=2.39.0',
+                'central-assets/operational.css?v=',
                 false,
             )
             ->assertSee(
-                'central-assets/operational.js?v=2.39.0',
+                'central-assets/operational.js?v=',
                 false,
             );
 
@@ -55,7 +78,7 @@ class OperationalStaticAssetsTest extends TestCase
             1,
             substr_count(
                 $html,
-                'central-assets/operational.css?v=2.39.0',
+                'central-assets/operational.css?v=',
             ),
         );
 
@@ -63,7 +86,7 @@ class OperationalStaticAssetsTest extends TestCase
             1,
             substr_count(
                 $html,
-                'central-assets/operational.js?v=2.39.0',
+                'central-assets/operational.js?v=',
             ),
         );
     }
