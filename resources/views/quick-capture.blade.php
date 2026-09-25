@@ -112,13 +112,7 @@
         </label>
 
         <div>
-            <div
-                style="
-                    font-size:14px;
-                    font-weight:700;
-                    margin-bottom:7px;
-                "
-            >
+            <div class="when-label">
                 ¿Cuándo?
             </div>
 

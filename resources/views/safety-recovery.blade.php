@@ -114,7 +114,7 @@
                     <div class="safety-empty">Los vencimientos recurrentes visibles tienen su siguiente ocurrencia generada.</div>
                 @endif
 
-                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <div class="safety-actions-row">
                     <a class="safety-action" href="{{ route('recurring-task-front.index') }}">Tareas recurrentes</a>
                     <a class="safety-action" href="{{ route('recurring-obligation-front.index') }}">Vencimientos recurrentes</a>
                 </div>
@@ -203,7 +203,7 @@
         </div>
     </div>
 
-    <div class="safety-grid" style="margin-top:14px">
+    <div class="safety-grid safety-grid-spaced">
         <section class="safety-card">
             <h2>Automatizaciones</h2>
             <div class="safety-health-line">
@@ -252,7 +252,7 @@
         </section>
     </div>
 
-    <div class="safety-grid" style="margin-top:14px">
+    <div class="safety-grid safety-grid-spaced">
         <section class="safety-card">
             <h2>Propuestas que requieren contexto humano</h2>
             @forelse($snapshot['proposal_issues'] as $proposal)
@@ -287,7 +287,7 @@
         </section>
     </div>
 
-    <p class="safety-muted" style="margin-top:14px">Actualizado {{ $snapshot['generated_at']->format('d/m/Y H:i:s') }} · Los errores internos, credenciales y tokens no se renderizan en esta vista.</p>
+    <p class="safety-muted safety-muted-spaced">Actualizado {{ $snapshot['generated_at']->format('d/m/Y H:i:s') }} · Los errores internos, credenciales y tokens no se renderizan en esta vista.</p>
 </div>
 <x-operational-interactions />
 </body>

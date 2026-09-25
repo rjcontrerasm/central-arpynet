@@ -18,3 +18,7 @@
         @media(min-width:900px){.safety-grid{grid-template-columns:minmax(0,1.2fr) minmax(320px,.8fr)}}
         @media(max-width:720px){.safety-header{display:grid}.safety-row{grid-template-columns:1fr}.safety-right{text-align:left}.safety-contract{grid-template-columns:1fr}.safety-health-line{align-items:flex-start;flex-direction:column}.safety-health-meta{text-align:left}}
         @media(prefers-color-scheme:light){.safety-status.healthy{color:#15803d}.safety-status.watch{color:#a16207}.safety-status.attention{color:#b91c1c}.safety-pill.failed{color:#b91c1c}.safety-pill.blocked,.safety-pill.stale{color:#a16207}.safety-pill.pending{color:#1d4ed8}}
+
+.safety-actions-row{display:flex;gap:8px;flex-wrap:wrap}
+.safety-grid-spaced{margin-top:14px}
+.safety-muted-spaced{margin-top:14px}

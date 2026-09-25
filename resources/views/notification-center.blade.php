@@ -77,13 +77,7 @@
                         $notification->read_at
                             ? ''
                             : 'unread'
-                    }}"
-                    style="
-                        width:100%;
-                        color:inherit;
-                        text-align:left;
-                        cursor:pointer;
-                    "
+                    }} notification-trigger"
                 >
                     <div class="notification-head">
                         <div class="title">

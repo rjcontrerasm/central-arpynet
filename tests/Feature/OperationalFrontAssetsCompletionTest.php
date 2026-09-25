@@ -6,6 +6,40 @@ use Tests\TestCase;
 
 class OperationalFrontAssetsCompletionTest extends TestCase
 {
+    public function test_operational_front_sources_are_compatible_with_strict_csp(): void
+    {
+        $paths = array_merge(
+            glob(resource_path('views/*.blade.php')) ?: [],
+            glob(resource_path('views/components/*.blade.php')) ?: [],
+            glob(resource_path('views/partials/*.blade.php')) ?: [],
+        );
+
+        foreach ($paths as $path) {
+            if (str_ends_with($path, 'welcome.blade.php')) {
+                continue;
+            }
+
+            $contents = file_get_contents($path);
+
+            $this->assertIsString($contents);
+            $this->assertDoesNotMatchRegularExpression(
+                '/<style\\b/i',
+                $contents,
+                $path,
+            );
+            $this->assertDoesNotMatchRegularExpression(
+                '/\\sstyle\\s*=/i',
+                $contents,
+                $path,
+            );
+            $this->assertDoesNotMatchRegularExpression(
+                '/<script\\b(?![^>]*\\bsrc\\s*=)[^>]*>/i',
+                $contents,
+                $path,
+            );
+        }
+    }
+
     public function test_remaining_operational_views_use_external_css(): void
     {
         foreach ([

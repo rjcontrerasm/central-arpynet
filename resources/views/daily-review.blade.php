@@ -52,8 +52,7 @@
 
         <div class="progress-track">
             <div
-                class="progress-bar"
-                style="width: {{ $reviewedCount * 25 }}%"
+                class="progress-bar progress-{{ $reviewedCount * 25 }}"
             ></div>
         </div>
 

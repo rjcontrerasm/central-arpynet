@@ -164,7 +164,7 @@
         </section>
     </div>
 
-    <section class="automation-card" style="margin-top:14px">
+    <section class="automation-card automation-card-spaced">
         <h2>Confirmaciones pendientes</h2>
         @forelse($pendingConfirmations as $run)
             <div class="automation-run-row">
@@ -202,7 +202,7 @@
         @endforelse
     </section>
 
-    <section class="automation-card" style="margin-top:14px">
+    <section class="automation-card automation-card-spaced">
         <h2>Ejecuciones recientes</h2>
         @forelse($recentRuns as $run)
             <div class="automation-run-row">

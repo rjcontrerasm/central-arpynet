@@ -118,7 +118,7 @@ $canWriteProject=in_array((int)$project->organization_id,$writableOrganizationId
 </div>
 </div>
 
-<div class="progress" title="Avance {{ $progress }}%"><span style="width: {{ $progress }}%"></span></div>
+<progress class="progress-native" max="100" value="{{ $progress }}" title="Avance {{ $progress }}%">{{ $progress }}%</progress>
 
 <div class="meta-row">
 <span>Avance {{ $progress }}%</span><span>·</span><span>{{ $project->stagnation_label }}</span>
