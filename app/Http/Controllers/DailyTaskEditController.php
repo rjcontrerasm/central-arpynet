@@ -50,6 +50,10 @@ class DailyTaskEditController extends Controller
                 'nullable',
                 'in:mine,team,unassigned',
             ],
+            'recurring_rule' => [
+                'nullable',
+                'integer',
+            ],
         ]);
 
         foreach (['urgency', 'impact'] as $field) {
@@ -140,6 +144,11 @@ class DailyTaskEditController extends Controller
 
         if (! empty($validated['view'])) {
             $params['view'] = $validated['view'];
+        }
+
+        if (! empty($validated['recurring_rule'])) {
+            $params['recurring_rule'] =
+                (int) $validated['recurring_rule'];
         }
 
         $undo->rememberTaskMutation(
