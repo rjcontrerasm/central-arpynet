@@ -792,6 +792,14 @@
                                         >
                                     @endif
 
+                                    @if ($selectedRecurringRule)
+                                        <input
+                                            type="hidden"
+                                            name="recurring_rule"
+                                            value="{{ $selectedRecurringRule }}"
+                                        >
+                                    @endif
+
                                     <button
                                         class="resume-button"
                                         type="submit"
