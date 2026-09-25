@@ -95,6 +95,18 @@ class DailyOpsOverdueRecurringTest extends TestCase
             ->assertSee('Completar más antigua')
             ->assertSee('Ver pendientes')
             ->assertSee(
+                'recurring-overdue-summary-row',
+                false,
+            )
+            ->assertSee(
+                'recurring-overdue-actions',
+                false,
+            )
+            ->assertSee(
+                'recurring-overdue-secondary',
+                false,
+            )
+            ->assertSee(
                 'recurring_rule='.$rule->id,
                 false,
             )
