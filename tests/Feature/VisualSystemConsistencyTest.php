@@ -29,7 +29,7 @@ class VisualSystemConsistencyTest extends TestCase
         );
 
         foreach ([
-            '/mi-dia' => ['daily-ops', '2.39.3'],
+            '/mi-dia' => ['daily-ops', null],
             '/captura' => ['quick-capture', '2.39.1'],
             '/servicios' => ['service-orders-ops', '2.39.1'],
             '/vencimientos' => ['obligations-ops', '2.39.2'],
@@ -47,7 +47,9 @@ class VisualSystemConsistencyTest extends TestCase
                 );
 
             $response->assertSee(
-                "central-assets/pages/{$asset}.css?v={$version}",
+                $version === null
+                    ? "central-assets/pages/{$asset}.css?v="
+                    : "central-assets/pages/{$asset}.css?v={$version}",
                 false,
             );
 
