@@ -25,3 +25,5 @@
         .automation-safety{margin-top:10px;line-height:1.5}
         @media(min-width:980px){.automation-grid{grid-template-columns:minmax(320px,.8fr) minmax(0,1.45fr);align-items:start}}
         @media(max-width:760px){.automation-header{display:grid}.automation-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.automation-form-grid,.automation-rule,.automation-run-row{grid-template-columns:1fr}.automation-wide{grid-column:auto}.automation-actions{justify-content:flex-start}}
+
+        .automation-section-spaced{margin-top:14px}
