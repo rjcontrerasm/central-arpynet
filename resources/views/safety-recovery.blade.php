@@ -5,26 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Estado y recuperación · Central ARPYNET</title>
     <x-operational-theme />
-    <style>
-        .safety-page{width:min(1200px,calc(100% - 28px));margin:0 auto;padding:22px 0 42px}
-        .safety-header{display:flex;gap:18px;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
-        .safety-header h1{margin:0 0 6px;font-size:26px}.safety-header p,.safety-muted{color:var(--op-muted,#94a3b8);font-size:12px;line-height:1.55}
-        .safety-status{display:inline-flex;align-items:center;gap:7px;margin-top:8px;border:1px solid var(--op-border,#334155);border-radius:999px;padding:5px 9px;font-size:11px;font-weight:850}
-        .safety-status.healthy{border-color:#16a34a;color:#86efac}.safety-status.watch{border-color:#d97706;color:#fcd34d}.safety-status.attention{border-color:#dc2626;color:#fca5a5}
-        .safety-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
-        .safety-kpi,.safety-card{border:1px solid var(--op-border,#334155);border-radius:16px;background:var(--op-card,#0f172a)}
-        .safety-kpi{padding:14px}.safety-kpi strong{display:block;margin-top:5px;font-size:22px}.safety-kpi span{font-size:11px;color:var(--op-muted,#94a3b8);font-weight:780}
-        .safety-grid{display:grid;grid-template-columns:1fr;gap:14px}.safety-card{padding:16px}.safety-card h2{margin:0 0 11px;font-size:17px}.safety-card h3{margin:16px 0 8px;font-size:13px}
-        .safety-row{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:12px;padding:11px 0;border-top:1px solid var(--op-border,#334155);font-size:12px}.safety-row:first-of-type{border-top:0}.safety-row strong{display:block;margin-bottom:4px}.safety-row-meta{color:var(--op-muted,#94a3b8);line-height:1.45}.safety-right{text-align:right}
-        .safety-pill{display:inline-flex;border:1px solid var(--op-border,#334155);border-radius:999px;padding:4px 8px;font-size:10px;font-weight:850}.safety-pill.failed{border-color:#dc2626;color:#fca5a5}.safety-pill.blocked,.safety-pill.stale{border-color:#d97706;color:#fcd34d}.safety-pill.pending{border-color:#2563eb;color:#bfdbfe}
-        .safety-contract{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.safety-contract div{border:1px solid var(--op-border,#334155);border-radius:12px;padding:11px}.safety-contract strong{display:block;margin-bottom:4px;font-size:12px}.safety-contract span{font-size:11px;color:var(--op-muted,#94a3b8)}
-        .safety-action{display:inline-flex;align-items:center;min-height:36px;border:1px solid var(--op-border,#334155);border-radius:10px;padding:7px 10px;color:inherit;text-decoration:none;font-size:12px;font-weight:800}.safety-action:hover{border-color:#3b82f6}
-        .safety-empty{padding:8px 0;color:var(--op-muted,#94a3b8);font-size:12px}.safety-note{margin-top:12px;border:1px solid var(--op-border,#334155);border-radius:12px;padding:11px 12px;color:var(--op-muted,#94a3b8);font-size:11px;line-height:1.5}
-        .safety-health-line{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}.safety-health-line .safety-status{margin-top:0}.safety-health-meta{font-size:11px;color:var(--op-muted,#94a3b8);text-align:right}
-        @media(min-width:900px){.safety-grid{grid-template-columns:minmax(0,1.2fr) minmax(320px,.8fr)}}
-        @media(max-width:720px){.safety-header{display:grid}.safety-row{grid-template-columns:1fr}.safety-right{text-align:left}.safety-contract{grid-template-columns:1fr}.safety-health-line{align-items:flex-start;flex-direction:column}.safety-health-meta{text-align:left}}
-        @media(prefers-color-scheme:light){.safety-status.healthy{color:#15803d}.safety-status.watch{color:#a16207}.safety-status.attention{color:#b91c1c}.safety-pill.failed{color:#b91c1c}.safety-pill.blocked,.safety-pill.stale{color:#a16207}.safety-pill.pending{color:#1d4ed8}}
-    </style>
+    <link
+        rel="stylesheet"
+        href="{{ asset('central-assets/pages/safety-recovery.css') }}?v=2.39.2"
+    >
 </head>
 <body>
 <div class="safety-page">

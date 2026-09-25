@@ -5,33 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Automatizaciones · Central ARPYNET</title>
     <x-operational-theme />
-    <style>
-        .automation-page{width:min(1200px,calc(100% - 28px));margin:0 auto;padding:22px 0 40px}
-        .automation-header{display:flex;gap:18px;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
-        .automation-header h1{margin:0 0 6px;font-size:26px}
-        .automation-header p,.automation-meta,.automation-safety,.automation-empty{color:var(--op-muted,#94a3b8);font-size:12px}
-        .automation-grid{display:grid;grid-template-columns:1fr;gap:14px}
-        .automation-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
-        .automation-card,.automation-kpi{border:1px solid var(--op-border,#334155);border-radius:16px;background:var(--op-card,#0f172a)}
-        .automation-kpi{padding:14px}.automation-kpi strong{display:block;margin-top:5px;font-size:22px}
-        .automation-card{padding:16px}.automation-card h2{margin:0 0 12px;font-size:17px}
-        .automation-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-        .automation-field{display:grid;gap:6px}.automation-field label{color:var(--op-muted,#94a3b8);font-size:12px;font-weight:800}
-        .automation-field input,.automation-field select{width:100%;min-height:42px;border:1px solid var(--op-border,#334155);border-radius:10px;padding:8px 10px;background:transparent;color:inherit}
-        .automation-wide{grid-column:1/-1}
-        .automation-button{display:inline-flex;align-items:center;justify-content:center;min-height:38px;border:1px solid #3b82f6;border-radius:10px;padding:7px 11px;background:#172554;color:#dbeafe;font:inherit;font-size:12px;font-weight:850;cursor:pointer;text-decoration:none}
-        .automation-button.secondary{border-color:var(--op-border,#334155);background:transparent;color:inherit}
-        .automation-rule{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,.9fr) minmax(120px,.4fr) auto;gap:12px;align-items:center;padding:13px 0;border-top:1px solid var(--op-border,#334155)}
-        .automation-rule:first-of-type{border-top:0}.automation-rule strong{display:block;margin-bottom:4px}
-        .automation-actions{display:flex;flex-wrap:wrap;gap:7px;justify-content:flex-end}
-        .automation-pill{display:inline-flex;align-items:center;border:1px solid var(--op-border,#334155);border-radius:999px;padding:4px 8px;font-size:11px;font-weight:850}
-        .automation-pill.active{border-color:#16a34a;color:#86efac}.automation-pill.inactive{color:var(--op-muted,#94a3b8)}
-        .automation-flash{margin-bottom:14px;border:1px solid #2563eb;border-radius:12px;padding:12px 14px;background:rgba(30,64,175,.18);font-size:13px}
-        .automation-run-row{display:grid;grid-template-columns:1fr 180px 140px;gap:10px;padding:10px 0;border-top:1px solid var(--op-border,#334155);font-size:12px}
-        .automation-safety{margin-top:10px;line-height:1.5}
-        @media(min-width:980px){.automation-grid{grid-template-columns:minmax(320px,.8fr) minmax(0,1.45fr);align-items:start}}
-        @media(max-width:760px){.automation-header{display:grid}.automation-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.automation-form-grid,.automation-rule,.automation-run-row{grid-template-columns:1fr}.automation-wide{grid-column:auto}.automation-actions{justify-content:flex-start}}
-    </style>
+    <link
+        rel="stylesheet"
+        href="{{ asset('central-assets/pages/automation-center.css') }}?v=2.39.2"
+    >
 </head>
 <body>
 <div class="automation-page">
