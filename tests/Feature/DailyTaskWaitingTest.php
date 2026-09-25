@@ -49,6 +49,32 @@ class DailyTaskWaitingTest extends TestCase
         );
     }
 
+    public function test_user_can_put_overdue_filtered_task_on_waiting(): void
+    {
+        [$user, $organization] = $this->context();
+
+        $task = $this->task(
+            $user,
+            $organization,
+        );
+
+        $this->actingAs($user)
+            ->post(
+                "/mi-dia/tareas/{$task->id}/esperar",
+                [
+                    'waiting_until' => '2026-09-04',
+                    'waiting_reason' => 'Esperando respuesta',
+                    'priority' => 'overdue',
+                    'view' => 'mine',
+                ],
+            )
+            ->assertRedirect('/mi-dia?priority=overdue&view=mine');
+
+        $this->assertNotNull(
+            $task->fresh()->waiting_since,
+        );
+    }
+
     public function test_waiting_task_is_shown_in_waiting_section(): void
     {
         [$user, $organization] = $this->context();
