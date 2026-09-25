@@ -26,7 +26,7 @@ class DailyTaskActionController extends Controller
             'q' => ['nullable', 'string', 'max:120'],
             'priority' => [
                 'nullable',
-                'in:critical,today,week,planned',
+                'in:overdue,critical,today,week,planned',
             ],
             'view' => [
                 'nullable',
