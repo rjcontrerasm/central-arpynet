@@ -93,6 +93,32 @@ class DailyTaskActionsTest extends TestCase
         );
     }
 
+    public function test_user_can_complete_task_from_overdue_filter(): void
+    {
+        [$user, $organization] = $this->context();
+
+        $task = $this->task(
+            $user,
+            $organization,
+        );
+
+        $this->actingAs($user)
+            ->post(
+                "/mi-dia/tareas/{$task->id}/accion",
+                [
+                    'action' => 'complete',
+                    'priority' => 'overdue',
+                    'view' => 'mine',
+                ],
+            )
+            ->assertRedirect('/mi-dia?priority=overdue&view=mine');
+
+        $this->assertSame(
+            'completed',
+            $task->fresh()->status,
+        );
+    }
+
     public function test_foreign_task_is_forbidden(): void
     {
         [$user] = $this->context();

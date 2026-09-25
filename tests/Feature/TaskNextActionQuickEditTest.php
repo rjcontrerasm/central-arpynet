@@ -31,6 +31,30 @@ class TaskNextActionQuickEditTest extends TestCase
         $this->assertSame('Enviar propuesta final', $task->fresh()->next_action);
     }
 
+    public function test_user_can_update_next_action_from_overdue_filter(): void
+    {
+        [$user, $organization, $task] = $this->context();
+
+        $this->actingAs($user)
+            ->post("/tareas/{$task->id}/proxima-accion", [
+                'next_action' => 'Enviar respuesta al cliente',
+                'return_to' => 'daily',
+                'scope' => $organization->id,
+                'priority' => 'overdue',
+                'view' => 'mine',
+            ])
+            ->assertRedirect(route('daily-ops.show', [
+                'scope' => $organization->id,
+                'priority' => 'overdue',
+                'view' => 'mine',
+            ]));
+
+        $this->assertSame(
+            'Enviar respuesta al cliente',
+            $task->fresh()->next_action,
+        );
+    }
+
     public function test_tracking_renders_quick_next_action_editor(): void
     {
         [$user, , $task] = $this->context();

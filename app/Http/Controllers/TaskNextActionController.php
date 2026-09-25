@@ -20,7 +20,7 @@ class TaskNextActionController extends Controller
             'return_to' => ['required', 'in:daily,tracking,decisions'],
             'scope' => ['nullable', 'integer'],
             'q' => ['nullable', 'string', 'max:120'],
-            'priority' => ['nullable', 'in:critical,today,week,planned'],
+            'priority' => ['nullable', 'in:overdue,critical,today,week,planned'],
             'view' => ['nullable', 'in:mine,team,unassigned'],
             'focus' => ['nullable', 'in:attention,stagnant,no_next_action,all'],
             'type' => ['nullable', 'in:all,task,project,service,obligation'],
