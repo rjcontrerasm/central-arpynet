@@ -68,7 +68,7 @@ class DailyOpsFiltersTest extends TestCase
             ->assertDontSee('Tarea planificada');
     }
 
-    public function test_critical_filter_also_includes_overdue_task(): void
+    public function test_overdue_filter_is_separate_from_critical_filter(): void
     {
         [$user, $organization] = $this->context();
 
@@ -82,9 +82,14 @@ class DailyOpsFiltersTest extends TestCase
         );
 
         $this->actingAs($user)
-            ->get('/mi-dia?priority=critical')
+            ->get('/mi-dia?priority=overdue')
             ->assertOk()
             ->assertSee('Tarea vencida operativa');
+
+        $this->actingAs($user)
+            ->get('/mi-dia?priority=critical')
+            ->assertOk()
+            ->assertDontSee('Tarea vencida operativa');
     }
 
     public function test_search_and_scope_can_be_combined(): void

@@ -82,8 +82,8 @@ class UiUxConsistencyTest extends TestCase
         $this->actingAs($user)
             ->get('/mi-dia')
             ->assertOk()
-            ->assertSee('Prioridad ahora')
-            ->assertSee('Críticos')
+            ->assertSee('Vencidas')
+            ->assertSee('Críticas')
             ->assertSee('Planificados')
             ->assertSee('Más');
     }

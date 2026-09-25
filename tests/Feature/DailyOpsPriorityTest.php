@@ -19,7 +19,7 @@ class DailyOpsPriorityTest extends TestCase
         $this->actingAs($user)
             ->get('/mi-dia')
             ->assertOk()
-            ->assertSee('Prioridad ahora')
+            ->assertSee('Vencidas')
             ->assertSee('Hoy')
             ->assertSee('Esta semana')
             ->assertSee('Planificados');
