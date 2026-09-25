@@ -605,12 +605,12 @@
                         @if ($row['type'] === 'recurring')
                             @include(
                                 'partials.daily-overdue-recurring-group',
-                                ['row' => $row],
+                                ['row' => $row]
                             )
                         @else
                             @include(
                                 'partials.daily-task-card',
-                                ['task' => $row['task']],
+                                ['task' => $row['task']]
                             )
                         @endif
                     @empty
@@ -690,7 +690,7 @@
                         @forelse ($section['tasks'] as $task)
                             @include(
                                 'partials.daily-task-card',
-                                ['task' => $task],
+                                ['task' => $task]
                             )
 @empty
                             <div class="empty">
