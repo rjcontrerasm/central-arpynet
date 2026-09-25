@@ -30,9 +30,17 @@ class SecurityHeadersMiddleware
             'Permissions-Policy',
             'camera=(), microphone=(), geolocation=()',
         );
+        $contentSecurityPolicy =
+            "base-uri 'self'; frame-ancestors 'self'; object-src 'none'; form-action 'self'";
+
+        if (! $request->is('admin', 'admin/*')) {
+            $contentSecurityPolicy .=
+                "; script-src 'self'; style-src 'self'";
+        }
+
         $response->headers->set(
             'Content-Security-Policy',
-            "base-uri 'self'; frame-ancestors 'self'; object-src 'none'; form-action 'self'",
+            $contentSecurityPolicy,
         );
 
         if ($request->isSecure()) {
