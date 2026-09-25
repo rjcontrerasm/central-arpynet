@@ -34,7 +34,7 @@ class VisualSystemConsistencyTest extends TestCase
             '/servicios' => ['service-orders-ops', '2.39.1'],
             '/vencimientos' => ['obligations-ops', '2.39.2'],
             '/seguimiento' => ['global-tracking', '2.39.2'],
-            '/resumen' => ['executive-summary', '2.39.2'],
+            '/resumen' => ['executive-summary', null],
             '/notificaciones' => ['notification-center', '2.39.2'],
             '/historial' => ['audit-history', '2.39.2'],
         ] as $page => [$asset, $version]) {
