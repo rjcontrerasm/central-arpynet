@@ -268,3 +268,11 @@
                 color: #0f172a;
             }
         }
+
+
+        .progress-fill.progress-0 { width: 0; }
+        .progress-fill.progress-1 { width: 20%; }
+        .progress-fill.progress-2 { width: 40%; }
+        .progress-fill.progress-3 { width: 60%; }
+        .progress-fill.progress-4 { width: 80%; }
+        .progress-fill.progress-5 { width: 100%; }
