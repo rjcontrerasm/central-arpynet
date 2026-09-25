@@ -187,7 +187,7 @@
     <section class="section">
         <div class="section-head">
             <div class="section-title">
-                <span class="dot" style="background:#eaf3ff;color:#1766cf">▣</span>
+                <span class="dot dot-scheduled">▣</span>
                 Programado para el día
             </div>
             <div class="section-count">{{ $scheduledItems->count() }} elemento(s)</div>
