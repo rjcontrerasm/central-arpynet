@@ -408,6 +408,56 @@
 
         .recurring-overdue-group {
             border-color: #7f1d1d;
+            gap: 8px;
+            align-content: start;
+        }
+
+        .recurring-overdue-summary-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px 12px;
+        }
+
+        .recurring-overdue-pills {
+            margin-top: 0;
+            flex: 0 0 auto;
+        }
+
+        .recurring-overdue-note {
+            margin-top: 0;
+            padding: 7px 10px;
+            line-height: 1.35;
+        }
+
+        .recurring-overdue-actions {
+            margin-top: 2px;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .recurring-overdue-actions .action,
+        .recurring-overdue-actions .action-form button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 36px;
+            padding: 7px 11px;
+        }
+
+        .recurring-overdue-secondary {
+            margin-top: 0;
+            line-height: 1.2;
+        }
+
+        .recurring-overdue-secondary a {
+            display: inline-flex;
+            align-items: center;
+            min-height: 28px;
+            color: #93c5fd;
+            font-size: 11px;
+            font-weight: 800;
         }
 
         .section { margin-top: 24px; }
@@ -802,6 +852,26 @@
 
             .item {
                 padding: 15px;
+            }
+
+            .recurring-overdue-summary-row {
+                display: grid;
+                justify-content: stretch;
+                gap: 7px;
+            }
+
+            .recurring-overdue-pills {
+                justify-self: start;
+            }
+
+            .recurring-overdue-actions {
+                align-items: stretch;
+            }
+
+            .recurring-overdue-actions .action,
+            .recurring-overdue-actions .action-form,
+            .recurring-overdue-actions .action-form button {
+                width: 100%;
             }
 
             .fab {
