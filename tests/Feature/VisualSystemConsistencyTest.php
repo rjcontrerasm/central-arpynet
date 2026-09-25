@@ -29,7 +29,7 @@ class VisualSystemConsistencyTest extends TestCase
         );
 
         foreach ([
-            '/mi-dia' => ['daily-ops', '2.39.1'],
+            '/mi-dia' => ['daily-ops', '2.39.3'],
             '/captura' => ['quick-capture', '2.39.1'],
             '/servicios' => ['service-orders-ops', '2.39.1'],
             '/vencimientos' => ['obligations-ops', '2.39.2'],
