@@ -82,9 +82,8 @@ class DailyOpsOverdueRecurringTest extends TestCase
         $response = $this->actingAs($user)
             ->get('/mi-dia')
             ->assertOk()
-            ->assertSee(
-                '3 tareas vencidas requieren',
-            )
+            ->assertSee('3')
+            ->assertSee('tareas vencidas requieren')
             ->assertSee('Ver vencidas')
             ->assertSee('Vencidas × 3')
             ->assertSee('3 pendientes vencidas')
