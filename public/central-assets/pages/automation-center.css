@@ -8,7 +8,7 @@
         .automation-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
         .automation-card,.automation-kpi{border:1px solid var(--op-border,#334155);border-radius:16px;background:var(--op-card,#0f172a)}
         .automation-kpi{padding:14px}.automation-kpi strong{display:block;margin-top:5px;font-size:22px}
-        .automation-card{padding:16px}.automation-card h2{margin:0 0 12px;font-size:17px}
+        .automation-card{padding:16px}.automation-card-spaced{margin-top:14px}.automation-card h2{margin:0 0 12px;font-size:17px}
         .automation-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
         .automation-field{display:grid;gap:6px}.automation-field label{color:var(--op-muted,#94a3b8);font-size:12px;font-weight:800}
         .automation-field input,.automation-field select{width:100%;min-height:42px;border:1px solid var(--op-border,#334155);border-radius:10px;padding:8px 10px;background:transparent;color:inherit}
