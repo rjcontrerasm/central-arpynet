@@ -57,11 +57,16 @@ continuar con nuevos módulos.
 | 2.38.2 | Hardening de administración y multiempresa | Completado |
 | 2.38.3 | Observabilidad de conexiones MariaDB | Completado |
 | 2.38.4 | Cierre de segunda auditoría y E2E críticos | En producción |
-| 2.39 | Consolidación de assets FRONT y CSP más estricto | Siguiente frente |
+| 2.39 | Consolidación de assets FRONT y CSP más estricto | Completado |
 
-### Regla para 2.39
+### Cierre de 2.39
 
-No externalizar CSS/JS ni endurecer `script-src` / `style-src` hasta
-confirmar el pipeline de construcción disponible en cPanel. El objetivo es
-reducir deuda frontend sin introducir una dependencia de despliegue que no
-pueda reproducirse o revertirse en producción.
+La consolidación de assets del FRONT quedó completada sin introducir un
+pipeline de construcción adicional en cPanel. Los assets operativos se sirven
+como archivos estáticos versionados automáticamente y el FRONT aplica
+`script-src 'self'` y `style-src 'self'`.
+
+Filament (`/admin`) conserva temporalmente la política CSP compatible
+anterior porque su stack y la vista personalizada de Integraciones todavía
+usan recursos inline. Ese endurecimiento queda como deuda separada y no
+bloquea el cierre del FRONT operacional.
