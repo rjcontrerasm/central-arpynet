@@ -261,3 +261,9 @@
                 border-color: #cbd5e1;
             }
         }
+
+.progress-0{width:0}
+.progress-25{width:25%}
+.progress-50{width:50%}
+.progress-75{width:75%}
+.progress-100{width:100%}
