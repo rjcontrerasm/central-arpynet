@@ -44,7 +44,7 @@
                         </div>
                     </div>
 
-                    <div class="money-title" style="margin-top:8px">
+                    <div class="money-title money-title-spaced">
                         Aging de cartera
                     </div>
 
@@ -65,7 +65,7 @@
                         @endforeach
                     </div>
 
-                    <div class="money-title" style="margin-top:8px">
+                    <div class="money-title money-title-spaced">
                         Próximos compromisos
                     </div>
 
@@ -90,7 +90,7 @@
                     </div>
 
                     @if ($data['top_receivable_clients']->isNotEmpty())
-                        <div class="money-title" style="margin-top:8px">
+                        <div class="money-title money-title-spaced">
                             Concentración de cuentas por cobrar
                         </div>
 
@@ -122,7 +122,7 @@
             @endforeach
         </div>
 
-        <div class="meta" style="margin-top:10px">
+        <div class="meta finance-note-spaced">
             La proyección operativa compara únicamente cobros con fecha futura registrada
             contra obligaciones pendientes del mismo horizonte. No representa saldo bancario,
             flujo de caja contable ni rentabilidad.
