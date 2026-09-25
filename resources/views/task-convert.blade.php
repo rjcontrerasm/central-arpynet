@@ -30,7 +30,13 @@
         </div>
     @endif
 
-    <form class="form" method="POST" action="{{ route('task-conversion.store', $task) }}">
+    <form
+        class="form"
+        method="POST"
+        action="{{ route('task-conversion.store', $task) }}"
+        data-task-convert
+        data-suggested-anchors='@json($suggestedAnchors)'
+    >
         @csrf
 
         <label>
@@ -146,37 +152,10 @@
     </form>
 </div>
 
-<script>
-(() => {
-    const target = document.getElementById('conversion-target');
-    const frequency = document.getElementById('conversion-frequency');
-    const anchor = document.getElementById('conversion-anchor');
-    const suggestedAnchors = @json($suggestedAnchors);
-    const groups = {
-        service: document.getElementById('service-fields'),
-        recurring: document.getElementById('recurring-fields'),
-        waiting: document.getElementById('waiting-fields'),
-    };
-
-    const refresh = () => {
-        Object.entries(groups).forEach(([key, element]) => {
-            element.hidden = target.value !== key;
-        });
-    };
-
-    const refreshAnchor = () => {
-        const suggested = suggestedAnchors[frequency.value];
-
-        if (suggested) {
-            anchor.value = suggested;
-        }
-    };
-
-    target.addEventListener('change', refresh);
-    frequency.addEventListener('change', refreshAnchor);
-    refresh();
-})();
-</script>
+<script
+    src="{{ asset('central-assets/pages/task-convert.js') }}?v={{ filemtime(public_path('central-assets/pages/task-convert.js')) }}"
+    defer
+></script>
 
 <x-operational-interactions />
 </body>

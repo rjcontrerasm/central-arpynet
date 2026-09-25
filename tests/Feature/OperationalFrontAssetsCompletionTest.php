@@ -54,11 +54,12 @@ class OperationalFrontAssetsCompletionTest extends TestCase
         }
     }
 
-    public function test_static_scripts_are_externalized_but_task_conversion_keeps_dynamic_script_explicit(): void
+    public function test_operational_scripts_are_externalized(): void
     {
         foreach ([
             'service-order-front-form',
             'notification-center',
+            'task-convert',
         ] as $view) {
             $contents = file_get_contents(
                 resource_path(
@@ -91,10 +92,13 @@ class OperationalFrontAssetsCompletionTest extends TestCase
         );
 
         $this->assertIsString($taskConvert);
-        $this->assertMatchesRegularExpression(
-            '/<script>.*<\/script>/s',
+        $this->assertStringContainsString(
+            'data-suggested-anchors',
             $taskConvert,
-            'La conversión mantiene temporalmente JS dinámico dependiente de Blade.',
+        );
+        $this->assertStringContainsString(
+            "filemtime(public_path('central-assets/pages/task-convert.js'))",
+            $taskConvert,
         );
     }
 }
