@@ -137,6 +137,10 @@
                                                 <input type="hidden" name="priority" value="{{ $selectedPriority }}">
                                             @endif
 
+                                            @if ($selectedRecurringRule)
+                                                <input type="hidden" name="recurring_rule" value="{{ $selectedRecurringRule }}">
+                                            @endif
+
                                             <input
                                                 type="text"
                                                 name="next_action"
@@ -238,6 +242,14 @@
                                                     >
                                                 @endif
 
+                                                @if ($selectedRecurringRule)
+                                                    <input
+                                                        type="hidden"
+                                                        name="recurring_rule"
+                                                        value="{{ $selectedRecurringRule }}"
+                                                    >
+                                                @endif
+
                                                 <button
                                                     class="action {{
                                                         $action
@@ -289,6 +301,14 @@
                                                     type="hidden"
                                                     name="priority"
                                                     value="{{ $selectedPriority }}"
+                                                >
+                                            @endif
+
+                                            @if ($selectedRecurringRule)
+                                                <input
+                                                    type="hidden"
+                                                    name="recurring_rule"
+                                                    value="{{ $selectedRecurringRule }}"
                                                 >
                                             @endif
 
