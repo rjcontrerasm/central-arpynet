@@ -643,6 +643,18 @@
                 )
                     @continue
                 @endif
+
+                @php
+                    $sectionPriority = [
+                        'prioridad-critica' =>
+                            'critical',
+                        'hoy' => 'today',
+                        'esta-semana' => 'week',
+                        'planificados' =>
+                            'planned',
+                    ][$section['id']] ?? null;
+                @endphp
+
                 <section
                     class="section"
                     id="{{ $section['id'] }}"
@@ -663,17 +675,8 @@
                                         $search !== ''
                                             ? $search
                                             : null,
-                                    'priority' => match (
-                                        $section['id']
-                                    ) {
-                                        'prioridad-critica' =>
-                                            'critical',
-                                        'hoy' => 'today',
-                                        'esta-semana' => 'week',
-                                        'planificados' =>
-                                            'planned',
-                                        default => null,
-                                    },
+                                    'priority' =>
+                                        $sectionPriority,
                                     'recurring_rule' =>
                                         $selectedRecurringRule,
                                 ]),
