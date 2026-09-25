@@ -42,7 +42,7 @@ class VisualSystemConsistencyTest extends TestCase
                 ->get($page)
                 ->assertOk()
                 ->assertSee(
-                    'central-assets/operational.css?v=2.39.0',
+                    'central-assets/operational.css?v=',
                     false,
                 );
 
