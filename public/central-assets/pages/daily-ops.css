@@ -131,6 +131,10 @@
             font-size: 13px;
         }
 
+        .meta-spaced {
+            margin-top: 8px;
+        }
+
         .hero {
             align-items: end;
             margin-bottom: 16px;
