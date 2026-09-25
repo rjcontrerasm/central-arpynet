@@ -146,6 +146,12 @@
             font-weight: 700;
         }
 
+        .due-label {
+            margin-bottom: 7px;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
         .chips {
             display: grid;
             grid-template-columns:

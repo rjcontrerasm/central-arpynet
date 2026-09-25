@@ -32,7 +32,7 @@ class SecurityHeadersMiddleware
         );
         $response->headers->set(
             'Content-Security-Policy',
-            "base-uri 'self'; frame-ancestors 'self'; object-src 'none'; form-action 'self'",
+            $this->contentSecurityPolicy($request),
         );
 
         if ($request->isSecure()) {
@@ -43,5 +43,32 @@ class SecurityHeadersMiddleware
         }
 
         return $response;
+    }
+
+    private function contentSecurityPolicy(
+        Request $request,
+    ): string {
+        $basePolicy =
+            "base-uri 'self'; frame-ancestors 'self'; object-src 'none'; form-action 'self'";
+
+        if ($this->requiresFrameworkInlineAssets($request)) {
+            return $basePolicy;
+        }
+
+        return $basePolicy
+            ."; script-src 'self'; style-src 'self'";
+    }
+
+    private function requiresFrameworkInlineAssets(
+        Request $request,
+    ): bool {
+        return $request->is(
+            'admin',
+            'admin/*',
+            'livewire',
+            'livewire/*',
+            'filament',
+            'filament/*',
+        );
     }
 }

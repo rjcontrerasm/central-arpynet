@@ -122,6 +122,13 @@
             border-color: #3b82f6;
         }
 
+        .notification-action {
+            width: 100%;
+            color: inherit;
+            text-align: left;
+            cursor: pointer;
+        }
+
         .title {
             font-weight: 800;
             line-height: 1.3;

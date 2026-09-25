@@ -7,7 +7,7 @@
 <title>Agenda · Central ARPYNET</title>
 <link
         rel="stylesheet"
-        href="{{ asset('central-assets/pages/operational-agenda.css') }}?v=2.39.1"
+        href="{{ asset('central-assets/pages/operational-agenda.css') }}?v={{ filemtime(public_path('central-assets/pages/operational-agenda.css')) }}"
     >
 </head>
 <body>
@@ -68,7 +68,7 @@
                 <input type="hidden" name="date" value="{{ $date->toDateString() }}">
                 <label class="scope">
                     Ámbito
-                    <select name="scope" onchange="this.form.submit()">
+                    <select name="scope" data-auto-submit>
                         <option value="">Todos</option>
                         @foreach($organizations as $organization)
                             <option
@@ -187,7 +187,7 @@
     <section class="section">
         <div class="section-head">
             <div class="section-title">
-                <span class="dot" style="background:#eaf3ff;color:#1766cf">▣</span>
+                <span class="dot programmed-dot">▣</span>
                 Programado para el día
             </div>
             <div class="section-count">{{ $scheduledItems->count() }} elemento(s)</div>
@@ -236,6 +236,11 @@
         @endif
     </section>
 </div>
+
+<script
+    src="{{ asset('central-assets/pages/operational-agenda.js') }}?v={{ filemtime(public_path('central-assets/pages/operational-agenda.js')) }}"
+    defer
+></script>
 
 <x-operational-theme />
 <x-operational-interactions />
