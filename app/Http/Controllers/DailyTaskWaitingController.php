@@ -37,7 +37,7 @@ class DailyTaskWaitingController extends Controller
             ],
             'priority' => [
                 'nullable',
-                'in:critical,today,week,planned',
+                'in:overdue,critical,today,week,planned',
             ],
             'view' => [
                 'nullable',
@@ -111,7 +111,7 @@ class DailyTaskWaitingController extends Controller
             ],
             'priority' => [
                 'nullable',
-                'in:critical,today,week,planned',
+                'in:overdue,critical,today,week,planned',
             ],
             'view' => [
                 'nullable',
