@@ -45,6 +45,35 @@ class DailyTaskEditTest extends TestCase
         $this->assertSame('low', $task->impact);
     }
 
+    public function test_user_can_edit_task_from_overdue_filter(): void
+    {
+        [$user, $organization] = $this->context();
+
+        $task = $this->task(
+            $user,
+            $organization,
+        );
+
+        $this->actingAs($user)
+            ->post(
+                "/mi-dia/tareas/{$task->id}/editar",
+                [
+                    'organization_id' => $organization->id,
+                    'due_date' => '2026-09-05',
+                    'urgency' => 'high',
+                    'impact' => 'low',
+                    'priority' => 'overdue',
+                    'view' => 'mine',
+                ],
+            )
+            ->assertRedirect('/mi-dia?priority=overdue&view=mine');
+
+        $this->assertSame(
+            '2026-09-05 17:00:00',
+            $task->fresh()->due_at->format('Y-m-d H:i:s'),
+        );
+    }
+
     public function test_user_can_remove_due_date(): void
     {
         [$user, $organization] = $this->context();
