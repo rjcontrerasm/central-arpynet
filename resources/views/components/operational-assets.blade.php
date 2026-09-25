@@ -1,10 +1,10 @@
 @once
 <link
     rel="stylesheet"
-    href="{{ asset('central-assets/operational.css') }}?v=2.39.0"
+    href="{{ asset('central-assets/operational.css') }}?v={{ filemtime(public_path('central-assets/operational.css')) }}"
 >
 <script
-    src="{{ asset('central-assets/operational.js') }}?v=2.39.0"
+    src="{{ asset('central-assets/operational.js') }}?v={{ filemtime(public_path('central-assets/operational.js')) }}"
     defer
 ></script>
 @endonce
