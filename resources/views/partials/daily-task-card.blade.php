@@ -319,6 +319,14 @@
                                                 >
                                             @endif
 
+                                            @if ($selectedWorkTeam)
+                                                <input
+                                                    type="hidden"
+                                                    name="work_team"
+                                                    value="{{ $selectedWorkTeam }}"
+                                                >
+                                            @endif
+
                                             <input
                                                 type="date"
                                                 name="waiting_until"
