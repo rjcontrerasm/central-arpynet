@@ -46,6 +46,10 @@ class DailyTaskWaitingController extends Controller
                 'nullable',
                 'integer',
             ],
+            'work_team' => [
+                'nullable',
+                'integer',
+            ],
         ]);
 
         $this->authorizeTask($request, $task);
