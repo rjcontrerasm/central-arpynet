@@ -53,6 +53,10 @@ class DailyTaskEditController extends Controller
                 'nullable',
                 'integer',
             ],
+            'work_team' => [
+                'nullable',
+                'integer',
+            ],
         ]);
 
         foreach (['urgency', 'impact'] as $field) {
