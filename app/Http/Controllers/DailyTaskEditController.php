@@ -152,6 +152,20 @@ class DailyTaskEditController extends Controller
                 (int) $validated['recurring_rule'];
         }
 
+        if (! empty($validated['work_team'])) {
+            $workTeamId =
+                (int) $validated['work_team'];
+
+            abort_unless(
+                $request->user()
+                    ->canAccessWorkTeam($workTeamId),
+                403,
+            );
+
+            $params['work_team'] = $workTeamId;
+            $params['view'] = 'team';
+        }
+
         $undo->rememberTaskMutation(
             $request->user(),
             $task,
