@@ -218,9 +218,7 @@ class Task extends Model
         return $query->where(
             function (Builder $visibility) use ($user): void {
                 $visibility
-                    ->where('assigned_to', $user->id)
-                    ->orWhere('created_by', $user->id)
-                    ->orWhere(
+                    ->where(
                         function (Builder $organizationVisibility) use ($user): void {
                             $organizationVisibility
                                 ->where('visibility_scope', 'organization')
@@ -240,12 +238,21 @@ class Task extends Model
                         function (Builder $teamVisibility) use ($user): void {
                             $teamVisibility
                                 ->where('visibility_scope', 'teams')
-                                ->whereHas(
-                                    'workTeams.users',
-                                    fn (Builder $membershipQuery): Builder =>
-                                        $membershipQuery
-                                            ->where('users.id', $user->id)
-                                            ->where('work_team_user.is_active', true),
+                                ->where(
+                                    function (Builder $teamAccess) use ($user): void {
+                                        $teamAccess
+                                            ->where('assigned_to', $user->id)
+                                            ->orWhereHas(
+                                                'workTeams.users',
+                                                fn (Builder $membershipQuery): Builder =>
+                                                    $membershipQuery
+                                                        ->where('users.id', $user->id)
+                                                        ->where(
+                                                            'work_team_user.is_active',
+                                                            true,
+                                                        ),
+                                            );
+                                    },
                                 );
                         },
                     );
@@ -255,18 +262,14 @@ class Task extends Model
 
     public function canBeUpdatedBy(User $user): bool
     {
-        if ((int) $this->assigned_to === (int) $user->id) {
-            return true;
-        }
-
-        if ((int) $this->created_by === (int) $user->id) {
-            return true;
-        }
-
         if ($this->visibility_scope === 'organization') {
             return $user->canWriteToOrganization(
                 (int) $this->organization_id,
             );
+        }
+
+        if ((int) $this->assigned_to === (int) $user->id) {
+            return true;
         }
 
         return $this->workTeams()
