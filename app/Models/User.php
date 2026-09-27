@@ -64,7 +64,10 @@ class User extends Authenticatable implements FilamentUser
 
     public function workTeams(): BelongsToMany
     {
-        return $this->belongsToMany(WorkTeam::class)
+        return $this->belongsToMany(
+            WorkTeam::class,
+            'work_team_user',
+        )
             ->withPivot(['role', 'is_active'])
             ->withTimestamps();
     }
