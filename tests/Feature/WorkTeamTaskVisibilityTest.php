@@ -133,10 +133,12 @@ class WorkTeamTaskVisibilityTest extends TestCase
             $task->fresh()->status,
         );
 
-        $task->forceFill([
-            'status' => 'pending',
-            'completed_at' => null,
-        ])->save();
+        $task->refresh()
+            ->forceFill([
+                'status' => 'pending',
+                'completed_at' => null,
+            ])
+            ->save();
 
         $this->actingAs($marisol)
             ->get('/mi-dia?view=team&scope='.$pcsotec->id)
