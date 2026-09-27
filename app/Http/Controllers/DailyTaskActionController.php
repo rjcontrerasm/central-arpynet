@@ -7,7 +7,6 @@ use App\Support\GlobalUndoService;
 use App\Support\OperationalTaskActionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class DailyTaskActionController extends Controller
 {
@@ -91,25 +90,11 @@ class DailyTaskActionController extends Controller
         $scope = $validated['scope'] ?? null;
 
         if ($scope) {
-            $allowed = DB::table(
-                'organization_user',
-            )
-                ->where(
-                    'user_id',
-                    $request->user()->id,
-                )
-                ->where(
-                    'organization_id',
-                    $scope,
-                )
-                ->where(
-                    'is_active',
-                    true,
-                )
-                ->exists();
-
             abort_unless(
-                $allowed,
+                $request->user()
+                    ->canAccessTaskScopeOrganization(
+                        (int) $scope,
+                    ),
                 403,
             );
 

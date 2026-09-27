@@ -62,6 +62,16 @@ class User extends Authenticatable implements FilamentUser
             ->withTimestamps();
     }
 
+    public function workTeams(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            WorkTeam::class,
+            'work_team_user',
+        )
+            ->withPivot(['role', 'is_active'])
+            ->withTimestamps();
+    }
+
     public function currentOrganization(): BelongsTo
     {
         return $this->belongsTo(
@@ -107,6 +117,34 @@ class User extends Authenticatable implements FilamentUser
             ->pluck('organizations.id')
             ->map(fn ($id): int => (int) $id)
             ->all();
+    }
+
+    public function taskScopeOrganizationIds(): array
+    {
+        if (! $this->is_active) {
+            return [];
+        }
+
+        return Task::query()
+            ->visibleTo($this)
+            ->select('organization_id')
+            ->distinct()
+            ->pluck('organization_id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+    }
+
+    public function canAccessTaskScopeOrganization(
+        int $organizationId,
+    ): bool {
+        return in_array(
+            $organizationId,
+            array_values(array_unique(array_merge(
+                $this->activeOrganizationIds(),
+                $this->taskScopeOrganizationIds(),
+            ))),
+            true,
+        );
     }
 
     public function writableOrganizationIds(): array

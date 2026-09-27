@@ -7,7 +7,6 @@ use App\Support\GlobalUndoService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class DailyTaskWaitingController extends Controller
 {
@@ -171,19 +170,10 @@ class DailyTaskWaitingController extends Controller
         Request $request,
         Task $task,
     ): void {
-        $allowed = DB::table('organization_user')
-            ->where(
-                'user_id',
-                $request->user()->id,
-            )
-            ->where(
-                'organization_id',
-                $task->organization_id,
-            )
-            ->where('is_active', true)
-            ->exists();
-
-        abort_unless($allowed, 403);
+        abort_unless(
+            $task->canBeUpdatedBy($request->user()),
+            403,
+        );
     }
 
     private function filters(
@@ -195,16 +185,13 @@ class DailyTaskWaitingController extends Controller
         $scope = $validated['scope'] ?? null;
 
         if ($scope) {
-            $allowed = DB::table('organization_user')
-                ->where(
-                    'user_id',
-                    $request->user()->id,
-                )
-                ->where('organization_id', $scope)
-                ->where('is_active', true)
-                ->exists();
-
-            abort_unless($allowed, 403);
+            abort_unless(
+                $request->user()
+                    ->canAccessTaskScopeOrganization(
+                        (int) $scope,
+                    ),
+                403,
+            );
 
             $params['scope'] = $scope;
         }

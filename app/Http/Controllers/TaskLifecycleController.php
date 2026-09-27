@@ -215,25 +215,8 @@ class TaskLifecycleController extends Controller
         Request $request,
         Task $task,
     ): void {
-        $allowed = DB::table(
-            'organization_user',
-        )
-            ->where(
-                'user_id',
-                $request->user()->id,
-            )
-            ->where(
-                'organization_id',
-                $task->organization_id,
-            )
-            ->where(
-                'is_active',
-                true,
-            )
-            ->exists();
-
         abort_unless(
-            $allowed,
+            $task->canBeUpdatedBy($request->user()),
             403,
         );
     }

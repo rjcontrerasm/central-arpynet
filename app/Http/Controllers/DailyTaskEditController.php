@@ -7,7 +7,6 @@ use App\Support\GlobalUndoService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class DailyTaskEditController extends Controller
 {
@@ -64,27 +63,26 @@ class DailyTaskEditController extends Controller
 
         $userId = $request->user()->id;
 
-        $canEditCurrent = DB::table('organization_user')
-            ->where('user_id', $userId)
-            ->where(
-                'organization_id',
-                $task->organization_id,
-            )
-            ->where('is_active', true)
-            ->exists();
+        abort_unless(
+            $task->canBeUpdatedBy($request->user()),
+            403,
+        );
 
-        abort_unless($canEditCurrent, 403);
+        $targetOrganizationId =
+            (int) $validated['organization_id'];
 
-        $canUseTarget = DB::table('organization_user')
-            ->where('user_id', $userId)
-            ->where(
-                'organization_id',
-                $validated['organization_id'],
-            )
-            ->where('is_active', true)
-            ->exists();
-
-        abort_unless($canUseTarget, 403);
+        if (
+            $targetOrganizationId
+            !== (int) $task->organization_id
+        ) {
+            abort_unless(
+                $request->user()
+                    ->canWriteToOrganization(
+                        $targetOrganizationId,
+                    ),
+                403,
+            );
+        }
 
         $timezone = config(
             'app.timezone',
@@ -113,14 +111,13 @@ class DailyTaskEditController extends Controller
         $scope = $validated['scope'] ?? null;
 
         if ($scope) {
-            $scopeAllowed =
-                DB::table('organization_user')
-                    ->where('user_id', $userId)
-                    ->where('organization_id', $scope)
-                    ->where('is_active', true)
-                    ->exists();
-
-            abort_unless($scopeAllowed, 403);
+            abort_unless(
+                $request->user()
+                    ->canAccessTaskScopeOrganization(
+                        (int) $scope,
+                    ),
+                403,
+            );
         }
 
         $params = [];

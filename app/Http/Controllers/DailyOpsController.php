@@ -53,13 +53,21 @@ class DailyOpsController extends Controller
         $user = $request->user();
         $selectedWorkView = $validated['view'] ?? 'mine';
 
-        $organizationIds = DB::table('organization_user')
-            ->where('user_id', $user->id)
-            ->where('is_active', true)
-            ->pluck('organization_id');
+        $organizationIds = collect(
+            $user->activeOrganizationIds(),
+        );
+
+        $taskScopeOrganizationIds = collect(
+            $user->taskScopeOrganizationIds(),
+        );
+
+        $visibleScopeOrganizationIds = $organizationIds
+            ->merge($taskScopeOrganizationIds)
+            ->unique()
+            ->values();
 
         $organizations = Organization::query()
-            ->whereIn('id', $organizationIds)
+            ->whereIn('id', $visibleScopeOrganizationIds)
             ->where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'name']);
@@ -70,7 +78,7 @@ class DailyOpsController extends Controller
 
         if (
             $selectedScope
-            && ! $organizationIds->contains($selectedScope)
+            && ! $visibleScopeOrganizationIds->contains($selectedScope)
         ) {
             abort(403);
         }
@@ -99,15 +107,13 @@ class DailyOpsController extends Controller
         $weekEnd = $now->addDays(7)->endOfDay();
 
         $tasksQuery = Task::query()
+            ->visibleTo($user)
             ->with([
                 'organization',
                 'assignee',
+                'workTeams',
                 'recurringRun.rule',
             ])
-            ->whereIn(
-                'organization_id',
-                $organizationIds,
-            )
             ->whereNotIn(
                 'status',
                 ['completed', 'cancelled', 'someday'],

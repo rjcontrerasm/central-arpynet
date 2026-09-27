@@ -6,7 +6,6 @@ use App\Models\Task;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
@@ -194,26 +193,7 @@ class OperationalTaskActionService
         User $actor,
         Task $task,
     ): void {
-        $allowed =
-            DB::table(
-                'organization_user',
-            )
-                ->where(
-                    'user_id',
-                    $actor->id,
-                )
-                ->where(
-                    'organization_id',
-                    $task
-                        ->organization_id,
-                )
-                ->where(
-                    'is_active',
-                    true,
-                )
-                ->exists();
-
-        if (! $allowed) {
+        if (! $task->canBeUpdatedBy($actor)) {
             throw new AuthorizationException(
                 'No autorizado para esta tarea.',
             );
