@@ -6,13 +6,13 @@ Este documento fija la numeración vigente a partir del cierre de 2.15.
 | --- | --- | --- |
 | 2.15 | Usuarios y Organizaciones | Completado |
 | 2.16 | Colaboración | En construcción |
-| 2.17 | Preparación humana de propuestas | Pendiente de validación / cierre |
-| 2.18 | Ampliar acciones sugeribles | Pendiente de validación / cierre |
-| 2.19 | Priorización ejecutiva transversal | Pendiente de validación / cierre |
-| 2.20 | Plan automático del día | Pendiente de validación / cierre |
-| 2.21 | Revisión diaria/semanal asistida | Pendiente de validación / cierre |
-| 2.22 | Automatizaciones inteligentes | Pendiente de validación / cierre |
-| 2.23 | Automatización cross-module | Pendiente de validación / cierre |
+| 2.17 | Preparación humana de propuestas | Completado |
+| 2.18 | Ampliar acciones sugeribles | Completado |
+| 2.19 | Priorización ejecutiva transversal | Completado |
+| 2.20 | Plan automático del día | Completado |
+| 2.21 | Revisión diaria/semanal asistida | Completado |
+| 2.22 | Automatizaciones inteligentes | Completado |
+| 2.23 | Automatización cross-module | Completado |
 | 2.24 | Finanzas ejecutivas avanzadas | Pendiente |
 | 2.25 | Health Score de clientes/servicios | Pendiente |
 | 2.26 | Incident 360 | Pendiente |
@@ -35,6 +35,33 @@ Cada hito debe pasar por desarrollo, pruebas, CI, revisión, integración a `mai
 
 La base existente ya contiene implementaciones relacionadas con propuestas de Jarvis, priorización ejecutiva, plan diario, revisiones asistidas y automatizaciones. Por ello, los hitos 2.17–2.23 deben auditarse contra el código actual antes de crear funcionalidad duplicada. El criterio será cerrar brechas y formalizar cada capacidad existente, no reescribirla sin necesidad.
 
+
+## Cierre de auditoría 2.17–2.23 — 2026-09-27
+
+La auditoría contra el código y las pruebas existentes confirmó que estos
+hitos ya estaban implementados sobre la base actual y no requerían una
+reescritura:
+
+- **2.17** — Preparación humana de propuestas: propuestas pendientes,
+  deduplicación, control de stale state y ausencia de mutación antes de
+  aprobación.
+- **2.18** — Acciones sugeribles ampliadas: cambios de estado, siguiente
+  acción, limpieza de bloqueos, creación propuesta de tareas y cambios de
+  etapa de servicios.
+- **2.19** — Priorización ejecutiva transversal: ranking entre ámbitos,
+  presión global y prioridades consolidadas.
+- **2.20** — Plan automático del día: construcción determinística del plan
+  desde prioridades ejecutivas, sin mutaciones.
+- **2.21** — Revisión diaria/semanal asistida: cierre diario guiado,
+  persistencia de progreso y revisión semanal.
+- **2.22** — Automatizaciones inteligentes: catálogo cerrado, preview,
+  ejecución controlada, confirmaciones, deduplicación y scheduler.
+- **2.23** — Automatización cross-module: creación controlada de tareas
+  desde proyectos, servicios y vencimientos, con confirmación explícita,
+  protección contra stale state y undo.
+
+La continuación funcional debe partir de **2.24**, evitando duplicar estas
+capacidades ya presentes.
 
 ## Re-baseline operativo — 2026-09-24
 
