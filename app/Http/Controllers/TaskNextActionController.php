@@ -48,6 +48,17 @@ class TaskNextActionController extends Controller
             );
         }
 
+        if (! empty($validated['work_team'])) {
+            abort_unless(
+                $request->user()->canAccessWorkTeam(
+                    (int) $validated['work_team'],
+                ),
+                403,
+            );
+
+            $validated['view'] = 'team';
+        }
+
         $nextAction = trim((string) ($validated['next_action'] ?? ''));
 
         $before = $undo->captureTask(
@@ -76,6 +87,8 @@ class TaskNextActionController extends Controller
                 'view' => $validated['view'] ?? null,
                 'recurring_rule' =>
                     $validated['recurring_rule'] ?? null,
+                'work_team' =>
+                    $validated['work_team'] ?? null,
             ])),
         };
 
