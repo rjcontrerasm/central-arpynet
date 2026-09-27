@@ -171,19 +171,10 @@ class DailyTaskWaitingController extends Controller
         Request $request,
         Task $task,
     ): void {
-        $allowed = DB::table('organization_user')
-            ->where(
-                'user_id',
-                $request->user()->id,
-            )
-            ->where(
-                'organization_id',
-                $task->organization_id,
-            )
-            ->where('is_active', true)
-            ->exists();
-
-        abort_unless($allowed, 403);
+        abort_unless(
+            $task->canBeUpdatedBy($request->user()),
+            403,
+        );
     }
 
     private function filters(
