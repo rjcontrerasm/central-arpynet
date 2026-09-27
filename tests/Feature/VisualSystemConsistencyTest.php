@@ -30,7 +30,7 @@ class VisualSystemConsistencyTest extends TestCase
 
         foreach ([
             '/mi-dia' => ['daily-ops', null],
-            '/captura' => ['quick-capture', '2.39.1'],
+            '/captura' => ['quick-capture', null],
             '/servicios' => ['service-orders-ops', '2.39.1'],
             '/vencimientos' => ['obligations-ops', '2.39.2'],
             '/seguimiento' => ['global-tracking', '2.39.2'],

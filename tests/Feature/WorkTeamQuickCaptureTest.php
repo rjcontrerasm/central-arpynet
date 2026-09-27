@@ -1,0 +1,230 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Organization;
+use App\Models\Task;
+use App\Models\User;
+use App\Models\WorkTeam;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class WorkTeamQuickCaptureTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_owner_can_create_cross_organization_team_task_with_single_assignee(): void
+    {
+        [$rolando, $lissette, $arpynet, $pcsotec, $team] =
+            $this->context();
+
+        $this->actingAs($rolando)
+            ->get('/captura')
+            ->assertOk()
+            ->assertSee('Responsable')
+            ->assertSee('Visibilidad')
+            ->assertSee('Equipos con acceso')
+            ->assertSee('Administración');
+
+        $this->actingAs($rolando)
+            ->post('/captura', [
+                'organization_id' => $pcsotec->id,
+                'title' => 'Facturar servicio Y de PC SOTEC',
+                'due_mode' => 'today',
+                'urgency' => 'normal',
+                'impact' => 'high',
+                'assigned_to' => $lissette->id,
+                'visibility_scope' => 'teams',
+                'work_team_ids' => [$team->id],
+            ])
+            ->assertRedirect('/captura');
+
+        $task = Task::query()
+            ->where(
+                'title',
+                'Facturar servicio Y de PC SOTEC',
+            )
+            ->firstOrFail();
+
+        $this->assertSame(
+            $pcsotec->id,
+            $task->organization_id,
+        );
+        $this->assertSame(
+            $lissette->id,
+            $task->assigned_to,
+        );
+        $this->assertSame(
+            'teams',
+            $task->visibility_scope,
+        );
+        $this->assertTrue(
+            $task->workTeams()
+                ->whereKey($team->id)
+                ->exists(),
+        );
+
+        $this->assertTrue(
+            Task::query()
+                ->visibleTo($lissette)
+                ->whereKey($task->id)
+                ->exists(),
+        );
+
+        $this->assertFalse(
+            $lissette->canAccessOrganization(
+                $pcsotec->id,
+            ),
+        );
+    }
+
+    public function test_legacy_capture_defaults_to_creator_and_organization_visibility(): void
+    {
+        [$rolando, , $arpynet] =
+            $this->context();
+
+        $this->actingAs($rolando)
+            ->post('/captura', [
+                'organization_id' => $arpynet->id,
+                'title' => 'Tarea normal',
+                'due_mode' => 'none',
+                'urgency' => 'normal',
+                'impact' => 'normal',
+            ])
+            ->assertRedirect('/captura');
+
+        $task = Task::query()
+            ->where('title', 'Tarea normal')
+            ->firstOrFail();
+
+        $this->assertSame(
+            $rolando->id,
+            $task->assigned_to,
+        );
+        $this->assertSame(
+            'organization',
+            $task->visibility_scope,
+        );
+        $this->assertSame(
+            0,
+            $task->workTeams()->count(),
+        );
+    }
+
+    public function test_team_task_rejects_assignee_outside_selected_team(): void
+    {
+        [$rolando, , , $pcsotec, $team] =
+            $this->context();
+
+        $outside = User::factory()->create([
+            'name' => 'Persona externa',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($rolando)
+            ->from('/captura')
+            ->post('/captura', [
+                'organization_id' => $pcsotec->id,
+                'title' => 'Asignación inválida',
+                'due_mode' => 'none',
+                'urgency' => 'normal',
+                'impact' => 'normal',
+                'assigned_to' => $outside->id,
+                'visibility_scope' => 'teams',
+                'work_team_ids' => [$team->id],
+            ])
+            ->assertRedirect('/captura')
+            ->assertSessionHasErrors('assigned_to');
+
+        $this->assertDatabaseMissing('tasks', [
+            'title' => 'Asignación inválida',
+        ]);
+    }
+
+    private function context(): array
+    {
+        $rolando = User::factory()->create([
+            'name' => 'Rolando',
+            'is_active' => true,
+        ]);
+
+        $lissette = User::factory()->create([
+            'name' => 'Lissette',
+            'is_active' => true,
+        ]);
+
+        $arpynet = Organization::query()->create([
+            'name' => 'ARPYNET',
+            'slug' => 'arpynet-team-capture',
+            'category' => 'company',
+            'timezone' => 'America/Lima',
+            'is_active' => true,
+            'created_by' => $rolando->id,
+        ]);
+
+        $pcsotec = Organization::query()->create([
+            'name' => 'PC SOTEC',
+            'slug' => 'pcsotec-team-capture',
+            'category' => 'company',
+            'timezone' => 'America/Lima',
+            'is_active' => true,
+            'created_by' => $rolando->id,
+        ]);
+
+        $arpynet->users()->attach([
+            $rolando->id => [
+                'role' => 'owner',
+                'is_default' => true,
+                'is_active' => true,
+            ],
+            $lissette->id => [
+                'role' => 'member',
+                'is_default' => false,
+                'is_active' => true,
+            ],
+        ]);
+
+        $pcsotec->users()->attach(
+            $rolando->id,
+            [
+                'role' => 'owner',
+                'is_default' => false,
+                'is_active' => true,
+            ],
+        );
+
+        $rolando->forceFill([
+            'current_organization_id' =>
+                $arpynet->id,
+        ])->save();
+
+        $team = WorkTeam::query()->create([
+            'home_organization_id' =>
+                $arpynet->id,
+            'name' => 'Administración',
+            'description' =>
+                'Administración transversal',
+            'is_active' => true,
+            'created_by' => $rolando->id,
+        ]);
+
+        $team->users()->attach([
+            $rolando->id => [
+                'role' => 'lead',
+                'is_active' => true,
+            ],
+            $lissette->id => [
+                'role' => 'member',
+                'is_active' => true,
+            ],
+        ]);
+
+        return [
+            $rolando,
+            $lissette,
+            $arpynet,
+            $pcsotec,
+            $team,
+        ];
+    }
+}

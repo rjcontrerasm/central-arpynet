@@ -14,7 +14,7 @@
 
     <link
         rel="stylesheet"
-        href="{{ asset('central-assets/pages/quick-capture.css') }}?v=2.39.1"
+        href="{{ asset('central-assets/pages/quick-capture.css') }}?v={{ filemtime(public_path('central-assets/pages/quick-capture.css')) }}"
     >
 </head>
 
@@ -109,6 +109,96 @@
                     </option>
                 @endforeach
             </select>
+        </label>
+
+        <div class="grid2">
+            <label>
+                Responsable
+
+                <select
+                    name="assigned_to"
+                    required
+                >
+                    @foreach ($assignees as $assignee)
+                        <option
+                            value="{{ $assignee->id }}"
+                            @selected(
+                                (string) old(
+                                    'assigned_to',
+                                    auth()->id(),
+                                )
+                                === (string) $assignee->id
+                            )
+                        >
+                            {{ $assignee->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </label>
+
+            <label>
+                Visibilidad
+
+                <select
+                    id="visibility-scope"
+                    name="visibility_scope"
+                    required
+                >
+                    <option
+                        value="organization"
+                        @selected(
+                            old(
+                                'visibility_scope',
+                                'organization',
+                            ) === 'organization'
+                        )
+                    >
+                        Toda la empresa / ámbito
+                    </option>
+
+                    <option
+                        value="teams"
+                        @selected(
+                            old('visibility_scope')
+                            === 'teams'
+                        )
+                    >
+                        Solo equipo(s)
+                    </option>
+                </select>
+            </label>
+        </div>
+
+        <label
+            id="work-teams-wrapper"
+            class="team-selector"
+        >
+            Equipos con acceso
+
+            <select
+                name="work_team_ids[]"
+                multiple
+                size="{{ min(max($workTeams->count(), 2), 5) }}"
+            >
+                @foreach ($workTeams as $team)
+                    <option
+                        value="{{ $team->id }}"
+                        @selected(
+                            in_array(
+                                $team->id,
+                                old('work_team_ids', []),
+                            )
+                        )
+                    >
+                        {{ $team->name }}
+                    </option>
+                @endforeach
+            </select>
+
+            <span class="advanced-hint">
+                Los miembros del equipo podrán verla aunque la tarea pertenezca
+                a otra empresa. El responsable sigue siendo una sola persona.
+            </span>
         </label>
 
         <div>
@@ -268,7 +358,10 @@
     @endif
 </div>
 
-<script src="{{ asset('central-assets/pages/quick-capture.js') }}?v=2.39.1"></script>
+<script
+    src="{{ asset('central-assets/pages/quick-capture.js') }}?v={{ filemtime(public_path('central-assets/pages/quick-capture.js')) }}"
+    defer
+></script>
     <x-operational-theme />
     <x-operational-interactions />
 </body>

@@ -58,6 +58,14 @@
                                         }}
                                     </span>
 
+                                    @if ($task->workTeams?->isNotEmpty())
+                                        @foreach ($task->workTeams as $workTeam)
+                                            <span class="pill">
+                                                Equipo: {{ $workTeam->name }}
+                                            </span>
+                                        @endforeach
+                                    @endif
+
                                     @if ($task->recurrence_label)
                                         <span class="pill week">
                                             ↻ {{ $task->recurrence_label }}

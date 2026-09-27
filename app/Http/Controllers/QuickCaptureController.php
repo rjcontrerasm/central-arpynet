@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Organization;
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\User;
+use App\Models\WorkTeam;
 use App\Support\GlobalUndoService;
 use App\Support\SmartTaskCaptureParser;
 use Carbon\CarbonImmutable;
@@ -21,7 +23,12 @@ class QuickCaptureController extends Controller
     {
         $user = $request->user();
         $organizations = $this->organizationsFor($user->id);
-        $projects = $this->projectsFor($user->id);
+        $projects = $this->projectsFor($user);
+        $workTeams = $this->workTeamsFor($user);
+        $assignees = $this->assigneesFor(
+            $user,
+            $workTeams,
+        );
         $organizationIds = $organizations->pluck('id');
 
         $recentTasks = Task::query()
@@ -45,6 +52,8 @@ class QuickCaptureController extends Controller
             'projects',
             'recentTasks',
             'defaultOrganizationId',
+            'workTeams',
+            'assignees',
         ));
     }
 
@@ -63,6 +72,20 @@ class QuickCaptureController extends Controller
             'due_date' => ['nullable', 'date', 'required_if:due_mode,custom'],
             'urgency' => ['required', 'in:low,normal,medium,high,critical'],
             'impact' => ['required', 'in:low,normal,medium,high,critical'],
+            'assigned_to' => ['nullable', 'integer'],
+            'visibility_scope' => [
+                'nullable',
+                'in:organization,teams',
+            ],
+            'work_team_ids' => [
+                'nullable',
+                'array',
+                'required_if:visibility_scope,teams',
+            ],
+            'work_team_ids.*' => [
+                'integer',
+                'distinct',
+            ],
         ]);
 
         foreach (['urgency', 'impact'] as $field) {
@@ -71,8 +94,18 @@ class QuickCaptureController extends Controller
             }
         }
 
+        $visibilityScope =
+            $validated['visibility_scope']
+            ?? 'organization';
+
+        $assigneeId = (int) (
+            $validated['assigned_to']
+            ?? $user->id
+        );
+
         $organizations = $this->organizationsFor($user->id);
-        $projects = $this->projectsFor($user->id);
+        $projects = $this->projectsFor($user);
+        $workTeams = $this->workTeamsFor($user);
 
         $parsed = $parser->parse(
             $validated['title'],
@@ -95,6 +128,86 @@ class QuickCaptureController extends Controller
             $organizations->contains('id', $organizationId),
             403,
         );
+
+        $selectedTeamIds = collect(
+            $validated['work_team_ids'] ?? [],
+        )
+            ->map(fn ($id): int => (int) $id)
+            ->unique()
+            ->values();
+
+        $accessibleTeamIds = $workTeams
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id);
+
+        abort_unless(
+            $selectedTeamIds
+                ->diff($accessibleTeamIds)
+                ->isEmpty(),
+            403,
+        );
+
+        if (
+            $visibilityScope
+            === 'teams'
+            && $selectedTeamIds->isEmpty()
+        ) {
+            throw ValidationException::withMessages([
+                'work_team_ids' =>
+                    'Selecciona al menos un equipo para una tarea compartida.',
+            ]);
+        }
+
+        if ($visibilityScope === 'organization') {
+            $assigneeAllowed = User::query()
+                ->whereKey($assigneeId)
+                ->where('is_active', true)
+                ->whereHas(
+                    'organizations',
+                    fn ($query) => $query
+                        ->where(
+                            'organizations.id',
+                            $organizationId,
+                        )
+                        ->where(
+                            'organization_user.is_active',
+                            true,
+                        )
+                        ->whereIn(
+                            'organization_user.role',
+                            ['owner', 'admin', 'member'],
+                        ),
+                )
+                ->exists();
+        } else {
+            $assigneeAllowed = User::query()
+                ->whereKey($assigneeId)
+                ->where('is_active', true)
+                ->whereHas(
+                    'workTeams',
+                    fn ($query) => $query
+                        ->whereIn(
+                            'work_teams.id',
+                            $selectedTeamIds,
+                        )
+                        ->where(
+                            'work_team_user.is_active',
+                            true,
+                        )
+                        ->whereIn(
+                            'work_team_user.role',
+                            ['lead', 'member'],
+                        ),
+                )
+                ->exists();
+        }
+
+        if (! $assigneeAllowed) {
+            throw ValidationException::withMessages([
+                'assigned_to' =>
+                    'El responsable debe tener acceso operativo válido para la visibilidad seleccionada.',
+            ]);
+        }
 
         $projectId = $parsed['project_id']
             ?? ($validated['project_id'] ?? null);
@@ -148,8 +261,20 @@ class QuickCaptureController extends Controller
                 ? 'Seguimiento pendiente'
                 : null,
             'source' => 'manual',
+            'assigned_to' => $assigneeId,
             'created_by' => $user->id,
+            'visibility_scope' =>
+                $visibilityScope,
         ]);
+
+        if (
+            $visibilityScope
+            === 'teams'
+        ) {
+            $task->workTeams()->sync(
+                $selectedTeamIds->all(),
+            );
+        }
 
         $undo->rememberTaskCreated(
             $user,
@@ -180,6 +305,10 @@ class QuickCaptureController extends Controller
         $organizationIds = DB::table('organization_user')
             ->where('user_id', $userId)
             ->where('is_active', true)
+            ->whereIn(
+                'role',
+                ['owner', 'admin', 'member'],
+            )
             ->pluck('organization_id');
 
         return Organization::query()
@@ -189,18 +318,109 @@ class QuickCaptureController extends Controller
             ->get(['id', 'name']);
     }
 
-    private function projectsFor(int $userId): Collection
+    private function projectsFor(User $user): Collection
     {
-        $organizationIds = DB::table('organization_user')
-            ->where('user_id', $userId)
-            ->where('is_active', true)
-            ->pluck('organization_id');
-
         return Project::query()
-            ->whereIn('organization_id', $organizationIds)
+            ->whereIn(
+                'organization_id',
+                $user->writableOrganizationIds(),
+            )
             ->whereNotIn('status', ['completed', 'cancelled'])
             ->orderBy('name')
             ->get(['id', 'organization_id', 'name']);
+    }
+
+    private function workTeamsFor(User $user): Collection
+    {
+        $manageableIds =
+            $user->manageableOrganizationIds();
+
+        return WorkTeam::query()
+            ->where('is_active', true)
+            ->where(
+                function ($query) use (
+                    $user,
+                    $manageableIds,
+                ): void {
+                    $query->whereHas(
+                        'users',
+                        fn ($membership) => $membership
+                            ->where(
+                                'users.id',
+                                $user->id,
+                            )
+                            ->where(
+                                'work_team_user.is_active',
+                                true,
+                            ),
+                    );
+
+                    if ($manageableIds !== []) {
+                        $query->orWhereIn(
+                            'home_organization_id',
+                            $manageableIds,
+                        );
+                    }
+                },
+            )
+            ->with([
+                'users' => fn ($query) => $query
+                    ->where('users.is_active', true)
+                    ->where(
+                        'work_team_user.is_active',
+                        true,
+                    )
+                    ->orderBy('users.name'),
+            ])
+            ->orderBy('name')
+            ->get();
+    }
+
+    private function assigneesFor(
+        User $user,
+        Collection $workTeams,
+    ): Collection {
+        $organizationUserIds = DB::table(
+            'organization_user',
+        )
+            ->whereIn(
+                'organization_id',
+                $user->writableOrganizationIds(),
+            )
+            ->where('is_active', true)
+            ->whereIn(
+                'role',
+                ['owner', 'admin', 'member'],
+            )
+            ->pluck('user_id');
+
+        $teamUserIds = $workTeams
+            ->flatMap(
+                fn (WorkTeam $team) =>
+                    $team->users
+                        ->filter(
+                            fn (User $member): bool =>
+                                in_array(
+                                    $member->pivot->role,
+                                    ['lead', 'member'],
+                                    true,
+                                ),
+                        )
+                        ->pluck('id'),
+            );
+
+        return User::query()
+            ->whereIn(
+                'id',
+                $organizationUserIds
+                    ->merge($teamUserIds)
+                    ->push($user->id)
+                    ->unique()
+                    ->values(),
+            )
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'email']);
     }
 
     private function dueAt(string $mode, ?string $customDate): ?CarbonImmutable
