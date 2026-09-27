@@ -494,6 +494,101 @@
                                                 </label>
 
                                                 <label class="edit-field full">
+                                                    Responsable
+
+                                                    <select
+                                                        name="assigned_to"
+                                                        required
+                                                    >
+                                                        @foreach (
+                                                            $taskAssignees
+                                                            as $assignee
+                                                        )
+                                                            <option
+                                                                value="{{ $assignee->id }}"
+                                                                @selected(
+                                                                    (string) $task->assigned_to
+                                                                    === (string) $assignee->id
+                                                                )
+                                                            >
+                                                                {{ $assignee->name }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                </label>
+
+                                                <label class="edit-field full">
+                                                    Visibilidad
+
+                                                    <select
+                                                        name="visibility_scope"
+                                                        required
+                                                    >
+                                                        <option
+                                                            value="organization"
+                                                            @selected(
+                                                                ($task->visibility_scope ?: 'organization')
+                                                                === 'organization'
+                                                            )
+                                                        >
+                                                            Toda la empresa / ámbito
+                                                        </option>
+
+                                                        <option
+                                                            value="teams"
+                                                            @selected(
+                                                                $task->visibility_scope
+                                                                === 'teams'
+                                                            )
+                                                        >
+                                                            Solo equipo(s)
+                                                        </option>
+                                                    </select>
+                                                </label>
+
+                                                <label class="edit-field full">
+                                                    Equipos con acceso
+
+                                                    <select
+                                                        name="work_team_ids[]"
+                                                        multiple
+                                                        size="{{ min(max($workTeams->count(), 2), 5) }}"
+                                                    >
+                                                        @php
+                                                            $taskTeamIds =
+                                                                $task->workTeams
+                                                                    ->pluck('id')
+                                                                    ->map(
+                                                                        fn ($id) => (int) $id
+                                                                    )
+                                                                    ->all();
+                                                        @endphp
+
+                                                        @foreach (
+                                                            $workTeams
+                                                            as $workTeam
+                                                        )
+                                                            <option
+                                                                value="{{ $workTeam->id }}"
+                                                                @selected(
+                                                                    in_array(
+                                                                        (int) $workTeam->id,
+                                                                        $taskTeamIds,
+                                                                        true,
+                                                                    )
+                                                                )
+                                                            >
+                                                                {{ $workTeam->name }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+
+                                                    <span class="advanced-hint">
+                                                        En visibilidad por equipo, selecciona al menos uno.
+                                                    </span>
+                                                </label>
+
+                                                <label class="edit-field full">
                                                     Fecha
 
                                                     <input
