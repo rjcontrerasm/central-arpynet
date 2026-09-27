@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Task;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
@@ -78,6 +79,15 @@ class AppServiceProvider extends ServiceProvider
             return;
         }
 
+        if (
+            $model instanceof Task
+            && $model->exists
+            && ! $model->isDirty('organization_id')
+            && $model->canBeUpdatedBy($user)
+        ) {
+            return;
+        }
+
         $organizationIds = [];
 
         $currentOrganizationId = $model->getAttribute('organization_id');
@@ -139,13 +149,33 @@ class AppServiceProvider extends ServiceProvider
             )
             ->exists();
 
+        if (
+            ! $assignable
+            && $model instanceof Task
+            && $model->visibility_scope === 'teams'
+        ) {
+            $assignable = User::query()
+                ->whereKey($assigneeId)
+                ->where('is_active', true)
+                ->whereHas(
+                    'workTeams',
+                    fn ($query) => $query
+                        ->where('work_team_user.is_active', true)
+                        ->whereIn(
+                            'work_team_user.role',
+                            ['lead', 'member'],
+                        ),
+                )
+                ->exists();
+        }
+
         if ($assignable) {
             return;
         }
 
         throw ValidationException::withMessages([
             'assigned_to' =>
-                'El responsable debe ser un usuario activo con permiso de trabajo en la empresa seleccionada.',
+                'El responsable debe ser un usuario activo con acceso operativo válido para la tarea.',
         ]);
     }
 }
