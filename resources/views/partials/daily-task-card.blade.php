@@ -148,6 +148,14 @@
                                                 <input type="hidden" name="recurring_rule" value="{{ $selectedRecurringRule }}">
                                             @endif
 
+                                            @if ($selectedWorkTeam)
+                                                <input
+                                                    type="hidden"
+                                                    name="work_team"
+                                                    value="{{ $selectedWorkTeam }}"
+                                                >
+                                            @endif
+
                                             <input
                                                 type="text"
                                                 name="next_action"
@@ -256,6 +264,14 @@
                                                         value="{{ $selectedRecurringRule }}"
                                                     >
                                                 @endif
+
+                                            @if ($selectedWorkTeam)
+                                                <input
+                                                    type="hidden"
+                                                    name="work_team"
+                                                    value="{{ $selectedWorkTeam }}"
+                                                >
+                                            @endif
 
                                                 <button
                                                     class="action {{
