@@ -119,6 +119,7 @@
                     array_filter([
                         'view' => $value,
                         'scope' => $selectedScope,
+                        'work_team' => $selectedWorkTeam,
                         'q' => $search !== ''
                             ? $search
                             : null,
@@ -132,6 +133,49 @@
             </a>
         @endforeach
     </nav>
+
+    @if ($workTeams->isNotEmpty())
+        <nav class="scopes" aria-label="Filtrar por equipo">
+            <a
+                class="scope {{ $selectedWorkTeam ? '' : 'active' }}"
+                href="{{ route(
+                    'daily-ops.show',
+                    array_filter([
+                        'view' => $selectedWorkView,
+                        'scope' => $selectedScope,
+                        'q' => $search !== '' ? $search : null,
+                        'priority' => $selectedPriority,
+                        'recurring_rule' => $selectedRecurringRule,
+                    ]),
+                ) }}"
+            >
+                Todos los equipos
+            </a>
+
+            @foreach ($workTeams as $workTeam)
+                <a
+                    class="scope {{
+                        $selectedWorkTeam === $workTeam->id
+                            ? 'active'
+                            : ''
+                    }}"
+                    href="{{ route(
+                        'daily-ops.show',
+                        array_filter([
+                            'view' => 'team',
+                            'work_team' => $workTeam->id,
+                            'scope' => $selectedScope,
+                            'q' => $search !== '' ? $search : null,
+                            'priority' => $selectedPriority,
+                            'recurring_rule' => $selectedRecurringRule,
+                        ]),
+                    ) }}"
+                >
+                    {{ $workTeam->name }}
+                </a>
+            @endforeach
+        </nav>
+    @endif
 
     <nav class="scopes" aria-label="Filtrar por ámbito">
         <a
@@ -184,6 +228,7 @@
         $baseQuery = array_filter([
             'view' => $selectedWorkView,
             'scope' => $selectedScope,
+            'work_team' => $selectedWorkTeam,
             'q' => $search !== '' ? $search : null,
             'recurring_rule' =>
                 $selectedRecurringRule,
@@ -218,6 +263,14 @@
                 >
             @endif
 
+            @if ($selectedWorkTeam)
+                <input
+                    type="hidden"
+                    name="work_team"
+                    value="{{ $selectedWorkTeam }}"
+                >
+            @endif
+
             @if ($selectedPriority)
                 <input
                     type="hidden"
@@ -233,6 +286,14 @@
                     value="{{ $selectedRecurringRule }}"
                 >
             @endif
+
+                                            @if ($selectedWorkTeam)
+                                                <input
+                                                    type="hidden"
+                                                    name="work_team"
+                                                    value="{{ $selectedWorkTeam }}"
+                                                >
+                                            @endif
 
             <input
                 class="search-input"
@@ -296,6 +357,7 @@
             $search !== ''
             || $selectedPriority
             || $selectedScope
+            || $selectedWorkTeam
             || $selectedRecurringRule
         )
             <div class="filter-summary">
@@ -313,6 +375,19 @@
                             $priorityLabels[
                                 $selectedPriority
                             ]
+                        }}
+                    </span>
+                @endif
+
+                @if ($selectedWorkTeam)
+                    <span>
+                        · Equipo: {{
+                            $workTeams
+                                ->firstWhere(
+                                    'id',
+                                    $selectedWorkTeam,
+                                )
+                                ?->name
                         }}
                     </span>
                 @endif
@@ -799,6 +874,14 @@
                                             value="{{ $selectedRecurringRule }}"
                                         >
                                     @endif
+
+                                            @if ($selectedWorkTeam)
+                                                <input
+                                                    type="hidden"
+                                                    name="work_team"
+                                                    value="{{ $selectedWorkTeam }}"
+                                                >
+                                            @endif
 
                                     <button
                                         class="resume-button"

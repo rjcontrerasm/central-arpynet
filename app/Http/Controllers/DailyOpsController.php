@@ -9,6 +9,7 @@ use App\Models\Project;
 use App\Models\RecurringTaskRule;
 use App\Models\ServiceOrder;
 use App\Models\Task;
+use App\Models\WorkTeam;
 use App\Support\DailyTaskPriority;
 use App\Support\GlobalTrackingItemFactory;
 use App\Support\RecurringTaskGenerator;
@@ -48,10 +49,34 @@ class DailyOpsController extends Controller
                 'nullable',
                 'in:mine,team,unassigned',
             ],
+            'work_team' => [
+                'nullable',
+                'integer',
+            ],
         ]);
 
         $user = $request->user();
-        $selectedWorkView = $validated['view'] ?? 'mine';
+
+        $workTeams = WorkTeam::query()
+            ->visibleTo($user)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['work_teams.id', 'work_teams.name']);
+
+        $selectedWorkTeam = isset($validated['work_team'])
+            ? (int) $validated['work_team']
+            : null;
+
+        if (
+            $selectedWorkTeam
+            && ! $workTeams->contains('id', $selectedWorkTeam)
+        ) {
+            abort(403);
+        }
+
+        $selectedWorkView = $selectedWorkTeam
+            ? 'team'
+            : ($validated['view'] ?? 'mine');
 
         $organizationIds = collect(
             $user->activeOrganizationIds(),
@@ -124,6 +149,17 @@ class DailyOpsController extends Controller
             $selectedWorkView,
             $user->id,
         );
+
+        if ($selectedWorkTeam) {
+            $tasksQuery->whereHas(
+                'workTeams',
+                fn (Builder $teamQuery): Builder =>
+                    $teamQuery->where(
+                        'work_teams.id',
+                        $selectedWorkTeam,
+                    ),
+            );
+        }
 
         if ($selectedScope) {
             $tasksQuery->where(
@@ -744,6 +780,8 @@ class DailyOpsController extends Controller
                 'organizations',
                 'selectedScope',
                 'selectedWorkView',
+                'workTeams',
+                'selectedWorkTeam',
                 'search',
                 'selectedPriority',
                 'selectedRecurringRule',

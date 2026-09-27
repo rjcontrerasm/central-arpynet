@@ -46,6 +46,10 @@ class DailyTaskWaitingController extends Controller
                 'nullable',
                 'integer',
             ],
+            'work_team' => [
+                'nullable',
+                'integer',
+            ],
         ]);
 
         $this->authorizeTask($request, $task);
@@ -216,6 +220,20 @@ class DailyTaskWaitingController extends Controller
         if (! empty($validated['recurring_rule'])) {
             $params['recurring_rule'] =
                 (int) $validated['recurring_rule'];
+        }
+
+        if (! empty($validated['work_team'])) {
+            $workTeamId =
+                (int) $validated['work_team'];
+
+            abort_unless(
+                $request->user()
+                    ->canAccessWorkTeam($workTeamId),
+                403,
+            );
+
+            $params['work_team'] = $workTeamId;
+            $params['view'] = 'team';
         }
 
         return $params;

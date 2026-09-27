@@ -22,6 +22,7 @@ class TaskNextActionController extends Controller
             'priority' => ['nullable', 'in:overdue,critical,today,week,planned'],
             'view' => ['nullable', 'in:mine,team,unassigned'],
             'recurring_rule' => ['nullable', 'integer'],
+            'work_team' => ['nullable', 'integer'],
             'focus' => ['nullable', 'in:attention,stagnant,no_next_action,all'],
             'type' => ['nullable', 'in:all,task,project,service,obligation'],
         ]);
@@ -45,6 +46,17 @@ class TaskNextActionController extends Controller
                     ),
                 403,
             );
+        }
+
+        if (! empty($validated['work_team'])) {
+            abort_unless(
+                $request->user()->canAccessWorkTeam(
+                    (int) $validated['work_team'],
+                ),
+                403,
+            );
+
+            $validated['view'] = 'team';
         }
 
         $nextAction = trim((string) ($validated['next_action'] ?? ''));
@@ -75,6 +87,8 @@ class TaskNextActionController extends Controller
                 'view' => $validated['view'] ?? null,
                 'recurring_rule' =>
                     $validated['recurring_rule'] ?? null,
+                'work_team' =>
+                    $validated['work_team'] ?? null,
             ])),
         };
 

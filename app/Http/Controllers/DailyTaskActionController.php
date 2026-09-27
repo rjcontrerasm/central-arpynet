@@ -35,6 +35,10 @@ class DailyTaskActionController extends Controller
                 'nullable',
                 'integer',
             ],
+            'work_team' => [
+                'nullable',
+                'integer',
+            ],
         ]);
 
         $actions->preview(
@@ -127,6 +131,20 @@ class DailyTaskActionController extends Controller
         if (! empty($validated['recurring_rule'])) {
             $params['recurring_rule'] =
                 (int) $validated['recurring_rule'];
+        }
+
+        if (! empty($validated['work_team'])) {
+            $workTeamId =
+                (int) $validated['work_team'];
+
+            abort_unless(
+                $request->user()
+                    ->canAccessWorkTeam($workTeamId),
+                403,
+            );
+
+            $params['work_team'] = $workTeamId;
+            $params['view'] = 'team';
         }
 
         return $params;
