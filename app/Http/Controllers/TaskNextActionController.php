@@ -22,6 +22,7 @@ class TaskNextActionController extends Controller
             'priority' => ['nullable', 'in:overdue,critical,today,week,planned'],
             'view' => ['nullable', 'in:mine,team,unassigned'],
             'recurring_rule' => ['nullable', 'integer'],
+            'work_team' => ['nullable', 'integer'],
             'focus' => ['nullable', 'in:attention,stagnant,no_next_action,all'],
             'type' => ['nullable', 'in:all,task,project,service,obligation'],
         ]);
