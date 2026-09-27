@@ -80,6 +80,86 @@ class WorkTeamTaskVisibilityTest extends TestCase
         );
     }
 
+    public function test_team_member_can_work_cross_organization_task_from_mi_dia(): void
+    {
+        [$rolando, $lissette, $marisol, , $arpynet, $pcsotec] =
+            $this->context();
+
+        $team = WorkTeam::query()->create([
+            'home_organization_id' => $arpynet->id,
+            'name' => 'Administración',
+            'is_active' => true,
+            'created_by' => $rolando->id,
+        ]);
+
+        $team->users()->attach([
+            $lissette->id => ['role' => 'member', 'is_active' => true],
+            $marisol->id => ['role' => 'viewer', 'is_active' => true],
+        ]);
+
+        $task = Task::query()->create([
+            'organization_id' => $pcsotec->id,
+            'title' => 'Facturar servicio Y de PC SOTEC',
+            'status' => 'pending',
+            'urgency' => 'normal',
+            'impact' => 'normal',
+            'visibility_scope' => 'teams',
+            'assigned_to' => $rolando->id,
+            'created_by' => $rolando->id,
+            'due_at' => now()->addDay(),
+        ]);
+
+        $task->workTeams()->attach($team->id);
+
+        $this->actingAs($lissette)
+            ->get('/mi-dia?view=team&scope='.$pcsotec->id)
+            ->assertOk()
+            ->assertSee('Facturar servicio Y de PC SOTEC')
+            ->assertSee('PC SOTEC');
+
+        $this->actingAs($lissette)
+            ->post(
+                route('daily-task-action.update', $task),
+                [
+                    'action' => 'complete',
+                    'view' => 'team',
+                    'scope' => $pcsotec->id,
+                ],
+            )
+            ->assertRedirect();
+
+        $this->assertSame(
+            'completed',
+            $task->fresh()->status,
+        );
+
+        $task->forceFill([
+            'status' => 'pending',
+            'completed_at' => null,
+        ])->save();
+
+        $this->actingAs($marisol)
+            ->get('/mi-dia?view=team&scope='.$pcsotec->id)
+            ->assertOk()
+            ->assertSee('Facturar servicio Y de PC SOTEC');
+
+        $this->actingAs($marisol)
+            ->post(
+                route('daily-task-action.update', $task),
+                [
+                    'action' => 'complete',
+                    'view' => 'team',
+                    'scope' => $pcsotec->id,
+                ],
+            )
+            ->assertForbidden();
+
+        $this->assertSame(
+            'pending',
+            $task->fresh()->status,
+        );
+    }
+
     public function test_existing_organization_visibility_remains_backward_compatible(): void
     {
         [$rolando, $lissette, , , $arpynet] = $this->context();
