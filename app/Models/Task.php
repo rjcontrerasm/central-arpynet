@@ -262,7 +262,11 @@ class Task extends Model
 
     public function canBeUpdatedBy(User $user): bool
     {
-        if ($this->visibility_scope === 'organization') {
+        $visibilityScope =
+            $this->visibility_scope
+            ?: 'organization';
+
+        if ($visibilityScope === 'organization') {
             return $user->canWriteToOrganization(
                 (int) $this->organization_id,
             );
