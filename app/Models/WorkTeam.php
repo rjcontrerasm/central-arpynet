@@ -54,7 +54,10 @@ class WorkTeam extends Model
 
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class)
+        return $this->belongsToMany(
+            User::class,
+            'work_team_user',
+        )
             ->withPivot(['role', 'is_active'])
             ->withTimestamps();
     }
