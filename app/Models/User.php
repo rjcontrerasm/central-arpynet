@@ -131,6 +131,19 @@ class User extends Authenticatable implements FilamentUser
             ->all();
     }
 
+    public function canAccessTaskScopeOrganization(
+        int $organizationId,
+    ): bool {
+        return in_array(
+            $organizationId,
+            array_values(array_unique(array_merge(
+                $this->activeOrganizationIds(),
+                $this->taskScopeOrganizationIds(),
+            ))),
+            true,
+        );
+    }
+
     public function writableOrganizationIds(): array
     {
         if (! $this->is_active) {
