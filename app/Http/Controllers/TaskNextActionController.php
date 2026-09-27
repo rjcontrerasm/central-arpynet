@@ -29,13 +29,10 @@ class TaskNextActionController extends Controller
 
         $userId = $request->user()->id;
 
-        $allowed = DB::table('organization_user')
-            ->where('user_id', $userId)
-            ->where('organization_id', $task->organization_id)
-            ->where('is_active', true)
-            ->exists();
-
-        abort_unless($allowed, 403);
+        abort_unless(
+            $task->canBeUpdatedBy($request->user()),
+            403,
+        );
 
         $scope = isset($validated['scope'])
             ? (int) $validated['scope']
