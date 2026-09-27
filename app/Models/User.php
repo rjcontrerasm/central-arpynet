@@ -116,6 +116,21 @@ class User extends Authenticatable implements FilamentUser
             ->all();
     }
 
+    public function taskScopeOrganizationIds(): array
+    {
+        if (! $this->is_active) {
+            return [];
+        }
+
+        return Task::query()
+            ->visibleTo($this)
+            ->select('organization_id')
+            ->distinct()
+            ->pluck('organization_id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+    }
+
     public function writableOrganizationIds(): array
     {
         if (! $this->is_active) {
