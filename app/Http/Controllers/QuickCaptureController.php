@@ -95,7 +95,7 @@ class QuickCaptureController extends Controller
         }
 
         $visibilityScope =
-            $visibilityScope
+            $validated['visibility_scope']
             ?? 'organization';
 
         $assigneeId = (int) (
