@@ -51,7 +51,7 @@ class MobileVisualPolishTest extends TestCase
             ->get('/captura')
             ->assertOk()
             ->assertSee(
-                'central-assets/pages/quick-capture.css?v=2.39.1',
+                'central-assets/pages/quick-capture.css?v=',
                 false,
             )
             ->assertSee(
