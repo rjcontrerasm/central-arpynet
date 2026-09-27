@@ -6,7 +6,6 @@ use App\Models\Task;
 use App\Support\GlobalUndoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class TaskNextActionController extends Controller
 {
@@ -39,13 +38,13 @@ class TaskNextActionController extends Controller
             : null;
 
         if ($scope) {
-            $scopeAllowed = DB::table('organization_user')
-                ->where('user_id', $userId)
-                ->where('organization_id', $scope)
-                ->where('is_active', true)
-                ->exists();
-
-            abort_unless($scopeAllowed, 403);
+            abort_unless(
+                $request->user()
+                    ->canAccessTaskScopeOrganization(
+                        $scope,
+                    ),
+                403,
+            );
         }
 
         $nextAction = trim((string) ($validated['next_action'] ?? ''));
