@@ -107,7 +107,7 @@ class DailyTaskEditController extends Controller
         }
 
         $visibilityScope =
-            $visibilityScope
+            $validated['visibility_scope']
             ?? ($task->visibility_scope ?: 'organization');
 
         $selectedTeamIds = array_key_exists(
