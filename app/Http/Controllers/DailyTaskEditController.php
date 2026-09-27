@@ -64,16 +64,10 @@ class DailyTaskEditController extends Controller
 
         $userId = $request->user()->id;
 
-        $canEditCurrent = DB::table('organization_user')
-            ->where('user_id', $userId)
-            ->where(
-                'organization_id',
-                $task->organization_id,
-            )
-            ->where('is_active', true)
-            ->exists();
-
-        abort_unless($canEditCurrent, 403);
+        abort_unless(
+            $task->canBeUpdatedBy($request->user()),
+            403,
+        );
 
         $canUseTarget = DB::table('organization_user')
             ->where('user_id', $userId)
