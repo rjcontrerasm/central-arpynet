@@ -5,27 +5,27 @@ Este documento fija la numeración vigente a partir del cierre de 2.15.
 | Hito | Objetivo | Estado |
 | --- | --- | --- |
 | 2.15 | Usuarios y Organizaciones | Completado |
-| 2.16 | Colaboración | En construcción |
-| 2.17 | Preparación humana de propuestas | Pendiente de validación / cierre |
-| 2.18 | Ampliar acciones sugeribles | Pendiente de validación / cierre |
-| 2.19 | Priorización ejecutiva transversal | Pendiente de validación / cierre |
-| 2.20 | Plan automático del día | Pendiente de validación / cierre |
-| 2.21 | Revisión diaria/semanal asistida | Pendiente de validación / cierre |
-| 2.22 | Automatizaciones inteligentes | Pendiente de validación / cierre |
-| 2.23 | Automatización cross-module | Pendiente de validación / cierre |
-| 2.24 | Finanzas ejecutivas avanzadas | Pendiente |
-| 2.25 | Health Score de clientes/servicios | Pendiente |
-| 2.26 | Incident 360 | Pendiente |
-| 2.27 | WhatsApp como interfaz CENTRAL | Pendiente |
-| 2.28 | Calendar / contexto externo | Pendiente |
-| 2.29 | Motor de decisión | Pendiente |
-| 2.30 | Delegación controlada | Pendiente |
-| 2.31 | Autonomía nivel 1 | Pendiente |
-| 2.32 | Autonomía nivel 2 | Pendiente |
-| 2.33 | Autonomía nivel 3 | Pendiente |
-| 2.34 | Hardening y recuperación | Pendiente |
-| 2.35 | UX final desktop/mobile | Pendiente |
-| 2.36 | CENTRAL Copilot | Meta final |
+| 2.16 | Colaboración | Completado |
+| 2.17 | Preparación humana de propuestas | Completado |
+| 2.18 | Ampliar acciones sugeribles | Completado |
+| 2.19 | Priorización ejecutiva transversal | Completado |
+| 2.20 | Plan automático del día | Completado |
+| 2.21 | Revisión diaria/semanal asistida | Completado |
+| 2.22 | Automatizaciones inteligentes | Completado |
+| 2.23 | Automatización cross-module | Completado |
+| 2.24 | Finanzas ejecutivas avanzadas | Completado |
+| 2.25 | Health Score de clientes/servicios | Completado |
+| 2.26 | Incident 360 | Completado |
+| 2.27 | WhatsApp como interfaz CENTRAL | Completado |
+| 2.28 | Calendar / contexto externo | Completado |
+| 2.29 | Motor de decisión | Completado |
+| 2.30 | Delegación controlada | Completado |
+| 2.31 | Autonomía nivel 1 | Completado |
+| 2.32 | Autonomía nivel 2 | Completado |
+| 2.33 | Autonomía nivel 3 | Completado |
+| 2.34 | Hardening y recuperación | Completado |
+| 2.35 | UX final desktop/mobile | Completado |
+| 2.36 | CENTRAL Copilot | Completado |
 
 ## Regla de avance
 
@@ -35,6 +35,78 @@ Cada hito debe pasar por desarrollo, pruebas, CI, revisión, integración a `mai
 
 La base existente ya contiene implementaciones relacionadas con propuestas de Jarvis, priorización ejecutiva, plan diario, revisiones asistidas y automatizaciones. Por ello, los hitos 2.17–2.23 deben auditarse contra el código actual antes de crear funcionalidad duplicada. El criterio será cerrar brechas y formalizar cada capacidad existente, no reescribirla sin necesidad.
 
+
+## Cierre de auditoría 2.16 — 2026-09-27
+
+La colaboración ya está implementada sobre tareas, proyectos, servicios e
+incidentes mediante hilos de comentarios, menciones y notificaciones. El
+acceso respeta roles de lectura/escritura, usuarios activos y aislamiento por
+organización; las pruebas cubren publicación, lectura, menciones válidas,
+rechazo de menciones externas y separación multiempresa.
+
+## Cierre de auditoría 2.17–2.23 — 2026-09-27
+
+La auditoría contra el código y las pruebas existentes confirmó que estos
+hitos ya estaban implementados sobre la base actual y no requerían una
+reescritura:
+
+- **2.17** — Preparación humana de propuestas: propuestas pendientes,
+  deduplicación, control de stale state y ausencia de mutación antes de
+  aprobación.
+- **2.18** — Acciones sugeribles ampliadas: cambios de estado, siguiente
+  acción, limpieza de bloqueos, creación propuesta de tareas y cambios de
+  etapa de servicios.
+- **2.19** — Priorización ejecutiva transversal: ranking entre ámbitos,
+  presión global y prioridades consolidadas.
+- **2.20** — Plan automático del día: construcción determinística del plan
+  desde prioridades ejecutivas, sin mutaciones.
+- **2.21** — Revisión diaria/semanal asistida: cierre diario guiado,
+  persistencia de progreso y revisión semanal.
+- **2.22** — Automatizaciones inteligentes: catálogo cerrado, preview,
+  ejecución controlada, confirmaciones, deduplicación y scheduler.
+- **2.23** — Automatización cross-module: creación controlada de tareas
+  desde proyectos, servicios y vencimientos, con confirmación explícita,
+  protección contra stale state y undo.
+
+La continuación funcional debe partir de **2.24**, evitando duplicar estas
+capacidades ya presentes.
+
+## Cierre de auditoría 2.24–2.36 — 2026-09-27
+
+La revisión del código y de la cobertura Feature confirmó que la base actual
+también contiene los hitos posteriores que el roadmap todavía mostraba como
+pendientes:
+
+- **2.24** — Finanzas ejecutivas avanzadas: aging, proyección 7/30 días,
+  concentración por cliente y separación estricta por moneda.
+- **2.25** — Health Score: scoring determinístico de servicios y agregación
+  por cliente con aislamiento por organización.
+- **2.26** — Incident 360: severidad, SLA, timeline, priorización y aislamiento.
+- **2.27** — WhatsApp como interfaz CENTRAL: comandos read-only, contexto
+  autorizado, identidad de remitente y captura controlada.
+- **2.28** — Calendar / contexto externo: conexión y sincronización con Google
+  Calendar, tokens protegidos y lectura de agenda.
+- **2.29** — Motor de decisión: score explicable, evidencia y ranking
+  determinístico sin red ni escrituras.
+- **2.30** — Delegación controlada: propuestas pendientes con revalidación,
+  aislamiento y sin mutación previa.
+- **2.31** — Autonomía nivel 1: preparación automática acotada de propuestas,
+  con revalidación y permisos.
+- **2.32** — Autonomía nivel 2: ejecución interna limitada, reversible y con
+  límites diarios.
+- **2.33** — Autonomía nivel 3: creación cross-module muy acotada, reversible,
+  con opt-in exacto y límites diarios.
+- **2.34** — Hardening y recuperación: Recovery Center, scheduler, recurrencias,
+  automatizaciones, WhatsApp, Calendar y salud de base de datos.
+- **2.35** — UX final desktop/mobile: geometría consistente, reglas móviles y
+  shell operacional consolidado.
+- **2.36** — CENTRAL Copilot: interfaz determinística de solo lectura sobre
+  contexto autorizado, sin escrituras ni respuestas inventadas.
+
+Con este re-baseline, los hitos históricos **2.16–2.36** quedan
+formalmente cerrados contra la implementación y cobertura existentes. El
+siguiente frente ya no debe inferirse de numeración antigua: debe definirse
+como una nueva línea posterior al baseline 2.39.
 
 ## Re-baseline operativo — 2026-09-24
 
