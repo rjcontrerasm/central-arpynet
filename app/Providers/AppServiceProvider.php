@@ -157,15 +157,6 @@ class AppServiceProvider extends ServiceProvider
             $assignable = User::query()
                 ->whereKey($assigneeId)
                 ->where('is_active', true)
-                ->whereHas(
-                    'workTeams',
-                    fn ($query) => $query
-                        ->where('work_team_user.is_active', true)
-                        ->whereIn(
-                            'work_team_user.role',
-                            ['lead', 'member'],
-                        ),
-                )
                 ->exists();
         }
 
