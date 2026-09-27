@@ -1,3 +1,23 @@
+## 2.40 — Equipos transversales, responsables y visibilidad por tarea
+
+Objetivo: permitir trabajo multiusuario real sin confundir empresa, equipo y responsable.
+
+Reglas base:
+
+- una tarea pertenece a una empresa/ámbito;
+- mantiene un responsable individual único;
+- puede compartirse con uno o varios equipos de trabajo;
+- los equipos pueden ser transversales y trabajar sobre tareas de distintas empresas;
+- pertenecer a un equipo no otorga acceso general a la empresa de la tarea;
+- miembros `lead/member` pueden actualizar tareas compartidas;
+- miembros `viewer` solo pueden leer;
+- tareas existentes conservan visibilidad por organización para compatibilidad;
+- tareas restringidas por equipo solo son visibles para responsable, creador y equipos asociados.
+
+Caso de referencia: el equipo **Administración** de ARPYNET puede incluir a
+Rolando, Lissette y Marisol y compartir tareas administrativas tanto de
+ARPYNET como de PC SOTEC, manteniendo un responsable individual por tarea.
+
 # Central ARPYNET — Roadmap maestro
 
 Este documento fija la numeración vigente a partir del cierre de 2.15.
@@ -130,6 +150,7 @@ continuar con nuevos módulos.
 | 2.38.3 | Observabilidad de conexiones MariaDB | Completado |
 | 2.38.4 | Cierre de segunda auditoría y E2E críticos | En producción |
 | 2.39 | Consolidación de assets FRONT y CSP más estricto | Completado |
+| 2.40 | Equipos transversales, responsables y visibilidad por tarea | En construcción |
 
 ### Cierre de 2.39
 
