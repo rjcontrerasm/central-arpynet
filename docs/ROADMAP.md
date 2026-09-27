@@ -5,7 +5,7 @@ Este documento fija la numeración vigente a partir del cierre de 2.15.
 | Hito | Objetivo | Estado |
 | --- | --- | --- |
 | 2.15 | Usuarios y Organizaciones | Completado |
-| 2.16 | Colaboración | En construcción |
+| 2.16 | Colaboración | Completado |
 | 2.17 | Preparación humana de propuestas | Completado |
 | 2.18 | Ampliar acciones sugeribles | Completado |
 | 2.19 | Priorización ejecutiva transversal | Completado |
@@ -35,6 +35,14 @@ Cada hito debe pasar por desarrollo, pruebas, CI, revisión, integración a `mai
 
 La base existente ya contiene implementaciones relacionadas con propuestas de Jarvis, priorización ejecutiva, plan diario, revisiones asistidas y automatizaciones. Por ello, los hitos 2.17–2.23 deben auditarse contra el código actual antes de crear funcionalidad duplicada. El criterio será cerrar brechas y formalizar cada capacidad existente, no reescribirla sin necesidad.
 
+
+## Cierre de auditoría 2.16 — 2026-09-27
+
+La colaboración ya está implementada sobre tareas, proyectos, servicios e
+incidentes mediante hilos de comentarios, menciones y notificaciones. El
+acceso respeta roles de lectura/escritura, usuarios activos y aislamiento por
+organización; las pruebas cubren publicación, lectura, menciones válidas,
+rechazo de menciones externas y separación multiempresa.
 
 ## Cierre de auditoría 2.17–2.23 — 2026-09-27
 
@@ -95,9 +103,10 @@ pendientes:
 - **2.36** — CENTRAL Copilot: interfaz determinística de solo lectura sobre
   contexto autorizado, sin escrituras ni respuestas inventadas.
 
-Con este re-baseline, **2.16 Colaboración** permanece como único hito histórico
-aún marcado “En construcción” y debe auditarse por separado antes de definir el
-siguiente frente funcional.
+Con este re-baseline, los hitos históricos **2.16–2.36** quedan
+formalmente cerrados contra la implementación y cobertura existentes. El
+siguiente frente ya no debe inferirse de numeración antigua: debe definirse
+como una nueva línea posterior al baseline 2.39.
 
 ## Re-baseline operativo — 2026-09-24
 
