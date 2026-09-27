@@ -8,9 +8,8 @@
                                     ->display_priority_band;
 
                                 $canWriteTask = $currentUser
-                                    ?->canWriteToOrganization(
-                                        (int) $task->organization_id,
-                                    ) ?? false;
+                                    ? $task->canBeUpdatedBy($currentUser)
+                                    : false;
                             @endphp
 
                             <div class="item" data-operational-card>
