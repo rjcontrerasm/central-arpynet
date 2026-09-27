@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Task;
+use App\Models\User;
+use App\Models\WorkTeam;
 use App\Support\GlobalUndoService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
@@ -31,6 +33,22 @@ class DailyTaskEditController extends Controller
             'impact' => [
                 'required',
                 'in:low,normal,medium,high,critical',
+            ],
+            'assigned_to' => [
+                'nullable',
+                'integer',
+            ],
+            'visibility_scope' => [
+                'nullable',
+                'in:organization,teams',
+            ],
+            'work_team_ids' => [
+                'nullable',
+                'array',
+            ],
+            'work_team_ids.*' => [
+                'integer',
+                'distinct',
             ],
             'scope' => [
                 'nullable',
@@ -88,6 +106,98 @@ class DailyTaskEditController extends Controller
             );
         }
 
+        $visibilityScope =
+            $validated['visibility_scope']
+            ?? ($task->visibility_scope ?: 'organization');
+
+        $selectedTeamIds = array_key_exists(
+            'work_team_ids',
+            $validated,
+        )
+            ? collect($validated['work_team_ids'] ?? [])
+                ->map(fn ($id): int => (int) $id)
+                ->unique()
+                ->values()
+            : $task->workTeams()
+                ->pluck('work_teams.id')
+                ->map(fn ($id): int => (int) $id)
+                ->values();
+
+        foreach ($selectedTeamIds as $workTeamId) {
+            abort_unless(
+                $request->user()
+                    ->canAccessWorkTeam($workTeamId),
+                403,
+            );
+        }
+
+        if (
+            $visibilityScope === 'teams'
+            && $selectedTeamIds->isEmpty()
+        ) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'work_team_ids' =>
+                    'Selecciona al menos un equipo para una tarea compartida.',
+            ]);
+        }
+
+        $assigneeId = (int) (
+            $validated['assigned_to']
+            ?? $task->assigned_to
+            ?? $request->user()->id
+        );
+
+        if ($visibilityScope === 'organization') {
+            $assigneeAllowed = User::query()
+                ->whereKey($assigneeId)
+                ->where('is_active', true)
+                ->whereHas(
+                    'organizations',
+                    fn ($query) => $query
+                        ->where(
+                            'organizations.id',
+                            $targetOrganizationId,
+                        )
+                        ->where(
+                            'organization_user.is_active',
+                            true,
+                        )
+                        ->whereIn(
+                            'organization_user.role',
+                            ['owner', 'admin', 'member'],
+                        ),
+                )
+                ->exists();
+        } else {
+            $assigneeAllowed = User::query()
+                ->whereKey($assigneeId)
+                ->where('is_active', true)
+                ->whereHas(
+                    'workTeams',
+                    fn ($query) => $query
+                        ->whereIn(
+                            'work_teams.id',
+                            $selectedTeamIds,
+                        )
+                        ->where(
+                            'work_team_user.is_active',
+                            true,
+                        )
+                        ->whereIn(
+                            'work_team_user.role',
+                            ['lead', 'member'],
+                        ),
+                )
+                ->exists();
+        }
+
+        if (! $assigneeAllowed) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'assigned_to' =>
+                    'El responsable debe tener acceso operativo válido para la visibilidad seleccionada.',
+            ]);
+        }
+
         $timezone = config(
             'app.timezone',
             'America/Lima',
@@ -110,7 +220,21 @@ class DailyTaskEditController extends Controller
             'due_at' => $dueAt,
             'urgency' => $validated['urgency'],
             'impact' => $validated['impact'],
+            'assigned_to' => $assigneeId,
+            'visibility_scope' =>
+                $visibilityScope,
         ])->save();
+
+        if (
+            $visibilityScope
+            === 'teams'
+        ) {
+            $task->workTeams()->sync(
+                $selectedTeamIds->all(),
+            );
+        } else {
+            $task->workTeams()->detach();
+        }
 
         $scope = $validated['scope'] ?? null;
 

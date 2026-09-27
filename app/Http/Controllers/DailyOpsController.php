@@ -9,6 +9,7 @@ use App\Models\Project;
 use App\Models\RecurringTaskRule;
 use App\Models\ServiceOrder;
 use App\Models\Task;
+use App\Models\User;
 use App\Models\WorkTeam;
 use App\Support\DailyTaskPriority;
 use App\Support\GlobalTrackingItemFactory;
@@ -96,6 +97,47 @@ class DailyOpsController extends Controller
             ->where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'name']);
+
+        $organizationAssigneeIds = DB::table(
+            'organization_user',
+        )
+            ->whereIn(
+                'organization_id',
+                $visibleScopeOrganizationIds,
+            )
+            ->where('is_active', true)
+            ->whereIn(
+                'role',
+                ['owner', 'admin', 'member'],
+            )
+            ->pluck('user_id');
+
+        $teamAssigneeIds = DB::table(
+            'work_team_user',
+        )
+            ->whereIn(
+                'work_team_id',
+                $workTeams->pluck('id'),
+            )
+            ->where('is_active', true)
+            ->whereIn(
+                'role',
+                ['lead', 'member'],
+            )
+            ->pluck('user_id');
+
+        $taskAssignees = User::query()
+            ->whereIn(
+                'id',
+                $organizationAssigneeIds
+                    ->merge($teamAssigneeIds)
+                    ->push($user->id)
+                    ->unique()
+                    ->values(),
+            )
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'email']);
 
         $selectedScope = isset($validated['scope'])
             ? (int) $validated['scope']
@@ -782,6 +824,7 @@ class DailyOpsController extends Controller
                 'selectedWorkView',
                 'workTeams',
                 'selectedWorkTeam',
+                'taskAssignees',
                 'search',
                 'selectedPriority',
                 'selectedRecurringRule',
