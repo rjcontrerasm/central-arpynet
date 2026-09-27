@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -41,6 +42,7 @@ class Task extends Model
         'assigned_to',
         'created_by',
         'is_private',
+        'visibility_scope',
         'sort_order',
     ];
 
@@ -203,20 +205,83 @@ class Task extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function workTeams(): BelongsToMany
+    {
+        return $this->belongsToMany(WorkTeam::class)
+            ->withTimestamps();
+    }
+
     public function scopeVisibleTo(
         Builder $query,
         User $user,
     ): Builder {
-        return $query->whereHas(
-            'organization.users',
-            fn (Builder $membershipQuery): Builder =>
-                $membershipQuery
-                    ->where('users.id', $user->id)
-                    ->where(
-                        'organization_user.is_active',
-                        true,
-                    ),
+        return $query->where(
+            function (Builder $visibility) use ($user): void {
+                $visibility
+                    ->where('assigned_to', $user->id)
+                    ->orWhere('created_by', $user->id)
+                    ->orWhere(
+                        function (Builder $organizationVisibility) use ($user): void {
+                            $organizationVisibility
+                                ->where('visibility_scope', 'organization')
+                                ->whereHas(
+                                    'organization.users',
+                                    fn (Builder $membershipQuery): Builder =>
+                                        $membershipQuery
+                                            ->where('users.id', $user->id)
+                                            ->where(
+                                                'organization_user.is_active',
+                                                true,
+                                            ),
+                                );
+                        },
+                    )
+                    ->orWhere(
+                        function (Builder $teamVisibility) use ($user): void {
+                            $teamVisibility
+                                ->where('visibility_scope', 'teams')
+                                ->whereHas(
+                                    'workTeams.users',
+                                    fn (Builder $membershipQuery): Builder =>
+                                        $membershipQuery
+                                            ->where('users.id', $user->id)
+                                            ->where('work_team_user.is_active', true),
+                                );
+                        },
+                    );
+            },
         );
+    }
+
+    public function canBeUpdatedBy(User $user): bool
+    {
+        if ((int) $this->assigned_to === (int) $user->id) {
+            return true;
+        }
+
+        if ((int) $this->created_by === (int) $user->id) {
+            return true;
+        }
+
+        if ($this->visibility_scope === 'organization') {
+            return $user->canWriteToOrganization(
+                (int) $this->organization_id,
+            );
+        }
+
+        return $this->workTeams()
+            ->whereHas(
+                'users',
+                fn (Builder $membership): Builder =>
+                    $membership
+                        ->where('users.id', $user->id)
+                        ->where('work_team_user.is_active', true)
+                        ->whereIn(
+                            'work_team_user.role',
+                            ['lead', 'member'],
+                        ),
+            )
+            ->exists();
     }
 
     public function scopeOpen(Builder $query): Builder
