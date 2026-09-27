@@ -287,6 +287,14 @@
                 >
             @endif
 
+                                            @if ($selectedWorkTeam)
+                                                <input
+                                                    type="hidden"
+                                                    name="work_team"
+                                                    value="{{ $selectedWorkTeam }}"
+                                                >
+                                            @endif
+
             <input
                 class="search-input"
                 type="search"
@@ -866,6 +874,14 @@
                                             value="{{ $selectedRecurringRule }}"
                                         >
                                     @endif
+
+                                            @if ($selectedWorkTeam)
+                                                <input
+                                                    type="hidden"
+                                                    name="work_team"
+                                                    value="{{ $selectedWorkTeam }}"
+                                                >
+                                            @endif
 
                                     <button
                                         class="resume-button"
