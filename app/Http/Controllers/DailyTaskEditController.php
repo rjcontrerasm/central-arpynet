@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Task;
+use App\Models\User;
+use App\Models\WorkTeam;
 use App\Support\GlobalUndoService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
@@ -31,6 +33,23 @@ class DailyTaskEditController extends Controller
             'impact' => [
                 'required',
                 'in:low,normal,medium,high,critical',
+            ],
+            'assigned_to' => [
+                'required',
+                'integer',
+            ],
+            'visibility_scope' => [
+                'required',
+                'in:organization,teams',
+            ],
+            'work_team_ids' => [
+                'nullable',
+                'array',
+                'required_if:visibility_scope,teams',
+            ],
+            'work_team_ids.*' => [
+                'integer',
+                'distinct',
             ],
             'scope' => [
                 'nullable',
@@ -88,6 +107,84 @@ class DailyTaskEditController extends Controller
             );
         }
 
+        $selectedTeamIds = collect(
+            $validated['work_team_ids'] ?? [],
+        )
+            ->map(fn ($id): int => (int) $id)
+            ->unique()
+            ->values();
+
+        foreach ($selectedTeamIds as $workTeamId) {
+            abort_unless(
+                $request->user()
+                    ->canAccessWorkTeam($workTeamId),
+                403,
+            );
+        }
+
+        if (
+            $validated['visibility_scope'] === 'teams'
+            && $selectedTeamIds->isEmpty()
+        ) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'work_team_ids' =>
+                    'Selecciona al menos un equipo para una tarea compartida.',
+            ]);
+        }
+
+        $assigneeId = (int) $validated['assigned_to'];
+
+        if ($validated['visibility_scope'] === 'organization') {
+            $assigneeAllowed = User::query()
+                ->whereKey($assigneeId)
+                ->where('is_active', true)
+                ->whereHas(
+                    'organizations',
+                    fn ($query) => $query
+                        ->where(
+                            'organizations.id',
+                            $targetOrganizationId,
+                        )
+                        ->where(
+                            'organization_user.is_active',
+                            true,
+                        )
+                        ->whereIn(
+                            'organization_user.role',
+                            ['owner', 'admin', 'member'],
+                        ),
+                )
+                ->exists();
+        } else {
+            $assigneeAllowed = User::query()
+                ->whereKey($assigneeId)
+                ->where('is_active', true)
+                ->whereHas(
+                    'workTeams',
+                    fn ($query) => $query
+                        ->whereIn(
+                            'work_teams.id',
+                            $selectedTeamIds,
+                        )
+                        ->where(
+                            'work_team_user.is_active',
+                            true,
+                        )
+                        ->whereIn(
+                            'work_team_user.role',
+                            ['lead', 'member'],
+                        ),
+                )
+                ->exists();
+        }
+
+        if (! $assigneeAllowed) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'assigned_to' =>
+                    'El responsable debe tener acceso operativo válido para la visibilidad seleccionada.',
+            ]);
+        }
+
         $timezone = config(
             'app.timezone',
             'America/Lima',
@@ -110,7 +207,21 @@ class DailyTaskEditController extends Controller
             'due_at' => $dueAt,
             'urgency' => $validated['urgency'],
             'impact' => $validated['impact'],
+            'assigned_to' => $assigneeId,
+            'visibility_scope' =>
+                $validated['visibility_scope'],
         ])->save();
+
+        if (
+            $validated['visibility_scope']
+            === 'teams'
+        ) {
+            $task->workTeams()->sync(
+                $selectedTeamIds->all(),
+            );
+        } else {
+            $task->workTeams()->detach();
+        }
 
         $scope = $validated['scope'] ?? null;
 
