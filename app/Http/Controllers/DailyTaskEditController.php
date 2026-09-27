@@ -35,17 +35,16 @@ class DailyTaskEditController extends Controller
                 'in:low,normal,medium,high,critical',
             ],
             'assigned_to' => [
-                'required',
+                'nullable',
                 'integer',
             ],
             'visibility_scope' => [
-                'required',
+                'nullable',
                 'in:organization,teams',
             ],
             'work_team_ids' => [
                 'nullable',
                 'array',
-                'required_if:visibility_scope,teams',
             ],
             'work_team_ids.*' => [
                 'integer',
@@ -107,12 +106,22 @@ class DailyTaskEditController extends Controller
             );
         }
 
-        $selectedTeamIds = collect(
-            $validated['work_team_ids'] ?? [],
+        $visibilityScope =
+            $visibilityScope
+            ?? ($task->visibility_scope ?: 'organization');
+
+        $selectedTeamIds = array_key_exists(
+            'work_team_ids',
+            $validated,
         )
-            ->map(fn ($id): int => (int) $id)
-            ->unique()
-            ->values();
+            ? collect($validated['work_team_ids'] ?? [])
+                ->map(fn ($id): int => (int) $id)
+                ->unique()
+                ->values()
+            : $task->workTeams()
+                ->pluck('work_teams.id')
+                ->map(fn ($id): int => (int) $id)
+                ->values();
 
         foreach ($selectedTeamIds as $workTeamId) {
             abort_unless(
@@ -123,7 +132,7 @@ class DailyTaskEditController extends Controller
         }
 
         if (
-            $validated['visibility_scope'] === 'teams'
+            $visibilityScope === 'teams'
             && $selectedTeamIds->isEmpty()
         ) {
             throw \Illuminate\Validation\ValidationException::withMessages([
@@ -132,9 +141,13 @@ class DailyTaskEditController extends Controller
             ]);
         }
 
-        $assigneeId = (int) $validated['assigned_to'];
+        $assigneeId = (int) (
+            $validated['assigned_to']
+            ?? $task->assigned_to
+            ?? $request->user()->id
+        );
 
-        if ($validated['visibility_scope'] === 'organization') {
+        if ($visibilityScope === 'organization') {
             $assigneeAllowed = User::query()
                 ->whereKey($assigneeId)
                 ->where('is_active', true)
@@ -209,11 +222,11 @@ class DailyTaskEditController extends Controller
             'impact' => $validated['impact'],
             'assigned_to' => $assigneeId,
             'visibility_scope' =>
-                $validated['visibility_scope'],
+                $visibilityScope,
         ])->save();
 
         if (
-            $validated['visibility_scope']
+            $visibilityScope
             === 'teams'
         ) {
             $task->workTeams()->sync(
