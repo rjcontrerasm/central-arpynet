@@ -204,6 +204,19 @@ class User extends Authenticatable implements FilamentUser
         );
     }
 
+    public function canAccessWorkTeam(int $workTeamId): bool
+    {
+        if (! $this->is_active) {
+            return false;
+        }
+
+        return $this->workTeams()
+            ->where('work_teams.id', $workTeamId)
+            ->where('work_teams.is_active', true)
+            ->wherePivot('is_active', true)
+            ->exists();
+    }
+
     public function canManageTeam(): bool
     {
         return $this->manageableOrganizationIds() !== [];
