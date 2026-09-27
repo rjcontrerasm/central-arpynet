@@ -35,6 +35,10 @@ class DailyTaskActionController extends Controller
                 'nullable',
                 'integer',
             ],
+            'work_team' => [
+                'nullable',
+                'integer',
+            ],
         ]);
 
         $actions->preview(
