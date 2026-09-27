@@ -150,7 +150,28 @@ continuar con nuevos módulos.
 | 2.38.3 | Observabilidad de conexiones MariaDB | Completado |
 | 2.38.4 | Cierre de segunda auditoría y E2E críticos | En producción |
 | 2.39 | Consolidación de assets FRONT y CSP más estricto | Completado |
-| 2.40 | Equipos transversales, responsables y visibilidad por tarea | En construcción |
+| 2.40 | Equipos transversales, responsables y visibilidad por tarea | Completado |
+
+### Cierre de 2.40
+
+La colaboración multiusuario sobre tareas quedó consolidada en cuatro pasos:
+
+- **2.40.0** — Fundación de equipos transversales: modelo `WorkTeam`,
+  membresías `lead/member/viewer`, visibilidad por organización o por equipos,
+  y autorización de lectura/escritura sin conceder acceso general a la empresa.
+- **2.40.1** — Administración de equipos y captura compartida: alta de equipos
+  desde Filament, gestión de miembros, responsable individual y selección de
+  empresa + visibilidad + equipos en Captura rápida.
+- **2.40.2** — Filtro transversal en Mi Día: un equipo puede ver en conjunto
+  sus tareas de distintas empresas, por ejemplo Administración con pendientes
+  de ARPYNET y PC SOTEC.
+- **2.40.3** — Reasignación de tareas existentes: edición de responsable,
+  visibilidad y equipos desde Mi Día, preservando validaciones y aislamiento.
+
+Regla operativa final: cada tarea conserva **una empresa/ámbito** y **un
+responsable individual**, pero puede compartirse con uno o varios equipos
+transversales. La pertenencia a un equipo habilita acceso a la tarea, no a toda
+la empresa de origen.
 
 ### Cierre de 2.39
 
