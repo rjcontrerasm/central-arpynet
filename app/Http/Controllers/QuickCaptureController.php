@@ -72,9 +72,9 @@ class QuickCaptureController extends Controller
             'due_date' => ['nullable', 'date', 'required_if:due_mode,custom'],
             'urgency' => ['required', 'in:low,normal,medium,high,critical'],
             'impact' => ['required', 'in:low,normal,medium,high,critical'],
-            'assigned_to' => ['required', 'integer'],
+            'assigned_to' => ['nullable', 'integer'],
             'visibility_scope' => [
-                'required',
+                'nullable',
                 'in:organization,teams',
             ],
             'work_team_ids' => [
@@ -93,6 +93,15 @@ class QuickCaptureController extends Controller
                 $validated[$field] = 'normal';
             }
         }
+
+        $visibilityScope =
+            $visibilityScope
+            ?? 'organization';
+
+        $assigneeId = (int) (
+            $validated['assigned_to']
+            ?? $user->id
+        );
 
         $organizations = $this->organizationsFor($user->id);
         $projects = $this->projectsFor($user);
@@ -139,7 +148,7 @@ class QuickCaptureController extends Controller
         );
 
         if (
-            $validated['visibility_scope']
+            $visibilityScope
             === 'teams'
             && $selectedTeamIds->isEmpty()
         ) {
@@ -149,9 +158,7 @@ class QuickCaptureController extends Controller
             ]);
         }
 
-        $assigneeId = (int) $validated['assigned_to'];
-
-        if ($validated['visibility_scope'] === 'organization') {
+        if ($visibilityScope === 'organization') {
             $assigneeAllowed = User::query()
                 ->whereKey($assigneeId)
                 ->where('is_active', true)
@@ -257,11 +264,11 @@ class QuickCaptureController extends Controller
             'assigned_to' => $assigneeId,
             'created_by' => $user->id,
             'visibility_scope' =>
-                $validated['visibility_scope'],
+                $visibilityScope,
         ]);
 
         if (
-            $validated['visibility_scope']
+            $visibilityScope
             === 'teams'
         ) {
             $task->workTeams()->sync(
