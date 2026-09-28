@@ -78,6 +78,50 @@ class WorkTeamQuickCaptureTest extends TestCase
         );
     }
 
+    public function test_selected_team_normalizes_contradictory_organization_visibility(): void
+    {
+        [$rolando, $lissette, $arpynet, , $team] =
+            $this->context();
+
+        $this->actingAs($lissette)
+            ->post('/captura', [
+                'organization_id' => $arpynet->id,
+                'title' => 'Pendiente para el equipo de administración',
+                'due_mode' => 'today',
+                'urgency' => 'normal',
+                'impact' => 'normal',
+                'assigned_to' => $lissette->id,
+                'visibility_scope' => 'organization',
+                'work_team_ids' => [$team->id],
+            ])
+            ->assertRedirect('/captura');
+
+        $task = Task::query()
+            ->where(
+                'title',
+                'Pendiente para el equipo de administración',
+            )
+            ->firstOrFail();
+
+        $this->assertSame(
+            'teams',
+            $task->visibility_scope,
+        );
+
+        $this->assertTrue(
+            $task->workTeams()
+                ->whereKey($team->id)
+                ->exists(),
+        );
+
+        $this->assertTrue(
+            Task::query()
+                ->visibleTo($rolando)
+                ->whereKey($task->id)
+                ->exists(),
+        );
+    }
+
     public function test_legacy_capture_defaults_to_creator_and_organization_visibility(): void
     {
         [$rolando, , $arpynet] =
