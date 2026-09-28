@@ -1,4 +1,4 @@
-/* Central ARPYNET 2.39.0 — operational shared interactions */
+/* Central ARPYNET 2.40.5 — operational shared interactions */
 
 (() => {
         const install = () => {
@@ -128,6 +128,94 @@
                     menu.removeAttribute('open');
                     menu.querySelector('summary')?.focus();
                 });
+            });
+
+            const teamAccessSelects = document.querySelectorAll(
+                'select[name="work_team_ids[]"][multiple]',
+            );
+
+            teamAccessSelects.forEach((teamSelect) => {
+                const form = teamSelect.closest('form');
+                const visibilitySelect = form?.querySelector(
+                    'select[name="visibility_scope"]',
+                );
+
+                if (! visibilitySelect) {
+                    return;
+                }
+
+                const hasSelectedTeam = () =>
+                    Array.from(teamSelect.options)
+                        .some((option) => option.selected);
+
+                const refreshRequiredState = () => {
+                    teamSelect.required =
+                        visibilitySelect.value === 'teams';
+                };
+
+                const syncVisibilityFromTeams = () => {
+                    visibilitySelect.value =
+                        hasSelectedTeam()
+                            ? 'teams'
+                            : 'organization';
+
+                    refreshRequiredState();
+                };
+
+                teamSelect.addEventListener(
+                    'mousedown',
+                    (event) => {
+                        if (
+                            event.button !== 0
+                            || event.target.tagName !== 'OPTION'
+                        ) {
+                            return;
+                        }
+
+                        event.preventDefault();
+
+                        event.target.selected =
+                            ! event.target.selected;
+
+                        teamSelect.focus();
+
+                        teamSelect.dispatchEvent(
+                            new Event(
+                                'change',
+                                { bubbles: true },
+                            ),
+                        );
+                    },
+                );
+
+                teamSelect.addEventListener(
+                    'change',
+                    syncVisibilityFromTeams,
+                );
+
+                visibilitySelect.addEventListener(
+                    'change',
+                    () => {
+                        if (
+                            visibilitySelect.value
+                            === 'organization'
+                        ) {
+                            Array.from(
+                                teamSelect.options,
+                            ).forEach((option) => {
+                                option.selected = false;
+                            });
+                        }
+
+                        refreshRequiredState();
+                    },
+                );
+
+                if (hasSelectedTeam()) {
+                    visibilitySelect.value = 'teams';
+                }
+
+                refreshRequiredState();
             });
         };
 
