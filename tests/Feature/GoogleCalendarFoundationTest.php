@@ -54,6 +54,7 @@ class GoogleCalendarFoundationTest extends TestCase
             ->assertRedirect('/login');
 
         $this->get('/login')
-            ->assertRedirect('/admin/login');
+            ->assertOk()
+            ->assertSee('Ingrese a su cuenta');
     }
 }
