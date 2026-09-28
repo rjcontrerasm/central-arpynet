@@ -8,8 +8,29 @@ use Illuminate\Support\Facades\Route;
 
 
 
-Route::redirect('/login', '/admin/login', 302)
-    ->name('login');
+Route::get(
+    '/login',
+    [
+        \App\Http\Controllers\OperationalAuthController::class,
+        'create',
+    ],
+)->name('login');
+
+Route::post(
+    '/login',
+    [
+        \App\Http\Controllers\OperationalAuthController::class,
+        'store',
+    ],
+)->name('login.store');
+
+Route::post(
+    '/logout',
+    [
+        \App\Http\Controllers\OperationalAuthController::class,
+        'destroy',
+    ],
+)->middleware('auth')->name('logout');
 
 
 Route::middleware('auth')->group(function (): void {
