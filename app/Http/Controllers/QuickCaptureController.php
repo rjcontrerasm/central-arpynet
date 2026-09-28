@@ -147,6 +147,13 @@ class QuickCaptureController extends Controller
             403,
         );
 
+        // A selected team always means team visibility.
+        // This also protects against stale or contradictory
+        // browser state such as organization + team selected.
+        if ($selectedTeamIds->isNotEmpty()) {
+            $visibilityScope = 'teams';
+        }
+
         if (
             $visibilityScope
             === 'teams'
