@@ -201,6 +201,24 @@ class DailyOpsController extends Controller
                         $selectedWorkTeam,
                     ),
             );
+        } elseif ($selectedWorkView === 'team') {
+            $accessibleWorkTeamIds = $workTeams
+                ->pluck('id')
+                ->map(fn ($id): int => (int) $id)
+                ->all();
+
+            if ($accessibleWorkTeamIds === []) {
+                $tasksQuery->whereRaw('1 = 0');
+            } else {
+                $tasksQuery->whereHas(
+                    'workTeams',
+                    fn (Builder $teamQuery): Builder =>
+                        $teamQuery->whereIn(
+                            'work_teams.id',
+                            $accessibleWorkTeamIds,
+                        ),
+                );
+            }
         }
 
         if ($selectedScope) {
