@@ -1,4 +1,4 @@
-/* Central ARPYNET 2.40.1 — quick-capture */
+/* Central ARPYNET 2.40.5 — quick-capture */
 
 (() => {
     const radios = document.querySelectorAll(
@@ -8,17 +8,6 @@
     const customDate = document.getElementById(
         'custom-date-wrapper',
     );
-
-    const visibility = document.getElementById(
-        'visibility-scope',
-    );
-
-    const teamsWrapper = document.getElementById(
-        'work-teams-wrapper',
-    );
-
-    const teamsSelect = teamsWrapper
-        ?.querySelector('select[name="work_team_ids[]"]');
 
     const refreshCustomDate = () => {
         const selected = document.querySelector(
@@ -35,29 +24,6 @@
         );
     };
 
-    const refreshTeamVisibility = () => {
-        if (! visibility || ! teamsWrapper) {
-            return;
-        }
-
-        const restricted =
-            visibility.value === 'teams';
-
-        teamsWrapper.hidden = ! restricted;
-
-        if (teamsSelect) {
-            teamsSelect.required = restricted;
-
-            if (! restricted) {
-                Array.from(
-                    teamsSelect.options,
-                ).forEach((option) => {
-                    option.selected = false;
-                });
-            }
-        }
-    };
-
     radios.forEach((radio) => {
         radio.addEventListener(
             'change',
@@ -65,11 +31,5 @@
         );
     });
 
-    visibility?.addEventListener(
-        'change',
-        refreshTeamVisibility,
-    );
-
     refreshCustomDate();
-    refreshTeamVisibility();
 })();
