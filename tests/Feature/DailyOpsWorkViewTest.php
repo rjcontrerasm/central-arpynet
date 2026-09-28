@@ -7,6 +7,7 @@ use App\Models\Organization;
 use App\Models\ServiceOrder;
 use App\Models\Task;
 use App\Models\User;
+use App\Models\WorkTeam;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -16,24 +17,34 @@ class DailyOpsWorkViewTest extends TestCase
 
     public function test_work_views_separate_mine_team_and_unassigned(): void
     {
-        [$owner, $teammate, $organization] = $this->context();
+        [$owner, $teammate, $organization, $team] = $this->context();
 
-        $this->task(
+        $mine = $this->task(
             $organization,
             'Solo mía',
             $owner,
         );
 
-        $this->task(
+        $teammateTask = $this->task(
             $organization,
             'De compañera',
             $teammate,
         );
 
-        $this->task(
+        $unassigned = $this->task(
             $organization,
             'Sin responsable',
         );
+
+        $legacyOrganizationTask = $this->task(
+            $organization,
+            'Antigua de toda la empresa',
+            $owner,
+        );
+
+        $mine->workTeams()->attach($team->id);
+        $teammateTask->workTeams()->attach($team->id);
+        $unassigned->workTeams()->attach($team->id);
 
         $this->actingAs($owner)
             ->get('/mi-dia')
@@ -51,6 +62,7 @@ class DailyOpsWorkViewTest extends TestCase
             ->assertSee('Solo mía')
             ->assertSee('De compañera')
             ->assertSee('Sin responsable')
+            ->assertDontSee('Antigua de toda la empresa')
             ->assertSee('Responsable:')
             ->assertSee($teammate->name);
 
@@ -108,7 +120,7 @@ class DailyOpsWorkViewTest extends TestCase
 
     public function test_viewer_sees_team_work_without_mutation_controls(): void
     {
-        [$owner, , $organization] = $this->context();
+        [$owner, , $organization, $team] = $this->context();
 
         $viewer = User::factory()->create([
             'name' => 'Usuaria solo lectura',
@@ -124,11 +136,24 @@ class DailyOpsWorkViewTest extends TestCase
             ],
         );
 
-        $this->task(
+        $viewerTask = $this->task(
             $organization,
             'Tarea visible sin edición',
             $owner,
         );
+
+        $team->users()->attach(
+            $viewer->id,
+            [
+                'role' => 'viewer',
+                'is_active' => true,
+            ],
+        );
+
+        $viewerTask->forceFill([
+            'visibility_scope' => 'teams',
+        ])->save();
+        $viewerTask->workTeams()->attach($team->id);
 
         $this->actingAs($viewer)
             ->get('/mi-dia?view=team')
@@ -225,6 +250,24 @@ class DailyOpsWorkViewTest extends TestCase
             ],
         );
 
-        return [$owner, $teammate, $organization];
+        $team = WorkTeam::query()->create([
+            'home_organization_id' => $organization->id,
+            'name' => 'Administración',
+            'is_active' => true,
+            'created_by' => $owner->id,
+        ]);
+
+        $team->users()->attach([
+            $owner->id => [
+                'role' => 'lead',
+                'is_active' => true,
+            ],
+            $teammate->id => [
+                'role' => 'member',
+                'is_active' => true,
+            ],
+        ]);
+
+        return [$owner, $teammate, $organization, $team];
     }
 }
