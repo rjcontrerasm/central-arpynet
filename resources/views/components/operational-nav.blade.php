@@ -298,6 +298,22 @@
                     Administración avanzada →
                 </a>
             @endif
+
+            <div class="op-nav-divider"></div>
+
+            <form
+                method="POST"
+                action="{{ route('logout') }}"
+            >
+                @csrf
+
+                <button
+                    class="op-nav-logout"
+                    type="submit"
+                >
+                    Cerrar sesión
+                </button>
+            </form>
         </div>
     </details>
 </nav>
