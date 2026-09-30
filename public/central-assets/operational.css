@@ -1047,7 +1047,7 @@ body {
 
 .topbar {
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     padding: 12px 14px;
     border-radius: 18px;
     background:
@@ -1098,7 +1098,7 @@ body {
     border-radius: 11px;
     background:
         #fff
-        url('/central-assets/brand/arpynet-mark.svg')
+        url('/central-assets/brand/arpynet-logo-2018.svg')
         center / contain
         no-repeat;
     box-shadow:
@@ -1145,7 +1145,11 @@ body {
 }
 
 .topbar .op-nav-more[open] > summary {
-    color: #fff;
+    border-color: var(--central-brand-orange) !important;
+    background: rgba(255, 255, 255, .12) !important;
+    color: #fff !important;
+    box-shadow: none !important;
+    outline: none !important;
 }
 
 .topbar .op-nav-menu {
@@ -1231,6 +1235,11 @@ body {
 .op-nav-more > summary:focus-visible {
     outline: none !important;
     border-color: var(--central-brand-orange) !important;
+    box-shadow: none !important;
+}
+
+.topbar .op-nav-more > summary {
+    outline: none !important;
     box-shadow: none !important;
 }
 
