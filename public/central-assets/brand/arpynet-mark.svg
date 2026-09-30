@@ -1,17 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 120" role="img" aria-labelledby="title desc">
-  <title id="title">ARPYNET.COM</title>
-  <desc id="desc">Marca ARPYNET en azul y naranja corporativo.</desc>
-  <g transform="translate(8 16)">
-    <path d="M44 6 73 23 73 57 44 74 15 57 15 23Z" fill="none" stroke="#f9a02c" stroke-width="7" stroke-linejoin="round"/>
-    <path d="M44 6v68M15 23l58 34M73 23 15 57" fill="none" stroke="#024883" stroke-width="5" stroke-linecap="round" opacity=".95"/>
-    <circle cx="44" cy="6" r="6" fill="#f9a02c"/>
-    <circle cx="73" cy="23" r="6" fill="#024883"/>
-    <circle cx="73" cy="57" r="6" fill="#f9a02c"/>
-    <circle cx="44" cy="74" r="6" fill="#024883"/>
-    <circle cx="15" cy="57" r="6" fill="#f9a02c"/>
-    <circle cx="15" cy="23" r="6" fill="#024883"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 78" role="img" aria-labelledby="title desc">
+  <title id="title">ARPYNET</title>
+  <desc id="desc">Logo corporativo ARPYNET con palabra azul, flecha naranja y lema Soluciones Tecnológicas.</desc>
+  <g font-family="Arial, Helvetica, sans-serif">
+    <text x="4" y="48" fill="#024883" font-size="48" font-weight="800" letter-spacing="8">ARPYNET</text>
+    <path d="M258 12 L284 39 L258 66 L272 66 L299 39 L272 12 Z" fill="#f9a02c"/>
+    <text x="46" y="73" fill="#f9a02c" font-size="12" font-weight="700" letter-spacing="2.3">SOLUCIONES TECNOLÓGICAS</text>
   </g>
-  <text x="104" y="70" font-family="Arial, Helvetica, sans-serif" font-size="54" font-weight="800" letter-spacing="-2">
-    <tspan fill="#024883">ARPY</tspan><tspan fill="#f9a02c">NET</tspan><tspan fill="#024883" font-size="28" letter-spacing="0">.COM</tspan>
-  </text>
 </svg>
