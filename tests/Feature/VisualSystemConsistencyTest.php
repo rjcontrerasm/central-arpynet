@@ -23,10 +23,17 @@ class VisualSystemConsistencyTest extends TestCase
             ),
         );
 
-        $this->assertStringContainsString(
-            '--central-primary:#245fd7',
-            $sharedCss,
-        );
+        foreach ([
+            '--central-primary:#024883',
+            '--central-primary-hover:#004371',
+            '--central-brand-orange:#f9a02c',
+            '--central-bg:#eef4f9',
+        ] as $brandToken) {
+            $this->assertStringContainsString(
+                $brandToken,
+                $sharedCss,
+            );
+        }
 
         foreach ([
             '/mi-dia' => ['daily-ops', null],
