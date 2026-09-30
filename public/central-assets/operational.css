@@ -1047,7 +1047,7 @@ body {
 
 .topbar {
     position: relative;
-    overflow: visible;
+    overflow: hidden;
     padding: 12px 14px;
     border-radius: 18px;
     background:
@@ -1098,7 +1098,7 @@ body {
     border-radius: 11px;
     background:
         #fff
-        url('https://www.arpynet.com/wp-content/uploads/2018/04/logo-arpynet.png')
+        url('/central-assets/brand/arpynet-mark.svg')
         center / contain
         no-repeat;
     box-shadow:
