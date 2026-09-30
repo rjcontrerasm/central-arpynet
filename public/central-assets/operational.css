@@ -1065,7 +1065,7 @@ body {
     position: absolute;
     z-index: 0;
     top: -54px;
-    right: -38px;
+    right: 0;
     width: 142px;
     height: 142px;
     border-radius: 999px;
