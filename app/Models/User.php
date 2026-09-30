@@ -22,6 +22,7 @@ class User extends Authenticatable implements FilamentUser
         'email',
         'password',
         'current_organization_id',
+        'default_work_team_id',
         'is_active',
     ];
 
@@ -70,6 +71,14 @@ class User extends Authenticatable implements FilamentUser
         )
             ->withPivot(['role', 'is_active'])
             ->withTimestamps();
+    }
+
+    public function defaultWorkTeam(): BelongsTo
+    {
+        return $this->belongsTo(
+            WorkTeam::class,
+            'default_work_team_id',
+        );
     }
 
     public function currentOrganization(): BelongsTo
