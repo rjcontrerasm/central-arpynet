@@ -57,8 +57,17 @@
         method="POST"
         action="{{ route('quick-capture.store') }}"
         autocomplete="off"
+        data-context-work-team-id="{{ $contextWorkTeamId ?? '' }}"
     >
         @csrf
+
+        @if ($contextWorkTeamId)
+            <input
+                type="hidden"
+                name="capture_context_work_team_id"
+                value="{{ $contextWorkTeamId }}"
+            >
+        @endif
 
         <label>
             ¿Qué tienes que hacer?
@@ -122,6 +131,7 @@
                     @foreach ($assignees as $assignee)
                         <option
                             value="{{ $assignee->id }}"
+                            data-default-work-team-id="{{ $defaultTeamByAssignee[$assignee->id] ?? '' }}"
                             @selected(
                                 (string) old(
                                     'assigned_to',
@@ -149,7 +159,7 @@
                         @selected(
                             old(
                                 'visibility_scope',
-                                'organization',
+                                $defaultVisibilityScope,
                             ) === 'organization'
                         )
                     >
@@ -159,8 +169,10 @@
                     <option
                         value="teams"
                         @selected(
-                            old('visibility_scope')
-                            === 'teams'
+                            old(
+                                'visibility_scope',
+                                $defaultVisibilityScope,
+                            ) === 'teams'
                         )
                     >
                         Solo equipo(s)
@@ -186,7 +198,12 @@
                         @selected(
                             in_array(
                                 $team->id,
-                                old('work_team_ids', []),
+                                old(
+                                    'work_team_ids',
+                                    $defaultWorkTeamId
+                                        ? [$defaultWorkTeamId]
+                                        : [],
+                                ),
                             )
                         )
                     >
