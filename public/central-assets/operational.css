@@ -1639,3 +1639,118 @@ textarea:focus,
         border-radius: 16px;
     }
 }
+
+
+/*
+ * 2.40.12 — Integración de marca en header.
+ * El logo deja de vivir dentro de una cápsula blanca y pasa a formar parte
+ * de un bloque de marca continuo, inspirado en la cabecera pública ARPYNET.
+ */
+.topbar .brand {
+    align-self: stretch;
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 64px;
+    margin:
+        -12px
+        14px
+        -12px
+        -14px;
+    padding:
+        0
+        22px
+        0
+        16px;
+    border-right: 2px solid rgba(249, 160, 44, .72);
+    border-radius:
+        18px
+        0
+        0
+        18px;
+    background:
+        linear-gradient(
+            135deg,
+            #f0f5f9 0%,
+            #e6eff6 100%
+        );
+    box-shadow:
+        inset -1px 0 0 rgba(2, 72, 131, .08);
+}
+
+.topbar .brand::before {
+    width: 178px;
+    height: 48px;
+    border-radius: 0;
+    background:
+        transparent
+        url('/central-assets/brand/arpynet-logo-2018.svg')
+        center / contain
+        no-repeat;
+    box-shadow: none;
+}
+
+.topbar .brand::after {
+    min-height: 34px;
+    padding-left: 15px;
+    border-left: 1px solid rgba(2, 72, 131, .22);
+    color: var(--central-brand-blue-dark);
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: .1em;
+}
+
+.topbar .op-nav {
+    flex: 1 1 auto;
+}
+
+@media (min-width: 760px) {
+    .topbar {
+        min-height: 64px;
+        padding-left: 14px;
+    }
+}
+
+@media (max-width: 759px) {
+    .topbar .brand {
+        width: calc(100% + 24px);
+        min-height: 58px;
+        margin:
+            -11px
+            -12px
+            0
+            -12px;
+        padding:
+            0
+            14px;
+        border-right: 0;
+        border-bottom: 2px solid rgba(249, 160, 44, .72);
+        border-radius:
+            16px
+            16px
+            0
+            0;
+    }
+
+    .topbar .brand::before {
+        width: 150px;
+        height: 42px;
+    }
+
+    .topbar .brand::after {
+        min-height: 30px;
+        padding-left: 12px;
+        font-size: 11px;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .topbar .brand {
+        background:
+            linear-gradient(
+                135deg,
+                #eaf1f6 0%,
+                #dce8f1 100%
+            );
+    }
+}
