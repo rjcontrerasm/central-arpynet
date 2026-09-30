@@ -21,6 +21,10 @@ class QuickCaptureController extends Controller
 {
     public function show(Request $request): View
     {
+        $validated = $request->validate([
+            'work_team' => ['nullable', 'integer'],
+        ]);
+
         $user = $request->user();
         $organizations = $this->organizationsFor($user->id);
         $projects = $this->projectsFor($user);
@@ -30,6 +34,80 @@ class QuickCaptureController extends Controller
             $workTeams,
         );
         $organizationIds = $organizations->pluck('id');
+        $accessibleTeamIds = $workTeams
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id);
+
+        $contextWorkTeamId = isset($validated['work_team'])
+            ? (int) $validated['work_team']
+            : null;
+
+        if (
+            $contextWorkTeamId
+            && ! $accessibleTeamIds->contains(
+                $contextWorkTeamId,
+            )
+        ) {
+            abort(403);
+        }
+
+        $defaultTeamByAssignee = $assignees
+            ->mapWithKeys(
+                function (User $assignee) use (
+                    $accessibleTeamIds,
+                ): array {
+                    $teamId = (int) (
+                        $assignee->default_work_team_id
+                        ?? 0
+                    );
+
+                    if (
+                        $teamId < 1
+                        || ! $accessibleTeamIds->contains(
+                            $teamId,
+                        )
+                    ) {
+                        return [$assignee->id => null];
+                    }
+
+                    $isActiveMember = DB::table(
+                        'work_team_user',
+                    )
+                        ->where(
+                            'work_team_id',
+                            $teamId,
+                        )
+                        ->where(
+                            'user_id',
+                            $assignee->id,
+                        )
+                        ->where('is_active', true)
+                        ->whereIn(
+                            'role',
+                            ['lead', 'member'],
+                        )
+                        ->exists();
+
+                    return [
+                        $assignee->id =>
+                            $isActiveMember
+                                ? $teamId
+                                : null,
+                    ];
+                },
+            );
+
+        $defaultWorkTeamId = $contextWorkTeamId
+            ?? (
+                $defaultTeamByAssignee[
+                    $user->id
+                ] ?? null
+            );
+
+        $defaultVisibilityScope =
+            $defaultWorkTeamId
+                ? 'teams'
+                : 'organization';
 
         $recentTasks = Task::query()
             ->with('organization')
@@ -54,6 +132,10 @@ class QuickCaptureController extends Controller
             'defaultOrganizationId',
             'workTeams',
             'assignees',
+            'contextWorkTeamId',
+            'defaultWorkTeamId',
+            'defaultVisibilityScope',
+            'defaultTeamByAssignee',
         ));
     }
 
@@ -85,6 +167,10 @@ class QuickCaptureController extends Controller
             'work_team_ids.*' => [
                 'integer',
                 'distinct',
+            ],
+            'capture_context_work_team_id' => [
+                'nullable',
+                'integer',
             ],
         ]);
 
@@ -302,8 +388,29 @@ class QuickCaptureController extends Controller
                 .'.';
         }
 
+        $contextWorkTeamId = (int) (
+            $validated[
+                'capture_context_work_team_id'
+            ] ?? 0
+        );
+
+        $redirectParams = [];
+
+        if (
+            $contextWorkTeamId > 0
+            && $accessibleTeamIds->contains(
+                $contextWorkTeamId,
+            )
+        ) {
+            $redirectParams['work_team'] =
+                $contextWorkTeamId;
+        }
+
         return redirect()
-            ->route('quick-capture.show')
+            ->route(
+                'quick-capture.show',
+                $redirectParams,
+            )
             ->with('quick_capture_success', $message);
     }
 
@@ -427,7 +534,12 @@ class QuickCaptureController extends Controller
             )
             ->where('is_active', true)
             ->orderBy('name')
-            ->get(['id', 'name', 'email']);
+            ->get([
+                'id',
+                'name',
+                'email',
+                'default_work_team_id',
+            ]);
     }
 
     private function dueAt(string $mode, ?string $customDate): ?CarbonImmutable

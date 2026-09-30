@@ -80,6 +80,26 @@ class UserResource extends Resource
                             ->helperText(
                                 'Un usuario inactivo no puede ingresar a Central.'
                             ),
+
+                        Select::make('default_work_team_id')
+                            ->label('Equipo predeterminado')
+                            ->placeholder('Sin equipo predeterminado')
+                            ->options(
+                                fn (?User $record): array =>
+                                    $record
+                                        ? $record->workTeams()
+                                            ->where('work_teams.is_active', true)
+                                            ->wherePivot('is_active', true)
+                                            ->orderBy('work_teams.name')
+                                            ->pluck('work_teams.name', 'work_teams.id')
+                                            ->all()
+                                        : [],
+                            )
+                            ->native(false)
+                            ->searchable()
+                            ->helperText(
+                                'Se preselecciona al capturar fuera de una vista de equipo. Déjalo vacío para usuarios como Rolando.'
+                            ),
                     ])
                     ->columns(2),
             ]);

@@ -99,7 +99,12 @@
         @if ($canQuickCapture)
             <a
                 class="quick"
-                href="{{ route('quick-capture.show') }}"
+                href="{{ route(
+                    'quick-capture.show',
+                    array_filter([
+                        'work_team' => $selectedWorkTeam,
+                    ]),
+                ) }}"
             >
                 + Captura rápida
             </a>
@@ -502,7 +507,12 @@
             @if ($canQuickCapture)
                 <a
                     class="focus-action secondary"
-                    href="{{ route('quick-capture.show') }}"
+                    href="{{ route(
+                    'quick-capture.show',
+                    array_filter([
+                        'work_team' => $selectedWorkTeam,
+                    ]),
+                ) }}"
                 >
                     + Capturar
                 </a>
@@ -1169,7 +1179,12 @@
 @if ($canQuickCapture)
     <a
         class="fab"
-        href="{{ route('quick-capture.show') }}"
+        href="{{ route(
+                    'quick-capture.show',
+                    array_filter([
+                        'work_team' => $selectedWorkTeam,
+                    ]),
+                ) }}"
     >
         + Captura rápida
     </a>

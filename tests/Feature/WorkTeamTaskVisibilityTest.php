@@ -232,12 +232,16 @@ class WorkTeamTaskVisibilityTest extends TestCase
         $cloudTask->workTeams()->attach($otherTeam->id);
 
         $this->actingAs($lissette)
-            ->get('/mi-dia?work_team='.$team->id)
+            ->get('/mi-dia?view=team&work_team='.$team->id)
             ->assertOk()
             ->assertSee('Administración')
             ->assertSee('Facturar servicio ARPYNET')
             ->assertSee('Facturar servicio PC SOTEC')
-            ->assertDontSee('Revisar servidor Cloud');
+            ->assertDontSee('Revisar servidor Cloud')
+            ->assertSee(
+                '/captura?work_team='.$team->id,
+                false,
+            );
 
         $this->actingAs($outsider)
             ->get('/mi-dia?work_team='.$team->id)
