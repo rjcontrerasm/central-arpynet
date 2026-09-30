@@ -1,4 +1,4 @@
-/* Central ARPYNET 2.39.0 — operational shared assets */
+/* Central ARPYNET 2.40.8 — ARPYNET brand theme */
 
 :root {
         font-family:
@@ -10,18 +10,25 @@
             "Segoe UI",
             sans-serif;
 
-        --central-bg: #f2f5f9;
+        --central-bg: #eef4f9;
         --central-surface: #ffffff;
-        --central-surface-soft: #f7f9fc;
-        --central-border: #d2dde9;
-        --central-border-strong: #bdcad9;
-        --central-text: #10213a;
-        --central-muted: #5e6f85;
+        --central-surface-soft: #f7fbfe;
+        --central-border: #d9e4ef;
+        --central-border-strong: #c2d3e3;
+        --central-text: #16324a;
+        --central-muted: #5f7285;
 
-        --central-primary: #245fd7;
-        --central-primary-hover: #1d4fb8;
-        --central-primary-soft: #eaf2ff;
-        --central-primary-text: #1d4fa7;
+        --central-primary: #024883;
+        --central-primary-hover: #004371;
+        --central-primary-soft: #eaf3fa;
+        --central-primary-text: #024883;
+
+        --central-accent: #f9a02c;
+        --central-accent-soft: #fff3e2;
+        --central-accent-text: #7a4b00;
+        --central-brand-blue: #024883;
+        --central-brand-blue-dark: #004371;
+        --central-brand-orange: #f9a02c;
 
         --central-danger: #b93b36;
         --central-danger-soft: #fff1f0;
@@ -36,7 +43,7 @@
         --central-success-soft: #eefaf3;
 
         --central-shadow:
-            0 7px 20px rgba(15, 23, 42, .045);
+            0 10px 28px rgba(2, 72, 131, .07);
 
         /*
          * Compatibilidad con las primeras vistas operativas. Varias pantallas
@@ -1018,3 +1025,293 @@
             color: #1d4ed8;
         }
     }
+
+/*
+ * 2.40.8 — Identidad visual ARPYNET
+ * Basado en la calculadora corporativa: azul #024883, azul oscuro #004371,
+ * naranja #f9a02c y superficies blancas.
+ */
+body {
+    background:
+        radial-gradient(
+            circle at top right,
+            rgba(249, 160, 44, .08),
+            transparent 24rem
+        ),
+        linear-gradient(
+            135deg,
+            #f5f9fc 0%,
+            var(--central-bg) 100%
+        ) !important;
+}
+
+.topbar {
+    position: relative;
+    overflow: visible;
+    padding: 12px 14px;
+    border-radius: 18px;
+    background:
+        linear-gradient(
+            135deg,
+            var(--central-brand-blue-dark) 0%,
+            var(--central-brand-blue) 100%
+        );
+    box-shadow:
+        0 12px 30px rgba(2, 72, 131, .16);
+}
+
+.topbar::after {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    top: -54px;
+    right: -38px;
+    width: 142px;
+    height: 142px;
+    border-radius: 999px;
+    background: rgba(249, 160, 44, .16);
+    pointer-events: none;
+}
+
+.topbar > * {
+    position: relative;
+    z-index: 1;
+}
+
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    color: #fff !important;
+    font-size: 0;
+    font-weight: 850;
+    letter-spacing: -.02em;
+}
+
+.brand::before {
+    content: '';
+    display: block;
+    width: 156px;
+    height: 42px;
+    flex: 0 0 auto;
+    border-radius: 11px;
+    background:
+        #fff
+        url('https://www.arpynet.com/wp-content/uploads/2018/04/logo-arpynet.png')
+        center / contain
+        no-repeat;
+    box-shadow:
+        0 7px 18px rgba(0, 0, 0, .12);
+}
+
+.brand::after {
+    content: 'CENTRAL';
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding-left: 13px;
+    border-left: 1px solid rgba(255, 255, 255, .42);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 850;
+    letter-spacing: .08em;
+}
+
+.topbar .op-nav {
+    --op-nav-muted: rgba(255, 255, 255, .74);
+    --op-nav-text: #ffffff;
+    --op-nav-surface: rgba(0, 67, 113, .98);
+    --op-nav-surface-2: rgba(255, 255, 255, .12);
+    --op-nav-border: rgba(255, 255, 255, .26);
+    --op-nav-accent: var(--central-brand-orange);
+}
+
+.topbar .op-nav-link:hover,
+.topbar .op-nav-more > summary:hover {
+    background: rgba(255, 255, 255, .1);
+    color: #fff;
+}
+
+.topbar .op-nav-link.is-active,
+.topbar .op-nav-menu a.is-active {
+    border-color: var(--central-brand-orange);
+    background: rgba(255, 255, 255, .12);
+    color: #fff;
+}
+
+.topbar .op-nav-link.is-active {
+    box-shadow:
+        inset 0 -2px 0 var(--central-brand-orange);
+}
+
+.topbar .op-nav-more[open] > summary {
+    color: #fff;
+}
+
+.topbar .op-nav-menu {
+    border-color: rgba(255, 255, 255, .18);
+    background: var(--central-brand-blue-dark);
+    box-shadow:
+        0 18px 45px rgba(0, 35, 60, .28);
+}
+
+.topbar .op-nav-menu a,
+.topbar .op-nav-group-title {
+    color: rgba(255, 255, 255, .84);
+}
+
+.topbar .op-nav-menu a:hover {
+    background: rgba(255, 255, 255, .09);
+    color: #fff;
+}
+
+.quick,
+.fab {
+    background:
+        linear-gradient(
+            135deg,
+            var(--central-brand-orange) 0%,
+            #f58d0b 100%
+        ) !important;
+    color: var(--central-brand-blue-dark) !important;
+    box-shadow:
+        0 10px 22px rgba(249, 160, 44, .24) !important;
+}
+
+.quick:hover,
+.fab:hover {
+    background:
+        linear-gradient(
+            135deg,
+            #f6a83f 0%,
+            var(--central-brand-orange) 100%
+        ) !important;
+}
+
+.search-button,
+.search button,
+.submit,
+.admin-link,
+.save,
+.save-edit,
+.pay-button {
+    background:
+        linear-gradient(
+            135deg,
+            var(--central-brand-blue-dark) 0%,
+            var(--central-brand-blue) 100%
+        ) !important;
+}
+
+.scope.active,
+.priority-filter.active,
+.chip.active {
+    border-color: rgba(2, 72, 131, .3) !important;
+    background: var(--central-primary-soft) !important;
+    color: var(--central-primary-text) !important;
+    box-shadow:
+        inset 0 -2px 0 rgba(249, 160, 44, .82);
+}
+
+:where(a:any-link:focus-visible),
+:where(
+    button,
+    input,
+    select,
+    textarea,
+    summary,
+    a,
+    [role="button"]
+):focus-visible {
+    outline-color: rgba(249, 160, 44, .68);
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.search-input:focus {
+    border-color: var(--central-brand-orange) !important;
+    box-shadow:
+        0 0 0 4px rgba(249, 160, 44, .14) !important;
+}
+
+.section-link,
+.clear-filter,
+.go,
+.money-title {
+    color: var(--central-brand-blue) !important;
+}
+
+.item,
+.card,
+.notification,
+.recent-item,
+.stat {
+    box-shadow:
+        0 1px 2px rgba(2, 72, 131, .025),
+        var(--central-shadow);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .stat:hover,
+    .item:hover,
+    .card:hover,
+    .notification:hover,
+    .recent-item:hover {
+        border-color: #aac5dc !important;
+        box-shadow:
+            0 10px 28px rgba(2, 72, 131, .1);
+    }
+}
+
+@media (max-width: 759px) {
+    .topbar {
+        padding: 11px 12px;
+        border-radius: 16px;
+    }
+
+    .brand {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .brand::before {
+        width: 128px;
+        height: 38px;
+    }
+
+    .brand::after {
+        font-size: 12px;
+        letter-spacing: .065em;
+    }
+
+    .topbar > .op-nav {
+        padding-top: 2px;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --central-primary: #5aa6de;
+        --central-primary-hover: #7dbbe8;
+        --central-primary-soft: #0f2d44;
+        --central-primary-text: #a9d3f0;
+        --central-accent-soft: #3b2a13;
+        --central-accent-text: #ffd39a;
+    }
+
+    body {
+        background:
+            radial-gradient(
+                circle at top right,
+                rgba(249, 160, 44, .07),
+                transparent 24rem
+            ),
+            linear-gradient(
+                135deg,
+                #091724 0%,
+                #0b1724 100%
+            ) !important;
+    }
+}
