@@ -1243,6 +1243,47 @@ textarea:focus,
     color: var(--central-brand-blue) !important;
 }
 
+.focus-panel {
+    border-color: rgba(2, 72, 131, .18) !important;
+    background:
+        radial-gradient(
+            circle at top right,
+            rgba(249, 160, 44, .14),
+            transparent 13rem
+        ),
+        linear-gradient(
+            135deg,
+            #f2f8fc 0%,
+            #ffffff 100%
+        ) !important;
+    box-shadow:
+        0 12px 30px rgba(2, 72, 131, .08);
+}
+
+.focus-eyebrow {
+    color: var(--central-brand-orange) !important;
+}
+
+.focus-title {
+    color: var(--central-brand-blue-dark) !important;
+}
+
+.focus-meta {
+    color: var(--central-muted) !important;
+}
+
+.focus-action {
+    border-color: var(--central-brand-blue) !important;
+    background: var(--central-primary-soft) !important;
+    color: var(--central-brand-blue-dark) !important;
+}
+
+.focus-action.secondary {
+    border-color: var(--central-border-strong) !important;
+    background: #fff !important;
+    color: var(--central-text) !important;
+}
+
 .item,
 .card,
 .notification,
@@ -1313,5 +1354,29 @@ textarea:focus,
                 #091724 0%,
                 #0b1724 100%
             ) !important;
+    }
+
+    .focus-panel {
+        border-color: rgba(90, 166, 222, .22) !important;
+        background:
+            radial-gradient(
+                circle at top right,
+                rgba(249, 160, 44, .09),
+                transparent 13rem
+            ),
+            linear-gradient(
+                135deg,
+                #0f2232 0%,
+                #101d2c 100%
+            ) !important;
+    }
+
+    .focus-title {
+        color: #f8fafc !important;
+    }
+
+    .focus-action.secondary {
+        background: #111b2e !important;
+        color: #e2e8f0 !important;
     }
 }
