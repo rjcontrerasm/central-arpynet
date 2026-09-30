@@ -635,7 +635,7 @@
 
         .op-nav-more > summary {
             max-width: min(42vw, 170px);
-            overflow: hidden;
+            overflow: visible;
             text-overflow: ellipsis;
         }
 
@@ -1141,8 +1141,7 @@ body {
 }
 
 .topbar .op-nav-link.is-active {
-    box-shadow:
-        inset 0 -2px 0 var(--central-brand-orange);
+    box-shadow: none;
 }
 
 .topbar .op-nav-more[open] > summary {
@@ -1207,11 +1206,10 @@ body {
 .scope.active,
 .priority-filter.active,
 .chip.active {
-    border-color: rgba(2, 72, 131, .3) !important;
+    border-color: var(--central-brand-orange) !important;
     background: var(--central-primary-soft) !important;
     color: var(--central-primary-text) !important;
-    box-shadow:
-        inset 0 -2px 0 rgba(249, 160, 44, .82);
+    box-shadow: none !important;
 }
 
 :where(a:any-link:focus-visible),
@@ -1225,6 +1223,15 @@ body {
     [role="button"]
 ):focus-visible {
     outline-color: rgba(249, 160, 44, .68);
+}
+
+.scope:focus-visible,
+.priority-filter:focus-visible,
+.op-nav-link:focus-visible,
+.op-nav-more > summary:focus-visible {
+    outline: none !important;
+    border-color: var(--central-brand-orange) !important;
+    box-shadow: none !important;
 }
 
 input:focus,
