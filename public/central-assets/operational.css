@@ -1754,3 +1754,78 @@ textarea:focus,
             );
     }
 }
+
+
+/*
+ * 2.40.13 — Header monocromático ARPYNET.
+ * Elimina el bloque claro y unifica marca + navegación sobre azul corporativo.
+ */
+.topbar .brand {
+    align-self: center;
+    min-height: 48px;
+    margin: 0 18px 0 0;
+    padding: 0 18px 0 0;
+    border-right: 1px solid rgba(255, 255, 255, .28);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.topbar .brand::before {
+    width: 172px;
+    height: 44px;
+    background:
+        transparent
+        url('/central-assets/brand/arpynet-logo-white.svg')
+        center / contain
+        no-repeat;
+    box-shadow: none;
+}
+
+.topbar .brand::after {
+    min-height: 30px;
+    padding-left: 0;
+    border-left: 0;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: .1em;
+}
+
+@media (min-width: 760px) {
+    .topbar {
+        min-height: 64px;
+        padding:
+            10px
+            14px;
+    }
+}
+
+@media (max-width: 759px) {
+    .topbar .brand {
+        width: 100%;
+        min-height: 48px;
+        margin: 0;
+        padding: 0 0 10px;
+        border-right: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, .22);
+        border-radius: 0;
+        background: transparent;
+    }
+
+    .topbar .brand::before {
+        width: 148px;
+        height: 40px;
+    }
+
+    .topbar .brand::after {
+        min-height: 28px;
+        font-size: 11px;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .topbar .brand {
+        background: transparent;
+    }
+}
