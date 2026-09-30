@@ -5,7 +5,6 @@ namespace App\Filament\Resources\Users;
 use App\Filament\Resources\Users\Pages\ManageUsers;
 use App\Models\Organization;
 use App\Models\User;
-use App\Models\WorkTeam;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
