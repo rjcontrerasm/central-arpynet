@@ -155,6 +155,120 @@ class WorkTeamQuickCaptureTest extends TestCase
         );
     }
 
+    public function test_user_default_team_preselects_capture_outside_team_context(): void
+    {
+        [$rolando, $lissette, , , $team] =
+            $this->context();
+
+        $lissette->forceFill([
+            'default_work_team_id' => $team->id,
+        ])->save();
+
+        $this->actingAs($lissette)
+            ->get('/captura')
+            ->assertOk()
+            ->assertViewHas(
+                'defaultWorkTeamId',
+                $team->id,
+            )
+            ->assertViewHas(
+                'defaultVisibilityScope',
+                'teams',
+            );
+
+        $this->actingAs($rolando)
+            ->get('/captura')
+            ->assertOk()
+            ->assertViewHas(
+                'defaultWorkTeamId',
+                null,
+            )
+            ->assertViewHas(
+                'defaultVisibilityScope',
+                'organization',
+            );
+    }
+
+    public function test_team_view_context_overrides_user_default_team(): void
+    {
+        [$rolando, $lissette, $arpynet, , $team] =
+            $this->context();
+
+        $support = WorkTeam::query()->create([
+            'home_organization_id' => $arpynet->id,
+            'name' => 'Soporte',
+            'is_active' => true,
+            'created_by' => $rolando->id,
+        ]);
+
+        $support->users()->attach([
+            $rolando->id => [
+                'role' => 'lead',
+                'is_active' => true,
+            ],
+            $lissette->id => [
+                'role' => 'member',
+                'is_active' => true,
+            ],
+        ]);
+
+        $lissette->forceFill([
+            'default_work_team_id' => $team->id,
+        ])->save();
+
+        $this->actingAs($lissette)
+            ->get('/captura?work_team='.$support->id)
+            ->assertOk()
+            ->assertViewHas(
+                'contextWorkTeamId',
+                $support->id,
+            )
+            ->assertViewHas(
+                'defaultWorkTeamId',
+                $support->id,
+            )
+            ->assertViewHas(
+                'defaultVisibilityScope',
+                'teams',
+            );
+    }
+
+    public function test_contextual_capture_preserves_team_after_save(): void
+    {
+        [$rolando, $lissette, $arpynet, , $team] =
+            $this->context();
+
+        $this->actingAs($rolando)
+            ->post('/captura', [
+                'organization_id' => $arpynet->id,
+                'title' => 'Tarea contextual administración',
+                'due_mode' => 'today',
+                'urgency' => 'normal',
+                'impact' => 'normal',
+                'assigned_to' => $lissette->id,
+                'visibility_scope' => 'teams',
+                'work_team_ids' => [$team->id],
+                'capture_context_work_team_id' =>
+                    $team->id,
+            ])
+            ->assertRedirect(
+                '/captura?work_team='.$team->id,
+            );
+
+        $task = Task::query()
+            ->where(
+                'title',
+                'Tarea contextual administración',
+            )
+            ->firstOrFail();
+
+        $this->assertTrue(
+            $task->workTeams()
+                ->whereKey($team->id)
+                ->exists(),
+        );
+    }
+
     public function test_team_task_rejects_assignee_outside_selected_team(): void
     {
         [$rolando, , , $pcsotec, $team] =
