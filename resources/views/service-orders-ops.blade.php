@@ -121,7 +121,30 @@
 
     <div class="list">
         @forelse($orders as $order)
-            @php $canWriteOrder = in_array((int)$order->organization_id, $writableOrganizationIds, true); @endphp
+            @php
+                $canWriteOrder = in_array((int)$order->organization_id, $writableOrganizationIds, true);
+                $orderMilestoneCount = $order->milestones->count();
+                $orderMilestoneCompleted = $order->milestones
+                    ->filter(
+                        fn ($milestone) =>
+                            $milestone->conformity_date
+                            || $milestone->task?->status === 'completed',
+                    )
+                    ->count();
+                $orderMilestoneOverdue = $order->milestones
+                    ->filter(
+                        fn ($milestone) =>
+                            $milestone->contractual_due_date
+                            && $milestone->contractual_due_date->isPast()
+                            && ! $milestone->conformity_date
+                            && ! in_array(
+                                $milestone->task?->status,
+                                ['completed', 'cancelled'],
+                                true,
+                            ),
+                    )
+                    ->count();
+            @endphp
             <article class="card">
                 <div class="card-head">
                     <div>
@@ -137,6 +160,11 @@
                     <span class="pill">{{ $stageOptions[$order->stage] ?? $order->stage }}</span>
                     <span class="pill">{{ $order->ops_days_in_stage }} días en etapa</span>
                     @if($order->order_number)<span class="pill">OS {{ $order->order_number }}</span>@endif
+                    @if($order->workTeam)<span class="pill">Equipo {{ $order->workTeam->name }}</span>@endif
+                    @if($orderMilestoneCount > 0)
+                        <span class="pill">Hitos {{ $orderMilestoneCompleted }}/{{ $orderMilestoneCount }}</span>
+                        @if($orderMilestoneOverdue > 0)<span class="pill critical">{{ $orderMilestoneOverdue }} hito{{ $orderMilestoneOverdue === 1 ? '' : 's' }} vencido{{ $orderMilestoneOverdue === 1 ? '' : 's' }}</span>@endif
+                    @endif
                 </div>
 
                 <div class="next">
