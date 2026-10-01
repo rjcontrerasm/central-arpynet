@@ -1,55 +1,374 @@
-/* Central ARPYNET 2.39.2 — service-order-front-form */
+/* Central ARPYNET 2.41.1 — service-order-front-form */
 
-:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:light dark}
-        *{box-sizing:border-box}body{margin:0;background:#0b1020;color:#f8fafc}a{color:inherit;text-decoration:none}button,input,select,textarea{font:inherit}
-        .shell{width:min(100%,1040px);margin:0 auto;padding:24px 16px 80px}.topbar,.hero,.actions{display:flex;align-items:center;justify-content:space-between;gap:12px}.topbar{margin-bottom:24px}.brand{font-weight:850;letter-spacing:-.03em}.hero{align-items:end;margin-bottom:18px}h1{margin:0;font-size:clamp(31px,7vw,46px);line-height:1;letter-spacing:-.05em}.subtitle,.help{color:#94a3b8}.subtitle{margin-top:7px;font-size:13px}
-        .panel{padding:16px;border:1px solid #24304b;border-radius:17px;background:#11182b}.grid{display:grid;gap:11px}.field{display:grid;gap:5px}.field label{color:#cbd5e1;font-size:11px;font-weight:820}.field input,.field select,.field textarea{width:100%;min-height:42px;padding:9px 10px;border:1px solid #334155;border-radius:10px;background:#0f172a;color:#f8fafc}.field textarea{min-height:90px;resize:vertical}.check{display:flex;align-items:center;gap:8px;min-height:42px}.check input{width:auto;min-height:auto}.help{font-size:10px;line-height:1.4}.section-title{margin:18px 0 10px;color:#93c5fd;font-size:12px;font-weight:850;text-transform:uppercase;letter-spacing:.05em}.actions{justify-content:flex-start;flex-wrap:wrap;margin-top:15px}.primary,.secondary{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:9px 13px;border-radius:10px;font-size:12px;font-weight:820;cursor:pointer}.primary{border:0;background:#2563eb;color:#fff}.secondary{border:1px solid #334155;background:#0f172a;color:#cbd5e1}.success,.errors,.readonly{margin-bottom:14px;padding:11px 13px;border-radius:12px;font-size:12px}.success{border:1px solid #166534;background:#052e16;color:#bbf7d0}.errors{border:1px solid #991b1b;background:#450a0a;color:#fecaca}.readonly{border:1px solid #475569;background:#0f172a;color:#cbd5e1}
-        @media(min-width:760px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.span-2{grid-column:1/-1}.span-3{grid-column:1/-1}}
-        @media(prefers-color-scheme:light){body{background:#f8fafc;color:#0f172a}.panel{background:#fff;border-color:#e2e8f0}.field input,.field select,.field textarea,.secondary{background:#fff;color:#0f172a;border-color:#cbd5e1}.field label{color:#334155}.readonly{background:#fff;border-color:#cbd5e1;color:#475569}}
+:root{
+    font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    color-scheme:light dark;
+    --so-bg:#eef4f9;
+    --so-surface:#ffffff;
+    --so-surface-soft:#f8fbfd;
+    --so-text:#16324a;
+    --so-muted:#64788b;
+    --so-border:#d9e4ef;
+    --so-blue:#024883;
+    --so-blue-dark:#004371;
+    --so-blue-soft:#eaf3fb;
+    --so-orange:#f9a02c;
+    --so-danger:#b42318;
+    --so-danger-soft:#fff0ee;
+    --so-success:#18794e;
+    --so-success-soft:#edf8f2;
+    --so-shadow:0 18px 55px rgba(0,67,113,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--so-bg);color:var(--so-text)}
+a{color:inherit;text-decoration:none}
+button,input,select,textarea{font:inherit}
+.shell{width:min(100%,1200px);margin:0 auto;padding:24px 16px 88px}
+.topbar{margin-bottom:26px}
+.hero{display:flex;align-items:end;justify-content:space-between;gap:16px;margin-bottom:22px}
+h1{margin:0;font-size:clamp(32px,5vw,48px);line-height:1;letter-spacing:-.045em;color:var(--so-blue-dark)}
+.subtitle{margin-top:8px;color:var(--so-muted);font-size:13px}
+.panel{
+    padding:18px;
+    border:1px solid var(--so-border);
+    border-radius:20px;
+    background:var(--so-surface);
+    box-shadow:var(--so-shadow);
+}
+.success,.errors,.readonly{
+    margin-bottom:14px;
+    padding:11px 13px;
+    border-radius:12px;
+    font-size:12px;
+    font-weight:720;
+}
+.success{border:1px solid #b8e2cc;background:var(--so-success-soft);color:var(--so-success)}
+.errors{border:1px solid #f6c1ba;background:var(--so-danger-soft);color:var(--so-danger)}
+.readonly{border:1px solid var(--so-border);background:var(--so-surface-soft);color:var(--so-muted)}
 
+.form-section{
+    margin:0 0 14px;
+    padding:16px;
+    border:1px solid var(--so-border);
+    border-radius:16px;
+    background:var(--so-surface-soft);
+}
+.form-section-primary{
+    border-color:#bfd6e8;
+    background:linear-gradient(180deg,#fbfdff 0%,#f5f9fc 100%);
+}
+.form-section-heading{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    margin-bottom:14px;
+}
+.form-section-heading h2{
+    margin:2px 0 0;
+    color:var(--so-text);
+    font-size:17px;
+    line-height:1.25;
+    letter-spacing:-.015em;
+}
+.section-kicker{
+    color:var(--so-blue);
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+}
+.section-badge{
+    display:inline-flex;
+    width:32px;
+    height:32px;
+    align-items:center;
+    justify-content:center;
+    flex:0 0 auto;
+    border-radius:10px;
+    background:var(--so-blue-soft);
+    color:var(--so-blue);
+    font-size:11px;
+    font-weight:900;
+}
+.form-section-collapsible{padding:0;overflow:hidden}
+.form-section-collapsible > summary{
+    margin:0;
+    padding:16px;
+    cursor:pointer;
+    list-style:none;
+    user-select:none;
+}
+.form-section-collapsible > summary::-webkit-details-marker{display:none}
+.form-section-collapsible > summary::after{
+    content:"⌄";
+    margin-left:auto;
+    color:var(--so-blue);
+    font-size:18px;
+    font-weight:900;
+    transition:transform .16s ease;
+}
+.form-section-collapsible[open] > summary::after{transform:rotate(180deg)}
+.form-section-collapsible .section-badge{margin-left:auto}
+.form-section-body{padding:0 16px 16px}
 
-/* 2.41.0 — Cronograma contractual de órdenes de servicio */
+.grid{display:grid;gap:12px}
+.field{display:grid;gap:6px;min-width:0}
+.field label{
+    color:#38536b;
+    font-size:11px;
+    font-weight:850;
+    line-height:1.2;
+}
+.field-label-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+}
+.field input,.field select,.field textarea{
+    width:100%;
+    min-height:44px;
+    padding:10px 11px;
+    border:1px solid #cbd9e5;
+    border-radius:11px;
+    outline:0;
+    background:#fff;
+    color:var(--so-text);
+    transition:border-color .14s ease,box-shadow .14s ease,background .14s ease;
+}
+.field input:hover,.field select:hover,.field textarea:hover{border-color:#aebfd0}
+.field input:focus,.field select:focus,.field textarea:focus{
+    border-color:#6ba3cf;
+    box-shadow:0 0 0 3px rgba(2,72,131,.10);
+}
+.field input:disabled,.field select:disabled,.field textarea:disabled{
+    background:#edf2f6;
+    color:#718599;
+    cursor:not-allowed;
+}
+.field textarea{min-height:96px;resize:vertical}
+.check{display:flex;align-items:center;gap:8px;min-height:42px}
+.check input{width:auto;min-height:auto}
+.help{color:#7890a5;font-size:10px;line-height:1.45}
+.inline-create-button{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:3px 7px;
+    border:0;
+    border-radius:8px;
+    background:transparent;
+    color:var(--so-blue);
+    font-size:11px;
+    font-weight:900;
+    cursor:pointer;
+}
+.inline-create-button:hover{background:var(--so-blue-soft)}
+.inline-create-button span{
+    display:inline-flex;
+    width:18px;
+    height:18px;
+    align-items:center;
+    justify-content:center;
+    border-radius:6px;
+    background:var(--so-blue);
+    color:#fff;
+    font-size:15px;
+    line-height:1;
+}
+
+.actions{display:flex;align-items:center;justify-content:flex-start;gap:8px;flex-wrap:wrap}
+.form-actions{
+    position:sticky;
+    z-index:15;
+    bottom:12px;
+    margin-top:18px;
+    padding:12px;
+    border:1px solid rgba(217,228,239,.92);
+    border-radius:14px;
+    background:rgba(255,255,255,.94);
+    box-shadow:0 12px 35px rgba(0,67,113,.11);
+    backdrop-filter:blur(10px);
+}
+.primary,.secondary{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:42px;
+    padding:9px 14px;
+    border-radius:10px;
+    font-size:12px;
+    font-weight:850;
+    cursor:pointer;
+}
+.primary{
+    border:1px solid var(--so-orange);
+    background:var(--so-orange);
+    color:#382000;
+    box-shadow:0 5px 14px rgba(249,160,44,.20);
+}
+.primary:hover{filter:brightness(.98)}
+.secondary{
+    border:1px solid var(--so-border);
+    background:#fff;
+    color:#4c6275;
+}
+.secondary:hover{border-color:#b9c9d7;background:#f8fafc}
+
+/* Inline client creation */
+.client-modal{
+    width:min(650px,calc(100vw - 28px));
+    max-height:min(82vh,760px);
+    padding:0;
+    border:0;
+    border-radius:20px;
+    background:transparent;
+    color:var(--so-text);
+    overflow:visible;
+}
+.client-modal::backdrop{
+    background:rgba(0,30,55,.48);
+    backdrop-filter:blur(3px);
+}
+.client-modal-card{
+    max-height:min(82vh,760px);
+    overflow:auto;
+    padding:20px;
+    border:1px solid var(--so-border);
+    border-radius:20px;
+    background:#fff;
+    box-shadow:0 28px 85px rgba(0,35,65,.28);
+}
+.client-modal-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:16px;
+    padding-bottom:14px;
+    border-bottom:1px solid var(--so-border);
+}
+.client-modal-head h2{margin:3px 0 0;font-size:22px;letter-spacing:-.025em}
+.client-modal-head p{margin:6px 0 0;color:var(--so-muted);font-size:12px;line-height:1.45}
+.modal-close{
+    width:36px;
+    height:36px;
+    flex:0 0 auto;
+    border:1px solid var(--so-border);
+    border-radius:10px;
+    background:#fff;
+    color:#587086;
+    font-size:22px;
+    line-height:1;
+    cursor:pointer;
+}
+.modal-close:hover{background:#f4f7fa}
+.client-modal-context{
+    margin:14px 0;
+    padding:9px 11px;
+    border-radius:10px;
+    background:var(--so-blue-soft);
+    color:#46647d;
+    font-size:11px;
+}
+.client-modal-context strong{color:var(--so-blue)}
+.client-modal-grid{margin-top:4px}
+.client-inline-errors{
+    margin-top:12px;
+    padding:10px 11px;
+    border:1px solid #f6c1ba;
+    border-radius:10px;
+    background:var(--so-danger-soft);
+    color:var(--so-danger);
+    font-size:11px;
+    line-height:1.45;
+}
+.client-modal-actions{
+    justify-content:flex-end;
+    margin-top:16px;
+    padding-top:14px;
+    border-top:1px solid var(--so-border);
+}
+
+/* Milestones */
 .milestone-panel{margin-top:18px}
+.section-title{
+    color:var(--so-blue);
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+}
 .milestone-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
 .milestone-title{margin-top:0}
-.milestone-summary{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:#64748b;font-size:12px}
-.milestone-summary strong{color:#0f172a;font-size:20px;line-height:1}
+.milestone-summary{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:var(--so-muted);font-size:12px}
+.milestone-summary strong{color:var(--so-text);font-size:20px;line-height:1}
 .milestone-overdue{padding:5px 8px;border-radius:999px;background:#fee2e2;color:#b91c1c;font-weight:800}
 .milestone-progress{display:block;width:100%;height:8px;margin:14px 0 18px;overflow:hidden;border:0;border-radius:999px;background:#e2e8f0;appearance:none}
 .milestone-progress::-webkit-progress-bar{background:#e2e8f0;border-radius:999px}
-.milestone-progress::-webkit-progress-value{border-radius:999px;background:linear-gradient(90deg,#024883,#f9a02c)}
-.milestone-progress::-moz-progress-bar{border-radius:999px;background:linear-gradient(90deg,#024883,#f9a02c)}
+.milestone-progress::-webkit-progress-value{border-radius:999px;background:linear-gradient(90deg,var(--so-blue),var(--so-orange))}
+.milestone-progress::-moz-progress-bar{border-radius:999px;background:linear-gradient(90deg,var(--so-blue),var(--so-orange))}
 .milestone-list{display:grid;gap:10px}
-.milestone-card{padding:14px;border:1px solid #dbe5ef;border-radius:14px;background:#fff}
+.milestone-card{padding:14px;border:1px solid var(--so-border);border-radius:14px;background:#fff}
 .milestone-card.is-overdue{border-color:#fecaca;background:#fffafa}
 .milestone-main{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:11px;align-items:center}
-.milestone-number{display:flex;width:34px;height:34px;align-items:center;justify-content:center;border-radius:10px;background:#eaf3fb;color:#024883;font-weight:900}
+.milestone-number{display:flex;width:34px;height:34px;align-items:center;justify-content:center;border-radius:10px;background:var(--so-blue-soft);color:var(--so-blue);font-weight:900}
 .milestone-copy{min-width:0}
-.milestone-copy strong{display:block;color:#16324a;font-size:14px}
-.milestone-meta,.milestone-contract{display:flex;gap:8px 14px;flex-wrap:wrap;margin-top:5px;color:#64748b;font-size:11px}
-.milestone-status{padding:6px 9px;border-radius:9px;background:#eaf3fb;color:#024883;font-size:11px;font-weight:850;white-space:nowrap}
+.milestone-copy strong{display:block;color:var(--so-text);font-size:14px}
+.milestone-meta,.milestone-contract{display:flex;gap:8px 14px;flex-wrap:wrap;margin-top:5px;color:var(--so-muted);font-size:11px}
+.milestone-status{padding:6px 9px;border-radius:9px;background:var(--so-blue-soft);color:var(--so-blue);font-size:11px;font-weight:850;white-space:nowrap}
 .milestone-status.danger{background:#fee2e2;color:#b91c1c}
-.milestone-contract{margin:11px 0 0 45px;padding-top:9px;border-top:1px dashed #dbe5ef}
+.milestone-contract{margin:11px 0 0 45px;padding-top:9px;border-top:1px dashed var(--so-border)}
 .milestone-editor{margin:12px 0 0 45px;border-top:1px solid #edf2f7;padding-top:10px}
-.milestone-editor summary{cursor:pointer;color:#024883;font-size:12px;font-weight:800}
+.milestone-editor summary{cursor:pointer;color:var(--so-blue);font-size:12px;font-weight:800}
 .milestone-editor form{margin-top:12px}
-.milestone-create{margin-top:18px;padding-top:16px;border-top:1px solid #dbe5ef}
-.milestone-empty{padding:16px;border:1px dashed #cbd5e1;border-radius:12px;color:#64748b;font-size:12px;text-align:center}
+.milestone-create{margin-top:18px;padding-top:16px;border-top:1px solid var(--so-border)}
+.milestone-empty{padding:16px;border:1px dashed #cbd5e1;border-radius:12px;color:var(--so-muted);font-size:12px;text-align:center}
 .milestone-grid{margin-top:10px}
+
+@media(min-width:760px){
+    .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .span-2{grid-column:1/-1}
+    .span-3{grid-column:1/-1}
+}
 @media(max-width:759px){
-  .milestone-heading{display:grid}
-  .milestone-main{grid-template-columns:34px minmax(0,1fr)}
-  .milestone-status{grid-column:2;justify-self:start}
-  .milestone-contract,.milestone-editor{margin-left:0}
+    .shell{padding:16px 12px 72px}
+    .panel{padding:12px;border-radius:16px}
+    .form-section{padding:13px}
+    .form-section-collapsible{padding:0}
+    .form-section-collapsible > summary{padding:13px}
+    .form-section-body{padding:0 13px 13px}
+    .form-section-heading{align-items:flex-start}
+    .form-actions{bottom:8px}
+    .milestone-heading{display:grid}
+    .milestone-main{grid-template-columns:34px minmax(0,1fr)}
+    .milestone-status{grid-column:2;justify-self:start}
+    .milestone-contract,.milestone-editor{margin-left:0}
+    .client-modal-card{padding:16px;border-radius:16px}
 }
 @media(prefers-color-scheme:dark){
-  .milestone-summary strong,.milestone-copy strong{color:#f8fafc}
-  .milestone-card{background:#11182b;border-color:#24304b}
-  .milestone-card.is-overdue{background:#241315;border-color:#7f1d1d}
-  .milestone-number{background:#102b42;color:#7dd3fc}
-  .milestone-status{background:#102b42;color:#7dd3fc}
-  .milestone-overdue,.milestone-status.danger{background:#450a0a;color:#fecaca}
-  .milestone-progress,.milestone-progress::-webkit-progress-bar{background:#24304b}
-  .milestone-contract,.milestone-editor,.milestone-create{border-color:#24304b}
-  .milestone-empty{border-color:#334155;color:#94a3b8}
+    :root{
+        --so-bg:#0b1020;
+        --so-surface:#11182b;
+        --so-surface-soft:#0f172a;
+        --so-text:#f8fafc;
+        --so-muted:#94a3b8;
+        --so-border:#24304b;
+        --so-blue:#7dd3fc;
+        --so-blue-dark:#f8fafc;
+        --so-blue-soft:#102b42;
+        --so-shadow:none;
+    }
+    .form-section-primary{border-color:#2c4764;background:#101a2d}
+    .field label{color:#cbd5e1}
+    .field input,.field select,.field textarea,.secondary,.modal-close{background:#0f172a;color:#f8fafc;border-color:#334155}
+    .field input:disabled,.field select:disabled,.field textarea:disabled{background:#182235;color:#94a3b8}
+    .form-actions{border-color:#24304b;background:rgba(15,23,42,.94)}
+    .client-modal-card{background:#11182b;border-color:#334155}
+    .milestone-card{background:#11182b;border-color:#24304b}
+    .milestone-card.is-overdue{background:#241315;border-color:#7f1d1d}
+    .milestone-overdue,.milestone-status.danger{background:#450a0a;color:#fecaca}
+    .milestone-progress,.milestone-progress::-webkit-progress-bar{background:#24304b}
+    .milestone-contract,.milestone-editor,.milestone-create{border-color:#24304b}
+    .milestone-empty{border-color:#334155;color:#94a3b8}
 }

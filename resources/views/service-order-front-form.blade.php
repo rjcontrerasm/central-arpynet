@@ -4,7 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light dark">
-    <title>{{ $serviceOrder ? 'Editar servicio' : 'Nuevo servicio' }} · Central ARPYNET</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{{ $serviceOrder ? 'Editar orden / servicio' : 'Nueva orden / servicio' }} · Central ARPYNET</title>
     <link
         rel="stylesheet"
         href="{{ asset('central-assets/pages/service-order-front-form.css') }}?v={{ filemtime(public_path('central-assets/pages/service-order-front-form.css')) }}"
@@ -12,16 +13,15 @@
 </head>
 <body>
 <div class="shell">
-    <div class="topbar">
-        <div class="brand">Central ARPYNET</div>
-        <x-operational-nav active="services" />
-    </div>
+    <x-operational-page-header
+        active="services"
+        :title="$serviceOrder ? 'Editar orden / servicio' : 'Nueva orden / servicio'"
+        subtitle="Del compromiso comercial al cronograma, ejecución, conformidad y cobro."
+    />
 
     @if(session('service_front_success'))<div class="success">{{ session('service_front_success') }}</div>@endif
     @if(session('service_milestone_success'))<div class="success">{{ session('service_milestone_success') }}</div>@endif
     @if($errors->any())<div class="errors">@foreach($errors->all() as $error)<div>{{ $error }}</div>@endforeach</div>@endif
-
-    <section class="hero"><div><h1>{{ $serviceOrder ? 'Editar servicio' : 'Nuevo servicio' }}</h1><div class="subtitle">Seguimiento comercial, ejecución y finanzas desde CENTRAL Front.</div></div></section>
     @if(! $canWrite)<div class="readonly">Tienes acceso de solo lectura a este servicio.</div>@endif
 
     @php
@@ -34,8 +34,15 @@
     <section class="panel">
         <form method="POST" action="{{ $serviceOrder ? route('service-order-front.update',$serviceOrder) : route('service-order-front.store') }}">
             @csrf
-            <div class="section-title">Servicio</div>
-            <div class="grid">
+            <section class="form-section form-section-primary">
+                <div class="form-section-heading">
+                    <div>
+                        <div class="section-kicker">Datos principales</div>
+                        <h2>Orden / servicio</h2>
+                    </div>
+                    <span class="section-badge">01</span>
+                </div>
+                <div class="grid">
                 <div class="field">
                     <label for="organization_id">Empresa / ámbito</label>
                     <select id="organization_id" name="organization_id" {{ $serviceOrder || ! $canWrite ? 'disabled' : '' }} required>
@@ -45,14 +52,27 @@
                 </div>
 
                 <div class="field">
-                    <label for="client_id">Cliente</label>
+                    <div class="field-label-row">
+                        <label for="client_id">Cliente</label>
+                        @if($canWrite)
+                            <button
+                                class="inline-create-button"
+                                type="button"
+                                data-client-modal-open
+                                aria-haspopup="dialog"
+                            >
+                                <span aria-hidden="true">+</span>
+                                Nuevo cliente
+                            </button>
+                        @endif
+                    </div>
                     <select id="client_id" name="client_id" {{ ! $canWrite ? 'disabled' : '' }} required>
                         <option value="">Seleccionar cliente</option>
                         @foreach($clientOptions as $id=>$client)
                             <option value="{{ $id }}" data-organizations="{{ implode(',',$client['organization_ids']) }}" @selected($selectedClient === (int)$id)>{{ $client['name'] }} — {{ implode(' · ',$client['organization_names']) }}</option>
                         @endforeach
                     </select>
-                    <div class="help">Solo se habilitan clientes asociados a la empresa seleccionada.</div>
+                    <div class="help" data-client-help>Solo se muestran clientes asociados a la empresa seleccionada.</div>
                 </div>
 
                 <div class="field span-2"><label for="title">Servicio / asunto</label><input id="title" name="title" maxlength="255" required value="{{ old('title',$serviceOrder?->title) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
@@ -71,20 +91,36 @@
                 <div class="field span-2"><label for="description">Descripción</label><textarea id="description" name="description" {{ ! $canWrite ? 'disabled' : '' }}>{{ old('description',$serviceOrder?->description) }}</textarea></div>
                 <div class="field"><label for="next_action">Próxima acción</label><input id="next_action" name="next_action" maxlength="255" value="{{ old('next_action',$serviceOrder?->next_action) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
                 <div class="field"><label for="next_action_at">Fecha de seguimiento</label><input id="next_action_at" type="datetime-local" name="next_action_at" value="{{ old('next_action_at',$serviceOrder?->next_action_at?->format('Y-m-d\TH:i')) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
-            </div>
+                </div>
+            </section>
 
-            <div class="section-title">Cotización y orden</div>
-            <div class="grid">
+            <section class="form-section">
+                <div class="form-section-heading">
+                    <div>
+                        <div class="section-kicker">Compromiso comercial</div>
+                        <h2>Cotización y orden</h2>
+                    </div>
+                    <span class="section-badge">02</span>
+                </div>
+                <div class="grid">
                 <div class="field"><label for="quotation_number">N.º de cotización</label><input id="quotation_number" name="quotation_number" maxlength="80" value="{{ old('quotation_number',$serviceOrder?->quotation_number) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
                 <div class="field"><label for="quotation_date">Fecha de cotización</label><input id="quotation_date" type="date" name="quotation_date" value="{{ old('quotation_date',$serviceOrder?->quotation_date?->format('Y-m-d')) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
                 <div class="field"><label for="order_number">N.º de orden</label><input id="order_number" name="order_number" maxlength="100" value="{{ old('order_number',$serviceOrder?->order_number) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
                 <div class="field"><label for="order_received_date">Recepción de orden</label><input id="order_received_date" type="date" name="order_received_date" value="{{ old('order_received_date',$serviceOrder?->order_received_date?->format('Y-m-d')) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
                 <div class="field"><label for="start_date">Inicio</label><input id="start_date" type="date" name="start_date" value="{{ old('start_date',$serviceOrder?->start_date?->format('Y-m-d')) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
                 <div class="field"><label for="end_date">Fin previsto / contractual</label><input id="end_date" type="date" name="end_date" value="{{ old('end_date',$serviceOrder?->end_date?->format('Y-m-d')) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
-            </div>
+                </div>
+            </section>
 
-            <div class="section-title">Monto y facturación</div>
-            <div class="grid">
+            <details class="form-section form-section-collapsible" @if($serviceOrder && in_array($serviceOrder->stage,['report_submitted','conformity','invoiced','paid','closed'],true)) open @endif>
+                <summary class="form-section-heading">
+                    <div>
+                        <div class="section-kicker">Control económico</div>
+                        <h2>Monto, conformidad y facturación</h2>
+                    </div>
+                    <span class="section-badge">03</span>
+                </summary>
+                <div class="grid form-section-body">
                 <div class="field"><label for="amount">Monto de la operación</label><input id="amount" type="number" min="0" step="0.01" name="amount" value="{{ old('amount',$serviceOrder?->amount) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
                 <div class="field"><label for="currency">Moneda</label><select id="currency" name="currency" {{ ! $canWrite ? 'disabled' : '' }} required>@foreach(['PEN'=>'Soles (PEN)','USD'=>'Dólares (USD)','EUR'=>'Euros (EUR)'] as $value=>$label)<option value="{{ $value }}" @selected(old('currency',$serviceOrder?->currency ?? 'PEN') === $value)>{{ $label }}</option>@endforeach</select></div>
                 <div class="field span-2"><label class="check"><input type="checkbox" name="includes_tax" value="1" @checked(old('includes_tax',$serviceOrder?->includes_tax ?? true)) {{ ! $canWrite ? 'disabled' : '' }}> Monto incluye IGV</label></div>
@@ -96,16 +132,25 @@
                 <div class="field"><label for="invoice_amount">Monto facturado</label><input id="invoice_amount" type="number" min="0" step="0.01" name="invoice_amount" value="{{ old('invoice_amount',$serviceOrder?->invoice_amount) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
                 <div class="field"><label for="paid_date">Fecha de pago</label><input id="paid_date" type="date" name="paid_date" value="{{ old('paid_date',$serviceOrder?->paid_date?->format('Y-m-d')) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
                 <div class="field"><label for="closed_date">Fecha de cierre</label><input id="closed_date" type="date" name="closed_date" value="{{ old('closed_date',$serviceOrder?->closed_date?->format('Y-m-d')) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
-            </div>
+                </div>
+            </details>
 
-            <div class="section-title">Documentos y notas</div>
-            <div class="grid">
+            <details class="form-section form-section-collapsible" @if($serviceOrder?->drive_url || $serviceOrder?->notes) open @endif>
+                <summary class="form-section-heading">
+                    <div>
+                        <div class="section-kicker">Soporte documental</div>
+                        <h2>Documentos y notas</h2>
+                    </div>
+                    <span class="section-badge">04</span>
+                </summary>
+                <div class="grid form-section-body">
                 <div class="field span-2"><label for="drive_url">Carpeta de Google Drive</label><input id="drive_url" type="url" name="drive_url" maxlength="255" value="{{ old('drive_url',$serviceOrder?->drive_url) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
                 <div class="field span-2"><label for="notes">Notas</label><textarea id="notes" name="notes" {{ ! $canWrite ? 'disabled' : '' }}>{{ old('notes',$serviceOrder?->notes) }}</textarea></div>
-            </div>
+                </div>
+            </details>
 
-            <div class="actions">
-                @if($canWrite)<button class="primary" type="submit" data-busy-label="Guardando…">{{ $serviceOrder ? 'Guardar cambios' : 'Crear servicio' }}</button>@endif
+            <div class="actions form-actions">
+                @if($canWrite)<button class="primary" type="submit" data-busy-label="Guardando…">{{ $serviceOrder ? 'Guardar cambios' : 'Crear orden / servicio' }}</button>@endif
                 <a class="secondary" href="{{ route('service-orders-ops.show') }}">Volver a servicios</a>
             </div>
         </form>
@@ -245,6 +290,57 @@
                 </div>
             @endif
         </section>
+    @endif
+    @if($canWrite)
+        <dialog class="client-modal" data-client-modal>
+            <form class="client-modal-card" method="POST" action="{{ route('client-ops.store') }}" data-client-inline-form>
+                <div class="client-modal-head">
+                    <div>
+                        <div class="section-kicker">Sin salir de esta orden</div>
+                        <h2>Nuevo cliente</h2>
+                        <p>Se asociará a la empresa seleccionada y quedará disponible inmediatamente.</p>
+                    </div>
+                    <button class="modal-close" type="button" data-client-modal-close aria-label="Cerrar">×</button>
+                </div>
+
+                <div class="client-modal-context">
+                    Empresa: <strong data-client-modal-organization>—</strong>
+                </div>
+
+                <div class="grid client-modal-grid">
+                    <div class="field span-2">
+                        <label for="quick_client_name">Nombre comercial</label>
+                        <input id="quick_client_name" name="name" maxlength="255" required autocomplete="organization">
+                    </div>
+                    <div class="field">
+                        <label for="quick_client_tax_id">RUC / documento</label>
+                        <input id="quick_client_tax_id" name="tax_id" maxlength="20" inputmode="numeric">
+                    </div>
+                    <div class="field">
+                        <label for="quick_client_legal_name">Razón social</label>
+                        <input id="quick_client_legal_name" name="legal_name" maxlength="255">
+                    </div>
+                    <div class="field">
+                        <label for="quick_client_contact">Contacto</label>
+                        <input id="quick_client_contact" name="contact_name" maxlength="255">
+                    </div>
+                    <div class="field">
+                        <label for="quick_client_email">Correo</label>
+                        <input id="quick_client_email" type="email" name="email" maxlength="255">
+                    </div>
+                    <div class="field">
+                        <label for="quick_client_phone">Teléfono</label>
+                        <input id="quick_client_phone" name="phone" maxlength="40">
+                    </div>
+                </div>
+
+                <div class="client-inline-errors" data-client-inline-errors hidden></div>
+                <div class="actions client-modal-actions">
+                    <button class="secondary" type="button" data-client-modal-close>Cancelar</button>
+                    <button class="primary" type="submit" data-busy-label="Creando…">Crear y seleccionar</button>
+                </div>
+            </form>
+        </dialog>
     @endif
 </div>
 <script src="{{ asset('central-assets/pages/service-order-front-form.js') }}?v={{ filemtime(public_path('central-assets/pages/service-order-front-form.js')) }}"></script>

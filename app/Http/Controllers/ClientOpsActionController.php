@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -10,7 +11,7 @@ use Illuminate\Validation\ValidationException;
 
 class ClientOpsActionController extends Controller
 {
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): JsonResponse|RedirectResponse
     {
         $validated = $this->validatePayload($request);
         $organizationIds = $this->organizationIds($validated);
@@ -37,6 +38,32 @@ class ClientOpsActionController extends Controller
 
             return $client;
         });
+
+        if ($request->expectsJson()) {
+            $client->load([
+                'organizations' => fn ($query) => $query
+                    ->where('organizations.is_active', true)
+                    ->wherePivot('is_active', true)
+                    ->orderBy('organizations.name'),
+            ]);
+
+            return response()->json([
+                'message' => 'Cliente creado.',
+                'client' => [
+                    'id' => $client->id,
+                    'name' => $client->name,
+                    'organization_ids' => $client->organizations
+                        ->pluck('id')
+                        ->map(fn ($id): int => (int) $id)
+                        ->values()
+                        ->all(),
+                    'organization_names' => $client->organizations
+                        ->pluck('name')
+                        ->values()
+                        ->all(),
+                ],
+            ], 201);
+        }
 
         $scope = $this->redirectScope($validated, $organizationIds);
 
