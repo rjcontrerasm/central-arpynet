@@ -87,6 +87,28 @@ class ServiceOrderFrontActionController extends Controller
             $this->attributes($request, $validated),
         )->save();
 
+        if ($serviceOrder->wasChanged('work_team_id')) {
+            $serviceOrder->loadMissing('milestones.task');
+
+            foreach ($serviceOrder->milestones as $milestone) {
+                if (! $milestone->task) {
+                    continue;
+                }
+
+                $milestone->task->fill([
+                    'visibility_scope' => $serviceOrder->work_team_id
+                        ? 'teams'
+                        : 'organization',
+                ])->save();
+
+                $milestone->task->workTeams()->sync(
+                    $serviceOrder->work_team_id
+                        ? [(int) $serviceOrder->work_team_id]
+                        : [],
+                );
+            }
+        }
+
         $undo->rememberServiceOrderMutation(
             $request->user(),
             $serviceOrder,
