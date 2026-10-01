@@ -616,3 +616,89 @@ h1{margin:0;font-size:clamp(32px,5vw,48px);line-height:1;letter-spacing:-.045em;
     .milestone-step-line.is-complete{background:#19794a;border-color:#19794a}
     .milestone-sequence-complete{background:#123524;color:#86efac}
 }
+
+
+/* 2.42.2 — Detail mode and collapsed milestone creation */
+.detail-mode-banner{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:14px;
+    padding:10px 12px;
+    border:1px solid #bfdbfe;
+    border-radius:12px;
+    background:#eff6ff;
+    color:#315f86;
+    font-size:11px;
+    font-weight:750
+}
+.detail-mode-banner a{
+    color:var(--so-blue);
+    font-weight:900
+}
+.action-link{text-decoration:none}
+
+.milestone-create{
+    margin-top:18px;
+    padding-top:16px;
+    border-top:1px solid var(--so-border)
+}
+.milestone-create-toggle{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    min-height:38px;
+    padding:7px 11px;
+    border:1px solid #bfd3e5;
+    border-radius:10px;
+    background:#fff;
+    color:var(--so-blue);
+    cursor:pointer;
+    list-style:none;
+    font-size:11px;
+    font-weight:900
+}
+.milestone-create-toggle::-webkit-details-marker{display:none}
+.milestone-create-toggle:hover{
+    border-color:#8db6d6;
+    background:var(--so-blue-soft)
+}
+.milestone-create-icon{
+    display:inline-flex;
+    width:22px;
+    height:22px;
+    align-items:center;
+    justify-content:center;
+    border-radius:7px;
+    background:var(--so-blue);
+    color:#fff;
+    font-size:16px;
+    line-height:1
+}
+.milestone-create[open] .milestone-create-icon{transform:rotate(45deg)}
+.milestone-create-body{
+    margin-top:12px;
+    padding:14px;
+    border:1px solid var(--so-border);
+    border-radius:13px;
+    background:var(--so-surface-soft)
+}
+
+@media(max-width:759px){
+    .detail-mode-banner{align-items:flex-start;flex-direction:column}
+    .milestone-create-toggle{width:100%;justify-content:flex-start}
+}
+
+@media(prefers-color-scheme:dark){
+    .detail-mode-banner{
+        border-color:#234c6d;
+        background:#102b42;
+        color:#cbd5e1
+    }
+    .milestone-create-toggle{
+        border-color:#334155;
+        background:#0f172a;
+        color:#7dd3fc
+    }
+}
