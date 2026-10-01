@@ -197,7 +197,7 @@
                         <div class="commercial-card-head">
                             <div>
                                 <strong>
-                                    {{ AppModelsServiceOrderExecutionOrder::documentTypeOptions()[$executionOrder->document_type] ?? 'Documento' }}
+                                    {{ \App\Models\ServiceOrderExecutionOrder::documentTypeOptions()[$executionOrder->document_type] ?? 'Documento' }}
                                     {{ $executionOrder->document_number ?: 'pendiente de número' }}
                                 </strong>
                                 <div class="milestone-meta">
@@ -207,7 +207,7 @@
                                 </div>
                             </div>
                             <span class="milestone-status">
-                                {{ AppModelsServiceOrderExecutionOrder::statusOptions()[$executionOrder->status] ?? $executionOrder->status }}
+                                {{ \App\Models\ServiceOrderExecutionOrder::statusOptions()[$executionOrder->status] ?? $executionOrder->status }}
                             </span>
                         </div>
 
@@ -218,11 +218,11 @@
                                     @csrf
                                     <div class="grid milestone-grid">
                                         <div class="field"><label>Ejercicio fiscal</label><input type="number" min="2000" max="2100" name="fiscal_year" value="{{ $executionOrder->fiscal_year }}"></div>
-                                        <div class="field"><label>Tipo</label><select name="document_type">@foreach(AppModelsServiceOrderExecutionOrder::documentTypeOptions() as $value=>$label)<option value="{{ $value }}" @selected($executionOrder->document_type === $value)>{{ $label }}</option>@endforeach</select></div>
+                                        <div class="field"><label>Tipo</label><select name="document_type">@foreach(\App\Models\ServiceOrderExecutionOrder::documentTypeOptions() as $value=>$label)<option value="{{ $value }}" @selected($executionOrder->document_type === $value)>{{ $label }}</option>@endforeach</select></div>
                                         <div class="field"><label>N.º documento</label><input name="document_number" maxlength="120" value="{{ $executionOrder->document_number }}"></div>
                                         <div class="field"><label>Fecha de emisión</label><input type="date" name="issued_date" value="{{ $executionOrder->issued_date?->format('Y-m-d') }}"></div>
                                         <div class="field"><label>Monto</label><input type="number" min="0" step="0.01" name="amount" value="{{ $executionOrder->amount }}"></div>
-                                        <div class="field"><label>Estado</label><select name="status">@foreach(AppModelsServiceOrderExecutionOrder::statusOptions() as $value=>$label)<option value="{{ $value }}" @selected($executionOrder->status === $value)>{{ $label }}</option>@endforeach</select></div>
+                                        <div class="field"><label>Estado</label><select name="status">@foreach(\App\Models\ServiceOrderExecutionOrder::statusOptions() as $value=>$label)<option value="{{ $value }}" @selected($executionOrder->status === $value)>{{ $label }}</option>@endforeach</select></div>
                                         <div class="field"><label>Inicio</label><input type="date" name="start_date" value="{{ $executionOrder->start_date?->format('Y-m-d') }}"></div>
                                         <div class="field"><label>Fin</label><input type="date" name="end_date" value="{{ $executionOrder->end_date?->format('Y-m-d') }}"></div>
                                         <div class="field span-2"><label>Notas</label><textarea name="notes">{{ $executionOrder->notes }}</textarea></div>
@@ -244,11 +244,11 @@
                         @csrf
                         <div class="grid milestone-grid">
                             <div class="field"><label>Ejercicio fiscal</label><input type="number" min="2000" max="2100" name="fiscal_year" value="{{ now()->year }}"></div>
-                            <div class="field"><label>Tipo</label><select name="document_type">@foreach(AppModelsServiceOrderExecutionOrder::documentTypeOptions() as $value=>$label)<option value="{{ $value }}">{{ $label }}</option>@endforeach</select></div>
+                            <div class="field"><label>Tipo</label><select name="document_type">@foreach(\App\Models\ServiceOrderExecutionOrder::documentTypeOptions() as $value=>$label)<option value="{{ $value }}">{{ $label }}</option>@endforeach</select></div>
                             <div class="field"><label>N.º documento</label><input name="document_number" maxlength="120" placeholder="Puede quedar pendiente"></div>
                             <div class="field"><label>Fecha de emisión</label><input type="date" name="issued_date"></div>
                             <div class="field"><label>Monto</label><input type="number" min="0" step="0.01" name="amount"></div>
-                            <div class="field"><label>Estado</label><select name="status">@foreach(AppModelsServiceOrderExecutionOrder::statusOptions() as $value=>$label)<option value="{{ $value }}">{{ $label }}</option>@endforeach</select></div>
+                            <div class="field"><label>Estado</label><select name="status">@foreach(\App\Models\ServiceOrderExecutionOrder::statusOptions() as $value=>$label)<option value="{{ $value }}">{{ $label }}</option>@endforeach</select></div>
                             <div class="field"><label>Inicio</label><input type="date" name="start_date"></div>
                             <div class="field"><label>Fin</label><input type="date" name="end_date"></div>
                             <div class="field span-2"><label>Notas</label><textarea name="notes"></textarea></div>
@@ -302,7 +302,7 @@
                                         <div class="field"><label>Fecha emisión</label><input type="date" name="issue_date" value="{{ $invoice->issue_date?->format('Y-m-d') }}"></div>
                                         <div class="field"><label>Vencimiento</label><input type="date" name="due_date" value="{{ $invoice->due_date?->format('Y-m-d') }}"></div>
                                         <div class="field"><label>Monto</label><input type="number" min="0" step="0.01" name="amount" value="{{ $invoice->amount }}"></div>
-                                        <div class="field"><label>Estado</label><select name="status">@foreach(AppModelsServiceOrderInvoice::statusOptions() as $value=>$label)<option value="{{ $value }}" @selected($invoice->status === $value)>{{ $label }}</option>@endforeach</select></div>
+                                        <div class="field"><label>Estado</label><select name="status">@foreach(\App\Models\ServiceOrderInvoice::statusOptions() as $value=>$label)<option value="{{ $value }}" @selected($invoice->status === $value)>{{ $label }}</option>@endforeach</select></div>
                                         <div class="field"><label>Fecha pago</label><input type="date" name="paid_date" value="{{ $invoice->paid_date?->format('Y-m-d') }}"></div>
                                         <div class="field span-2"><label>Notas</label><textarea name="notes">{{ $invoice->notes }}</textarea></div>
                                     </div>
@@ -327,7 +327,7 @@
                             <div class="field"><label>Fecha emisión</label><input type="date" name="issue_date"></div>
                             <div class="field"><label>Vencimiento</label><input type="date" name="due_date"></div>
                             <div class="field"><label>Monto</label><input type="number" min="0" step="0.01" name="amount"></div>
-                            <div class="field"><label>Estado</label><select name="status">@foreach(AppModelsServiceOrderInvoice::statusOptions() as $value=>$label)<option value="{{ $value }}">{{ $label }}</option>@endforeach</select></div>
+                            <div class="field"><label>Estado</label><select name="status">@foreach(\App\Models\ServiceOrderInvoice::statusOptions() as $value=>$label)<option value="{{ $value }}">{{ $label }}</option>@endforeach</select></div>
                             <div class="field"><label>Fecha pago</label><input type="date" name="paid_date"></div>
                             <div class="field span-2"><label>Notas</label><textarea name="notes"></textarea></div>
                         </div>
