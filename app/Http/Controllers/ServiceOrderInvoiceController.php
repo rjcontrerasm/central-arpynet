@@ -20,9 +20,10 @@ class ServiceOrderInvoiceController extends Controller
         $validated = $this->validatePayload($request);
         $this->validateExecutionOrder($serviceOrder, $validated);
 
-        $serviceOrder->invoices()->create(
-            $this->attributes($request, $validated),
-        );
+        $attributes = $this->attributes($validated);
+        $attributes['created_by'] = $request->user()->id;
+
+        $serviceOrder->invoices()->create($attributes);
 
         return redirect()
             ->route('service-order-front.edit', $serviceOrder)
@@ -45,7 +46,7 @@ class ServiceOrderInvoiceController extends Controller
         $this->validateExecutionOrder($serviceOrder, $validated);
 
         $invoice->fill(
-            $this->attributes($request, $validated),
+            $this->attributes($validated),
         )->save();
 
         return redirect()
@@ -97,10 +98,7 @@ class ServiceOrderInvoiceController extends Controller
         }
     }
 
-    private function attributes(
-        Request $request,
-        array $validated,
-    ): array {
+    private function attributes(array $validated): array {
         foreach (['number', 'notes'] as $field) {
             $value = trim((string) ($validated[$field] ?? ''));
             $validated[$field] = $value !== '' ? $value : null;
@@ -112,8 +110,6 @@ class ServiceOrderInvoiceController extends Controller
         ) {
             $validated['paid_date'] = now()->toDateString();
         }
-
-        $validated['created_by'] ??= $request->user()->id;
 
         return $validated;
     }
