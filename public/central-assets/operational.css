@@ -2712,3 +2712,49 @@ body:has(.global-undo-bar) .operational-scroll-top {
         transform: none !important;
     }
 }
+
+
+/*
+ * 2.40.19 — Posicionamiento real del toast reversible.
+ * El JS lo mueve a body para evitar que el header actúe como containing block.
+ */
+body > .global-undo-bar {
+    position: fixed !important;
+    top: auto !important;
+    right: max(18px, env(safe-area-inset-right)) !important;
+    bottom: max(20px, env(safe-area-inset-bottom)) !important;
+    left: auto !important;
+    z-index: 420 !important;
+}
+
+body.has-global-undo-toast .success {
+    display: none !important;
+}
+
+body.has-global-undo-toast .operational-scroll-top {
+    bottom:
+        max(
+            88px,
+            calc(env(safe-area-inset-bottom) + 78px)
+        ) !important;
+}
+
+@media (max-width: 759px) {
+    body > .global-undo-bar {
+        right: max(12px, env(safe-area-inset-right)) !important;
+        bottom:
+            max(
+                86px,
+                calc(env(safe-area-inset-bottom) + 74px)
+            ) !important;
+        left: max(12px, env(safe-area-inset-left)) !important;
+    }
+
+    body.has-global-undo-toast .operational-scroll-top {
+        bottom:
+            max(
+                168px,
+                calc(env(safe-area-inset-bottom) + 156px)
+            ) !important;
+    }
+}
