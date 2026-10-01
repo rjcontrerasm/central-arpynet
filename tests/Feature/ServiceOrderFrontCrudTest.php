@@ -38,7 +38,8 @@ class ServiceOrderFrontCrudTest extends TestCase
         $this->actingAs($user)
             ->get('/servicios/nuevo')
             ->assertOk()
-            ->assertSee('Nuevo servicio')
+            ->assertSee('Nueva orden / servicio')
+            ->assertSee('Nuevo cliente')
             ->assertDontSee('/admin/ordenes-servicio', false);
 
         $create = $this->actingAs($user)->post('/servicios', [
@@ -124,6 +125,48 @@ class ServiceOrderFrontCrudTest extends TestCase
             ->assertSee('Servicio FRONT actualizado')
             ->assertSee('Guardar cambios')
             ->assertDontSee('/admin/ordenes-servicio', false);
+    }
+
+    public function test_client_can_be_created_inline_from_service_order_form(): void
+    {
+        [$user, $organization] = $this->context('member');
+
+        $response = $this->actingAs($user)
+            ->postJson('/clientes', [
+                'organization_id' => $organization->id,
+                'name' => 'Cliente creado desde OS',
+                'legal_name' => 'Cliente OS S.A.C.',
+                'tax_id' => '20609999991',
+                'contact_name' => 'Contacto OS',
+                'email' => 'contacto-os@example.test',
+                'phone' => '999888777',
+                'is_active' => true,
+            ]);
+
+        $response
+            ->assertCreated()
+            ->assertJsonPath('message', 'Cliente creado.')
+            ->assertJsonPath('client.name', 'Cliente creado desde OS')
+            ->assertJsonPath(
+                'client.organization_ids.0',
+                $organization->id,
+            );
+
+        $client = Client::query()
+            ->where('name', 'Cliente creado desde OS')
+            ->firstOrFail();
+
+        $this->assertTrue($client->is_active);
+        $this->assertTrue(
+            $client->organizations()
+                ->whereKey($organization->id)
+                ->exists(),
+        );
+
+        $this->actingAs($user)
+            ->get('/servicios/nuevo?scope='.$organization->id)
+            ->assertOk()
+            ->assertSee('Cliente creado desde OS');
     }
 
     public function test_viewer_can_read_service_but_cannot_create_or_update(): void
