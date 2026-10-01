@@ -38,33 +38,15 @@
                 ) >= time();
         @endphp
 
-        <div class="success">
-            <div class="success-row">
-                <span>
-                    {{ session('daily_action_success') }}
-                </span>
-
-                @if ($canUndo)
-                    <form
-                        class="undo-form"
-                        method="POST"
-                        action="{{ route(
-                            'daily-task-action.undo',
-                        ) }}"
-                    >
-                        @csrf
-
-                        <button
-                            class="undo-button"
-                            type="submit"
-                            data-busy-label="Deshaciendo…"
-                        >
-                            Deshacer
-                        </button>
-                    </form>
-                @endif
+        @unless ($canUndo)
+            <div class="success">
+                <div class="success-row">
+                    <span>
+                        {{ session('daily_action_success') }}
+                    </span>
+                </div>
             </div>
-        </div>
+        @endunless
     @endif
 
     @php
