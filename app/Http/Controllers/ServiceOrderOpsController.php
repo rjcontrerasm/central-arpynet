@@ -64,7 +64,7 @@ class ServiceOrderOpsController extends Controller
         $finance = $validated['finance'] ?? 'all';
 
         $query = ServiceOrder::query()
-            ->with(['organization', 'client'])
+            ->with(['organization', 'client', 'workTeam', 'milestones.task'])
             ->whereIn('organization_id', $organizationIds);
 
         if ($selectedScope) {
