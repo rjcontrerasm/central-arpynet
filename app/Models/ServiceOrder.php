@@ -19,6 +19,10 @@ class ServiceOrder extends Model
         'client_id',
         'title',
         'description',
+        'contract_document_type',
+        'contract_number',
+        'contract_date',
+        'contract_amount',
         'stage',
         'stage_changed_at',
         'quotation_number',
@@ -52,6 +56,8 @@ class ServiceOrder extends Model
     {
         return [
             'stage_changed_at' => 'datetime',
+            'contract_date' => 'date',
+            'contract_amount' => 'decimal:2',
             'quotation_date' => 'date',
             'order_received_date' => 'date',
             'start_date' => 'date',
@@ -88,7 +94,9 @@ class ServiceOrder extends Model
             }
 
             $activityFields = [
-                'organization_id', 'client_id', 'title', 'description', 'stage',
+                'organization_id', 'client_id', 'title', 'description',
+                'contract_document_type', 'contract_number', 'contract_date',
+                'contract_amount', 'stage',
                 'quotation_number', 'quotation_date', 'order_number',
                 'order_received_date', 'start_date', 'end_date',
                 'report_submitted_date', 'conformity_date', 'invoice_number',
@@ -147,6 +155,48 @@ class ServiceOrder extends Model
     {
         return $this->hasMany(ServiceOrderMilestone::class)
             ->orderBy('sequence');
+    }
+
+    public function executionOrders(): HasMany
+    {
+        return $this->hasMany(ServiceOrderExecutionOrder::class)
+            ->orderBy('fiscal_year')
+            ->orderBy('id');
+    }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(ServiceOrderInvoice::class)
+            ->orderBy('issue_date')
+            ->orderBy('id');
+    }
+
+    public function getExecutionOrderedAmountAttribute(): float
+    {
+        return (float) $this->executionOrders
+            ->whereNotIn('status', ['cancelled'])
+            ->sum(fn ($order): float => (float) ($order->amount ?? 0));
+    }
+
+    public function getExecutionIssuedAmountAttribute(): float
+    {
+        return (float) $this->executionOrders
+            ->whereIn('status', ['issued', 'executing', 'closed'])
+            ->sum(fn ($order): float => (float) ($order->amount ?? 0));
+    }
+
+    public function getInvoicedTotalAttribute(): float
+    {
+        return (float) $this->invoices
+            ->whereNotIn('status', ['cancelled'])
+            ->sum(fn ($invoice): float => (float) ($invoice->amount ?? 0));
+    }
+
+    public function getPaidTotalAttribute(): float
+    {
+        return (float) $this->invoices
+            ->where('status', 'paid')
+            ->sum(fn ($invoice): float => (float) ($invoice->amount ?? 0));
     }
 
     public function createdBy(): BelongsTo

@@ -10,8 +10,10 @@ use App\Http\Controllers\RecurringObligationFrontController;
 use App\Http\Controllers\RecurringTaskFrontActionController;
 use App\Http\Controllers\RecurringTaskFrontController;
 use App\Http\Controllers\SafetyRecoveryController;
+use App\Http\Controllers\ServiceOrderExecutionOrderController;
 use App\Http\Controllers\ServiceOrderFrontActionController;
 use App\Http\Controllers\ServiceOrderFrontController;
+use App\Http\Controllers\ServiceOrderInvoiceController;
 use App\Http\Controllers\ServiceOrderMilestoneController;
 use Illuminate\Support\Facades\Route;
 
@@ -51,6 +53,19 @@ Route::middleware('auth')->group(function (): void {
         ->name('service-order-milestones.store');
     Route::post('/servicios/{serviceOrder}/hitos/{milestone}', [ServiceOrderMilestoneController::class, 'update'])
         ->name('service-order-milestones.update');
+
+    Route::post('/servicios/{serviceOrder}/hitos/{milestone}/accion', [ServiceOrderMilestoneController::class, 'action'])
+        ->name('service-order-milestones.action');
+
+    Route::post('/servicios/{serviceOrder}/ordenes-ejecucion', [ServiceOrderExecutionOrderController::class, 'store'])
+        ->name('service-order-execution-orders.store');
+    Route::post('/servicios/{serviceOrder}/ordenes-ejecucion/{executionOrder}', [ServiceOrderExecutionOrderController::class, 'update'])
+        ->name('service-order-execution-orders.update');
+
+    Route::post('/servicios/{serviceOrder}/facturas', [ServiceOrderInvoiceController::class, 'store'])
+        ->name('service-order-invoices.store');
+    Route::post('/servicios/{serviceOrder}/facturas/{invoice}', [ServiceOrderInvoiceController::class, 'update'])
+        ->name('service-order-invoices.update');
 
     Route::get('/vencimientos/recurrentes', [RecurringObligationFrontController::class, 'index'])
         ->name('recurring-obligation-front.index');

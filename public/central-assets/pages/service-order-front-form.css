@@ -372,3 +372,129 @@ h1{margin:0;font-size:clamp(32px,5vw,48px);line-height:1;letter-spacing:-.045em;
     .milestone-contract,.milestone-editor,.milestone-create{border-color:#24304b}
     .milestone-empty{border-color:#334155;color:#94a3b8}
 }
+
+
+/* 2.42.0 — Contract execution, invoices and milestone actions */
+.commercial-panel{margin-top:18px}
+.commercial-heading{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:14px
+}
+.financial-kpis{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    gap:8px
+}
+.financial-kpis span{
+    display:grid;
+    gap:2px;
+    min-width:128px;
+    padding:9px 11px;
+    border:1px solid var(--so-border);
+    border-radius:11px;
+    background:var(--so-surface-soft);
+    color:var(--so-muted);
+    font-size:10px;
+    text-align:right
+}
+.financial-kpis strong{
+    color:var(--so-text);
+    font-size:13px
+}
+.commercial-list{display:grid;gap:10px}
+.commercial-card{
+    padding:14px;
+    border:1px solid var(--so-border);
+    border-radius:14px;
+    background:var(--so-surface)
+}
+.commercial-card-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:14px
+}
+.commercial-card-head strong{
+    display:block;
+    color:var(--so-text);
+    font-size:14px
+}
+.commercial-editor,
+.commercial-create{
+    margin-top:12px;
+    padding-top:11px;
+    border-top:1px solid var(--so-border)
+}
+.commercial-editor summary,
+.commercial-create summary{
+    cursor:pointer;
+    color:var(--so-blue);
+    font-size:12px;
+    font-weight:850
+}
+.commercial-editor form,
+.commercial-create form{margin-top:12px}
+
+.milestone-status-stack{
+    display:grid;
+    justify-items:end;
+    gap:5px
+}
+.task-status{
+    background:#f5f7fa;
+    color:#5f7285
+}
+.milestone-quick-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+    margin:12px 0 0 45px;
+    padding-top:10px;
+    border-top:1px solid var(--so-border)
+}
+.milestone-quick-actions form{margin:0}
+.quick-action{
+    display:inline-flex;
+    min-height:34px;
+    align-items:center;
+    justify-content:center;
+    padding:6px 10px;
+    border:1px solid #bfd3e5;
+    border-radius:9px;
+    background:#fff;
+    color:var(--so-blue);
+    font-size:11px;
+    font-weight:850;
+    cursor:pointer
+}
+.quick-action:hover{
+    border-color:#8db6d6;
+    background:var(--so-blue-soft)
+}
+.secondary-action{color:#53697c}
+
+@media(max-width:759px){
+    .commercial-heading,
+    .commercial-card-head{display:grid}
+    .financial-kpis{justify-content:stretch}
+    .financial-kpis span{min-width:0;text-align:left}
+    .milestone-status-stack{
+        grid-column:2;
+        justify-items:start
+    }
+    .milestone-quick-actions{margin-left:0}
+}
+
+@media(prefers-color-scheme:dark){
+    .task-status{background:#182235;color:#cbd5e1}
+    .quick-action{
+        border-color:#334155;
+        background:#0f172a;
+        color:#7dd3fc
+    }
+    .quick-action:hover{background:#102b42}
+}
