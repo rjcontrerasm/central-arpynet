@@ -1776,7 +1776,7 @@ textarea:focus,
     height: 44px;
     background:
         transparent
-        url('/central-assets/brand/arpynet-logo-white.svg')
+        url('/central-assets/brand/arpynet-official-vector-white.svg')
         center / contain
         no-repeat;
     box-shadow: none;
@@ -1827,5 +1827,24 @@ textarea:focus,
 @media (prefers-color-scheme: dark) {
     .topbar .brand {
         background: transparent;
+    }
+}
+
+
+/*
+ * 2.40.14 — Logo oficial vectorial proporcionado por ARPYNET.
+ * Conserva la geometría exacta del SVG suministrado y lo presenta
+ * en monocromo blanco para máxima legibilidad sobre el header azul.
+ */
+.topbar .brand::before {
+    width: 194px;
+    height: 42px;
+    background-size: contain;
+}
+
+@media (max-width: 759px) {
+    .topbar .brand::before {
+        width: 164px;
+        height: 38px;
     }
 }
