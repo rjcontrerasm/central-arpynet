@@ -210,6 +210,16 @@ class ServiceOrderMilestoneController extends Controller
             ],
         ]);
 
+        if (
+            $validated['action'] === 'complete_task'
+            && $milestone->task
+        ) {
+            abort_unless(
+                $milestone->task->canBeUpdatedBy($request->user()),
+                403,
+            );
+        }
+
         $today = now(
             config('app.timezone', 'America/Lima'),
         )->toDateString();
