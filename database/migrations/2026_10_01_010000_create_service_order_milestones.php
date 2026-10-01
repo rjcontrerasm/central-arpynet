@@ -53,6 +53,8 @@ return new class extends Migration
                 'service_order_milestone_sequence_unique',
             );
 
+            // Keep the explicit name below MariaDB's
+            // 64-character identifier limit.
             $table->index(
                 [
                     'service_order_id',
