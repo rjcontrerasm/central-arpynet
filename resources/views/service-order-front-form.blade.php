@@ -7,7 +7,7 @@
     <title>{{ $serviceOrder ? 'Editar servicio' : 'Nuevo servicio' }} · Central ARPYNET</title>
     <link
         rel="stylesheet"
-        href="{{ asset('central-assets/pages/service-order-front-form.css') }}?v=2.39.2"
+        href="{{ asset('central-assets/pages/service-order-front-form.css') }}?v={{ filemtime(public_path('central-assets/pages/service-order-front-form.css')) }}"
     >
 </head>
 <body>
@@ -18,6 +18,7 @@
     </div>
 
     @if(session('service_front_success'))<div class="success">{{ session('service_front_success') }}</div>@endif
+    @if(session('service_milestone_success'))<div class="success">{{ session('service_milestone_success') }}</div>@endif
     @if($errors->any())<div class="errors">@foreach($errors->all() as $error)<div>{{ $error }}</div>@endforeach</div>@endif
 
     <section class="hero"><div><h1>{{ $serviceOrder ? 'Editar servicio' : 'Nuevo servicio' }}</h1><div class="subtitle">Seguimiento comercial, ejecución y finanzas desde CENTRAL Front.</div></div></section>
@@ -27,6 +28,7 @@
         $organizationId=(int)old('organization_id',$serviceOrder?->organization_id ?? $defaultOrganizationId);
         $selectedClient=(int)old('client_id',$serviceOrder?->client_id ?? 0);
         $selectedAssignee=(int)old('assigned_to',$serviceOrder?->assigned_to ?? auth()->id());
+        $selectedWorkTeam=(int)old('work_team_id',$serviceOrder?->work_team_id ?? 0);
     @endphp
 
     <section class="panel">
@@ -55,7 +57,17 @@
 
                 <div class="field span-2"><label for="title">Servicio / asunto</label><input id="title" name="title" maxlength="255" required value="{{ old('title',$serviceOrder?->title) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
                 <div class="field"><label for="stage">Etapa</label><select id="stage" name="stage" {{ ! $canWrite ? 'disabled' : '' }} required>@foreach(\App\Models\ServiceOrder::stageOptions() as $value=>$label)<option value="{{ $value }}" @selected(old('stage',$serviceOrder?->stage ?? 'opportunity') === $value)>{{ $label }}</option>@endforeach</select></div>
-                <div class="field"><label for="assigned_to">Responsable</label><select id="assigned_to" name="assigned_to" {{ ! $canWrite ? 'disabled' : '' }}><option value="">Sin asignar</option>@foreach($assigneeOptions as $id=>$assignee)<option value="{{ $id }}" data-organizations="{{ implode(',',$assignee['organization_ids']) }}" @selected($selectedAssignee === (int)$id)>{{ $assignee['name'] }}</option>@endforeach</select></div>
+                <div class="field"><label for="assigned_to">Responsable</label><select id="assigned_to" name="assigned_to" {{ ! $canWrite ? 'disabled' : '' }}><option value="">Sin asignar</option>@foreach($assigneeOptions as $id=>$assignee)<option value="{{ $id }}" data-organizations="{{ implode(',',$assignee['organization_ids']) }}" data-work-teams="{{ implode(',',$assignee['work_team_ids']) }}" @selected($selectedAssignee === (int)$id)>{{ $assignee['name'] }}</option>@endforeach</select></div>
+                <div class="field">
+                    <label for="work_team_id">Equipo de trabajo</label>
+                    <select id="work_team_id" name="work_team_id" {{ ! $canWrite ? 'disabled' : '' }}>
+                        <option value="">Sin equipo · visible por empresa</option>
+                        @foreach($workTeamOptions as $id=>$team)
+                            <option value="{{ $id }}" @selected($selectedWorkTeam === (int)$id)>{{ $team['name'] }}</option>
+                        @endforeach
+                    </select>
+                    <div class="help">Si seleccionas un equipo, los hitos nuevos se crearán como tareas compartidas con ese equipo.</div>
+                </div>
                 <div class="field span-2"><label for="description">Descripción</label><textarea id="description" name="description" {{ ! $canWrite ? 'disabled' : '' }}>{{ old('description',$serviceOrder?->description) }}</textarea></div>
                 <div class="field"><label for="next_action">Próxima acción</label><input id="next_action" name="next_action" maxlength="255" value="{{ old('next_action',$serviceOrder?->next_action) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
                 <div class="field"><label for="next_action_at">Fecha de seguimiento</label><input id="next_action_at" type="datetime-local" name="next_action_at" value="{{ old('next_action_at',$serviceOrder?->next_action_at?->format('Y-m-d\TH:i')) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
@@ -98,8 +110,157 @@
             </div>
         </form>
     </section>
+
+    @if($serviceOrder)
+        @php
+            $milestoneCount = $serviceOrder->milestones->count();
+            $milestoneCompleted = $serviceOrder->milestones
+                ->filter(
+                    fn ($milestone) =>
+                        $milestone->conformity_date
+                        || $milestone->task?->status === 'completed',
+                )
+                ->count();
+            $milestoneOverdue = $serviceOrder->milestones
+                ->filter(
+                    fn ($milestone) =>
+                        $milestone->contractual_due_date
+                        && $milestone->contractual_due_date->isPast()
+                        && ! $milestone->conformity_date
+                        && ! in_array(
+                            $milestone->task?->status,
+                            ['completed', 'cancelled'],
+                            true,
+                        ),
+                )
+                ->count();
+            $milestoneProgress = $milestoneCount > 0
+                ? (int) round(($milestoneCompleted / $milestoneCount) * 100)
+                : 0;
+            $eligibleMilestoneAssignees = collect($assigneeOptions)
+                ->filter(
+                    fn ($assignee) =>
+                        ! $serviceOrder->work_team_id
+                        || in_array(
+                            (int) $serviceOrder->work_team_id,
+                            $assignee['work_team_ids'],
+                            true,
+                        ),
+                );
+        @endphp
+
+        <section class="panel milestone-panel" id="cronograma">
+            <div class="milestone-heading">
+                <div>
+                    <div class="section-title milestone-title">Cronograma / hitos</div>
+                    <div class="help">
+                        Cada hito genera una tarea operativa vinculada a esta orden.
+                        Las fechas son contractuales y no se interpretan como recurrencia mensual.
+                    </div>
+                </div>
+                <div class="milestone-summary">
+                    <strong>{{ $milestoneCompleted }}/{{ $milestoneCount }}</strong>
+                    <span>completados</span>
+                    @if($milestoneOverdue > 0)
+                        <span class="milestone-overdue">{{ $milestoneOverdue }} vencido{{ $milestoneOverdue === 1 ? '' : 's' }}</span>
+                    @endif
+                </div>
+            </div>
+
+            <div class="milestone-progress" aria-label="Avance de hitos: {{ $milestoneProgress }}%">
+                <span style="width: {{ $milestoneProgress }}%"></span>
+            </div>
+
+            <div class="milestone-list">
+                @forelse($serviceOrder->milestones as $milestone)
+                    @php
+                        $task = $milestone->task;
+                        $isOverdue =
+                            $milestone->contractual_due_date
+                            && $milestone->contractual_due_date->isPast()
+                            && ! $milestone->conformity_date
+                            && ! in_array(
+                                $task?->status,
+                                ['completed', 'cancelled'],
+                                true,
+                            );
+                    @endphp
+                    <article class="milestone-card {{ $isOverdue ? 'is-overdue' : '' }}">
+                        <div class="milestone-main">
+                            <div class="milestone-number">{{ $milestone->sequence }}</div>
+                            <div class="milestone-copy">
+                                <strong>{{ $milestone->title }}</strong>
+                                <div class="milestone-meta">
+                                    <span>{{ $milestone->contractual_due_date ? 'Vence '.$milestone->contractual_due_date->format('d/m/Y') : 'Sin fecha contractual' }}</span>
+                                    <span>{{ $task?->assignee?->name ?? 'Sin responsable' }}</span>
+                                    @if($serviceOrder->workTeam)<span>{{ $serviceOrder->workTeam->name }}</span>@endif
+                                </div>
+                            </div>
+                            <span class="milestone-status {{ $isOverdue ? 'danger' : '' }}">
+                                {{ $milestone->operational_status_label }}
+                            </span>
+                        </div>
+
+                        @if($milestone->delivered_date || $milestone->conformity_date || $milestone->amount)
+                            <div class="milestone-contract">
+                                @if($milestone->delivered_date)<span>Entregado: {{ $milestone->delivered_date->format('d/m/Y') }}</span>@endif
+                                @if($milestone->conformity_date)<span>Conformidad: {{ $milestone->conformity_date->format('d/m/Y') }}</span>@endif
+                                @if($milestone->amount)<span>Monto: {{ $serviceOrder->currency }} {{ number_format((float)$milestone->amount,2,'.',',') }}</span>@endif
+                            </div>
+                        @endif
+
+                        @if($canWrite)
+                            <details class="milestone-editor">
+                                <summary>Editar hito</summary>
+                                <form method="POST" action="{{ route('service-order-milestones.update',[$serviceOrder,$milestone]) }}">
+                                    @csrf
+                                    <div class="grid milestone-grid">
+                                        <div class="field span-2"><label>Título</label><input name="title" required maxlength="255" value="{{ $milestone->title }}"></div>
+                                        <div class="field"><label>Fecha contractual</label><input type="date" name="contractual_due_date" value="{{ $milestone->contractual_due_date?->format('Y-m-d') }}"></div>
+                                        <div class="field"><label>Responsable</label><select name="assigned_to">@foreach($eligibleMilestoneAssignees as $id=>$assignee)<option value="{{ $id }}" @selected((int)$task?->assigned_to === (int)$id)>{{ $assignee['name'] }}</option>@endforeach</select></div>
+                                        <div class="field"><label>Prioridad</label><select name="urgency">@foreach(['low'=>'Baja','normal'=>'Normal','high'=>'Alta','critical'=>'Crítica'] as $value=>$label)<option value="{{ $value }}" @selected(($task?->urgency ?? 'normal') === $value)>{{ $label }}</option>@endforeach</select></div>
+                                        <div class="field"><label>Monto asociado</label><input type="number" min="0" step="0.01" name="amount" value="{{ $milestone->amount }}"></div>
+                                        <div class="field"><label>Fecha de entrega</label><input type="date" name="delivered_date" value="{{ $milestone->delivered_date?->format('Y-m-d') }}"></div>
+                                        <div class="field"><label>Fecha de conformidad</label><input type="date" name="conformity_date" value="{{ $milestone->conformity_date?->format('Y-m-d') }}"></div>
+                                        <div class="field span-2"><label>Descripción</label><textarea name="description">{{ $milestone->description }}</textarea></div>
+                                        <div class="field span-2"><label>Notas contractuales</label><textarea name="notes">{{ $milestone->notes }}</textarea></div>
+                                    </div>
+                                    <div class="actions"><button class="primary" type="submit" data-busy-label="Guardando…">Guardar hito</button></div>
+                                </form>
+                            </details>
+                        @endif
+                    </article>
+                @empty
+                    <div class="milestone-empty">
+                        Esta orden todavía no tiene hitos. Agrega el primer entregable para generar su tarea operativa.
+                    </div>
+                @endforelse
+            </div>
+
+            @if($canWrite)
+                <div class="milestone-create">
+                    <div class="section-title">Agregar hito / entregable</div>
+                    <form method="POST" action="{{ route('service-order-milestones.store',$serviceOrder) }}">
+                        @csrf
+                        <div class="grid milestone-grid">
+                            <div class="field span-2"><label for="milestone_title">Título del entregable</label><input id="milestone_title" name="title" required maxlength="255" placeholder="Ej. Entregable 1 · Informe de implementación"></div>
+                            <div class="field"><label for="milestone_due">Fecha contractual</label><input id="milestone_due" type="date" name="contractual_due_date"></div>
+                            <div class="field"><label for="milestone_assignee">Responsable</label><select id="milestone_assignee" name="assigned_to">@foreach($eligibleMilestoneAssignees as $id=>$assignee)<option value="{{ $id }}" @selected((int)$serviceOrder->assigned_to === (int)$id)>{{ $assignee['name'] }}</option>@endforeach</select></div>
+                            <div class="field"><label for="milestone_urgency">Prioridad</label><select id="milestone_urgency" name="urgency"><option value="normal">Normal</option><option value="high">Alta</option><option value="critical">Crítica</option><option value="low">Baja</option></select></div>
+                            <div class="field"><label for="milestone_amount">Monto asociado</label><input id="milestone_amount" type="number" min="0" step="0.01" name="amount"></div>
+                            <div class="field span-2"><label for="milestone_description">Descripción</label><textarea id="milestone_description" name="description"></textarea></div>
+                            <div class="field span-2"><label for="milestone_notes">Notas contractuales</label><textarea id="milestone_notes" name="notes"></textarea></div>
+                        </div>
+                        <div class="actions">
+                            <button class="primary" type="submit" data-busy-label="Creando…">Agregar hito y crear tarea</button>
+                        </div>
+                    </form>
+                </div>
+            @endif
+        </section>
+    @endif
 </div>
-<script src="{{ asset('central-assets/pages/service-order-front-form.js') }}?v=2.39.2"></script>
+<script src="{{ asset('central-assets/pages/service-order-front-form.js') }}?v={{ filemtime(public_path('central-assets/pages/service-order-front-form.js')) }}"></script>
 <x-operational-theme />
 <x-operational-interactions />
 </body>
