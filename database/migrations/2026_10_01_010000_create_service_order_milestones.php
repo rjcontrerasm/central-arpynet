@@ -53,10 +53,13 @@ return new class extends Migration
                 'service_order_milestone_sequence_unique',
             );
 
-            $table->index([
-                'service_order_id',
-                'contractual_due_date',
-            ]);
+            $table->index(
+                [
+                    'service_order_id',
+                    'contractual_due_date',
+                ],
+                'so_milestones_order_due_idx',
+            );
         });
     }
 
