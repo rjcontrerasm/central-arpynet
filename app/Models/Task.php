@@ -195,6 +195,14 @@ class Task extends Model
             'task_id',
         );
     }
+    public function serviceOrderMilestone(): HasOne
+    {
+        return $this->hasOne(
+            ServiceOrderMilestone::class,
+            'task_id',
+        );
+    }
+
     public function assignee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');
