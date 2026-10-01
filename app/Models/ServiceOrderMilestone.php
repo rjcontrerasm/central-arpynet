@@ -14,6 +14,7 @@ class ServiceOrderMilestone extends Model
     protected $fillable = [
         'service_order_id',
         'task_id',
+        'execution_order_id',
         'sequence',
         'title',
         'description',
@@ -46,12 +47,25 @@ class ServiceOrderMilestone extends Model
         return $this->belongsTo(Task::class);
     }
 
+    public function executionOrder(): BelongsTo
+    {
+        return $this->belongsTo(
+            ServiceOrderExecutionOrder::class,
+            'execution_order_id',
+        );
+    }
+
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
     public function getOperationalStatusLabelAttribute(): string
+    {
+        return $this->contractual_status_label;
+    }
+
+    public function getContractualStatusLabelAttribute(): string
     {
         if ($this->conformity_date) {
             return 'Conforme';
@@ -61,19 +75,21 @@ class ServiceOrderMilestone extends Model
             return 'Entregado';
         }
 
-        if ($this->task?->status === 'completed') {
-            return 'Tarea completada';
-        }
-
-        if ($this->task?->status === 'cancelled') {
-            return 'Cancelado';
-        }
-
         if ($this->is_overdue) {
             return 'Vencido';
         }
 
         return 'Pendiente';
+    }
+
+    public function getTaskStatusLabelAttribute(): string
+    {
+        if (! $this->task) {
+            return 'Sin tarea';
+        }
+
+        return Task::statusOptions()[$this->task->status]
+            ?? ucfirst($this->task->status);
     }
 
     public function getIsOverdueAttribute(): bool
