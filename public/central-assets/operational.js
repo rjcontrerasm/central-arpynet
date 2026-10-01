@@ -130,6 +130,23 @@
                 });
             });
 
+            const undoToast = document.querySelector(
+                '.global-undo-bar'
+            );
+
+            if (
+                undoToast
+                && undoToast.parentElement !== document.body
+            ) {
+                document.body.appendChild(undoToast);
+            }
+
+            if (undoToast) {
+                document.body.classList.add(
+                    'has-global-undo-toast',
+                );
+            }
+
             const homeUrl = '/mi-dia';
 
             document.querySelectorAll('.brand').forEach((brand) => {
