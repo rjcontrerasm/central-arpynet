@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Client;
 use App\Models\ServiceOrder;
 use App\Models\User;
+use App\Models\WorkTeam;
 use App\Support\GlobalUndoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,11 +25,15 @@ class ServiceOrderFrontActionController extends Controller
         );
 
         $this->validateRelations(
+            $request,
             $organizationId,
             (int) $validated['client_id'],
             isset($validated['assigned_to'])
                 ? (int) $validated['assigned_to']
                 : $request->user()->id,
+            isset($validated['work_team_id'])
+                ? (int) $validated['work_team_id']
+                : null,
         );
 
         $attributes = $this->attributes($request, $validated);
@@ -65,10 +70,14 @@ class ServiceOrderFrontActionController extends Controller
         }
 
         $this->validateRelations(
+            $request,
             $organizationId,
             (int) $validated['client_id'],
             isset($validated['assigned_to'])
                 ? (int) $validated['assigned_to']
+                : null,
+            isset($validated['work_team_id'])
+                ? (int) $validated['work_team_id']
                 : null,
         );
 
@@ -97,6 +106,7 @@ class ServiceOrderFrontActionController extends Controller
             'organization_id' => ['required', 'integer'],
             'client_id' => ['required', 'integer'],
             'assigned_to' => ['nullable', 'integer'],
+            'work_team_id' => ['nullable', 'integer'],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:10000'],
             'stage' => [
@@ -128,9 +138,11 @@ class ServiceOrderFrontActionController extends Controller
     }
 
     private function validateRelations(
+        Request $request,
         int $organizationId,
         int $clientId,
         ?int $assignedTo,
+        ?int $workTeamId,
     ): void {
         $clientIsValid = Client::query()
             ->whereKey($clientId)
@@ -169,6 +181,75 @@ class ServiceOrderFrontActionController extends Controller
             throw ValidationException::withMessages([
                 'assigned_to' =>
                     'El responsable debe tener acceso operativo al mismo ámbito.',
+            ]);
+        }
+
+        if ($workTeamId === null) {
+            return;
+        }
+
+        $manageableIds = $request->user()->manageableOrganizationIds();
+
+        $teamIsValid = WorkTeam::query()
+            ->whereKey($workTeamId)
+            ->where('is_active', true)
+            ->where(
+                function ($query) use (
+                    $request,
+                    $manageableIds,
+                ): void {
+                    $query->whereHas(
+                        'users',
+                        fn ($membership) => $membership
+                            ->where(
+                                'users.id',
+                                $request->user()->id,
+                            )
+                            ->where(
+                                'work_team_user.is_active',
+                                true,
+                            ),
+                    );
+
+                    if ($manageableIds !== []) {
+                        $query->orWhereIn(
+                            'home_organization_id',
+                            $manageableIds,
+                        );
+                    }
+                },
+            )
+            ->exists();
+
+        if (! $teamIsValid) {
+            throw ValidationException::withMessages([
+                'work_team_id' =>
+                    'El equipo seleccionado no está disponible para este usuario.',
+            ]);
+        }
+
+        if ($assignedTo === null) {
+            return;
+        }
+
+        $assigneeBelongsToTeam = User::query()
+            ->whereKey($assignedTo)
+            ->whereHas(
+                'workTeams',
+                fn ($query) => $query
+                    ->where('work_teams.id', $workTeamId)
+                    ->where('work_team_user.is_active', true)
+                    ->whereIn(
+                        'work_team_user.role',
+                        ['lead', 'member'],
+                    ),
+            )
+            ->exists();
+
+        if (! $assigneeBelongsToTeam) {
+            throw ValidationException::withMessages([
+                'assigned_to' =>
+                    'El responsable debe pertenecer al equipo seleccionado.',
             ]);
         }
     }
