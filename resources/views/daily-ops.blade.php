@@ -111,124 +111,6 @@
         @endif
     </section>
 
-    <nav class="scopes" aria-label="Vista de trabajo">
-        @foreach ($workViewLabels as $value => $label)
-            <a
-                class="scope {{
-                    $selectedWorkView === $value
-                        ? 'active'
-                        : ''
-                }}"
-                href="{{ route(
-                    'daily-ops.show',
-                    array_filter([
-                        'view' => $value,
-                        'scope' => $selectedScope,
-                        'work_team' => $selectedWorkTeam,
-                        'q' => $search !== ''
-                            ? $search
-                            : null,
-                        'priority' => $selectedPriority,
-                        'recurring_rule' =>
-                            $selectedRecurringRule,
-                    ]),
-                ) }}"
-            >
-                {{ $label }}
-            </a>
-        @endforeach
-    </nav>
-
-    @if ($workTeams->isNotEmpty())
-        <nav class="scopes" aria-label="Filtrar por equipo">
-            <a
-                class="scope {{ $selectedWorkTeam ? '' : 'active' }}"
-                href="{{ route(
-                    'daily-ops.show',
-                    array_filter([
-                        'view' => $selectedWorkView,
-                        'scope' => $selectedScope,
-                        'q' => $search !== '' ? $search : null,
-                        'priority' => $selectedPriority,
-                        'recurring_rule' => $selectedRecurringRule,
-                    ]),
-                ) }}"
-            >
-                Todos los equipos
-            </a>
-
-            @foreach ($workTeams as $workTeam)
-                <a
-                    class="scope {{
-                        $selectedWorkTeam === $workTeam->id
-                            ? 'active'
-                            : ''
-                    }}"
-                    href="{{ route(
-                        'daily-ops.show',
-                        array_filter([
-                            'view' => 'team',
-                            'work_team' => $workTeam->id,
-                            'scope' => $selectedScope,
-                            'q' => $search !== '' ? $search : null,
-                            'priority' => $selectedPriority,
-                            'recurring_rule' => $selectedRecurringRule,
-                        ]),
-                    ) }}"
-                >
-                    {{ $workTeam->name }}
-                </a>
-            @endforeach
-        </nav>
-    @endif
-
-    <nav class="scopes" aria-label="Filtrar por ámbito">
-        <a
-            class="scope {{ $selectedScope ? '' : 'active' }}"
-            href="{{ route(
-                'daily-ops.show',
-                array_filter([
-                    'view' => $selectedWorkView,
-                    'q' => $search !== ''
-                        ? $search
-                        : null,
-                    'priority' =>
-                        $selectedPriority,
-                    'recurring_rule' =>
-                        $selectedRecurringRule,
-                ]),
-            ) }}"
-        >
-            Todos
-        </a>
-
-        @foreach ($organizations as $organization)
-            <a
-                class="scope {{
-                    $selectedScope === $organization->id
-                        ? 'active'
-                        : ''
-                }}"
-                href="{{ route(
-                    'daily-ops.show',
-                    array_filter([
-                        'view' => $selectedWorkView,
-                        'scope' => $organization->id,
-                        'q' => $search !== ''
-                            ? $search
-                            : null,
-                        'priority' =>
-                            $selectedPriority,
-                        'recurring_rule' =>
-                            $selectedRecurringRule,
-                    ]),
-                ) }}"
-            >
-                {{ $organization->name }}
-            </a>
-        @endforeach
-    </nav>
-
     @php
         $baseQuery = array_filter([
             'view' => $selectedWorkView,
@@ -248,116 +130,229 @@
         ];
     @endphp
 
-    <section class="filters">
-        <form
-            class="search-form"
-            method="GET"
-            action="{{ route('daily-ops.show') }}"
-        >
-            <input
-                type="hidden"
-                name="view"
-                value="{{ $selectedWorkView }}"
-            >
+    <section
+        class="daily-context-panel"
+        aria-label="Contexto y filtros de Mi día"
+    >
+        <div class="daily-context-top">
+            <div class="daily-context-group daily-context-view">
+                <div class="daily-context-label">
+                    <svg class="daily-context-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 3 3.75 7.5 12 12l8.25-4.5L12 3Z"/>
+                        <path d="m3.75 12 8.25 4.5 8.25-4.5"/>
+                        <path d="m3.75 16.5 8.25 4.5 8.25-4.5"/>
+                    </svg>
+                    <span>Vista</span>
+                </div>
 
-            @if ($selectedScope)
-                <input
-                    type="hidden"
-                    name="scope"
-                    value="{{ $selectedScope }}"
-                >
+                <nav class="daily-context-options daily-view-options" aria-label="Vista de trabajo">
+                    @foreach ($workViewLabels as $value => $label)
+                        <a
+                            class="scope {{ $selectedWorkView === $value ? 'active' : '' }}"
+                            href="{{ route(
+                                'daily-ops.show',
+                                array_filter([
+                                    'view' => $value,
+                                    'scope' => $selectedScope,
+                                    'work_team' => $selectedWorkTeam,
+                                    'q' => $search !== '' ? $search : null,
+                                    'priority' => $selectedPriority,
+                                    'recurring_rule' => $selectedRecurringRule,
+                                ]),
+                            ) }}"
+                        >
+                            {{ $label }}
+                        </a>
+                    @endforeach
+                </nav>
+            </div>
+
+            @if ($workTeams->isNotEmpty())
+                <div class="daily-context-group daily-context-team">
+                    <div class="daily-context-label">
+                        <svg class="daily-context-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
+                        <span>Equipo</span>
+                    </div>
+
+                    <nav class="daily-context-options daily-team-options" aria-label="Filtrar por equipo">
+                        <a
+                            class="scope {{ $selectedWorkTeam ? '' : 'active' }}"
+                            href="{{ route(
+                                'daily-ops.show',
+                                array_filter([
+                                    'view' => $selectedWorkView,
+                                    'scope' => $selectedScope,
+                                    'q' => $search !== '' ? $search : null,
+                                    'priority' => $selectedPriority,
+                                    'recurring_rule' => $selectedRecurringRule,
+                                ]),
+                            ) }}"
+                        >
+                            Todos
+                        </a>
+
+                        @foreach ($workTeams as $workTeam)
+                            <a
+                                class="scope {{ $selectedWorkTeam === $workTeam->id ? 'active' : '' }}"
+                                href="{{ route(
+                                    'daily-ops.show',
+                                    array_filter([
+                                        'view' => 'team',
+                                        'work_team' => $workTeam->id,
+                                        'scope' => $selectedScope,
+                                        'q' => $search !== '' ? $search : null,
+                                        'priority' => $selectedPriority,
+                                        'recurring_rule' => $selectedRecurringRule,
+                                    ]),
+                                ) }}"
+                            >
+                                {{ $workTeam->name }}
+                            </a>
+                        @endforeach
+                    </nav>
+                </div>
             @endif
+        </div>
 
-            @if ($selectedWorkTeam)
-                <input
-                    type="hidden"
-                    name="work_team"
-                    value="{{ $selectedWorkTeam }}"
-                >
-            @endif
+        <div class="daily-context-section">
+            <div class="daily-context-label">
+                <svg class="daily-context-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M3 21h18"/>
+                    <path d="M5 21V5a2 2 0 0 1 2-2h6v18"/>
+                    <path d="M13 9h4a2 2 0 0 1 2 2v10"/>
+                    <path d="M8 7h2M8 11h2M8 15h2M16 13h1M16 17h1"/>
+                </svg>
+                <span>Empresa</span>
+            </div>
 
-            @if ($selectedPriority)
-                <input
-                    type="hidden"
-                    name="priority"
-                    value="{{ $selectedPriority }}"
-                >
-            @endif
-
-            @if ($selectedRecurringRule)
-                <input
-                    type="hidden"
-                    name="recurring_rule"
-                    value="{{ $selectedRecurringRule }}"
-                >
-            @endif
-
-                                            @if ($selectedWorkTeam)
-                                                <input
-                                                    type="hidden"
-                                                    name="work_team"
-                                                    value="{{ $selectedWorkTeam }}"
-                                                >
-                                            @endif
-
-            <input
-                class="search-input"
-                type="search"
-                name="q"
-                value="{{ $search }}"
-                placeholder="Buscar tarea..."
-                autocomplete="off"
-            >
-
-            <button
-                class="search-button"
-                type="submit"
-            >
-                Buscar
-            </button>
-        </form>
-
-        <nav
-            class="priority-filters"
-            aria-label="Filtrar por prioridad"
-        >
-            <a
-                class="priority-filter {{
-                    $selectedPriority
-                        ? ''
-                        : 'active'
-                }}"
-                href="{{ route(
-                    'daily-ops.show',
-                    $baseQuery,
-                ) }}"
-            >
-                Todas
-            </a>
-
-            @foreach (
-                $priorityLabels
-                as $value => $label
-            )
+            <nav class="daily-context-options daily-company-options" aria-label="Filtrar por empresa">
                 <a
-                    class="priority-filter {{
-                        $selectedPriority === $value
-                            ? 'active'
-                            : ''
-                    }}"
+                    class="scope {{ $selectedScope ? '' : 'active' }}"
                     href="{{ route(
                         'daily-ops.show',
-                        array_merge(
-                            $baseQuery,
-                            ['priority' => $value],
-                        ),
+                        array_filter([
+                            'view' => $selectedWorkView,
+                            'work_team' => $selectedWorkTeam,
+                            'q' => $search !== '' ? $search : null,
+                            'priority' => $selectedPriority,
+                            'recurring_rule' => $selectedRecurringRule,
+                        ]),
                     ) }}"
                 >
-                    {{ $label }}
+                    Todos
                 </a>
-            @endforeach
-        </nav>
 
+                @foreach ($organizations as $organization)
+                    <a
+                        class="scope {{ $selectedScope === $organization->id ? 'active' : '' }}"
+                        href="{{ route(
+                            'daily-ops.show',
+                            array_filter([
+                                'view' => $selectedWorkView,
+                                'scope' => $organization->id,
+                                'work_team' => $selectedWorkTeam,
+                                'q' => $search !== '' ? $search : null,
+                                'priority' => $selectedPriority,
+                                'recurring_rule' => $selectedRecurringRule,
+                            ]),
+                        ) }}"
+                    >
+                        {{ $organization->name }}
+                    </a>
+                @endforeach
+            </nav>
+        </div>
+
+        <div class="daily-context-section daily-search-section">
+            <div class="daily-context-label">
+                <svg class="daily-context-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7"/>
+                    <path d="m20 20-3.5-3.5"/>
+                </svg>
+                <span>Buscar</span>
+            </div>
+
+            <form class="search-form" method="GET" action="{{ route('daily-ops.show') }}">
+                <input type="hidden" name="view" value="{{ $selectedWorkView }}">
+
+                @if ($selectedScope)
+                    <input type="hidden" name="scope" value="{{ $selectedScope }}">
+                @endif
+
+                @if ($selectedWorkTeam)
+                    <input type="hidden" name="work_team" value="{{ $selectedWorkTeam }}">
+                @endif
+
+                @if ($selectedPriority)
+                    <input type="hidden" name="priority" value="{{ $selectedPriority }}">
+                @endif
+
+                @if ($selectedRecurringRule)
+                    <input type="hidden" name="recurring_rule" value="{{ $selectedRecurringRule }}">
+                @endif
+
+                <div class="daily-search-field">
+                    <svg class="daily-search-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="11" cy="11" r="7"/>
+                        <path d="m20 20-3.5-3.5"/>
+                    </svg>
+
+                    <input
+                        class="search-input"
+                        type="search"
+                        name="q"
+                        value="{{ $search }}"
+                        placeholder="Buscar tarea..."
+                        autocomplete="off"
+                    >
+                </div>
+
+                <button class="search-button" type="submit">
+                    Buscar
+                </button>
+            </form>
+        </div>
+
+        <div class="daily-context-section daily-status-section">
+            <div class="daily-context-label">
+                <svg class="daily-context-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 6h16M4 12h16M4 18h16"/>
+                    <circle cx="9" cy="6" r="2"/>
+                    <circle cx="15" cy="12" r="2"/>
+                    <circle cx="8" cy="18" r="2"/>
+                </svg>
+                <span>Estado</span>
+            </div>
+
+            <nav class="priority-filters" aria-label="Filtrar por prioridad">
+                <a
+                    class="priority-filter {{ $selectedPriority ? '' : 'active' }}"
+                    href="{{ route('daily-ops.show', $baseQuery) }}"
+                >
+                    Todas
+                </a>
+
+                @foreach ($priorityLabels as $value => $label)
+                    <a
+                        class="priority-filter {{ $selectedPriority === $value ? 'active' : '' }}"
+                        href="{{ route(
+                            'daily-ops.show',
+                            array_merge($baseQuery, ['priority' => $value]),
+                        ) }}"
+                    >
+                        {{ $label }}
+                    </a>
+                @endforeach
+            </nav>
+        </div>
+    </section>
+
+    <section class="filters daily-filter-summary-shell">
         @if (
             $search !== ''
             || $selectedPriority
