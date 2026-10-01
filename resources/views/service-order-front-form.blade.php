@@ -163,15 +163,16 @@
 
     @if($serviceOrder)
         @php
+            $plannedExecutionAmount = $serviceOrder->execution_ordered_amount;
+            $issuedExecutionAmount = $serviceOrder->execution_issued_amount;
             $contractBaseAmount = (float) (
                 $serviceOrder->contract_amount
                 ?? $serviceOrder->amount
-                ?? 0
+                ?? $plannedExecutionAmount
             );
-            $orderedAmount = $serviceOrder->execution_ordered_amount;
             $invoicedAmount = $serviceOrder->invoiced_total;
             $paidAmount = $serviceOrder->paid_total;
-            $pendingOrderAmount = max(0, $contractBaseAmount - $orderedAmount);
+            $pendingOrderAmount = max(0, $contractBaseAmount - $issuedExecutionAmount);
             $pendingInvoiceAmount = max(0, $contractBaseAmount - $invoicedAmount);
         @endphp
 
@@ -185,7 +186,7 @@
                     </div>
                 </div>
                 <div class="financial-kpis">
-                    <span><strong>{{ $serviceOrder->currency }} {{ number_format($orderedAmount,2,'.',',') }}</strong> ordenado</span>
+                    <span><strong>{{ $serviceOrder->currency }} {{ number_format($issuedExecutionAmount,2,'.',',') }}</strong> emitido</span>
                     <span><strong>{{ $serviceOrder->currency }} {{ number_format($pendingOrderAmount,2,'.',',') }}</strong> pendiente</span>
                 </div>
             </div>
