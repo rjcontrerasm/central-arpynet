@@ -145,6 +145,34 @@
                 document.body.classList.add(
                     'has-global-undo-toast',
                 );
+
+                if (window.location.pathname === '/mi-dia') {
+                    const undoMessage = undoToast
+                        .querySelector('.global-undo-message')
+                        ?.textContent
+                        ?.trim()
+                        ?.replace(/\s+/g, ' ');
+
+                    if (undoMessage) {
+                        document
+                            .querySelectorAll('.success')
+                            .forEach((success) => {
+                                const successMessage = success
+                                    .textContent
+                                    ?.trim()
+                                    ?.replace(/\s+/g, ' ');
+
+                                if (
+                                    successMessage
+                                    && successMessage.includes(
+                                        undoMessage,
+                                    )
+                                ) {
+                                    success.hidden = true;
+                                }
+                            });
+                    }
+                }
             }
 
             const homeUrl = '/mi-dia';
