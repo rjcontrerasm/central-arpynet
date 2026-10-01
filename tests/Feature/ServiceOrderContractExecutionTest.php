@@ -137,7 +137,7 @@ class ServiceOrderContractExecutionTest extends TestCase
             '/servicios/'.$service->id.'/hitos',
             [
                 'title' => 'Informe de ejecución inicial',
-                'contractual_due_date' => '2026-09-30',
+                'contractual_due_date' => '2026-10-30',
                 'execution_order_id' => $executionOrder->id,
                 'assigned_to' => $user->id,
                 'urgency' => 'high',
