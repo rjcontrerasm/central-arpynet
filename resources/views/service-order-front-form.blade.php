@@ -159,9 +159,12 @@
                 </div>
             </div>
 
-            <div class="milestone-progress" aria-label="Avance de hitos: {{ $milestoneProgress }}%">
-                <span style="width: {{ $milestoneProgress }}%"></span>
-            </div>
+            <progress
+                class="milestone-progress"
+                value="{{ $milestoneProgress }}"
+                max="100"
+                aria-label="Avance de hitos: {{ $milestoneProgress }}%"
+            >{{ $milestoneProgress }}%</progress>
 
             <div class="milestone-list">
                 @forelse($serviceOrder->milestones as $milestone)
