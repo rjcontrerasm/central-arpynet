@@ -130,6 +130,88 @@
                 });
             });
 
+            const homeUrl = '/mi-dia';
+
+            document.querySelectorAll('.brand').forEach((brand) => {
+                if (brand.tagName === 'A') {
+                    return;
+                }
+
+                brand.setAttribute('role', 'link');
+                brand.setAttribute('tabindex', '0');
+                brand.setAttribute('aria-label', 'Ir a Mi día');
+                brand.dataset.homeLink = 'true';
+
+                const navigateHome = () => {
+                    window.location.href = homeUrl;
+                };
+
+                brand.addEventListener('click', navigateHome);
+                brand.addEventListener('keydown', (event) => {
+                    if (
+                        event.key === 'Enter'
+                        || event.key === ' '
+                    ) {
+                        event.preventDefault();
+                        navigateHome();
+                    }
+                });
+            });
+
+            const scrollTopButton = document.createElement('button');
+
+            scrollTopButton.type = 'button';
+            scrollTopButton.className = 'operational-scroll-top';
+            scrollTopButton.setAttribute('aria-label', 'Volver arriba');
+            scrollTopButton.setAttribute('title', 'Volver arriba');
+            scrollTopButton.hidden = true;
+            scrollTopButton.innerHTML = \`
+                <svg
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                >
+                    <path d="m6 10 6-6 6 6"/>
+                    <path d="M12 4v16"/>
+                </svg>
+            \`;
+
+            document.body.appendChild(scrollTopButton);
+
+            const refreshScrollTopButton = () => {
+                const shouldShow =
+                    window.scrollY > 520
+                    && document.documentElement.scrollHeight
+                        > window.innerHeight + 700;
+
+                scrollTopButton.hidden = ! shouldShow;
+                scrollTopButton.classList.toggle(
+                    'is-visible',
+                    shouldShow,
+                );
+            };
+
+            scrollTopButton.addEventListener('click', () => {
+                window.scrollTo({
+                    top: 0,
+                    behavior: window.matchMedia(
+                        '(prefers-reduced-motion: reduce)'
+                    ).matches
+                        ? 'auto'
+                        : 'smooth',
+                });
+            });
+
+            window.addEventListener(
+                'scroll',
+                refreshScrollTopButton,
+                { passive: true },
+            );
+            window.addEventListener(
+                'resize',
+                refreshScrollTopButton,
+            );
+            refreshScrollTopButton();
+
             const teamAccessSelects = document.querySelectorAll(
                 'select[name="work_team_ids[]"][multiple]',
             );
