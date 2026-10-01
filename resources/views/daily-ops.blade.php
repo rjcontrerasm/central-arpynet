@@ -39,7 +39,7 @@
         @endphp
 
         @unless ($canUndo)
-            <div class="success">
+            <div class="success daily-action-success">
                 <div class="success-row">
                     <span>
                         {{ session('daily_action_success') }}
