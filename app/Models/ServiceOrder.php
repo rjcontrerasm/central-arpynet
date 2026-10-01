@@ -95,7 +95,7 @@ class ServiceOrder extends Model
                 'invoice_date', 'invoice_due_date', 'paid_date', 'closed_date',
                 'amount', 'invoice_amount', 'currency', 'includes_tax',
                 'next_action', 'next_action_at', 'drive_url', 'notes',
-                'assigned_to',
+                'assigned_to', 'work_team_id',
             ];
 
             foreach ($activityFields as $field) {
