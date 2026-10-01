@@ -2556,3 +2556,159 @@ h2 {
         transition: none;
     }
 }
+
+
+/*
+ * 2.40.18 — Toast reversible en esquina inferior derecha.
+ * Reduce interferencia con la navegación y evita duplicar el estado reversible.
+ */
+.global-undo-bar {
+    top: auto !important;
+    right: max(18px, env(safe-area-inset-right)) !important;
+    bottom: max(20px, env(safe-area-inset-bottom)) !important;
+    left: auto !important;
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    width: auto;
+    max-width: min(430px, calc(100vw - 36px));
+    min-height: 58px;
+    padding: 10px 11px 10px 10px;
+    border: 1px solid #d6e4dd !important;
+    border-radius: 14px !important;
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #f8fcfa 100%
+        ) !important;
+    color: #29483a !important;
+    box-shadow:
+        0 14px 34px rgba(15, 52, 77, .16) !important;
+    font-size: 12px;
+    font-weight: 720;
+}
+
+.global-undo-status-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: #e8f7ee;
+    color: #1a7a4d;
+}
+
+.global-undo-status-icon svg,
+.global-undo-button-icon {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.global-undo-status-icon svg {
+    width: 17px;
+    height: 17px;
+}
+
+.global-undo-message {
+    min-width: 0;
+    color: #335545;
+    line-height: 1.35;
+}
+
+.global-undo-bar form {
+    margin: 0;
+}
+
+.global-undo-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 36px !important;
+    padding: 7px 10px !important;
+    border: 1px solid #b8cee0 !important;
+    border-radius: 10px !important;
+    background: #f2f7fb !important;
+    color: #155a8d !important;
+    box-shadow: none !important;
+    font-size: 11.5px;
+    font-weight: 800;
+    transition:
+        background-color 120ms ease,
+        border-color 120ms ease,
+        color 120ms ease,
+        transform 120ms ease;
+}
+
+.global-undo-button:hover {
+    border-color: #8db1cb !important;
+    background: #eaf3f9 !important;
+    color: #064c7a !important;
+    transform: translateY(-1px);
+}
+
+.global-undo-button-icon {
+    width: 15px;
+    height: 15px;
+    flex: 0 0 auto;
+}
+
+.global-undo-bar--restored {
+    grid-template-columns: auto minmax(0, 1fr);
+}
+
+.global-undo-bar--restored .global-undo-status-icon {
+    background: #edf3f8;
+    color: #2e678f;
+}
+
+body:has(.global-undo-bar) .operational-scroll-top {
+    bottom:
+        max(
+            88px,
+            calc(env(safe-area-inset-bottom) + 78px)
+        );
+}
+
+@media (max-width: 759px) {
+    .global-undo-bar {
+        right: max(12px, env(safe-area-inset-right)) !important;
+        bottom:
+            max(
+                86px,
+                calc(env(safe-area-inset-bottom) + 74px)
+            ) !important;
+        left: max(12px, env(safe-area-inset-left)) !important;
+        grid-template-columns: auto minmax(0, 1fr);
+        max-width: none;
+    }
+
+    .global-undo-bar form {
+        grid-column: 1 / -1;
+    }
+
+    .global-undo-button {
+        width: 100%;
+    }
+
+    body:has(.global-undo-bar) .operational-scroll-top {
+        bottom:
+            max(
+                168px,
+                calc(env(safe-area-inset-bottom) + 156px)
+            );
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .global-undo-button {
+        transition: none;
+        transform: none !important;
+    }
+}
