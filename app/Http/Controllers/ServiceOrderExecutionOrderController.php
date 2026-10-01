@@ -18,9 +18,10 @@ class ServiceOrderExecutionOrderController extends Controller
 
         $validated = $this->validatePayload($request);
 
-        $serviceOrder->executionOrders()->create(
-            $this->attributes($request, $validated),
-        );
+        $attributes = $this->attributes($validated);
+        $attributes['created_by'] = $request->user()->id;
+
+        $serviceOrder->executionOrders()->create($attributes);
 
         return redirect()
             ->route('service-order-front.edit', $serviceOrder)
@@ -42,7 +43,7 @@ class ServiceOrderExecutionOrderController extends Controller
         $validated = $this->validatePayload($request);
 
         $executionOrder->fill(
-            $this->attributes($request, $validated),
+            $this->attributes($validated),
         )->save();
 
         return redirect()
@@ -76,16 +77,11 @@ class ServiceOrderExecutionOrderController extends Controller
         ]);
     }
 
-    private function attributes(
-        Request $request,
-        array $validated,
-    ): array {
+    private function attributes(array $validated): array {
         foreach (['document_number', 'notes'] as $field) {
             $value = trim((string) ($validated[$field] ?? ''));
             $validated[$field] = $value !== '' ? $value : null;
         }
-
-        $validated['created_by'] ??= $request->user()->id;
 
         return $validated;
     }
