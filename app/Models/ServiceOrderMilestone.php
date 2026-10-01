@@ -69,13 +69,30 @@ class ServiceOrderMilestone extends Model
             return 'Cancelado';
         }
 
-        if (
-            $this->contractual_due_date
-            && $this->contractual_due_date->isPast()
-        ) {
+        if ($this->is_overdue) {
             return 'Vencido';
         }
 
         return 'Pendiente';
+    }
+
+    public function getIsOverdueAttribute(): bool
+    {
+        if (
+            ! $this->contractual_due_date
+            || $this->conformity_date
+            || in_array(
+                $this->task?->status,
+                ['completed', 'cancelled'],
+                true,
+            )
+        ) {
+            return false;
+        }
+
+        return $this->contractual_due_date->isBefore(
+            now(config('app.timezone', 'America/Lima'))
+                ->startOfDay(),
+        );
     }
 }
