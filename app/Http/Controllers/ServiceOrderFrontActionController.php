@@ -179,31 +179,29 @@ class ServiceOrderFrontActionController extends Controller
             ]);
         }
 
-        if ($assignedTo === null) {
-            return;
-        }
+        if ($assignedTo !== null) {
+            $assigneeIsValid = User::query()
+                ->whereKey($assignedTo)
+                ->where('is_active', true)
+                ->whereHas(
+                    'organizations',
+                    fn ($query) => $query
+                        ->where('organizations.id', $organizationId)
+                        ->where('organizations.is_active', true)
+                        ->where('organization_user.is_active', true)
+                        ->whereIn(
+                            'organization_user.role',
+                            ['owner', 'admin', 'member'],
+                        ),
+                )
+                ->exists();
 
-        $assigneeIsValid = User::query()
-            ->whereKey($assignedTo)
-            ->where('is_active', true)
-            ->whereHas(
-                'organizations',
-                fn ($query) => $query
-                    ->where('organizations.id', $organizationId)
-                    ->where('organizations.is_active', true)
-                    ->where('organization_user.is_active', true)
-                    ->whereIn(
-                        'organization_user.role',
-                        ['owner', 'admin', 'member'],
-                    ),
-            )
-            ->exists();
-
-        if (! $assigneeIsValid) {
-            throw ValidationException::withMessages([
-                'assigned_to' =>
-                    'El responsable debe tener acceso operativo al mismo ámbito.',
-            ]);
+            if (! $assigneeIsValid) {
+                throw ValidationException::withMessages([
+                    'assigned_to' =>
+                        'El responsable debe tener acceso operativo al mismo ámbito.',
+                ]);
+            }
         }
 
         if ($workTeamId === null) {
