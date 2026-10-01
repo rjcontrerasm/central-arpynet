@@ -123,15 +123,7 @@
                 ->count();
             $milestoneOverdue = $serviceOrder->milestones
                 ->filter(
-                    fn ($milestone) =>
-                        $milestone->contractual_due_date
-                        && $milestone->contractual_due_date->isPast()
-                        && ! $milestone->conformity_date
-                        && ! in_array(
-                            $milestone->task?->status,
-                            ['completed', 'cancelled'],
-                            true,
-                        ),
+                    fn ($milestone) => $milestone->is_overdue,
                 )
                 ->count();
             $milestoneProgress = $milestoneCount > 0
@@ -175,15 +167,7 @@
                 @forelse($serviceOrder->milestones as $milestone)
                     @php
                         $task = $milestone->task;
-                        $isOverdue =
-                            $milestone->contractual_due_date
-                            && $milestone->contractual_due_date->isPast()
-                            && ! $milestone->conformity_date
-                            && ! in_array(
-                                $task?->status,
-                                ['completed', 'cancelled'],
-                                true,
-                            );
+                        $isOverdue = $milestone->is_overdue;
                     @endphp
                     <article class="milestone-card {{ $isOverdue ? 'is-overdue' : '' }}">
                         <div class="milestone-main">
