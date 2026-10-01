@@ -134,14 +134,12 @@ class ServiceOrderFrontController extends Controller
                 'organizations' => fn ($query) => $query
                     ->whereIn('organizations.id', $organizationIds)
                     ->wherePivot('is_active', true),
-            ])
-            ->orderBy('name')
-            ->get()
-            ->with([
                 'workTeams' => fn ($query) => $query
                     ->where('work_teams.is_active', true)
                     ->where('work_team_user.is_active', true),
             ])
+            ->orderBy('name')
+            ->get()
             ->mapWithKeys(fn (User $user): array => [
                 $user->id => [
                     'name' => $user->name,
