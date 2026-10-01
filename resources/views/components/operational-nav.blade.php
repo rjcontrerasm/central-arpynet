@@ -324,7 +324,16 @@
         role="status"
         aria-live="polite"
     >
-        <span>
+        <span
+            class="global-undo-status-icon"
+            aria-hidden="true"
+        >
+            <svg viewBox="0 0 24 24">
+                <path d="m5 12 4 4L19 6"/>
+            </svg>
+        </span>
+
+        <span class="global-undo-message">
             {{ $globalUndo->label }}.
         </span>
 
@@ -345,17 +354,35 @@
                 type="submit"
                 data-busy-label="Deshaciendo…"
             >
-                Deshacer
+                <svg
+                    class="global-undo-button-icon"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                >
+                    <path d="M9 7 4 12l5 5"/>
+                    <path d="M4 12h9a7 7 0 0 1 7 7"/>
+                </svg>
+                <span>Deshacer</span>
             </button>
         </form>
     </div>
 @elseif ($globalUndoFlash)
     <div
-        class="global-undo-bar"
+        class="global-undo-bar global-undo-bar--restored"
         role="status"
         aria-live="polite"
     >
-        <span>
+        <span
+            class="global-undo-status-icon"
+            aria-hidden="true"
+        >
+            <svg viewBox="0 0 24 24">
+                <path d="M9 7 4 12l5 5"/>
+                <path d="M4 12h9a7 7 0 0 1 7 7"/>
+            </svg>
+        </span>
+
+        <span class="global-undo-message">
             {{ $globalUndoFlash }}
         </span>
     </div>
