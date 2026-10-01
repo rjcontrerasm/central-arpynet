@@ -1110,3 +1110,351 @@
                 border-color: #cbd5e1;
             }
         }
+
+
+/*
+ * 2.40.16 — Panel de contexto de Mi día.
+ * Agrupa Vista, Equipo, Empresa, Buscar y Estado en una sola superficie,
+ * optimizada para pocos equipos y con iconografía lineal consistente.
+ */
+.daily-context-panel {
+    display: grid;
+    gap: 0;
+    margin-bottom: 18px;
+    padding: 18px 20px;
+    border: 1px solid #d5e2eb;
+    border-radius: 18px;
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,.98) 0%,
+            rgba(249,252,254,.98) 100%
+        );
+    box-shadow:
+        0 8px 26px rgba(0, 67, 113, .055);
+}
+
+.daily-context-top {
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1.05fr)
+        minmax(280px, .95fr);
+    align-items: stretch;
+    border-bottom: 1px solid #e1eaf1;
+}
+
+.daily-context-group {
+    min-width: 0;
+    padding-bottom: 16px;
+}
+
+.daily-context-group + .daily-context-group {
+    margin-left: 20px;
+    padding-left: 20px;
+    border-left: 1px solid #e1eaf1;
+}
+
+.daily-context-section {
+    display: grid;
+    grid-template-columns: 128px minmax(0, 1fr);
+    align-items: center;
+    gap: 20px;
+    min-width: 0;
+    padding: 16px 0;
+    border-bottom: 1px solid #e1eaf1;
+}
+
+.daily-context-section:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+}
+
+.daily-context-label {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+    color: #123f62;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: -.01em;
+}
+
+.daily-context-icon,
+.daily-search-icon {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.daily-context-icon {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 auto;
+    color: #0b5689;
+}
+
+.daily-context-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-width: 0;
+}
+
+.daily-context-top .daily-context-options {
+    margin-top: 12px;
+}
+
+.daily-context-panel .scope,
+.daily-context-panel .priority-filter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 8px 13px;
+    border: 1px solid #d2dfe9 !important;
+    border-radius: 12px !important;
+    background: #fff !important;
+    color: #294b65 !important;
+    box-shadow:
+        0 1px 2px rgba(0, 67, 113, .025) !important;
+    font-size: 12px !important;
+    font-weight: 720 !important;
+    line-height: 1.15;
+    white-space: nowrap;
+    transition:
+        border-color 120ms ease,
+        background-color 120ms ease,
+        color 120ms ease,
+        box-shadow 120ms ease,
+        transform 120ms ease;
+}
+
+.daily-context-panel .scope:hover,
+.daily-context-panel .priority-filter:hover {
+    border-color: #9abbd1 !important;
+    background: #f8fbfd !important;
+    color: #064a78 !important;
+}
+
+.daily-context-panel .scope.active,
+.daily-context-panel .priority-filter.active {
+    border-color: #78a9cc !important;
+    background:
+        linear-gradient(
+            180deg,
+            #eef6fb 0%,
+            #e6f1f8 100%
+        ) !important;
+    color: #075083 !important;
+    box-shadow:
+        inset 0 0 0 1px rgba(2,72,131,.035),
+        0 2px 6px rgba(2,72,131,.045) !important;
+}
+
+.daily-view-options .scope {
+    min-width: 116px;
+}
+
+.daily-team-options .scope {
+    min-width: 92px;
+}
+
+.daily-company-options {
+    align-items: center;
+}
+
+.daily-company-options .scope {
+    min-height: 36px;
+    padding: 7px 12px;
+    border-radius: 11px !important;
+    font-size: 11.5px !important;
+}
+
+.daily-search-section {
+    grid-template-columns: 128px minmax(0, 1fr);
+}
+
+.daily-search-section .search-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+}
+
+.daily-search-field {
+    position: relative;
+    min-width: 0;
+}
+
+.daily-search-icon {
+    position: absolute;
+    z-index: 2;
+    top: 50%;
+    left: 13px;
+    width: 18px;
+    height: 18px;
+    color: #8aa3b7;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.daily-context-panel .search-input {
+    min-height: 44px !important;
+    padding: 10px 14px 10px 42px !important;
+    border: 1px solid #d2dfe9 !important;
+    border-radius: 12px !important;
+    background: #fff !important;
+    box-shadow: none !important;
+}
+
+.daily-context-panel .search-input::placeholder {
+    color: #8a9bab;
+}
+
+.daily-context-panel .search-input:focus {
+    border-color: #77a7c8 !important;
+    box-shadow:
+        0 0 0 3px rgba(2,72,131,.07) !important;
+}
+
+.daily-context-panel .search-button {
+    min-width: 96px;
+    min-height: 44px;
+    padding: 9px 16px;
+    border-radius: 12px !important;
+    box-shadow:
+        0 5px 13px rgba(2,72,131,.12) !important;
+}
+
+.daily-status-section .priority-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    overflow: visible;
+    padding: 0;
+}
+
+.daily-status-section .priority-filter {
+    min-height: 36px;
+    padding: 7px 12px;
+    border-radius: 11px !important;
+}
+
+.daily-filter-summary-shell {
+    margin-top: -7px;
+    margin-bottom: 14px;
+}
+
+.daily-filter-summary-shell:has(.filter-summary) {
+    margin-top: -7px;
+}
+
+.daily-filter-summary-shell:not(:has(.filter-summary)) {
+    display: none;
+}
+
+.daily-filter-summary-shell .filter-summary {
+    min-height: 32px;
+    padding: 7px 10px;
+    border-radius: 10px;
+    background: rgba(255,255,255,.55);
+}
+
+@media (max-width: 900px) {
+    .daily-context-top {
+        grid-template-columns: 1fr;
+    }
+
+    .daily-context-group + .daily-context-group {
+        margin-left: 0;
+        padding-top: 16px;
+        padding-left: 0;
+        border-top: 1px solid #e1eaf1;
+        border-left: 0;
+    }
+
+    .daily-context-section {
+        grid-template-columns: 108px minmax(0, 1fr);
+        gap: 14px;
+    }
+
+    .daily-search-section {
+        grid-template-columns: 108px minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 620px) {
+    .daily-context-panel {
+        margin-right: -2px;
+        margin-left: -2px;
+        padding: 14px;
+        border-radius: 15px;
+    }
+
+    .daily-context-section,
+    .daily-search-section {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .daily-context-label {
+        font-size: 12px;
+    }
+
+    .daily-context-options {
+        gap: 7px;
+    }
+
+    .daily-view-options,
+    .daily-team-options {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .daily-view-options .scope,
+    .daily-team-options .scope {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .daily-view-options .scope:last-child:nth-child(odd) {
+        grid-column: 1 / -1;
+    }
+
+    .daily-company-options {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 3px;
+        scrollbar-width: none;
+    }
+
+    .daily-company-options::-webkit-scrollbar {
+        display: none;
+    }
+
+    .daily-search-section .search-form {
+        grid-template-columns: 1fr;
+    }
+
+    .daily-context-panel .search-button {
+        width: 100%;
+    }
+
+    .daily-status-section .priority-filters {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 3px;
+        scrollbar-width: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .daily-context-panel .scope,
+    .daily-context-panel .priority-filter {
+        transition: none !important;
+        transform: none !important;
+    }
+}
