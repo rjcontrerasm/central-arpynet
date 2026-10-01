@@ -460,7 +460,11 @@
                             $selectedRecurringRule,
                     ])) }}"
                 >
-                    Ver vencidas
+                    <svg class="focus-action-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M9 6h11M9 12h11M9 18h11"/>
+                        <path d="M4 6h.01M4 12h.01M4 18h.01"/>
+                    </svg>
+                    <span>Ver vencidas</span>
                 </a>
             @elseif ($criticalCount > 0)
                 <a
@@ -474,7 +478,11 @@
                             $selectedRecurringRule,
                     ])) }}"
                 >
-                    Ver críticas
+                    <svg class="focus-action-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M9 6h11M9 12h11M9 18h11"/>
+                        <path d="M4 6h.01M4 12h.01M4 18h.01"/>
+                    </svg>
+                    <span>Ver críticas</span>
                 </a>
             @elseif ($priorityTodayCount > 0)
                 <a
@@ -488,7 +496,11 @@
                             $selectedRecurringRule,
                     ])) }}"
                 >
-                    Ver tareas de hoy
+                    <svg class="focus-action-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M9 6h11M9 12h11M9 18h11"/>
+                        <path d="M4 6h.01M4 12h.01M4 18h.01"/>
+                    </svg>
+                    <span>Ver tareas de hoy</span>
                 </a>
             @endif
 
@@ -496,7 +508,11 @@
                 class="focus-action secondary"
                 href="{{ route('operational-agenda.show') }}"
             >
-                Abrir agenda
+                <svg class="focus-action-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M6 2v4M18 2v4M3 9h18"/>
+                    <rect x="3" y="4" width="18" height="17" rx="2"/>
+                </svg>
+                <span>Abrir agenda</span>
             </a>
 
             @if ($canQuickCapture)
@@ -509,7 +525,10 @@
                     ]),
                 ) }}"
                 >
-                    + Capturar
+                    <svg class="focus-action-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 5v14M5 12h14"/>
+                    </svg>
+                    <span>Capturar</span>
                 </a>
             @endif
         </div>
