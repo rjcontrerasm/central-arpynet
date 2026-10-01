@@ -293,7 +293,7 @@
     @endif
     @if($canWrite)
         <dialog class="client-modal" data-client-modal>
-            <form class="client-modal-card" data-client-inline-form>
+            <form class="client-modal-card" method="POST" action="{{ route('client-ops.store') }}" data-client-inline-form>
                 <div class="client-modal-head">
                     <div>
                         <div class="section-kicker">Sin salir de esta orden</div>
