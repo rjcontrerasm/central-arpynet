@@ -45,6 +45,9 @@ class ServiceOrderMilestoneController extends Controller
                 'title' => $this->taskTitle(
                     $serviceOrder,
                     $validated['title'],
+                    isset($validated['execution_order_id'])
+                        ? (int) $validated['execution_order_id']
+                        : null,
                 ),
                 'description' => $this->nullableText(
                     $validated['description'] ?? null,
@@ -151,6 +154,9 @@ class ServiceOrderMilestoneController extends Controller
                     'title' => $this->taskTitle(
                         $serviceOrder,
                         $validated['title'],
+                        isset($validated['execution_order_id'])
+                            ? (int) $validated['execution_order_id']
+                            : null,
                     ),
                     'description' => $this->nullableText(
                         $validated['description'] ?? null,
@@ -398,10 +404,19 @@ class ServiceOrderMilestoneController extends Controller
     private function taskTitle(
         ServiceOrder $serviceOrder,
         string $milestoneTitle,
+        ?int $executionOrderId = null,
     ): string {
+        $executionNumber = $executionOrderId
+            ? $serviceOrder->executionOrders()
+                ->whereKey($executionOrderId)
+                ->value('document_number')
+            : null;
+
         $context = trim(
             (string) (
-                $serviceOrder->order_number
+                $executionNumber
+                ?: $serviceOrder->order_number
+                ?: $serviceOrder->contract_number
                 ?: $serviceOrder->title
             ),
         );
