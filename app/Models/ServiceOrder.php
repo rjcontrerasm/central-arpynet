@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Validation\ValidationException;
 
@@ -43,6 +44,7 @@ class ServiceOrder extends Model
         'notes',
         'last_activity_at',
         'assigned_to',
+        'work_team_id',
         'created_by',
     ];
 
@@ -93,7 +95,7 @@ class ServiceOrder extends Model
                 'invoice_date', 'invoice_due_date', 'paid_date', 'closed_date',
                 'amount', 'invoice_amount', 'currency', 'includes_tax',
                 'next_action', 'next_action_at', 'drive_url', 'notes',
-                'assigned_to',
+                'assigned_to', 'work_team_id',
             ];
 
             foreach ($activityFields as $field) {
@@ -134,6 +136,17 @@ class ServiceOrder extends Model
     public function assignee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function workTeam(): BelongsTo
+    {
+        return $this->belongsTo(WorkTeam::class);
+    }
+
+    public function milestones(): HasMany
+    {
+        return $this->hasMany(ServiceOrderMilestone::class)
+            ->orderBy('sequence');
     }
 
     public function createdBy(): BelongsTo

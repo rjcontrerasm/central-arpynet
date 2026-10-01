@@ -12,6 +12,7 @@ use App\Http\Controllers\RecurringTaskFrontController;
 use App\Http\Controllers\SafetyRecoveryController;
 use App\Http\Controllers\ServiceOrderFrontActionController;
 use App\Http\Controllers\ServiceOrderFrontController;
+use App\Http\Controllers\ServiceOrderMilestoneController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function (): void {
@@ -45,6 +46,11 @@ Route::middleware('auth')->group(function (): void {
         ->name('service-order-front.edit');
     Route::post('/servicios/{serviceOrder}/editar', [ServiceOrderFrontActionController::class, 'update'])
         ->name('service-order-front.update');
+
+    Route::post('/servicios/{serviceOrder}/hitos', [ServiceOrderMilestoneController::class, 'store'])
+        ->name('service-order-milestones.store');
+    Route::post('/servicios/{serviceOrder}/hitos/{milestone}', [ServiceOrderMilestoneController::class, 'update'])
+        ->name('service-order-milestones.update');
 
     Route::get('/vencimientos/recurrentes', [RecurringObligationFrontController::class, 'index'])
         ->name('recurring-obligation-front.index');

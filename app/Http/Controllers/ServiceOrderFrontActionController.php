@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Client;
 use App\Models\ServiceOrder;
 use App\Models\User;
+use App\Models\WorkTeam;
 use App\Support\GlobalUndoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,11 +25,15 @@ class ServiceOrderFrontActionController extends Controller
         );
 
         $this->validateRelations(
+            $request,
             $organizationId,
             (int) $validated['client_id'],
             isset($validated['assigned_to'])
                 ? (int) $validated['assigned_to']
                 : $request->user()->id,
+            isset($validated['work_team_id'])
+                ? (int) $validated['work_team_id']
+                : null,
         );
 
         $attributes = $this->attributes($request, $validated);
@@ -65,10 +70,14 @@ class ServiceOrderFrontActionController extends Controller
         }
 
         $this->validateRelations(
+            $request,
             $organizationId,
             (int) $validated['client_id'],
             isset($validated['assigned_to'])
                 ? (int) $validated['assigned_to']
+                : null,
+            isset($validated['work_team_id'])
+                ? (int) $validated['work_team_id']
                 : null,
         );
 
@@ -77,6 +86,28 @@ class ServiceOrderFrontActionController extends Controller
         $serviceOrder->fill(
             $this->attributes($request, $validated),
         )->save();
+
+        if ($serviceOrder->wasChanged('work_team_id')) {
+            $serviceOrder->loadMissing('milestones.task');
+
+            foreach ($serviceOrder->milestones as $milestone) {
+                if (! $milestone->task) {
+                    continue;
+                }
+
+                $milestone->task->fill([
+                    'visibility_scope' => $serviceOrder->work_team_id
+                        ? 'teams'
+                        : 'organization',
+                ])->save();
+
+                $milestone->task->workTeams()->sync(
+                    $serviceOrder->work_team_id
+                        ? [(int) $serviceOrder->work_team_id]
+                        : [],
+                );
+            }
+        }
 
         $undo->rememberServiceOrderMutation(
             $request->user(),
@@ -97,6 +128,7 @@ class ServiceOrderFrontActionController extends Controller
             'organization_id' => ['required', 'integer'],
             'client_id' => ['required', 'integer'],
             'assigned_to' => ['nullable', 'integer'],
+            'work_team_id' => ['nullable', 'integer'],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:10000'],
             'stage' => [
@@ -128,9 +160,11 @@ class ServiceOrderFrontActionController extends Controller
     }
 
     private function validateRelations(
+        Request $request,
         int $organizationId,
         int $clientId,
         ?int $assignedTo,
+        ?int $workTeamId,
     ): void {
         $clientIsValid = Client::query()
             ->whereKey($clientId)
@@ -145,30 +179,97 @@ class ServiceOrderFrontActionController extends Controller
             ]);
         }
 
+        if ($assignedTo !== null) {
+            $assigneeIsValid = User::query()
+                ->whereKey($assignedTo)
+                ->where('is_active', true)
+                ->whereHas(
+                    'organizations',
+                    fn ($query) => $query
+                        ->where('organizations.id', $organizationId)
+                        ->where('organizations.is_active', true)
+                        ->where('organization_user.is_active', true)
+                        ->whereIn(
+                            'organization_user.role',
+                            ['owner', 'admin', 'member'],
+                        ),
+                )
+                ->exists();
+
+            if (! $assigneeIsValid) {
+                throw ValidationException::withMessages([
+                    'assigned_to' =>
+                        'El responsable debe tener acceso operativo al mismo ámbito.',
+                ]);
+            }
+        }
+
+        if ($workTeamId === null) {
+            return;
+        }
+
+        $manageableIds = $request->user()->manageableOrganizationIds();
+
+        $teamIsValid = WorkTeam::query()
+            ->whereKey($workTeamId)
+            ->where('is_active', true)
+            ->where(
+                function ($query) use (
+                    $request,
+                    $manageableIds,
+                ): void {
+                    $query->whereHas(
+                        'users',
+                        fn ($membership) => $membership
+                            ->where(
+                                'users.id',
+                                $request->user()->id,
+                            )
+                            ->where(
+                                'work_team_user.is_active',
+                                true,
+                            ),
+                    );
+
+                    if ($manageableIds !== []) {
+                        $query->orWhereIn(
+                            'home_organization_id',
+                            $manageableIds,
+                        );
+                    }
+                },
+            )
+            ->exists();
+
+        if (! $teamIsValid) {
+            throw ValidationException::withMessages([
+                'work_team_id' =>
+                    'El equipo seleccionado no está disponible para este usuario.',
+            ]);
+        }
+
         if ($assignedTo === null) {
             return;
         }
 
-        $assigneeIsValid = User::query()
+        $assigneeBelongsToTeam = User::query()
             ->whereKey($assignedTo)
-            ->where('is_active', true)
             ->whereHas(
-                'organizations',
+                'workTeams',
                 fn ($query) => $query
-                    ->where('organizations.id', $organizationId)
-                    ->where('organizations.is_active', true)
-                    ->where('organization_user.is_active', true)
+                    ->where('work_teams.id', $workTeamId)
+                    ->where('work_team_user.is_active', true)
                     ->whereIn(
-                        'organization_user.role',
-                        ['owner', 'admin', 'member'],
+                        'work_team_user.role',
+                        ['lead', 'member'],
                     ),
             )
             ->exists();
 
-        if (! $assigneeIsValid) {
+        if (! $assigneeBelongsToTeam) {
             throw ValidationException::withMessages([
                 'assigned_to' =>
-                    'El responsable debe tener acceso operativo al mismo ámbito.',
+                    'El responsable debe pertenecer al equipo seleccionado.',
             ]);
         }
     }
