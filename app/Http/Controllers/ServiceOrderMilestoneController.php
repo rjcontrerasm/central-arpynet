@@ -22,6 +22,7 @@ class ServiceOrderMilestoneController extends Controller
         $this->authorizeOrder($request, $serviceOrder);
 
         $validated = $this->validatePayload($request);
+        $this->validateExecutionOrder($serviceOrder, $validated);
         $assigneeId = $this->resolveAssignee(
             $request,
             $serviceOrder,
@@ -71,6 +72,8 @@ class ServiceOrderMilestoneController extends Controller
             ServiceOrderMilestone::query()->create([
                 'service_order_id' => $serviceOrder->id,
                 'task_id' => $task->id,
+                'execution_order_id' =>
+                    $validated['execution_order_id'] ?? null,
                 'sequence' => $sequence,
                 'title' => trim($validated['title']),
                 'description' => $this->nullableText(
@@ -110,6 +113,7 @@ class ServiceOrderMilestoneController extends Controller
             $request,
             includeDeliveryFields: true,
         );
+        $this->validateExecutionOrder($serviceOrder, $validated);
 
         $assigneeId = $this->resolveAssignee(
             $request,
@@ -124,6 +128,8 @@ class ServiceOrderMilestoneController extends Controller
             $assigneeId,
         ): void {
             $milestone->fill([
+                'execution_order_id' =>
+                    $validated['execution_order_id'] ?? null,
                 'title' => trim($validated['title']),
                 'description' => $this->nullableText(
                     $validated['description'] ?? null,
@@ -176,6 +182,100 @@ class ServiceOrderMilestoneController extends Controller
             );
     }
 
+    public function action(
+        Request $request,
+        ServiceOrder $serviceOrder,
+        ServiceOrderMilestone $milestone,
+    ): RedirectResponse {
+        $this->authorizeOrder($request, $serviceOrder);
+        $this->assertMilestoneBelongsToOrder(
+            $serviceOrder,
+            $milestone,
+        );
+
+        $validated = $request->validate([
+            'action' => [
+                'required',
+                Rule::in([
+                    'complete_task',
+                    'mark_delivered',
+                    'mark_conformity',
+                ]),
+            ],
+        ]);
+
+        $today = now(
+            config('app.timezone', 'America/Lima'),
+        )->toDateString();
+
+        DB::transaction(function () use (
+            $milestone,
+            $validated,
+            $today,
+        ): void {
+            if ($validated['action'] === 'complete_task') {
+                if ($milestone->task) {
+                    $milestone->task->fill([
+                        'status' => 'completed',
+                    ])->save();
+                }
+
+                return;
+            }
+
+            if ($validated['action'] === 'mark_delivered') {
+                $milestone->fill([
+                    'delivered_date' => $milestone->delivered_date
+                        ?: $today,
+                ])->save();
+
+                return;
+            }
+
+            $milestone->fill([
+                'delivered_date' => $milestone->delivered_date
+                    ?: $today,
+                'conformity_date' => $milestone->conformity_date
+                    ?: $today,
+            ])->save();
+        });
+
+        $message = match ($validated['action']) {
+            'complete_task' => 'Tarea del hito completada.',
+            'mark_delivered' => 'Hito marcado como entregado.',
+            default => 'Conformidad registrada.',
+        };
+
+        return redirect()
+            ->route('service-order-front.edit', $serviceOrder)
+            ->withFragment('cronograma')
+            ->with('service_milestone_success', $message);
+    }
+
+    private function validateExecutionOrder(
+        ServiceOrder $serviceOrder,
+        array $validated,
+    ): void {
+        $executionOrderId = isset($validated['execution_order_id'])
+            ? (int) $validated['execution_order_id']
+            : null;
+
+        if (! $executionOrderId) {
+            return;
+        }
+
+        if (
+            ! $serviceOrder->executionOrders()
+                ->whereKey($executionOrderId)
+                ->exists()
+        ) {
+            throw ValidationException::withMessages([
+                'execution_order_id' =>
+                    'La orden seleccionada no pertenece a este servicio.',
+            ]);
+        }
+    }
+
     private function validatePayload(
         Request $request,
         bool $includeDeliveryFields = false,
@@ -184,6 +284,7 @@ class ServiceOrderMilestoneController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:5000'],
             'contractual_due_date' => ['nullable', 'date'],
+            'execution_order_id' => ['nullable', 'integer'],
             'assigned_to' => ['nullable', 'integer'],
             'urgency' => [
                 'required',
