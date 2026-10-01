@@ -56,6 +56,9 @@ jobs:
             | xargs -0 -n1 php -l >/tmp/php-lint.log
           tail -n 20 /tmp/php-lint.log
 
+      - name: Check shared JavaScript syntax
+        run: node --check public/central-assets/operational.js
+
       - name: Run test suite
         run: php artisan test
 
