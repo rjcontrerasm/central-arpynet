@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Client;
 use App\Models\ServiceOrder;
 use App\Models\User;
+use App\Models\WorkTeam;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -35,6 +36,7 @@ class ServiceOrderFrontController extends Controller
             'defaultOrganizationId' => $organizationId,
             'clientOptions' => $this->clientOptions($request),
             'assigneeOptions' => $this->assigneeOptions($request),
+            'workTeamOptions' => $this->workTeamOptions($request),
             'canWrite' => true,
         ]);
     }
@@ -51,11 +53,17 @@ class ServiceOrderFrontController extends Controller
         );
 
         return view('service-order-front-form', [
-            'serviceOrder' => $serviceOrder->load(['client', 'assignee']),
+            'serviceOrder' => $serviceOrder->load([
+                'client',
+                'assignee',
+                'workTeam',
+                'milestones.task.assignee',
+            ]),
             'writableOrganizations' => $this->writableOrganizations($request),
             'defaultOrganizationId' => (int) $serviceOrder->organization_id,
             'clientOptions' => $this->clientOptions($request),
             'assigneeOptions' => $this->assigneeOptions($request),
+            'workTeamOptions' => $this->workTeamOptions($request),
             'canWrite' => $request->user()->canWriteToOrganization(
                 (int) $serviceOrder->organization_id,
             ),
@@ -129,10 +137,70 @@ class ServiceOrderFrontController extends Controller
             ])
             ->orderBy('name')
             ->get()
+            ->with([
+                'workTeams' => fn ($query) => $query
+                    ->where('work_teams.is_active', true)
+                    ->where('work_team_user.is_active', true),
+            ])
             ->mapWithKeys(fn (User $user): array => [
                 $user->id => [
                     'name' => $user->name,
                     'organization_ids' => $user->organizations
+                        ->pluck('id')
+                        ->map(fn ($id): int => (int) $id)
+                        ->all(),
+                    'work_team_ids' => $user->workTeams
+                        ->pluck('id')
+                        ->map(fn ($id): int => (int) $id)
+                        ->all(),
+                ],
+            ])
+            ->all();
+    }
+
+    private function workTeamOptions(Request $request): array
+    {
+        $user = $request->user();
+        $manageableIds = $user->manageableOrganizationIds();
+
+        return WorkTeam::query()
+            ->where('is_active', true)
+            ->where(
+                function (Builder $query) use (
+                    $user,
+                    $manageableIds,
+                ): void {
+                    $query->whereHas(
+                        'users',
+                        fn (Builder $membership): Builder =>
+                            $membership
+                                ->where('users.id', $user->id)
+                                ->where('work_team_user.is_active', true),
+                    );
+
+                    if ($manageableIds !== []) {
+                        $query->orWhereIn(
+                            'home_organization_id',
+                            $manageableIds,
+                        );
+                    }
+                },
+            )
+            ->with([
+                'users' => fn ($query) => $query
+                    ->where('users.is_active', true)
+                    ->where('work_team_user.is_active', true)
+                    ->whereIn(
+                        'work_team_user.role',
+                        ['lead', 'member'],
+                    ),
+            ])
+            ->orderBy('name')
+            ->get()
+            ->mapWithKeys(fn (WorkTeam $team): array => [
+                $team->id => [
+                    'name' => $team->name,
+                    'member_ids' => $team->users
                         ->pluck('id')
                         ->map(fn ($id): int => (int) $id)
                         ->all(),
