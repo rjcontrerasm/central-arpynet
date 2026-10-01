@@ -94,6 +94,7 @@ class ServiceOrderContractExecutionTest extends TestCase
         $this->assertCount(2, $service->executionOrders);
         $this->assertCount(1, $service->invoices);
         $this->assertSame(36500.0, $service->execution_ordered_amount);
+        $this->assertSame(14600.0, $service->execution_issued_amount);
         $this->assertSame(14600.0, $service->invoiced_total);
         $this->assertSame(0.0, $service->paid_total);
 
