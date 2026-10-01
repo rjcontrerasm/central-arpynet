@@ -98,17 +98,26 @@
                 <div class="form-section-heading">
                     <div>
                         <div class="section-kicker">Compromiso comercial</div>
-                        <h2>Cotización y orden</h2>
+                        <h2>Cotización y respaldo contractual</h2>
                     </div>
                     <span class="section-badge">02</span>
                 </div>
                 <div class="grid">
-                <div class="field"><label for="quotation_number">N.º de cotización</label><input id="quotation_number" name="quotation_number" maxlength="80" value="{{ old('quotation_number',$serviceOrder?->quotation_number) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
-                <div class="field"><label for="quotation_date">Fecha de cotización</label><input id="quotation_date" type="date" name="quotation_date" value="{{ old('quotation_date',$serviceOrder?->quotation_date?->format('Y-m-d')) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
-                <div class="field"><label for="order_number">N.º de orden</label><input id="order_number" name="order_number" maxlength="100" value="{{ old('order_number',$serviceOrder?->order_number) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
-                <div class="field"><label for="order_received_date">Recepción de orden</label><input id="order_received_date" type="date" name="order_received_date" value="{{ old('order_received_date',$serviceOrder?->order_received_date?->format('Y-m-d')) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
-                <div class="field"><label for="start_date">Inicio</label><input id="start_date" type="date" name="start_date" value="{{ old('start_date',$serviceOrder?->start_date?->format('Y-m-d')) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
-                <div class="field"><label for="end_date">Fin previsto / contractual</label><input id="end_date" type="date" name="end_date" value="{{ old('end_date',$serviceOrder?->end_date?->format('Y-m-d')) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
+                    <div class="field"><label for="quotation_number">N.º de cotización</label><input id="quotation_number" name="quotation_number" maxlength="80" value="{{ old('quotation_number',$serviceOrder?->quotation_number) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
+                    <div class="field"><label for="quotation_date">Fecha de cotización</label><input id="quotation_date" type="date" name="quotation_date" value="{{ old('quotation_date',$serviceOrder?->quotation_date?->format('Y-m-d')) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
+                    <div class="field">
+                        <label for="contract_document_type">Respaldo contractual</label>
+                        <select id="contract_document_type" name="contract_document_type" {{ ! $canWrite ? 'disabled' : '' }}>
+                            @foreach(['none'=>'Sin contrato','contract'=>'Contrato','direct_order'=>'Orden directa','other'=>'Otro'] as $value=>$label)
+                                <option value="{{ $value }}" @selected(old('contract_document_type',$serviceOrder?->contract_document_type ?? 'none') === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="field"><label for="contract_number">N.º de contrato / referencia</label><input id="contract_number" name="contract_number" maxlength="120" value="{{ old('contract_number',$serviceOrder?->contract_number) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
+                    <div class="field"><label for="contract_date">Fecha de contrato</label><input id="contract_date" type="date" name="contract_date" value="{{ old('contract_date',$serviceOrder?->contract_date?->format('Y-m-d')) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
+                    <div class="field"><label for="contract_amount">Monto contractual</label><input id="contract_amount" type="number" min="0" step="0.01" name="contract_amount" value="{{ old('contract_amount',$serviceOrder?->contract_amount) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
+                    <div class="field"><label for="start_date">Inicio</label><input id="start_date" type="date" name="start_date" value="{{ old('start_date',$serviceOrder?->start_date?->format('Y-m-d')) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
+                    <div class="field"><label for="end_date">Fin previsto / contractual</label><input id="end_date" type="date" name="end_date" value="{{ old('end_date',$serviceOrder?->end_date?->format('Y-m-d')) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
                 </div>
             </section>
 
@@ -126,11 +135,7 @@
                 <div class="field span-2"><label class="check"><input type="checkbox" name="includes_tax" value="1" @checked(old('includes_tax',$serviceOrder?->includes_tax ?? true)) {{ ! $canWrite ? 'disabled' : '' }}> Monto incluye IGV</label></div>
                 <div class="field"><label for="report_submitted_date">Informe presentado</label><input id="report_submitted_date" type="date" name="report_submitted_date" value="{{ old('report_submitted_date',$serviceOrder?->report_submitted_date?->format('Y-m-d')) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
                 <div class="field"><label for="conformity_date">Conformidad recibida</label><input id="conformity_date" type="date" name="conformity_date" value="{{ old('conformity_date',$serviceOrder?->conformity_date?->format('Y-m-d')) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
-                <div class="field"><label for="invoice_number">Factura</label><input id="invoice_number" name="invoice_number" maxlength="100" value="{{ old('invoice_number',$serviceOrder?->invoice_number) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
-                <div class="field"><label for="invoice_date">Fecha de factura</label><input id="invoice_date" type="date" name="invoice_date" value="{{ old('invoice_date',$serviceOrder?->invoice_date?->format('Y-m-d')) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
-                <div class="field"><label for="invoice_due_date">Vencimiento de factura</label><input id="invoice_due_date" type="date" name="invoice_due_date" value="{{ old('invoice_due_date',$serviceOrder?->invoice_due_date?->format('Y-m-d')) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
-                <div class="field"><label for="invoice_amount">Monto facturado</label><input id="invoice_amount" type="number" min="0" step="0.01" name="invoice_amount" value="{{ old('invoice_amount',$serviceOrder?->invoice_amount) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
-                <div class="field"><label for="paid_date">Fecha de pago</label><input id="paid_date" type="date" name="paid_date" value="{{ old('paid_date',$serviceOrder?->paid_date?->format('Y-m-d')) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
+                <div class="field span-2"><div class="help">Las facturas se gestionan como registros independientes debajo de esta ficha para permitir facturación parcial o por ejercicios.</div></div>
                 <div class="field"><label for="closed_date">Fecha de cierre</label><input id="closed_date" type="date" name="closed_date" value="{{ old('closed_date',$serviceOrder?->closed_date?->format('Y-m-d')) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
                 </div>
             </details>
