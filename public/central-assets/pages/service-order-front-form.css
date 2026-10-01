@@ -6,3 +6,48 @@
         .panel{padding:16px;border:1px solid #24304b;border-radius:17px;background:#11182b}.grid{display:grid;gap:11px}.field{display:grid;gap:5px}.field label{color:#cbd5e1;font-size:11px;font-weight:820}.field input,.field select,.field textarea{width:100%;min-height:42px;padding:9px 10px;border:1px solid #334155;border-radius:10px;background:#0f172a;color:#f8fafc}.field textarea{min-height:90px;resize:vertical}.check{display:flex;align-items:center;gap:8px;min-height:42px}.check input{width:auto;min-height:auto}.help{font-size:10px;line-height:1.4}.section-title{margin:18px 0 10px;color:#93c5fd;font-size:12px;font-weight:850;text-transform:uppercase;letter-spacing:.05em}.actions{justify-content:flex-start;flex-wrap:wrap;margin-top:15px}.primary,.secondary{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:9px 13px;border-radius:10px;font-size:12px;font-weight:820;cursor:pointer}.primary{border:0;background:#2563eb;color:#fff}.secondary{border:1px solid #334155;background:#0f172a;color:#cbd5e1}.success,.errors,.readonly{margin-bottom:14px;padding:11px 13px;border-radius:12px;font-size:12px}.success{border:1px solid #166534;background:#052e16;color:#bbf7d0}.errors{border:1px solid #991b1b;background:#450a0a;color:#fecaca}.readonly{border:1px solid #475569;background:#0f172a;color:#cbd5e1}
         @media(min-width:760px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.span-2{grid-column:1/-1}.span-3{grid-column:1/-1}}
         @media(prefers-color-scheme:light){body{background:#f8fafc;color:#0f172a}.panel{background:#fff;border-color:#e2e8f0}.field input,.field select,.field textarea,.secondary{background:#fff;color:#0f172a;border-color:#cbd5e1}.field label{color:#334155}.readonly{background:#fff;border-color:#cbd5e1;color:#475569}}
+
+
+/* 2.41.0 — Cronograma contractual de órdenes de servicio */
+.milestone-panel{margin-top:18px}
+.milestone-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.milestone-title{margin-top:0}
+.milestone-summary{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:#64748b;font-size:12px}
+.milestone-summary strong{color:#0f172a;font-size:20px;line-height:1}
+.milestone-overdue{padding:5px 8px;border-radius:999px;background:#fee2e2;color:#b91c1c;font-weight:800}
+.milestone-progress{height:8px;margin:14px 0 18px;overflow:hidden;border-radius:999px;background:#e2e8f0}
+.milestone-progress span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#024883,#f9a02c);transition:width .2s ease}
+.milestone-list{display:grid;gap:10px}
+.milestone-card{padding:14px;border:1px solid #dbe5ef;border-radius:14px;background:#fff}
+.milestone-card.is-overdue{border-color:#fecaca;background:#fffafa}
+.milestone-main{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:11px;align-items:center}
+.milestone-number{display:flex;width:34px;height:34px;align-items:center;justify-content:center;border-radius:10px;background:#eaf3fb;color:#024883;font-weight:900}
+.milestone-copy{min-width:0}
+.milestone-copy strong{display:block;color:#16324a;font-size:14px}
+.milestone-meta,.milestone-contract{display:flex;gap:8px 14px;flex-wrap:wrap;margin-top:5px;color:#64748b;font-size:11px}
+.milestone-status{padding:6px 9px;border-radius:9px;background:#eaf3fb;color:#024883;font-size:11px;font-weight:850;white-space:nowrap}
+.milestone-status.danger{background:#fee2e2;color:#b91c1c}
+.milestone-contract{margin:11px 0 0 45px;padding-top:9px;border-top:1px dashed #dbe5ef}
+.milestone-editor{margin:12px 0 0 45px;border-top:1px solid #edf2f7;padding-top:10px}
+.milestone-editor summary{cursor:pointer;color:#024883;font-size:12px;font-weight:800}
+.milestone-editor form{margin-top:12px}
+.milestone-create{margin-top:18px;padding-top:16px;border-top:1px solid #dbe5ef}
+.milestone-empty{padding:16px;border:1px dashed #cbd5e1;border-radius:12px;color:#64748b;font-size:12px;text-align:center}
+.milestone-grid{margin-top:10px}
+@media(max-width:759px){
+  .milestone-heading{display:grid}
+  .milestone-main{grid-template-columns:34px minmax(0,1fr)}
+  .milestone-status{grid-column:2;justify-self:start}
+  .milestone-contract,.milestone-editor{margin-left:0}
+}
+@media(prefers-color-scheme:dark){
+  .milestone-summary strong,.milestone-copy strong{color:#f8fafc}
+  .milestone-card{background:#11182b;border-color:#24304b}
+  .milestone-card.is-overdue{background:#241315;border-color:#7f1d1d}
+  .milestone-number{background:#102b42;color:#7dd3fc}
+  .milestone-status{background:#102b42;color:#7dd3fc}
+  .milestone-overdue,.milestone-status.danger{background:#450a0a;color:#fecaca}
+  .milestone-progress{background:#24304b}
+  .milestone-contract,.milestone-editor,.milestone-create{border-color:#24304b}
+  .milestone-empty{border-color:#334155;color:#94a3b8}
+}
