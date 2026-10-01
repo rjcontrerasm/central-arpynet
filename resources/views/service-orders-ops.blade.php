@@ -133,15 +133,7 @@
                     ->count();
                 $orderMilestoneOverdue = $order->milestones
                     ->filter(
-                        fn ($milestone) =>
-                            $milestone->contractual_due_date
-                            && $milestone->contractual_due_date->isPast()
-                            && ! $milestone->conformity_date
-                            && ! in_array(
-                                $milestone->task?->status,
-                                ['completed', 'cancelled'],
-                                true,
-                            ),
+                        fn ($milestone) => $milestone->is_overdue,
                     )
                     ->count();
             @endphp
