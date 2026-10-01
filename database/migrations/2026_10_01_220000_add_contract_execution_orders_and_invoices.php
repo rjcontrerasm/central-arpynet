@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -86,6 +87,63 @@ return new class extends Migration
                 ->constrained('service_order_execution_orders')
                 ->nullOnDelete();
         });
+
+        DB::table('service_orders')
+            ->orderBy('id')
+            ->get()
+            ->each(function ($serviceOrder): void {
+                $executionOrderId = null;
+
+                if (
+                    filled($serviceOrder->order_number)
+                    || filled($serviceOrder->order_received_date)
+                ) {
+                    $yearSource = $serviceOrder->order_received_date
+                        ?: $serviceOrder->start_date;
+
+                    $executionOrderId = DB::table(
+                        'service_order_execution_orders',
+                    )->insertGetId([
+                        'service_order_id' => $serviceOrder->id,
+                        'fiscal_year' => $yearSource
+                            ? (int) substr((string) $yearSource, 0, 4)
+                            : null,
+                        'document_type' => 'service_order',
+                        'document_number' => $serviceOrder->order_number,
+                        'issued_date' => $serviceOrder->order_received_date,
+                        'start_date' => $serviceOrder->start_date,
+                        'end_date' => $serviceOrder->end_date,
+                        'amount' => $serviceOrder->invoice_amount
+                            ?: $serviceOrder->amount,
+                        'status' => 'issued',
+                        'created_by' => $serviceOrder->created_by,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+
+                if (
+                    filled($serviceOrder->invoice_number)
+                    || filled($serviceOrder->invoice_date)
+                    || filled($serviceOrder->invoice_amount)
+                ) {
+                    DB::table('service_order_invoices')->insert([
+                        'service_order_id' => $serviceOrder->id,
+                        'execution_order_id' => $executionOrderId,
+                        'number' => $serviceOrder->invoice_number,
+                        'issue_date' => $serviceOrder->invoice_date,
+                        'due_date' => $serviceOrder->invoice_due_date,
+                        'paid_date' => $serviceOrder->paid_date,
+                        'amount' => $serviceOrder->invoice_amount,
+                        'status' => $serviceOrder->paid_date
+                            ? 'paid'
+                            : 'issued',
+                        'created_by' => $serviceOrder->created_by,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            });
     }
 
     public function down(): void
