@@ -428,7 +428,7 @@
 
                         @if($canWrite)
                             <div class="milestone-quick-actions">
-                                @if($task && $task->status !== 'completed' && $task->status !== 'cancelled')
+                                @if($task && $task->canBeUpdatedBy(auth()->user()) && $task->status !== 'completed' && $task->status !== 'cancelled')
                                     <form method="POST" action="{{ route('service-order-milestones.action',[$serviceOrder,$milestone]) }}">
                                         @csrf
                                         <input type="hidden" name="action" value="complete_task">
