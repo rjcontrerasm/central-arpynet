@@ -140,7 +140,9 @@ class ServiceOrderMilestoneController extends Controller
                 'contractual_due_date' =>
                     $validated['contractual_due_date'] ?? null,
                 'delivered_date' =>
-                    $validated['delivered_date'] ?? null,
+                    $validated['delivered_date']
+                    ?? $validated['conformity_date']
+                    ?? null,
                 'conformity_date' =>
                     $validated['conformity_date'] ?? null,
                 'amount' => $validated['amount'] ?? null,
@@ -150,7 +152,7 @@ class ServiceOrderMilestoneController extends Controller
             ])->save();
 
             if ($milestone->task) {
-                $milestone->task->fill([
+                $taskAttributes = [
                     'title' => $this->taskTitle(
                         $serviceOrder,
                         $validated['title'],
@@ -169,7 +171,16 @@ class ServiceOrderMilestoneController extends Controller
                     'visibility_scope' => $serviceOrder->work_team_id
                         ? 'teams'
                         : 'organization',
-                ])->save();
+                ];
+
+                if (
+                    ! empty($validated['delivered_date'])
+                    || ! empty($validated['conformity_date'])
+                ) {
+                    $taskAttributes['status'] = 'completed';
+                }
+
+                $milestone->task->fill($taskAttributes)->save();
 
                 $milestone->task->workTeams()->sync(
                     $serviceOrder->work_team_id
@@ -230,16 +241,14 @@ class ServiceOrderMilestoneController extends Controller
             $today,
         ): void {
             if ($validated['action'] === 'complete_task') {
-                if ($milestone->task) {
-                    $milestone->task->fill([
-                        'status' => 'completed',
-                    ])->save();
-                }
+                $this->completeLinkedTask($milestone);
 
                 return;
             }
 
             if ($validated['action'] === 'mark_delivered') {
+                $this->completeLinkedTask($milestone);
+
                 $milestone->fill([
                     'delivered_date' => $milestone->delivered_date
                         ?: $today,
@@ -247,6 +256,8 @@ class ServiceOrderMilestoneController extends Controller
 
                 return;
             }
+
+            $this->completeLinkedTask($milestone);
 
             $milestone->fill([
                 'delivered_date' => $milestone->delivered_date
@@ -257,9 +268,9 @@ class ServiceOrderMilestoneController extends Controller
         });
 
         $message = match ($validated['action']) {
-            'complete_task' => 'Tarea del hito completada.',
-            'mark_delivered' => 'Hito marcado como entregado.',
-            default => 'Conformidad registrada.',
+            'complete_task' => 'Trabajo completado. El hito queda listo para entregar.',
+            'mark_delivered' => 'Hito entregado. La tarea vinculada quedó completada automáticamente.',
+            default => 'Conformidad registrada. La tarea y la entrega quedaron completadas automáticamente.',
         };
 
         return redirect()
@@ -436,6 +447,21 @@ class ServiceOrderMilestoneController extends Controller
             0,
             255,
         );
+    }
+
+    private function completeLinkedTask(
+        ServiceOrderMilestone $milestone,
+    ): void {
+        if (
+            ! $milestone->task
+            || $milestone->task->status === 'completed'
+        ) {
+            return;
+        }
+
+        $milestone->task->fill([
+            'status' => 'completed',
+        ])->save();
     }
 
     private function nullableText(?string $value): ?string

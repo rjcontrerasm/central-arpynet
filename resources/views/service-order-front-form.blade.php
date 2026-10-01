@@ -396,6 +396,11 @@
                     @php
                         $task = $milestone->task;
                         $isOverdue = $milestone->is_overdue;
+                        $isDelivered = (bool) $milestone->delivered_date;
+                        $isConformed = (bool) $milestone->conformity_date;
+                        $isTaskDone = $task?->status === 'completed'
+                            || $isDelivered
+                            || $isConformed;
                     @endphp
                     <article class="milestone-card {{ $isOverdue ? 'is-overdue' : '' }}">
                         <div class="milestone-main">
@@ -408,14 +413,9 @@
                                     @if($serviceOrder->workTeam)<span>{{ $serviceOrder->workTeam->name }}</span>@endif
                                 </div>
                             </div>
-                            <div class="milestone-status-stack">
-                                <span class="milestone-status {{ $isOverdue ? 'danger' : '' }}">
-                                    Contrato: {{ $milestone->contractual_status_label }}
-                                </span>
-                                <span class="milestone-status task-status">
-                                    Tarea: {{ $milestone->task_status_label }}
-                                </span>
-                            </div>
+                            <span class="milestone-status {{ $isOverdue ? 'danger' : '' }}">
+                                {{ $milestone->contractual_status_label }}
+                            </span>
                         </div>
 
                         @if($milestone->delivered_date || $milestone->conformity_date || $milestone->amount || $milestone->executionOrder)
@@ -427,28 +427,62 @@
                             </div>
                         @endif
 
+                        <div class="milestone-sequence" aria-label="Secuencia del hito">
+                            <div class="milestone-step {{ $isTaskDone ? 'is-complete' : 'is-current' }}">
+                                <span class="milestone-step-dot">{{ $isTaskDone ? '✓' : '1' }}</span>
+                                <div>
+                                    <strong>Trabajo completado</strong>
+                                    <small>
+                                        @if($isTaskDone)
+                                            Tarea operativa terminada
+                                        @elseif($task?->status === 'cancelled')
+                                            Tarea cancelada
+                                        @else
+                                            Primer paso
+                                        @endif
+                                    </small>
+                                </div>
+                            </div>
+                            <span class="milestone-step-line {{ $isTaskDone ? 'is-complete' : '' }}" aria-hidden="true"></span>
+                            <div class="milestone-step {{ $isDelivered ? 'is-complete' : ($isTaskDone ? 'is-current' : 'is-pending') }}">
+                                <span class="milestone-step-dot">{{ $isDelivered ? '✓' : '2' }}</span>
+                                <div>
+                                    <strong>Entregado</strong>
+                                    <small>{{ $isDelivered ? $milestone->delivered_date->format('d/m/Y') : 'Pendiente de entrega' }}</small>
+                                </div>
+                            </div>
+                            <span class="milestone-step-line {{ $isDelivered ? 'is-complete' : '' }}" aria-hidden="true"></span>
+                            <div class="milestone-step {{ $isConformed ? 'is-complete' : ($isDelivered ? 'is-current' : 'is-pending') }}">
+                                <span class="milestone-step-dot">{{ $isConformed ? '✓' : '3' }}</span>
+                                <div>
+                                    <strong>Conforme</strong>
+                                    <small>{{ $isConformed ? $milestone->conformity_date->format('d/m/Y') : ($isDelivered ? 'Esperando conformidad' : 'Paso final') }}</small>
+                                </div>
+                            </div>
+                        </div>
+
                         @if($canWrite)
                             <div class="milestone-quick-actions">
-                                @if($task && $task->canBeUpdatedBy(auth()->user()) && $task->status !== 'completed' && $task->status !== 'cancelled')
+                                @if(! $isTaskDone && $task && $task->canBeUpdatedBy(auth()->user()) && $task->status !== 'cancelled')
                                     <form method="POST" action="{{ route('service-order-milestones.action',[$serviceOrder,$milestone]) }}">
                                         @csrf
                                         <input type="hidden" name="action" value="complete_task">
-                                        <button class="quick-action" type="submit" data-busy-label="Completando…">✓ Completar tarea</button>
+                                        <button class="quick-action primary-next-action" type="submit" data-busy-label="Completando…">✓ Completar trabajo</button>
                                     </form>
-                                @endif
-                                @if(! $milestone->delivered_date)
+                                @elseif(! $isDelivered)
                                     <form method="POST" action="{{ route('service-order-milestones.action',[$serviceOrder,$milestone]) }}">
                                         @csrf
                                         <input type="hidden" name="action" value="mark_delivered">
-                                        <button class="quick-action" type="submit" data-busy-label="Marcando…">Marcar entregado</button>
+                                        <button class="quick-action primary-next-action" type="submit" data-busy-label="Marcando…">Marcar entregado →</button>
                                     </form>
-                                @endif
-                                @if(! $milestone->conformity_date)
+                                @elseif(! $isConformed)
                                     <form method="POST" action="{{ route('service-order-milestones.action',[$serviceOrder,$milestone]) }}">
                                         @csrf
                                         <input type="hidden" name="action" value="mark_conformity">
-                                        <button class="quick-action" type="submit" data-busy-label="Registrando…">Registrar conformidad</button>
+                                        <button class="quick-action primary-next-action" type="submit" data-busy-label="Registrando…">Registrar conformidad →</button>
                                     </form>
+                                @else
+                                    <span class="milestone-sequence-complete">✓ Secuencia completada</span>
                                 @endif
                                 @if($task)
                                     <a class="quick-action secondary-action" href="{{ route('daily-ops.show',['q'=>$task->title]) }}">Ver tarea</a>
