@@ -163,6 +163,180 @@
 
     @if($serviceOrder)
         @php
+            $contractBaseAmount = (float) (
+                $serviceOrder->contract_amount
+                ?? $serviceOrder->amount
+                ?? 0
+            );
+            $orderedAmount = $serviceOrder->execution_ordered_amount;
+            $invoicedAmount = $serviceOrder->invoiced_total;
+            $paidAmount = $serviceOrder->paid_total;
+            $pendingOrderAmount = max(0, $contractBaseAmount - $orderedAmount);
+            $pendingInvoiceAmount = max(0, $contractBaseAmount - $invoicedAmount);
+        @endphp
+
+        <section class="panel commercial-panel" id="ejecucion-contractual">
+            <div class="commercial-heading">
+                <div>
+                    <div class="section-title">Órdenes / ejecución presupuestal</div>
+                    <div class="help">
+                        Un contrato puede ejecutarse mediante una o varias órdenes,
+                        incluso en ejercicios fiscales distintos.
+                    </div>
+                </div>
+                <div class="financial-kpis">
+                    <span><strong>{{ $serviceOrder->currency }} {{ number_format($orderedAmount,2,'.',',') }}</strong> ordenado</span>
+                    <span><strong>{{ $serviceOrder->currency }} {{ number_format($pendingOrderAmount,2,'.',',') }}</strong> pendiente</span>
+                </div>
+            </div>
+
+            <div class="commercial-list">
+                @forelse($serviceOrder->executionOrders as $executionOrder)
+                    <article class="commercial-card">
+                        <div class="commercial-card-head">
+                            <div>
+                                <strong>
+                                    {{ AppModelsServiceOrderExecutionOrder::documentTypeOptions()[$executionOrder->document_type] ?? 'Documento' }}
+                                    {{ $executionOrder->document_number ?: 'pendiente de número' }}
+                                </strong>
+                                <div class="milestone-meta">
+                                    <span>Ejercicio {{ $executionOrder->fiscal_year ?: 'sin definir' }}</span>
+                                    <span>{{ $serviceOrder->currency }} {{ number_format((float)($executionOrder->amount ?? 0),2,'.',',') }}</span>
+                                    @if($executionOrder->issued_date)<span>Emitida {{ $executionOrder->issued_date->format('d/m/Y') }}</span>@endif
+                                </div>
+                            </div>
+                            <span class="milestone-status">
+                                {{ AppModelsServiceOrderExecutionOrder::statusOptions()[$executionOrder->status] ?? $executionOrder->status }}
+                            </span>
+                        </div>
+
+                        @if($canWrite)
+                            <details class="commercial-editor">
+                                <summary>Editar orden</summary>
+                                <form method="POST" action="{{ route('service-order-execution-orders.update',[$serviceOrder,$executionOrder]) }}">
+                                    @csrf
+                                    <div class="grid milestone-grid">
+                                        <div class="field"><label>Ejercicio fiscal</label><input type="number" min="2000" max="2100" name="fiscal_year" value="{{ $executionOrder->fiscal_year }}"></div>
+                                        <div class="field"><label>Tipo</label><select name="document_type">@foreach(AppModelsServiceOrderExecutionOrder::documentTypeOptions() as $value=>$label)<option value="{{ $value }}" @selected($executionOrder->document_type === $value)>{{ $label }}</option>@endforeach</select></div>
+                                        <div class="field"><label>N.º documento</label><input name="document_number" maxlength="120" value="{{ $executionOrder->document_number }}"></div>
+                                        <div class="field"><label>Fecha de emisión</label><input type="date" name="issued_date" value="{{ $executionOrder->issued_date?->format('Y-m-d') }}"></div>
+                                        <div class="field"><label>Monto</label><input type="number" min="0" step="0.01" name="amount" value="{{ $executionOrder->amount }}"></div>
+                                        <div class="field"><label>Estado</label><select name="status">@foreach(AppModelsServiceOrderExecutionOrder::statusOptions() as $value=>$label)<option value="{{ $value }}" @selected($executionOrder->status === $value)>{{ $label }}</option>@endforeach</select></div>
+                                        <div class="field"><label>Inicio</label><input type="date" name="start_date" value="{{ $executionOrder->start_date?->format('Y-m-d') }}"></div>
+                                        <div class="field"><label>Fin</label><input type="date" name="end_date" value="{{ $executionOrder->end_date?->format('Y-m-d') }}"></div>
+                                        <div class="field span-2"><label>Notas</label><textarea name="notes">{{ $executionOrder->notes }}</textarea></div>
+                                    </div>
+                                    <div class="actions"><button class="primary" type="submit" data-busy-label="Guardando…">Guardar orden</button></div>
+                                </form>
+                            </details>
+                        @endif
+                    </article>
+                @empty
+                    <div class="milestone-empty">Aún no hay órdenes de ejecución registradas.</div>
+                @endforelse
+            </div>
+
+            @if($canWrite)
+                <details class="commercial-create">
+                    <summary>+ Agregar orden de ejecución</summary>
+                    <form method="POST" action="{{ route('service-order-execution-orders.store',$serviceOrder) }}">
+                        @csrf
+                        <div class="grid milestone-grid">
+                            <div class="field"><label>Ejercicio fiscal</label><input type="number" min="2000" max="2100" name="fiscal_year" value="{{ now()->year }}"></div>
+                            <div class="field"><label>Tipo</label><select name="document_type">@foreach(AppModelsServiceOrderExecutionOrder::documentTypeOptions() as $value=>$label)<option value="{{ $value }}">{{ $label }}</option>@endforeach</select></div>
+                            <div class="field"><label>N.º documento</label><input name="document_number" maxlength="120" placeholder="Puede quedar pendiente"></div>
+                            <div class="field"><label>Fecha de emisión</label><input type="date" name="issued_date"></div>
+                            <div class="field"><label>Monto</label><input type="number" min="0" step="0.01" name="amount"></div>
+                            <div class="field"><label>Estado</label><select name="status">@foreach(AppModelsServiceOrderExecutionOrder::statusOptions() as $value=>$label)<option value="{{ $value }}">{{ $label }}</option>@endforeach</select></div>
+                            <div class="field"><label>Inicio</label><input type="date" name="start_date"></div>
+                            <div class="field"><label>Fin</label><input type="date" name="end_date"></div>
+                            <div class="field span-2"><label>Notas</label><textarea name="notes"></textarea></div>
+                        </div>
+                        <div class="actions"><button class="primary" type="submit" data-busy-label="Agregando…">Agregar orden</button></div>
+                    </form>
+                </details>
+            @endif
+        </section>
+
+        <section class="panel commercial-panel" id="facturacion">
+            <div class="commercial-heading">
+                <div>
+                    <div class="section-title">Facturación y cobranza</div>
+                    <div class="help">
+                        Registra tantas facturas como requiera el servicio y vincúlalas,
+                        cuando corresponda, a una orden de ejecución.
+                    </div>
+                </div>
+                <div class="financial-kpis">
+                    <span><strong>{{ $serviceOrder->currency }} {{ number_format($invoicedAmount,2,'.',',') }}</strong> facturado</span>
+                    <span><strong>{{ $serviceOrder->currency }} {{ number_format($paidAmount,2,'.',',') }}</strong> cobrado</span>
+                    <span><strong>{{ $serviceOrder->currency }} {{ number_format($pendingInvoiceAmount,2,'.',',') }}</strong> por facturar</span>
+                </div>
+            </div>
+
+            <div class="commercial-list">
+                @forelse($serviceOrder->invoices as $invoice)
+                    <article class="commercial-card">
+                        <div class="commercial-card-head">
+                            <div>
+                                <strong>Factura {{ $invoice->number ?: 'pendiente de emisión' }}</strong>
+                                <div class="milestone-meta">
+                                    <span>{{ $serviceOrder->currency }} {{ number_format((float)($invoice->amount ?? 0),2,'.',',') }}</span>
+                                    @if($invoice->executionOrder)<span>{{ $invoice->executionOrder->document_number ?: 'Orden '.$invoice->executionOrder->fiscal_year }}</span>@endif
+                                    @if($invoice->issue_date)<span>Emitida {{ $invoice->issue_date->format('d/m/Y') }}</span>@endif
+                                    @if($invoice->due_date)<span>Vence {{ $invoice->due_date->format('d/m/Y') }}</span>@endif
+                                </div>
+                            </div>
+                            <span class="milestone-status {{ $invoice->display_status === 'Vencida' ? 'danger' : '' }}">{{ $invoice->display_status }}</span>
+                        </div>
+
+                        @if($canWrite)
+                            <details class="commercial-editor">
+                                <summary>Editar factura</summary>
+                                <form method="POST" action="{{ route('service-order-invoices.update',[$serviceOrder,$invoice]) }}">
+                                    @csrf
+                                    <div class="grid milestone-grid">
+                                        <div class="field"><label>N.º factura</label><input name="number" maxlength="120" value="{{ $invoice->number }}"></div>
+                                        <div class="field"><label>Orden vinculada</label><select name="execution_order_id"><option value="">Sin orden específica</option>@foreach($serviceOrder->executionOrders as $orderOption)<option value="{{ $orderOption->id }}" @selected((int)$invoice->execution_order_id === (int)$orderOption->id)>{{ $orderOption->fiscal_year }} · {{ $orderOption->document_number ?: 'Pendiente' }}</option>@endforeach</select></div>
+                                        <div class="field"><label>Fecha emisión</label><input type="date" name="issue_date" value="{{ $invoice->issue_date?->format('Y-m-d') }}"></div>
+                                        <div class="field"><label>Vencimiento</label><input type="date" name="due_date" value="{{ $invoice->due_date?->format('Y-m-d') }}"></div>
+                                        <div class="field"><label>Monto</label><input type="number" min="0" step="0.01" name="amount" value="{{ $invoice->amount }}"></div>
+                                        <div class="field"><label>Estado</label><select name="status">@foreach(AppModelsServiceOrderInvoice::statusOptions() as $value=>$label)<option value="{{ $value }}" @selected($invoice->status === $value)>{{ $label }}</option>@endforeach</select></div>
+                                        <div class="field"><label>Fecha pago</label><input type="date" name="paid_date" value="{{ $invoice->paid_date?->format('Y-m-d') }}"></div>
+                                        <div class="field span-2"><label>Notas</label><textarea name="notes">{{ $invoice->notes }}</textarea></div>
+                                    </div>
+                                    <div class="actions"><button class="primary" type="submit" data-busy-label="Guardando…">Guardar factura</button></div>
+                                </form>
+                            </details>
+                        @endif
+                    </article>
+                @empty
+                    <div class="milestone-empty">Aún no hay facturas registradas.</div>
+                @endforelse
+            </div>
+
+            @if($canWrite)
+                <details class="commercial-create">
+                    <summary>+ Agregar factura</summary>
+                    <form method="POST" action="{{ route('service-order-invoices.store',$serviceOrder) }}">
+                        @csrf
+                        <div class="grid milestone-grid">
+                            <div class="field"><label>N.º factura</label><input name="number" maxlength="120" placeholder="Puede quedar pendiente"></div>
+                            <div class="field"><label>Orden vinculada</label><select name="execution_order_id"><option value="">Sin orden específica</option>@foreach($serviceOrder->executionOrders as $orderOption)<option value="{{ $orderOption->id }}">{{ $orderOption->fiscal_year }} · {{ $orderOption->document_number ?: 'Pendiente' }}</option>@endforeach</select></div>
+                            <div class="field"><label>Fecha emisión</label><input type="date" name="issue_date"></div>
+                            <div class="field"><label>Vencimiento</label><input type="date" name="due_date"></div>
+                            <div class="field"><label>Monto</label><input type="number" min="0" step="0.01" name="amount"></div>
+                            <div class="field"><label>Estado</label><select name="status">@foreach(AppModelsServiceOrderInvoice::statusOptions() as $value=>$label)<option value="{{ $value }}">{{ $label }}</option>@endforeach</select></div>
+                            <div class="field"><label>Fecha pago</label><input type="date" name="paid_date"></div>
+                            <div class="field span-2"><label>Notas</label><textarea name="notes"></textarea></div>
+                        </div>
+                        <div class="actions"><button class="primary" type="submit" data-busy-label="Agregando…">Agregar factura</button></div>
+                    </form>
+                </details>
+            @endif
+        </section>
+
+        @php
             $milestoneCount = $serviceOrder->milestones->count();
             $milestoneCompleted = $serviceOrder->milestones
                 ->filter(
