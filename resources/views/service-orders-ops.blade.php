@@ -140,7 +140,7 @@
             <article class="card">
                 <div class="card-head">
                     <div>
-                        <div class="title">{{ $order->title }}</div>
+                        <a class="title title-link" href="{{ route('service-order-front.show',$order) }}">{{ $order->title }}</a>
                         <div class="meta">{{ $order->organization?->name ?? 'Sin ámbito' }} · {{ $order->client?->name ?? 'Sin cliente' }}</div>
                     </div>
                     <span class="pill {{ $order->ops_level }}">{{ $order->ops_label }}</span>
@@ -213,8 +213,13 @@
                 @endif
 
                 <div class="card-foot">
-                    <span class="muted">{{ $canWriteOrder ? 'Edición FRONT disponible' : 'Solo lectura' }}</span>
-                    <a class="card-link" href="{{ route('service-order-front.edit',$order) }}">{{ $canWriteOrder ? 'Editar servicio' : 'Ver servicio' }} →</a>
+                    <span class="muted">Detalle completo disponible</span>
+                    <div class="card-actions">
+                        <a class="card-link" href="{{ route('service-order-front.show',$order) }}">Ver servicio →</a>
+                        @if($canWriteOrder)
+                            <a class="card-link secondary-card-link" href="{{ route('service-order-front.edit',$order) }}">Editar</a>
+                        @endif
+                    </div>
                 </div>
             </article>
         @empty
