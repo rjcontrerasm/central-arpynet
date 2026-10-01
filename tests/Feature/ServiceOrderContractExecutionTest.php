@@ -180,6 +180,93 @@ class ServiceOrderContractExecutionTest extends TestCase
         $this->assertSame('Conforme', $milestone->contractual_status_label);
     }
 
+    public function test_marking_delivered_completes_linked_task_automatically(): void
+    {
+        [$user, $organization, $client] = $this->context();
+
+        $service = ServiceOrder::query()->create([
+            'organization_id' => $organization->id,
+            'client_id' => $client->id,
+            'title' => 'Servicio secuencial',
+            'stage' => 'execution',
+            'currency' => 'PEN',
+            'assigned_to' => $user->id,
+            'created_by' => $user->id,
+        ]);
+
+        $this->actingAs($user)->post(
+            '/servicios/'.$service->id.'/hitos',
+            [
+                'title' => 'Informe entregable',
+                'contractual_due_date' => '2026-10-30',
+                'assigned_to' => $user->id,
+                'urgency' => 'normal',
+            ],
+        )->assertRedirect();
+
+        $milestone = ServiceOrderMilestone::query()->firstOrFail();
+
+        $this->assertSame('pending', $milestone->task()->value('status'));
+
+        $this->actingAs($user)->post(
+            '/servicios/'.$service->id.'/hitos/'.$milestone->id.'/accion',
+            ['action' => 'mark_delivered'],
+        )->assertRedirect();
+
+        $milestone->refresh()->load('task');
+
+        $this->assertNotNull($milestone->delivered_date);
+        $this->assertSame('completed', $milestone->task->status);
+        $this->assertNotNull($milestone->task->completed_at);
+
+        $this->actingAs($user)
+            ->get('/servicios/'.$service->id.'/editar')
+            ->assertOk()
+            ->assertSee('Trabajo completado')
+            ->assertSee('Entregado')
+            ->assertSee('Esperando conformidad')
+            ->assertSee('Registrar conformidad')
+            ->assertDontSee('Completar trabajo');
+    }
+
+    public function test_registering_conformity_completes_all_previous_steps(): void
+    {
+        [$user, $organization, $client] = $this->context();
+
+        $service = ServiceOrder::query()->create([
+            'organization_id' => $organization->id,
+            'client_id' => $client->id,
+            'title' => 'Servicio con conformidad directa',
+            'stage' => 'execution',
+            'currency' => 'PEN',
+            'assigned_to' => $user->id,
+            'created_by' => $user->id,
+        ]);
+
+        $this->actingAs($user)->post(
+            '/servicios/'.$service->id.'/hitos',
+            [
+                'title' => 'Entregable final',
+                'assigned_to' => $user->id,
+                'urgency' => 'normal',
+            ],
+        )->assertRedirect();
+
+        $milestone = ServiceOrderMilestone::query()->firstOrFail();
+
+        $this->actingAs($user)->post(
+            '/servicios/'.$service->id.'/hitos/'.$milestone->id.'/accion',
+            ['action' => 'mark_conformity'],
+        )->assertRedirect();
+
+        $milestone->refresh()->load('task');
+
+        $this->assertNotNull($milestone->delivered_date);
+        $this->assertNotNull($milestone->conformity_date);
+        $this->assertSame('completed', $milestone->task->status);
+        $this->assertSame('Conforme', $milestone->contractual_status_label);
+    }
+
     public function test_viewer_cannot_add_execution_order_or_invoice(): void
     {
         [$owner, $organization, $client] = $this->context();
