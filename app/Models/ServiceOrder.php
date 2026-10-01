@@ -178,6 +178,13 @@ class ServiceOrder extends Model
             ->sum(fn ($order): float => (float) ($order->amount ?? 0));
     }
 
+    public function getExecutionIssuedAmountAttribute(): float
+    {
+        return (float) $this->executionOrders
+            ->whereIn('status', ['issued', 'executing', 'closed'])
+            ->sum(fn ($order): float => (float) ($order->amount ?? 0));
+    }
+
     public function getInvoicedTotalAttribute(): float
     {
         return (float) $this->invoices
