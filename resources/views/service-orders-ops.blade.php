@@ -7,7 +7,7 @@
     <title>Servicios · Central ARPYNET</title>
     <link
         rel="stylesheet"
-        href="{{ asset('central-assets/pages/service-orders-ops.css') }}?v=2.39.1"
+        href="{{ asset('central-assets/pages/service-orders-ops.css') }}?v={{ filemtime(public_path('central-assets/pages/service-orders-ops.css')) }}"
     >
 </head>
 <body>
