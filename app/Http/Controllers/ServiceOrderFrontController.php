@@ -94,8 +94,9 @@ class ServiceOrderFrontController extends Controller
             (int) $serviceOrder->organization_id,
         );
 
-        return view('service-order-front-form', [
+        return view('service-order-front-show', [
             'serviceOrder' => $serviceOrder->load([
+                'organization',
                 'client',
                 'assignee',
                 'workTeam',
@@ -104,14 +105,7 @@ class ServiceOrderFrontController extends Controller
                 'milestones.executionOrder',
                 'milestones.task.assignee',
             ]),
-            'writableOrganizations' => $this->writableOrganizations($request),
-            'defaultOrganizationId' => (int) $serviceOrder->organization_id,
-            'clientOptions' => $this->clientOptions($request),
-            'assigneeOptions' => $this->assigneeOptions($request),
-            'workTeamOptions' => $this->workTeamOptions($request),
-            'canWrite' => false,
             'canEdit' => $canEdit,
-            'viewMode' => true,
         ]);
     }
 
