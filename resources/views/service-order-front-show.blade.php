@@ -29,7 +29,7 @@
     </x-operational-page-header>
 
     @php
-        $stageLabel = AppModelsServiceOrder::stageOptions()[$serviceOrder->stage] ?? $serviceOrder->stage;
+        $stageLabel = \App\Models\ServiceOrder::stageOptions()[$serviceOrder->stage] ?? $serviceOrder->stage;
         $contractType = [
             'none' => 'Sin contrato',
             'contract' => 'Contrato',
@@ -133,8 +133,8 @@
             @forelse($serviceOrder->executionOrders as $order)
                 <article class="record-row">
                     <div class="record-copy">
-                        <strong>{{ AppModelsServiceOrderExecutionOrder::documentTypeOptions()[$order->document_type] ?? 'Documento' }} {{ $order->document_number ?: 'pendiente' }}</strong>
-                        <span>Ejercicio {{ $order->fiscal_year ?: '—' }} · {{ $serviceOrder->currency }} {{ number_format((float)($order->amount ?? 0),2,'.',',') }} · {{ AppModelsServiceOrderExecutionOrder::statusOptions()[$order->status] ?? $order->status }}</span>
+                        <strong>{{ \App\Models\ServiceOrderExecutionOrder::documentTypeOptions()[$order->document_type] ?? 'Documento' }} {{ $order->document_number ?: 'pendiente' }}</strong>
+                        <span>Ejercicio {{ $order->fiscal_year ?: '—' }} · {{ $serviceOrder->currency }} {{ number_format((float)($order->amount ?? 0),2,'.',',') }} · {{ \App\Models\ServiceOrderExecutionOrder::statusOptions()[$order->status] ?? $order->status }}</span>
                     </div>
                     @if($order->document_url)
                         <a class="document-button" href="{{ $order->document_url }}" target="_blank" rel="noopener noreferrer">
