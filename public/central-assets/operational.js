@@ -145,6 +145,34 @@
                 document.body.classList.add(
                     'has-global-undo-toast',
                 );
+
+                if (window.location.pathname === '/mi-dia') {
+                    const undoMessage = undoToast
+                        .querySelector('.global-undo-message')
+                        ?.textContent
+                        ?.trim()
+                        ?.replace(/\s+/g, ' ');
+
+                    if (undoMessage) {
+                        document
+                            .querySelectorAll('.success')
+                            .forEach((success) => {
+                                const successMessage = success
+                                    .textContent
+                                    ?.trim()
+                                    ?.replace(/\s+/g, ' ');
+
+                                if (
+                                    successMessage
+                                    && successMessage.includes(
+                                        undoMessage,
+                                    )
+                                ) {
+                                    success.hidden = true;
+                                }
+                            });
+                    }
+                }
             }
 
             const homeUrl = '/mi-dia';
@@ -182,7 +210,7 @@
             scrollTopButton.setAttribute('aria-label', 'Volver arriba');
             scrollTopButton.setAttribute('title', 'Volver arriba');
             scrollTopButton.hidden = true;
-            scrollTopButton.innerHTML = \`
+            scrollTopButton.innerHTML = `
                 <svg
                     viewBox="0 0 24 24"
                     aria-hidden="true"
@@ -190,7 +218,7 @@
                     <path d="m6 10 6-6 6 6"/>
                     <path d="M12 4v16"/>
                 </svg>
-            \`;
+            `;
 
             document.body.appendChild(scrollTopButton);
 

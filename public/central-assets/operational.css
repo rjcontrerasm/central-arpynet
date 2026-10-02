@@ -2727,10 +2727,6 @@ body > .global-undo-bar {
     z-index: 420 !important;
 }
 
-body.has-global-undo-toast .success {
-    display: none !important;
-}
-
 body.has-global-undo-toast .operational-scroll-top {
     bottom:
         max(
