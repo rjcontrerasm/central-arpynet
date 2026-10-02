@@ -17,6 +17,7 @@ class ServiceOrderExecutionOrder extends Model
         'fiscal_year',
         'document_type',
         'document_number',
+        'document_url',
         'issued_date',
         'start_date',
         'end_date',
