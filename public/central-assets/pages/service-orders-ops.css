@@ -39,3 +39,278 @@
 
 .view-service-link{display:inline-flex;align-items:center;gap:6px}
 .view-service-link svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+
+/* 2.42.4 — Service cards: hierarchy, scanability and compact actions */
+.service-card{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    padding:16px;
+    border-radius:18px
+}
+.service-card-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:14px
+}
+.service-card-identity{min-width:0;flex:1}
+.service-card .title{
+    display:block;
+    font-size:15px;
+    font-weight:900;
+    line-height:1.25;
+    letter-spacing:-.012em
+}
+.service-card-meta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px;
+    margin-top:5px;
+    color:#64748b;
+    font-size:10.5px;
+    line-height:1.35
+}
+.service-card-status{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    gap:6px;
+    flex:0 0 auto
+}
+.service-card-status .pill{margin:0}
+
+.service-card-context{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 12px;
+    padding:0 1px;
+    color:#64748b;
+    font-size:10px;
+    font-weight:720
+}
+.service-card-context span{
+    position:relative
+}
+.service-card-context span:not(:last-child)::after{
+    content:"";
+    position:absolute;
+    top:50%;
+    right:-7px;
+    width:2px;
+    height:2px;
+    border-radius:999px;
+    background:#94a3b8
+}
+.health-inline.warning{color:#a16207}
+.health-inline.danger{color:#b91c1c}
+.health-inline.success{color:#166534}
+
+.service-card-metrics{
+    display:grid;
+    grid-template-columns:1.25fr .7fr 1fr;
+    gap:8px
+}
+.service-card-metrics>div{
+    display:grid;
+    gap:3px;
+    min-width:0;
+    padding:9px 10px;
+    border:1px solid #e2e8f0;
+    border-radius:11px;
+    background:#f8fafc
+}
+.service-card-metrics span{
+    color:#64748b;
+    font-size:9px;
+    font-weight:760;
+    text-transform:uppercase;
+    letter-spacing:.04em
+}
+.service-card-metrics strong{
+    overflow:hidden;
+    color:#16324a;
+    font-size:12px;
+    line-height:1.25;
+    text-overflow:ellipsis;
+    white-space:nowrap
+}
+
+.service-next-action{
+    padding:11px 12px;
+    border:1px solid #cfe0ee;
+    border-radius:12px;
+    background:#f5f9fc
+}
+.service-next-action.is-empty{
+    border-style:dashed;
+    border-color:#e0c791;
+    background:#fffaf0
+}
+.service-next-label{
+    color:#024883;
+    font-size:9px;
+    font-weight:900;
+    letter-spacing:.06em;
+    text-transform:uppercase
+}
+.service-next-main{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:12px;
+    margin-top:4px
+}
+.service-next-main strong{
+    color:#16324a;
+    font-size:12px;
+    line-height:1.35
+}
+.service-next-main span{
+    color:#64748b;
+    font-size:9.5px;
+    white-space:nowrap
+}
+.service-next-action.is-empty .service-next-main strong{color:#9a5b00}
+.service-card-alerts{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px
+}
+.alert-chip{
+    padding:5px 8px;
+    border-radius:999px;
+    background:#eff6ff;
+    color:#1d4ed8;
+    font-size:9.5px;
+    font-weight:800
+}
+.alert-chip.danger{background:#fef2f2;color:#b91c1c}
+.alert-chip.success{background:#f0fdf4;color:#166534}
+
+.quick-actions{
+    margin:0;
+    padding-top:0;
+    border-top:0
+}
+.quick-actions>summary{
+    min-height:32px;
+    padding:5px 9px;
+    border:1px solid #d5e0ea;
+    border-radius:9px;
+    background:#fff;
+    color:#53697c;
+    font-size:10px
+}
+.quick-actions-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-top:8px
+}
+.quick-actions-grid>details{
+    margin:0;
+    padding:0;
+    border:0
+}
+.quick-actions-grid>details>summary{
+    width:100%;
+    justify-content:center
+}
+
+.service-card-actions{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:8px;
+    margin-top:auto;
+    padding-top:12px;
+    border-top:1px solid #e2e8f0
+}
+.service-primary-action,
+.service-secondary-action{
+    display:inline-flex;
+    min-height:36px;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    padding:7px 11px;
+    border-radius:10px;
+    font-size:10.5px;
+    font-weight:880
+}
+.service-primary-action{
+    border:1px solid #024883;
+    background:#024883;
+    color:#fff
+}
+.service-primary-action:hover{background:#004371}
+.service-secondary-action{
+    border:1px solid #cbd5e1;
+    background:#fff;
+    color:#475569
+}
+.service-secondary-action:hover{background:#f8fafc}
+.view-icon{
+    position:relative;
+    display:inline-block;
+    width:16px;
+    height:11px;
+    border:1.8px solid currentColor;
+    border-radius:50% / 60%;
+    flex:0 0 auto
+}
+.view-icon::after{
+    content:"";
+    position:absolute;
+    top:50%;
+    left:50%;
+    width:4px;
+    height:4px;
+    border-radius:999px;
+    background:currentColor;
+    transform:translate(-50%,-50%)
+}
+
+/* Remove legacy oversized icon treatment if cached markup briefly coexists. */
+.view-service-link svg{display:none!important}
+
+@media(max-width:620px){
+    .service-card-head{display:grid}
+    .service-card-status{justify-content:flex-start}
+    .service-card-metrics{grid-template-columns:1fr 1fr}
+    .service-card-metrics>div:first-child{grid-column:1/-1}
+    .service-next-main{display:grid}
+    .service-next-main span{white-space:normal}
+    .quick-actions-grid{grid-template-columns:1fr}
+    .service-card-actions{justify-content:stretch}
+    .service-primary-action,.service-secondary-action{flex:1}
+}
+
+@media(prefers-color-scheme:dark){
+    .service-card-meta,.service-card-context{color:#94a3b8}
+    .service-card-metrics>div{
+        border-color:#24304b;
+        background:#0f172a
+    }
+    .service-card-metrics span{color:#94a3b8}
+    .service-card-metrics strong{color:#f8fafc}
+    .service-next-action{
+        border-color:#244665;
+        background:#102033
+    }
+    .service-next-action.is-empty{
+        border-color:#5e4b24;
+        background:#2b2312
+    }
+    .service-next-main strong{color:#f8fafc}
+    .service-next-main span{color:#94a3b8}
+    .quick-actions>summary,
+    .service-secondary-action{
+        border-color:#334155;
+        background:#0f172a;
+        color:#cbd5e1
+    }
+    .service-card-actions{border-color:#24304b}
+}
