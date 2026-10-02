@@ -60,6 +60,7 @@ class ServiceOrderInvoiceController extends Controller
         return $request->validate([
             'execution_order_id' => ['nullable', 'integer'],
             'number' => ['nullable', 'string', 'max:120'],
+            'document_url' => ['nullable', 'url', 'max:500'],
             'issue_date' => ['nullable', 'date'],
             'due_date' => ['nullable', 'date', 'after_or_equal:issue_date'],
             'paid_date' => ['nullable', 'date'],
@@ -99,7 +100,7 @@ class ServiceOrderInvoiceController extends Controller
     }
 
     private function attributes(array $validated): array {
-        foreach (['number', 'notes'] as $field) {
+        foreach (['number', 'document_url', 'notes'] as $field) {
             $value = trim((string) ($validated[$field] ?? ''));
             $validated[$field] = $value !== '' ? $value : null;
         }
