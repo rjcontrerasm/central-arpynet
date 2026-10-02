@@ -44,6 +44,8 @@ Route::middleware('auth')->group(function (): void {
         ->name('service-order-front.create');
     Route::post('/servicios', [ServiceOrderFrontActionController::class, 'store'])
         ->name('service-order-front.store');
+    Route::get('/servicios/{serviceOrder}', [ServiceOrderFrontController::class, 'show'])
+        ->name('service-order-front.show');
     Route::get('/servicios/{serviceOrder}/editar', [ServiceOrderFrontController::class, 'edit'])
         ->name('service-order-front.edit');
     Route::post('/servicios/{serviceOrder}/editar', [ServiceOrderFrontActionController::class, 'update'])

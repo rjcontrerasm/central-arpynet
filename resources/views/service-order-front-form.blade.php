@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $serviceOrder ? 'Editar orden / servicio' : 'Nueva orden / servicio' }} · Central ARPYNET</title>
+    <title>{{ $viewMode ? 'Detalle del servicio' : ($serviceOrder ? 'Editar orden / servicio' : 'Nueva orden / servicio') }} · Central ARPYNET</title>
     <link
         rel="stylesheet"
         href="{{ asset('central-assets/pages/service-order-front-form.css') }}?v={{ filemtime(public_path('central-assets/pages/service-order-front-form.css')) }}"
@@ -15,14 +15,23 @@
 <div class="shell">
     <x-operational-page-header
         active="services"
-        :title="$serviceOrder ? 'Editar orden / servicio' : 'Nueva orden / servicio'"
+        :title="$viewMode ? 'Detalle del servicio' : ($serviceOrder ? 'Editar orden / servicio' : 'Nueva orden / servicio')"
         subtitle="Del compromiso comercial al cronograma, ejecución, conformidad y cobro."
     />
 
     @if(session('service_front_success'))<div class="success">{{ session('service_front_success') }}</div>@endif
     @if(session('service_milestone_success'))<div class="success">{{ session('service_milestone_success') }}</div>@endif
     @if($errors->any())<div class="errors">@foreach($errors->all() as $error)<div>{{ $error }}</div>@endforeach</div>@endif
-    @if(! $canWrite)<div class="readonly">Tienes acceso de solo lectura a este servicio.</div>@endif
+    @if($viewMode)
+        <div class="detail-mode-banner">
+            <span>Vista de detalle · sin edición accidental.</span>
+            @if($canEdit)
+                <a href="{{ route('service-order-front.edit',$serviceOrder) }}">Editar servicio →</a>
+            @endif
+        </div>
+    @elseif(! $canWrite)
+        <div class="readonly">Tienes acceso de solo lectura a este servicio.</div>
+    @endif
 
     @php
         $organizationId=(int)old('organization_id',$serviceOrder?->organization_id ?? $defaultOrganizationId);
@@ -155,7 +164,11 @@
             </details>
 
             <div class="actions form-actions">
-                @if($canWrite)<button class="primary" type="submit" data-busy-label="Guardando…">{{ $serviceOrder ? 'Guardar cambios' : 'Crear orden / servicio' }}</button>@endif
+                @if($canWrite)
+                    <button class="primary" type="submit" data-busy-label="Guardando…">{{ $serviceOrder ? 'Guardar cambios' : 'Crear orden / servicio' }}</button>
+                @elseif($viewMode && $canEdit)
+                    <a class="primary action-link" href="{{ route('service-order-front.edit',$serviceOrder) }}">Editar servicio</a>
+                @endif
                 <a class="secondary" href="{{ route('service-orders-ops.show') }}">Volver a servicios</a>
             </div>
         </form>
@@ -520,8 +533,12 @@
             </div>
 
             @if($canWrite)
-                <div class="milestone-create">
-                    <div class="section-title">Agregar hito / entregable</div>
+                <details class="milestone-create">
+                    <summary class="milestone-create-toggle">
+                        <span class="milestone-create-icon" aria-hidden="true">+</span>
+                        Agregar hito / entregable
+                    </summary>
+                    <div class="milestone-create-body">
                     <form method="POST" action="{{ route('service-order-milestones.store',$serviceOrder) }}">
                         @csrf
                         <div class="grid milestone-grid">
@@ -538,7 +555,8 @@
                             <button class="primary" type="submit" data-busy-label="Creando…">Agregar hito y crear tarea</button>
                         </div>
                     </form>
-                </div>
+                    </div>
+                </details>
             @endif
         </section>
     @endif

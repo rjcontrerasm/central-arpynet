@@ -53,6 +53,29 @@ class ServiceOrderOpsTest extends TestCase
             ->assertSee('Crítica');
     }
 
+    public function test_service_title_links_to_detail_view(): void
+    {
+        [$user, $organization, $client] = $this->context();
+
+        $order = $this->order(
+            $user,
+            $organization,
+            $client,
+            ['title' => 'Servicio navegable'],
+        );
+
+        $this->actingAs($user)
+            ->get('/servicios?focus=all')
+            ->assertOk()
+            ->assertSee('Servicio navegable')
+            ->assertSee(
+                route('service-order-front.show', $order, false),
+                false,
+            )
+            ->assertSee('Ver servicio')
+            ->assertSee('Editar');
+    }
+
     public function test_foreign_scope_is_forbidden(): void
     {
         [$user] = $this->context();

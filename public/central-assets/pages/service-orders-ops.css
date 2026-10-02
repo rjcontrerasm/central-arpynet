@@ -9,3 +9,29 @@
         @media(min-width:760px){.money-grid,.stats{grid-template-columns:repeat(5,minmax(0,1fr))}.list{grid-template-columns:repeat(2,minmax(0,1fr))}.empty{grid-column:1/-1}}
         @media(max-width:620px){.topbar,.hero,.card-foot{align-items:flex-start;flex-direction:column}.finance-grid{grid-template-columns:1fr}.finance-grid .full{grid-column:auto}}
         @media(prefers-color-scheme:light){body{background:#f8fafc;color:#0f172a}.subtitle,.meta,.stat-label,.money-label,.field,.empty{color:#64748b}.money,.stat,.card{background:#fff;border-color:#e2e8f0}.chip,summary{background:#fff;color:#475569;border-color:#cbd5e1}.chip.active{background:#eff6ff;color:#1d4ed8;border-color:#60a5fa}.pill{background:#f1f5f9;color:#475569}.pill.critical,.pill.overdue{background:#fef2f2;color:#b91c1c}.pill.attention{background:#fff7ed;color:#c2410c}.pill.watch{background:#fffbeb;color:#a16207}.pill.receivable{background:#eff6ff;color:#1d4ed8}.pill.paid{background:#f0fdf4;color:#166534}.next,.editor{background:#f8fafc}.search input,.editor input,.editor select{background:#fff;color:#0f172a;border-color:#cbd5e1}}
+
+
+/* 2.42.2 — Service detail navigation */
+.title-link{
+    display:inline-block;
+    color:inherit;
+    text-decoration:none
+}
+.title-link:hover{
+    color:#2563eb;
+    text-decoration:underline;
+    text-underline-offset:3px
+}
+.card-actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap
+}
+.secondary-card-link{
+    color:#64748b
+}
+@media(prefers-color-scheme:dark){
+    .title-link:hover{color:#93c5fd}
+    .secondary-card-link{color:#94a3b8}
+}

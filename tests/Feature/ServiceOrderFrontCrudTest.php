@@ -127,6 +127,44 @@ class ServiceOrderFrontCrudTest extends TestCase
             ->assertDontSee('/admin/ordenes-servicio', false);
     }
 
+    public function test_service_has_separate_read_only_detail_view(): void
+    {
+        [$user, $organization] = $this->context('member');
+
+        $client = Client::query()->create([
+            'organization_id' => $organization->id,
+            'name' => 'Cliente detalle',
+            'is_active' => true,
+            'created_by' => $user->id,
+        ]);
+
+        $service = ServiceOrder::query()->create([
+            'organization_id' => $organization->id,
+            'client_id' => $client->id,
+            'title' => 'Servicio visible en detalle',
+            'stage' => 'execution',
+            'currency' => 'PEN',
+            'assigned_to' => $user->id,
+            'created_by' => $user->id,
+        ]);
+
+        $this->actingAs($user)
+            ->get('/servicios/'.$service->id)
+            ->assertOk()
+            ->assertSee('Detalle del servicio')
+            ->assertSee('Vista de detalle')
+            ->assertSee('Servicio visible en detalle')
+            ->assertSee('Editar servicio')
+            ->assertDontSee('Agregar hito / entregable')
+            ->assertDontSee('Agregar hito y crear tarea');
+
+        $this->actingAs($user)
+            ->get('/servicios/'.$service->id.'/editar')
+            ->assertOk()
+            ->assertSee('Agregar hito / entregable')
+            ->assertSee('Agregar hito y crear tarea');
+    }
+
     public function test_client_can_be_created_inline_from_service_order_form(): void
     {
         [$user, $organization] = $this->context('member');

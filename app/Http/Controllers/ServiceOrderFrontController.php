@@ -38,6 +38,8 @@ class ServiceOrderFrontController extends Controller
             'assigneeOptions' => $this->assigneeOptions($request),
             'workTeamOptions' => $this->workTeamOptions($request),
             'canWrite' => true,
+            'canEdit' => true,
+            'viewMode' => false,
         ]);
     }
 
@@ -70,6 +72,46 @@ class ServiceOrderFrontController extends Controller
             'canWrite' => $request->user()->canWriteToOrganization(
                 (int) $serviceOrder->organization_id,
             ),
+            'canEdit' => $request->user()->canWriteToOrganization(
+                (int) $serviceOrder->organization_id,
+            ),
+            'viewMode' => false,
+        ]);
+    }
+
+    public function show(
+        Request $request,
+        ServiceOrder $serviceOrder,
+    ): View {
+        abort_unless(
+            $request->user()->canAccessOrganization(
+                (int) $serviceOrder->organization_id,
+            ),
+            403,
+        );
+
+        $canEdit = $request->user()->canWriteToOrganization(
+            (int) $serviceOrder->organization_id,
+        );
+
+        return view('service-order-front-form', [
+            'serviceOrder' => $serviceOrder->load([
+                'client',
+                'assignee',
+                'workTeam',
+                'executionOrders',
+                'invoices.executionOrder',
+                'milestones.executionOrder',
+                'milestones.task.assignee',
+            ]),
+            'writableOrganizations' => $this->writableOrganizations($request),
+            'defaultOrganizationId' => (int) $serviceOrder->organization_id,
+            'clientOptions' => $this->clientOptions($request),
+            'assigneeOptions' => $this->assigneeOptions($request),
+            'workTeamOptions' => $this->workTeamOptions($request),
+            'canWrite' => false,
+            'canEdit' => $canEdit,
+            'viewMode' => true,
         ]);
     }
 
