@@ -76,6 +76,35 @@ class ServiceOrderOpsTest extends TestCase
             ->assertSee('Editar');
     }
 
+    public function test_service_card_keeps_quick_forms_collapsed_and_next_action_concise(): void
+    {
+        [$user, $organization, $client] = $this->context();
+
+        $this->order(
+            $user,
+            $organization,
+            $client,
+            [
+                'title' => 'Servicio compacto',
+                'stage' => 'execution',
+                'amount' => 36500,
+            ],
+        );
+
+        $this->actingAs($user)
+            ->get('/servicios?focus=all')
+            ->assertOk()
+            ->assertSee('Servicio compacto')
+            ->assertSee('No definida')
+            ->assertSee('Aún no hay seguimiento programado.')
+            ->assertSee('Definir ahora')
+            ->assertSee('Actualizar seguimiento')
+            ->assertSee('Actualizar finanzas')
+            ->assertSee('Incluye impuestos')
+            ->assertSee('service-orders-ops.js?v=', false)
+            ->assertDontSee('Definir próxima acción');
+    }
+
     public function test_foreign_scope_is_forbidden(): void
     {
         [$user] = $this->context();
