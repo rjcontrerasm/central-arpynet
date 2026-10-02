@@ -72,7 +72,7 @@ class ServiceOrderOpsTest extends TestCase
                 route('service-order-front.show', $order, false),
                 false,
             )
-            ->assertSee('Ver detalle')
+            ->assertSee('Ver ficha')
             ->assertSee('Editar');
     }
 
