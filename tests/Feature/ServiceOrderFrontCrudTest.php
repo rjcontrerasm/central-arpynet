@@ -155,7 +155,7 @@ class ServiceOrderFrontCrudTest extends TestCase
             ->assertSee('Vista de detalle')
             ->assertSee('Servicio visible en detalle')
             ->assertSee('Editar servicio')
-            ->assertSee('Agregar hito / entregable')
+            ->assertDontSee('Agregar hito / entregable')
             ->assertDontSee('Agregar hito y crear tarea');
 
         $this->actingAs($user)
