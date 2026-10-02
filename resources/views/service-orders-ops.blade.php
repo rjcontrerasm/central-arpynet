@@ -191,16 +191,12 @@
                             @endif
                         </strong>
                         @if($orderMilestoneCount > 0)
-                            <span
+                            <progress
                                 class="milestone-progress"
-                                role="progressbar"
                                 aria-label="Avance de hitos"
-                                aria-valuemin="0"
-                                aria-valuemax="100"
-                                aria-valuenow="{{ $orderMilestoneProgress }}"
-                            >
-                                <span style="width:{{ $orderMilestoneProgress }}%"></span>
-                            </span>
+                                value="{{ $orderMilestoneProgress }}"
+                                max="100"
+                            >{{ $orderMilestoneProgress }}%</progress>
                         @endif
                     </div>
                     <div>
