@@ -499,7 +499,7 @@
 @media(prefers-color-scheme:dark){
     .milestone-progress,
     .milestone-progress::-webkit-progress-bar{background:#334155}
-    .milestone-progress::-webkit-progress-value,
+    .milestone-progress::-webkit-progress-value{background:#38bdf8}
     .milestone-progress::-moz-progress-bar{background:#38bdf8}
     .service-action-panel>summary{
         border-color:#334155;
