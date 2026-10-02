@@ -164,7 +164,7 @@
                     <span>{{ $order->ops_days_in_stage }} días en etapa</span>
                     @if($order->workTeam)<span>{{ $order->workTeam->name }}</span>@endif
                     @if($order->health_score !== null)
-                        <span class="health-inline {{ $order->health_css }}">Health {{ $order->health_score }}/100</span>
+                        <span class="health-inline {{ $order->health_css }}">Health {{ $order->health_score }}/100 · {{ $order->health_label }}</span>
                     @endif
                 </div>
 
