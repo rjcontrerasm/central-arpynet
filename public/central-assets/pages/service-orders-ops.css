@@ -35,3 +35,7 @@
     .title-link:hover{color:#93c5fd}
     .secondary-card-link{color:#94a3b8}
 }
+
+
+.view-service-link{display:inline-flex;align-items:center;gap:6px}
+.view-service-link svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}

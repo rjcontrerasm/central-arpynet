@@ -19,8 +19,8 @@
         subtitle="Del compromiso comercial al cronograma, ejecución, conformidad y cobro."
     />
 
-    @if(session('service_front_success'))<div class="success">{{ session('service_front_success') }}</div>@endif
-    @if(session('service_milestone_success'))<div class="success">{{ session('service_milestone_success') }}</div>@endif
+    @if(session('service_front_success'))<div class="service-toast" data-service-toast>{{ session('service_front_success') }}</div>@endif
+    @if(session('service_milestone_success'))<div class="service-toast" data-service-toast>{{ session('service_milestone_success') }}</div>@endif
     @if($errors->any())<div class="errors">@foreach($errors->all() as $error)<div>{{ $error }}</div>@endforeach</div>@endif
     @if($viewMode)
         <div class="detail-mode-banner">
@@ -125,6 +125,7 @@
                     <div class="field"><label for="contract_number">N.º de contrato / referencia</label><input id="contract_number" name="contract_number" maxlength="120" value="{{ old('contract_number',$serviceOrder?->contract_number) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
                     <div class="field"><label for="contract_date">Fecha de contrato</label><input id="contract_date" type="date" name="contract_date" value="{{ old('contract_date',$serviceOrder?->contract_date?->format('Y-m-d')) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
                     <div class="field"><label for="contract_amount">Monto contractual</label><input id="contract_amount" type="number" min="0" step="0.01" name="contract_amount" value="{{ old('contract_amount',$serviceOrder?->contract_amount) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
+                    <div class="field span-2"><label for="contract_url">Enlace al contrato / documento</label><input id="contract_url" type="url" name="contract_url" maxlength="500" placeholder="https://..." value="{{ old('contract_url',$serviceOrder?->contract_url) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
                     <div class="field"><label for="start_date">Inicio</label><input id="start_date" type="date" name="start_date" value="{{ old('start_date',$serviceOrder?->start_date?->format('Y-m-d')) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
                     <div class="field"><label for="end_date">Fin previsto / contractual</label><input id="end_date" type="date" name="end_date" value="{{ old('end_date',$serviceOrder?->end_date?->format('Y-m-d')) }}" {{ ! $canWrite ? 'disabled' : '' }}></div>
                 </div>
@@ -163,7 +164,7 @@
                 </div>
             </details>
 
-            <div class="actions form-actions">
+            <div class="actions form-actions form-actions-right">
                 @if($canWrite)
                     <button class="primary" type="submit" data-busy-label="Guardando…">{{ $serviceOrder ? 'Guardar cambios' : 'Crear orden / servicio' }}</button>
                 @elseif($viewMode && $canEdit)
@@ -233,6 +234,7 @@
                                         <div class="field"><label>Ejercicio fiscal</label><input type="number" min="2000" max="2100" name="fiscal_year" value="{{ $executionOrder->fiscal_year }}"></div>
                                         <div class="field"><label>Tipo</label><select name="document_type">@foreach(\App\Models\ServiceOrderExecutionOrder::documentTypeOptions() as $value=>$label)<option value="{{ $value }}" @selected($executionOrder->document_type === $value)>{{ $label }}</option>@endforeach</select></div>
                                         <div class="field"><label>N.º documento</label><input name="document_number" maxlength="120" value="{{ $executionOrder->document_number }}"></div>
+                                        <div class="field"><label>Enlace al documento</label><input type="url" name="document_url" maxlength="500" value="{{ $executionOrder->document_url }}" placeholder="https://..."></div>
                                         <div class="field"><label>Fecha de emisión</label><input type="date" name="issued_date" value="{{ $executionOrder->issued_date?->format('Y-m-d') }}"></div>
                                         <div class="field"><label>Monto</label><input type="number" min="0" step="0.01" name="amount" value="{{ $executionOrder->amount }}"></div>
                                         <div class="field"><label>Estado</label><select name="status">@foreach(\App\Models\ServiceOrderExecutionOrder::statusOptions() as $value=>$label)<option value="{{ $value }}" @selected($executionOrder->status === $value)>{{ $label }}</option>@endforeach</select></div>
@@ -259,6 +261,7 @@
                             <div class="field"><label>Ejercicio fiscal</label><input type="number" min="2000" max="2100" name="fiscal_year" value="{{ now()->year }}"></div>
                             <div class="field"><label>Tipo</label><select name="document_type">@foreach(\App\Models\ServiceOrderExecutionOrder::documentTypeOptions() as $value=>$label)<option value="{{ $value }}">{{ $label }}</option>@endforeach</select></div>
                             <div class="field"><label>N.º documento</label><input name="document_number" maxlength="120" placeholder="Puede quedar pendiente"></div>
+                            <div class="field"><label>Enlace al documento</label><input type="url" name="document_url" maxlength="500" placeholder="https://..."></div>
                             <div class="field"><label>Fecha de emisión</label><input type="date" name="issued_date"></div>
                             <div class="field"><label>Monto</label><input type="number" min="0" step="0.01" name="amount"></div>
                             <div class="field"><label>Estado</label><select name="status">@foreach(\App\Models\ServiceOrderExecutionOrder::statusOptions() as $value=>$label)<option value="{{ $value }}">{{ $label }}</option>@endforeach</select></div>
@@ -311,6 +314,7 @@
                                     @csrf
                                     <div class="grid milestone-grid">
                                         <div class="field"><label>N.º factura</label><input name="number" maxlength="120" value="{{ $invoice->number }}"></div>
+                                        <div class="field"><label>Enlace a factura</label><input type="url" name="document_url" maxlength="500" value="{{ $invoice->document_url }}" placeholder="https://..."></div>
                                         <div class="field"><label>Orden vinculada</label><select name="execution_order_id"><option value="">Sin orden específica</option>@foreach($serviceOrder->executionOrders as $orderOption)<option value="{{ $orderOption->id }}" @selected((int)$invoice->execution_order_id === (int)$orderOption->id)>{{ $orderOption->fiscal_year }} · {{ $orderOption->document_number ?: 'Pendiente' }}</option>@endforeach</select></div>
                                         <div class="field"><label>Fecha emisión</label><input type="date" name="issue_date" value="{{ $invoice->issue_date?->format('Y-m-d') }}"></div>
                                         <div class="field"><label>Vencimiento</label><input type="date" name="due_date" value="{{ $invoice->due_date?->format('Y-m-d') }}"></div>
@@ -336,6 +340,7 @@
                         @csrf
                         <div class="grid milestone-grid">
                             <div class="field"><label>N.º factura</label><input name="number" maxlength="120" placeholder="Puede quedar pendiente"></div>
+                            <div class="field"><label>Enlace a factura</label><input type="url" name="document_url" maxlength="500" placeholder="https://..."></div>
                             <div class="field"><label>Orden vinculada</label><select name="execution_order_id"><option value="">Sin orden específica</option>@foreach($serviceOrder->executionOrders as $orderOption)<option value="{{ $orderOption->id }}">{{ $orderOption->fiscal_year }} · {{ $orderOption->document_number ?: 'Pendiente' }}</option>@endforeach</select></div>
                             <div class="field"><label>Fecha emisión</label><input type="date" name="issue_date"></div>
                             <div class="field"><label>Vencimiento</label><input type="date" name="due_date"></div>

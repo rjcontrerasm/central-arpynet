@@ -215,7 +215,10 @@
                 <div class="card-foot">
                     <span class="muted">Detalle completo disponible</span>
                     <div class="card-actions">
-                        <a class="card-link" href="{{ route('service-order-front.show',$order) }}">Ver servicio →</a>
+                        <a class="card-link view-service-link" href="{{ route('service-order-front.show',$order) }}">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+    Ver detalle
+</a>
                         @if($canWriteOrder)
                             <a class="card-link secondary-card-link" href="{{ route('service-order-front.edit',$order) }}">Editar</a>
                         @endif

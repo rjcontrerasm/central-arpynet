@@ -152,9 +152,12 @@ class ServiceOrderFrontCrudTest extends TestCase
             ->get('/servicios/'.$service->id)
             ->assertOk()
             ->assertSee('Detalle del servicio')
-            ->assertSee('Vista de detalle')
             ->assertSee('Servicio visible en detalle')
+            ->assertSee('Compromiso contractual')
+            ->assertSee('Órdenes vinculadas')
+            ->assertSee('Facturación y cobranza')
             ->assertSee('Editar servicio')
+            ->assertDontSee('name="title"', false)
             ->assertDontSee('Agregar hito / entregable')
             ->assertDontSee('Agregar hito y crear tarea');
 
@@ -163,6 +166,58 @@ class ServiceOrderFrontCrudTest extends TestCase
             ->assertOk()
             ->assertSee('Agregar hito / entregable')
             ->assertSee('Agregar hito y crear tarea');
+    }
+
+    public function test_service_detail_exposes_document_links_in_new_tabs(): void
+    {
+        [$user, $organization] = $this->context('member');
+
+        $client = Client::query()->create([
+            'organization_id' => $organization->id,
+            'name' => 'Cliente documentos',
+            'is_active' => true,
+            'created_by' => $user->id,
+        ]);
+
+        $service = ServiceOrder::query()->create([
+            'organization_id' => $organization->id,
+            'client_id' => $client->id,
+            'title' => 'Servicio documentado',
+            'contract_document_type' => 'contract',
+            'contract_number' => 'C-2026-01',
+            'contract_url' => 'https://docs.example.test/contrato',
+            'stage' => 'execution',
+            'currency' => 'PEN',
+            'created_by' => $user->id,
+        ]);
+
+        $executionOrder = $service->executionOrders()->create([
+            'fiscal_year' => 2026,
+            'document_type' => 'service_order',
+            'document_number' => 'OS-500',
+            'document_url' => 'https://docs.example.test/orden',
+            'status' => 'issued',
+            'created_by' => $user->id,
+        ]);
+
+        $service->invoices()->create([
+            'execution_order_id' => $executionOrder->id,
+            'number' => 'E001-500',
+            'document_url' => 'https://docs.example.test/factura',
+            'status' => 'issued',
+            'created_by' => $user->id,
+        ]);
+
+        $this->actingAs($user)
+            ->get('/servicios/'.$service->id)
+            ->assertOk()
+            ->assertSee('Abrir contrato')
+            ->assertSee('Abrir orden')
+            ->assertSee('Abrir factura')
+            ->assertSee('https://docs.example.test/contrato', false)
+            ->assertSee('https://docs.example.test/orden', false)
+            ->assertSee('https://docs.example.test/factura', false)
+            ->assertSee('target="_blank"', false);
     }
 
     public function test_client_can_be_created_inline_from_service_order_form(): void

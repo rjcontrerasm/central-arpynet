@@ -135,6 +135,7 @@ class ServiceOrderFrontActionController extends Controller
             'contract_number' => ['nullable', 'string', 'max:120'],
             'contract_date' => ['nullable', 'date'],
             'contract_amount' => ['nullable', 'numeric', 'min:0'],
+            'contract_url' => ['nullable', 'url', 'max:500'],
             'stage' => [
                 'required',
                 Rule::in(array_keys(ServiceOrder::stageOptions())),
@@ -284,7 +285,7 @@ class ServiceOrderFrontActionController extends Controller
     ): array {
         foreach ([
             'title', 'description', 'contract_document_type',
-            'contract_number', 'quotation_number', 'order_number',
+            'contract_number', 'contract_url', 'quotation_number', 'order_number',
             'invoice_number', 'next_action', 'drive_url', 'notes',
         ] as $field) {
             if (! array_key_exists($field, $validated)) {

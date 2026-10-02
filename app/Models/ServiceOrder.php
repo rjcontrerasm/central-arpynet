@@ -23,6 +23,7 @@ class ServiceOrder extends Model
         'contract_number',
         'contract_date',
         'contract_amount',
+        'contract_url',
         'stage',
         'stage_changed_at',
         'quotation_number',
@@ -96,7 +97,7 @@ class ServiceOrder extends Model
             $activityFields = [
                 'organization_id', 'client_id', 'title', 'description',
                 'contract_document_type', 'contract_number', 'contract_date',
-                'contract_amount', 'stage',
+                'contract_amount', 'contract_url', 'stage',
                 'quotation_number', 'quotation_date', 'order_number',
                 'order_received_date', 'start_date', 'end_date',
                 'report_submitted_date', 'conformity_date', 'invoice_number',

@@ -63,6 +63,7 @@ class ServiceOrderExecutionOrderController extends Controller
                 )),
             ],
             'document_number' => ['nullable', 'string', 'max:120'],
+            'document_url' => ['nullable', 'url', 'max:500'],
             'issued_date' => ['nullable', 'date'],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
@@ -78,7 +79,7 @@ class ServiceOrderExecutionOrderController extends Controller
     }
 
     private function attributes(array $validated): array {
-        foreach (['document_number', 'notes'] as $field) {
+        foreach (['document_number', 'document_url', 'notes'] as $field) {
             $value = trim((string) ($validated[$field] ?? ''));
             $validated[$field] = $value !== '' ? $value : null;
         }

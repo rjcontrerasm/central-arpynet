@@ -15,6 +15,7 @@ class ServiceOrderInvoice extends Model
         'service_order_id',
         'execution_order_id',
         'number',
+        'document_url',
         'issue_date',
         'due_date',
         'paid_date',

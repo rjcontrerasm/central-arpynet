@@ -1,3 +1,19 @@
+(() => {
+    const globalUndo = document.querySelector('.global-undo-bar');
+
+    if (globalUndo && globalUndo.parentElement !== document.body) {
+        document.body.appendChild(globalUndo);
+        document.body.classList.add('has-global-undo-toast');
+    }
+
+    document.querySelectorAll('[data-service-toast]').forEach((toast) => {
+        window.setTimeout(() => {
+            toast.classList.add('is-hiding');
+            window.setTimeout(() => toast.remove(), 220);
+        }, 4500);
+    });
+})();
+
 /* Central ARPYNET 2.41.1 — service-order-front-form */
 
 (() => {
