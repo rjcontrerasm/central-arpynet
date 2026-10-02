@@ -7,7 +7,7 @@
     <title>Servicios · Central ARPYNET</title>
     <link
         rel="stylesheet"
-        href="{{ asset('central-assets/pages/service-orders-ops.css') }}?v=2.39.1"
+        href="{{ asset('central-assets/pages/service-orders-ops.css') }}?v={{ filemtime(public_path('central-assets/pages/service-orders-ops.css')) }}"
     >
 </head>
 <body>
@@ -137,92 +137,132 @@
                     )
                     ->count();
             @endphp
-            <article class="card">
-                <div class="card-head">
-                    <div>
-                        <a class="title title-link" href="{{ route('service-order-front.show',$order) }}">{{ $order->title }}</a>
-                        <div class="meta">{{ $order->organization?->name ?? 'Sin ámbito' }} · {{ $order->client?->name ?? 'Sin cliente' }}</div>
+            <article class="card service-card">
+                <div class="service-card-head">
+                    <div class="service-card-identity">
+                        <a class="title title-link" href="{{ route('service-order-front.show',$order) }}">
+                            {{ $order->title }}
+                        </a>
+                        <div class="service-card-meta">
+                            {{ $order->organization?->name ?? 'Sin ámbito' }}
+                            <span aria-hidden="true">·</span>
+                            {{ $order->client?->name ?? 'Sin cliente' }}
+                            @if($order->order_number)
+                                <span aria-hidden="true">·</span>
+                                OS {{ $order->order_number }}
+                            @endif
+                        </div>
                     </div>
-                    <span class="pill {{ $order->ops_level }}">{{ $order->ops_label }}</span>
+                    <div class="service-card-status">
+                        <span class="pill {{ $order->ops_level }}">{{ $order->ops_label }}</span>
+                        <span class="pill {{ $order->fin_status }}">{{ $order->fin_label }}</span>
+                    </div>
                 </div>
 
-                <div class="pills">
-                    <span class="pill {{ $order->fin_status }}">{{ $order->fin_label }}</span>
-                    @if($order->health_score !== null)<span class="pill {{ $order->health_css }}">Health {{ $order->health_score }}/100 · {{ $order->health_label }}</span>@endif
-                    <span class="pill">{{ $stageOptions[$order->stage] ?? $order->stage }}</span>
-                    <span class="pill">{{ $order->ops_days_in_stage }} días en etapa</span>
-                    @if($order->order_number)<span class="pill">OS {{ $order->order_number }}</span>@endif
-                    @if($order->workTeam)<span class="pill">Equipo {{ $order->workTeam->name }}</span>@endif
-                    @if($orderMilestoneCount > 0)
-                        <span class="pill">Hitos {{ $orderMilestoneCompleted }}/{{ $orderMilestoneCount }}</span>
-                        @if($orderMilestoneOverdue > 0)<span class="pill critical">{{ $orderMilestoneOverdue }} hito{{ $orderMilestoneOverdue === 1 ? '' : 's' }} vencido{{ $orderMilestoneOverdue === 1 ? '' : 's' }}</span>@endif
+                <div class="service-card-context">
+                    <span>{{ $stageOptions[$order->stage] ?? $order->stage }}</span>
+                    <span>{{ $order->ops_days_in_stage }} días en etapa</span>
+                    @if($order->workTeam)<span>{{ $order->workTeam->name }}</span>@endif
+                    @if($order->health_score !== null)
+                        <span class="health-inline {{ $order->health_css }}">Health {{ $order->health_score }}/100 · {{ $order->health_label }}</span>
                     @endif
                 </div>
 
-                <div class="next">
-                    <strong>Siguiente acción:</strong> {{ $order->next_action ?: 'Sin definir' }}
-                    @if($order->next_action_at)<div class="meta">{{ $order->next_action_at->format('d/m/Y H:i') }}</div>@endif
-                    @if($order->end_date)<div class="meta">Fin contractual: {{ $order->end_date->format('d/m/Y') }}</div>@endif
-                    @foreach($order->ops_reasons as $reason)<div class="reason">{{ $reason }}</div>@endforeach
+                <div class="service-card-metrics">
+                    <div>
+                        <span>Monto</span>
+                        <strong>{{ $order->currency }} {{ number_format($order->fin_service_amount,2,'.',',') }}</strong>
+                    </div>
+                    <div>
+                        <span>Hitos</span>
+                        <strong>{{ $orderMilestoneCompleted }}/{{ $orderMilestoneCount }}</strong>
+                    </div>
+                    <div>
+                        <span>Fin contractual</span>
+                        <strong>{{ $order->end_date?->format('d/m/Y') ?: '—' }}</strong>
+                    </div>
                 </div>
 
-                <div class="next">
-                    <strong>Finanzas:</strong>
-                    @if($order->fin_service_amount > 0)<div class="meta">Servicio: {{ $order->currency }} {{ number_format($order->fin_service_amount,2,'.',',') }}</div>@endif
-                    @if($order->fin_is_invoiced)<div class="meta">Factura: {{ $order->invoice_number ?: 'sin número' }} · {{ $order->currency }} {{ number_format($order->fin_invoice_amount,2,'.',',') }}</div>@endif
-                    @if($order->invoice_due_date)<div class="meta">Vence: {{ $order->invoice_due_date->format('d/m/Y') }}</div>@endif
-                    @if($order->paid_date)<div class="meta">Pagado: {{ $order->paid_date->format('d/m/Y') }}</div>@endif
+                <div class="service-next-action {{ $order->next_action ? '' : 'is-empty' }}">
+                    <div class="service-next-label">Siguiente acción</div>
+                    <div class="service-next-main">
+                        <strong>{{ $order->next_action ?: 'Definir próxima acción' }}</strong>
+                        @if($order->next_action_at)
+                            <span>{{ $order->next_action_at->format('d/m/Y H:i') }}</span>
+                        @elseif(! $order->next_action)
+                            <span>Este servicio no tiene seguimiento programado.</span>
+                        @endif
+                    </div>
+                    @foreach($order->ops_reasons as $reason)
+                        <div class="reason">{{ $reason }}</div>
+                    @endforeach
                 </div>
+
+                @if($orderMilestoneOverdue > 0 || $order->fin_is_invoiced || $order->paid_date)
+                    <div class="service-card-alerts">
+                        @if($orderMilestoneOverdue > 0)
+                            <span class="alert-chip danger">{{ $orderMilestoneOverdue }} hito{{ $orderMilestoneOverdue === 1 ? '' : 's' }} vencido{{ $orderMilestoneOverdue === 1 ? '' : 's' }}</span>
+                        @endif
+                        @if($order->fin_is_invoiced)
+                            <span class="alert-chip">Factura {{ $order->invoice_number ?: 'sin número' }} · {{ $order->currency }} {{ number_format($order->fin_invoice_amount,2,'.',',') }}</span>
+                        @endif
+                        @if($order->paid_date)
+                            <span class="alert-chip success">Pagado {{ $order->paid_date->format('d/m/Y') }}</span>
+                        @endif
+                    </div>
+                @endif
 
                 @if($canWriteOrder)
-                    <details>
-                        <summary>Actualizar finanzas</summary>
-                        <form class="editor" method="POST" action="{{ route('service-orders-finance.update',$order) }}">
-                            @csrf
-                            @if($selectedScope)<input type="hidden" name="scope" value="{{ $selectedScope }}">@endif
-                            @if($selectedStage)<input type="hidden" name="filter_stage" value="{{ $selectedStage }}">@endif
-                            <input type="hidden" name="focus" value="{{ $focus }}"><input type="hidden" name="finance" value="{{ $finance }}">
-                            @if($search !== '')<input type="hidden" name="q" value="{{ $search }}">@endif
-                            <div class="finance-grid">
-                                <label class="field">Moneda<select name="currency">@foreach(['PEN'=>'PEN','USD'=>'USD','EUR'=>'EUR'] as $value=>$label)<option value="{{ $value }}" @selected($order->currency === $value)>{{ $label }}</option>@endforeach</select></label>
-                                <label class="field">Monto servicio<input type="number" step="0.01" min="0" name="amount" value="{{ $order->amount }}"></label>
-                                <label class="field full">N.° factura<input type="text" name="invoice_number" value="{{ $order->invoice_number }}" maxlength="100"></label>
-                                <label class="field">Fecha factura<input type="date" name="invoice_date" value="{{ $order->invoice_date?->format('Y-m-d') }}"></label>
-                                <label class="field">Monto factura<input type="number" step="0.01" min="0" name="invoice_amount" value="{{ $order->invoice_amount }}"></label>
-                                <label class="field">Vence factura<input type="date" name="invoice_due_date" value="{{ $order->invoice_due_date?->format('Y-m-d') }}"></label>
-                                <label class="field">Fecha pago<input type="date" name="paid_date" value="{{ $order->paid_date?->format('Y-m-d') }}"></label>
-                                <label class="field full"><span>Incluye impuestos</span><input type="hidden" name="includes_tax" value="0"><input type="checkbox" name="includes_tax" value="1" @checked($order->includes_tax)></label>
-                            </div>
-                            <button class="save" type="submit">Guardar finanzas</button>
-                        </form>
-                    </details>
+                    <details class="quick-actions">
+                        <summary>Acciones rápidas</summary>
+                        <div class="quick-actions-grid">
+                            <details>
+                                <summary>Seguimiento</summary>
+                                <form class="editor" method="POST" action="{{ route('service-orders-ops.update',$order) }}">
+                                    @csrf
+                                    @if($selectedScope)<input type="hidden" name="scope" value="{{ $selectedScope }}">@endif
+                                    @if($selectedStage)<input type="hidden" name="filter_stage" value="{{ $selectedStage }}">@endif
+                                    <input type="hidden" name="focus" value="{{ $focus }}">@if($search !== '')<input type="hidden" name="q" value="{{ $search }}">@endif
+                                    <label class="field">Etapa<select name="stage" required>@foreach($stageOptions as $value=>$label)<option value="{{ $value }}" @selected($order->stage === $value)>{{ $label }}</option>@endforeach</select></label>
+                                    <label class="field">Siguiente acción<input type="text" name="next_action" value="{{ $order->next_action }}" maxlength="255" placeholder="Ej. enviar informe"></label>
+                                    <label class="field">Fecha y hora<input type="datetime-local" name="next_action_at" value="{{ $order->next_action_at?->format('Y-m-d\TH:i') }}"></label>
+                                    <button class="save" type="submit">Guardar seguimiento</button>
+                                </form>
+                            </details>
 
-                    <details>
-                        <summary>Actualizar seguimiento</summary>
-                        <form class="editor" method="POST" action="{{ route('service-orders-ops.update',$order) }}">
-                            @csrf
-                            @if($selectedScope)<input type="hidden" name="scope" value="{{ $selectedScope }}">@endif
-                            @if($selectedStage)<input type="hidden" name="filter_stage" value="{{ $selectedStage }}">@endif
-                            <input type="hidden" name="focus" value="{{ $focus }}">@if($search !== '')<input type="hidden" name="q" value="{{ $search }}">@endif
-                            <label class="field">Etapa<select name="stage" required>@foreach($stageOptions as $value=>$label)<option value="{{ $value }}" @selected($order->stage === $value)>{{ $label }}</option>@endforeach</select></label>
-                            <label class="field">Siguiente acción<input type="text" name="next_action" value="{{ $order->next_action }}" maxlength="255" placeholder="Ej. enviar informe"></label>
-                            <label class="field">Fecha y hora<input type="datetime-local" name="next_action_at" value="{{ $order->next_action_at?->format('Y-m-d\TH:i') }}"></label>
-                            <button class="save" type="submit">Guardar seguimiento</button>
-                        </form>
+                            <details>
+                                <summary>Finanzas</summary>
+                                <form class="editor" method="POST" action="{{ route('service-orders-finance.update',$order) }}">
+                                    @csrf
+                                    @if($selectedScope)<input type="hidden" name="scope" value="{{ $selectedScope }}">@endif
+                                    @if($selectedStage)<input type="hidden" name="filter_stage" value="{{ $selectedStage }}">@endif
+                                    <input type="hidden" name="focus" value="{{ $focus }}"><input type="hidden" name="finance" value="{{ $finance }}">
+                                    @if($search !== '')<input type="hidden" name="q" value="{{ $search }}">@endif
+                                    <div class="finance-grid">
+                                        <label class="field">Moneda<select name="currency">@foreach(['PEN'=>'PEN','USD'=>'USD','EUR'=>'EUR'] as $value=>$label)<option value="{{ $value }}" @selected($order->currency === $value)>{{ $label }}</option>@endforeach</select></label>
+                                        <label class="field">Monto servicio<input type="number" step="0.01" min="0" name="amount" value="{{ $order->amount }}"></label>
+                                        <label class="field full">N.° factura<input type="text" name="invoice_number" value="{{ $order->invoice_number }}" maxlength="100"></label>
+                                        <label class="field">Fecha factura<input type="date" name="invoice_date" value="{{ $order->invoice_date?->format('Y-m-d') }}"></label>
+                                        <label class="field">Monto factura<input type="number" step="0.01" min="0" name="invoice_amount" value="{{ $order->invoice_amount }}"></label>
+                                        <label class="field">Vence factura<input type="date" name="invoice_due_date" value="{{ $order->invoice_due_date?->format('Y-m-d') }}"></label>
+                                        <label class="field">Fecha pago<input type="date" name="paid_date" value="{{ $order->paid_date?->format('Y-m-d') }}"></label>
+                                        <label class="field full"><span>Incluye impuestos</span><input type="hidden" name="includes_tax" value="0"><input type="checkbox" name="includes_tax" value="1" @checked($order->includes_tax)></label>
+                                    </div>
+                                    <button class="save" type="submit">Guardar finanzas</button>
+                                </form>
+                            </details>
+                        </div>
                     </details>
                 @endif
 
-                <div class="card-foot">
-                    <span class="muted">Detalle completo disponible</span>
-                    <div class="card-actions">
-                        <a class="card-link view-service-link" href="{{ route('service-order-front.show',$order) }}">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
-    Ver detalle
-</a>
-                        @if($canWriteOrder)
-                            <a class="card-link secondary-card-link" href="{{ route('service-order-front.edit',$order) }}">Editar</a>
-                        @endif
-                    </div>
+                <div class="service-card-actions">
+                    <a class="service-primary-action" href="{{ route('service-order-front.show',$order) }}">
+                        <span class="view-icon" aria-hidden="true"></span>
+                        Ver ficha
+                    </a>
+                    @if($canWriteOrder)
+                        <a class="service-secondary-action" href="{{ route('service-order-front.edit',$order) }}">Editar</a>
+                    @endif
                 </div>
             </article>
         @empty
