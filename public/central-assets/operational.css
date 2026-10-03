@@ -3321,8 +3321,17 @@ input[type="radio"] {
         gap: 18px !important;
         padding: 0 18px !important;
         margin-bottom: 22px !important;
+        border: 1px solid rgba(255,255,255,.08) !important;
         border-radius: 16px !important;
+        background: linear-gradient(135deg,#004371 0%,#025087 100%) !important;
+        box-shadow: 0 8px 24px rgba(0,67,113,.13) !important;
         overflow: visible !important;
+        box-sizing: border-box !important;
+    }
+
+    .topbar::after {
+        display: none !important;
+        content: none !important;
     }
 
     .topbar .brand {
@@ -3333,6 +3342,28 @@ input[type="radio"] {
         flex: 0 0 auto;
         margin: 0 18px 0 0 !important;
         padding: 0 18px 0 0 !important;
+        border-right: 1px solid rgba(255,255,255,.2) !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .topbar .brand::before {
+        width: 194px !important;
+        height: 42px !important;
+        background:
+            transparent
+            url('/central-assets/brand/arpynet-official-vector-white.svg')
+            center / contain
+            no-repeat !important;
+    }
+
+    .topbar .brand::after {
+        min-height: 30px !important;
+        color: #fff !important;
+        font-size: 12px !important;
+        font-weight: 900 !important;
+        letter-spacing: .1em !important;
     }
 
     .topbar .op-nav {
