@@ -7,7 +7,7 @@
     <title>Convertir tarea · Central ARPYNET</title>
     <link
         rel="stylesheet"
-        href="{{ asset('central-assets/pages/task-convert.css') }}?v=2.39.2"
+        href="{{ asset('central-assets/pages/task-convert.css') }}?v={{ filemtime(public_path('central-assets/pages/task-convert.css')) }}"
     >
 </head>
 <body>
