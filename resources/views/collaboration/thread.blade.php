@@ -18,9 +18,9 @@
         .shell { width:min(100%,980px); margin:0 auto; padding:24px 16px 80px; }
         .topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:24px; }
         .brand { font-weight:850; letter-spacing:-.03em; }
-        .back { display:inline-flex; margin-bottom:14px; color:#93c5fd; font-size:12px; font-weight:800; }
+        .back { display:inline-flex; color:#024883; font-size:12px; font-weight:800; }
         .hero { padding:18px; border:1px solid #24304b; border-radius:17px; background:#11182b; }
-        .badge { display:inline-flex; padding:4px 8px; border-radius:999px; background:#172554; color:#bfdbfe; font-size:10px; font-weight:850; text-transform:uppercase; letter-spacing:.04em; }
+        .badge { display:inline-flex; padding:4px 8px; border-radius:999px; background:#eaf3fa; color:#024883; font-size:10px; font-weight:850; text-transform:uppercase; letter-spacing:.04em; }
         h1 { margin:10px 0 0; font-size:clamp(26px,6vw,38px); line-height:1.08; letter-spacing:-.045em; }
         .meta { margin-top:6px; color:#94a3b8; font-size:11px; line-height:1.45; }
         .success, .errors, .readonly { margin-top:12px; padding:11px 13px; border-radius:12px; font-size:12px; }
@@ -35,34 +35,37 @@
         select { min-height:118px; padding:7px; }
         .field + .field { margin-top:12px; }
         .hint { margin-top:5px; color:#94a3b8; font-size:10px; line-height:1.45; }
-        .submit { margin-top:12px; padding:10px 14px; border:1px solid #2563eb; border-radius:10px; background:#1d4ed8; color:#fff; font-weight:850; cursor:pointer; }
+        .submit { margin-top:12px; padding:10px 14px; border:1px solid #024883; border-radius:10px; background:#024883; color:#fff; font-weight:850; cursor:pointer; }
         .thread { display:grid; gap:10px; }
         .comment { padding:14px; border:1px solid #24304b; border-radius:15px; background:#11182b; }
         .comment-head { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
         .author { font-size:13px; font-weight:850; }
         .body { margin-top:9px; color:#e2e8f0; font-size:13px; line-height:1.6; white-space:pre-wrap; overflow-wrap:anywhere; }
-        .mentions { margin-top:8px; color:#93c5fd; font-size:11px; }
+        .mentions { margin-top:8px; color:#024883; font-size:11px; }
         .empty { padding:24px; border:1px dashed #334155; border-radius:15px; color:#94a3b8; text-align:center; font-size:12px; }
         @media (prefers-color-scheme: light) {
             body { background:#f8fafc; color:#0f172a; }
             .hero,.composer,.comment { background:#fff; border-color:#e2e8f0; }
-            .badge { background:#eff6ff; color:#1d4ed8; }
+            .badge { background:#eaf3fa; color:#024883; }
             .meta,.hint,.empty { color:#64748b; }
             label,.body { color:#334155; }
             textarea,select { background:#fff; color:#0f172a; border-color:#cbd5e1; }
             .readonly { background:#f8fafc; color:#475569; border-color:#cbd5e1; }
-            .back,.mentions { color:#2563eb; }
+            .back,.mentions { color:#024883; }
         }
     </style>
 </head>
 <body>
 <div class="shell">
-    <div class="topbar">
-        <div class="brand">Central ARPYNET</div>
-        <x-operational-nav active="collaboration" />
-    </div>
-
-    <a class="back" href="{{ route('collaboration.index') }}">← Volver a colaboración</a>
+    <x-operational-page-header
+        active="collaboration"
+        title="Colaboración"
+        subtitle="Conversación operativa y menciones internas."
+    >
+        <x-slot:actions>
+            <a class="back" href="{{ route('collaboration.index') }}">← Volver a colaboración</a>
+        </x-slot:actions>
+    </x-operational-page-header>
 
     <section class="hero">
         <span class="badge">{{ $subjectLabel }}</span>
