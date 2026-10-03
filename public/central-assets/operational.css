@@ -2758,3 +2758,479 @@ body.has-global-undo-toast .operational-scroll-top {
             ) !important;
     }
 }
+
+
+/*
+ * 2.43.0 — Contrato visual CENTRAL basado en Mi día.
+ *
+ * Mi día es la referencia de producto para toda la superficie operativa:
+ * tipografía Inter/system, azul ARPYNET como color estructural, naranja como
+ * acento/CTA, superficies blancas, bordes azul-gris suaves, iconografía lineal,
+ * radios controlados y una escala de espaciado común.
+ *
+ * Los CSS de página pueden conservar geometrías especializadas, pero no deben
+ * redefinir el lenguaje visual global.
+ */
+:root {
+    --central-font:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    --central-info: #0b5689;
+    --central-link: #024883;
+
+    --central-space-1: 4px;
+    --central-space-2: 8px;
+    --central-space-3: 12px;
+    --central-space-4: 16px;
+    --central-space-5: 20px;
+    --central-space-6: 24px;
+
+    --central-radius-xs: 8px;
+    --central-radius-sm: 10px;
+    --central-radius-md: 12px;
+    --central-radius-lg: 15px;
+    --central-radius-xl: 18px;
+    --central-radius-pill: 999px;
+    --central-radius: var(--central-radius-xl);
+
+    --central-control-height: 44px;
+    --central-control-compact: 36px;
+    --central-icon-sm: 16px;
+    --central-icon-md: 18px;
+    --central-icon-lg: 20px;
+
+    --central-font-xs: 10px;
+    --central-font-sm: 11px;
+    --central-font-md: 12px;
+    --central-font-base: 13px;
+    --central-font-lg: 16px;
+
+    --central-card-shadow:
+        0 8px 26px rgba(0, 67, 113, .055);
+    --central-control-shadow:
+        0 5px 13px rgba(2, 72, 131, .12);
+}
+
+html,
+body,
+button,
+input,
+select,
+textarea,
+summary {
+    font-family: var(--central-font) !important;
+}
+
+body {
+    font-size: var(--central-font-base);
+    line-height: 1.45;
+}
+
+.shell,
+.jarvis,
+.automation-page,
+.safety-page,
+.copilot,
+.o360 {
+    width: min(100%, 1200px) !important;
+    margin-right: auto !important;
+    margin-left: auto !important;
+}
+
+.shell {
+    padding-right: 16px !important;
+    padding-left: 16px !important;
+}
+
+.topbar {
+    min-height: 66px;
+    align-items: center !important;
+    gap: var(--central-space-4) !important;
+    margin-bottom: 22px !important;
+}
+
+.hero {
+    align-items: flex-end !important;
+    gap: var(--central-space-4) !important;
+    margin-bottom: 18px !important;
+}
+
+.hero h1,
+.hero > h1 {
+    margin: 0 !important;
+    color: var(--central-brand-blue-dark) !important;
+    font-size: clamp(32px, 4.4vw, 48px) !important;
+    font-weight: 900 !important;
+    letter-spacing: -.045em !important;
+    line-height: 1 !important;
+}
+
+.hero .subtitle,
+.hero > p {
+    max-width: 760px;
+    margin-top: 7px !important;
+    margin-bottom: 0 !important;
+    color: var(--central-muted) !important;
+    font-size: var(--central-font-base) !important;
+    line-height: 1.5 !important;
+}
+
+.section-head h2,
+.panel h2,
+.card h2 {
+    color: var(--central-text);
+    font-weight: 850;
+    letter-spacing: -.02em;
+}
+
+/* Superficies y tarjetas */
+:where(
+    .card,
+    .item,
+    .panel,
+    .stat,
+    .money,
+    .notification,
+    .recent-item,
+    .shell-card,
+    .decision-card,
+    .progress-card
+) {
+    border-color: var(--central-border) !important;
+    background: var(--central-surface) !important;
+}
+
+:where(
+    .card,
+    .item,
+    .panel,
+    .notification,
+    .recent-item,
+    .shell-card,
+    .decision-card
+) {
+    box-shadow: var(--central-card-shadow);
+}
+
+:where(.card, .item, .notification, .recent-item) {
+    border-radius: var(--central-radius-lg) !important;
+}
+
+/* Controles de formulario */
+:where(
+    input:not([type="checkbox"]):not([type="radio"]),
+    select,
+    textarea,
+    .search-input
+) {
+    min-height: var(--central-control-height);
+    border: 1px solid var(--central-border-strong) !important;
+    border-radius: var(--central-radius-md) !important;
+    background: var(--central-surface) !important;
+    color: var(--central-text) !important;
+}
+
+textarea {
+    min-height: 96px;
+}
+
+:where(
+    input:not([type="checkbox"]):not([type="radio"]),
+    select,
+    textarea,
+    .search-input
+)::placeholder {
+    color: #8a9bab;
+}
+
+:where(
+    input:not([type="checkbox"]):not([type="radio"]),
+    select,
+    textarea,
+    .search-input
+):focus {
+    border-color: #77a7c8 !important;
+    outline: 0 !important;
+    box-shadow: 0 0 0 3px rgba(2, 72, 131, .07) !important;
+}
+
+/* Botones primarios: azul estructural. */
+:where(
+    .primary-link,
+    .primary,
+    .admin-link,
+    .submit,
+    .save,
+    .save-edit,
+    .pay-button,
+    .search-button,
+    .search button,
+    .filters button,
+    .tracking-next-form button,
+    .next-action-save,
+    .service-primary-action,
+    .header-action.primary-action
+) {
+    display: inline-flex;
+    min-height: var(--central-control-height);
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 9px 14px;
+    border: 1px solid var(--central-brand-blue) !important;
+    border-radius: var(--central-radius-md) !important;
+    background:
+        linear-gradient(
+            135deg,
+            var(--central-brand-blue-dark) 0%,
+            var(--central-brand-blue) 100%
+        ) !important;
+    color: #fff !important;
+    box-shadow: var(--central-control-shadow);
+    font-size: var(--central-font-md) !important;
+    font-weight: 850 !important;
+    line-height: 1.15;
+    text-decoration: none !important;
+}
+
+:where(
+    .primary-link,
+    .primary,
+    .admin-link,
+    .submit,
+    .save,
+    .save-edit,
+    .pay-button,
+    .search-button,
+    .search button,
+    .filters button,
+    .tracking-next-form button,
+    .next-action-save,
+    .service-primary-action,
+    .header-action.primary-action
+):hover {
+    background: var(--central-brand-blue-dark) !important;
+    color: #fff !important;
+}
+
+/* El naranja queda reservado para captura/creación rápida, como en Mi día. */
+:where(.quick, .fab, .central-accent-action) {
+    border-color: var(--central-brand-orange) !important;
+    background:
+        linear-gradient(
+            135deg,
+            var(--central-brand-orange) 0%,
+            #f58d0b 100%
+        ) !important;
+    color: #fff !important;
+}
+
+/* Botón secundario/acción contextual. */
+:where(
+    .secondary,
+    .secondary-link,
+    .focus-action,
+    .service-secondary-action,
+    .header-action:not(.primary-action),
+    .read-all,
+    .small-action,
+    .action,
+    .task-edit > summary,
+    .service-action-panel > summary
+) {
+    min-height: var(--central-control-compact);
+    border: 1px solid var(--central-border-strong) !important;
+    border-radius: var(--central-radius-sm) !important;
+    background: var(--central-surface) !important;
+    color: #294b65 !important;
+    box-shadow: none !important;
+    font-size: var(--central-font-sm) !important;
+    font-weight: 800 !important;
+}
+
+:where(
+    .secondary,
+    .secondary-link,
+    .focus-action,
+    .service-secondary-action,
+    .header-action:not(.primary-action),
+    .read-all,
+    .small-action,
+    .action,
+    .task-edit > summary,
+    .service-action-panel > summary
+):hover {
+    border-color: #9abbd1 !important;
+    background: var(--central-surface-soft) !important;
+    color: var(--central-brand-blue) !important;
+}
+
+/* Filtros: azul claro, nunca CTA naranja. */
+:where(.scope, .priority-filter, .chip) {
+    min-height: 36px;
+    padding: 7px 12px !important;
+    border: 1px solid #d2dfe9 !important;
+    border-radius: var(--central-radius-sm) !important;
+    background: var(--central-surface) !important;
+    color: #294b65 !important;
+    font-size: var(--central-font-sm) !important;
+    font-weight: 750 !important;
+}
+
+:where(.scope, .priority-filter, .chip):hover {
+    border-color: #9abbd1 !important;
+    background: #f8fbfd !important;
+    color: #064a78 !important;
+}
+
+:where(.scope.active, .priority-filter.active, .chip.active) {
+    border-color: #78a9cc !important;
+    background:
+        linear-gradient(
+            180deg,
+            #eef6fb 0%,
+            #e6f1f8 100%
+        ) !important;
+    color: #075083 !important;
+}
+
+/* Enlaces y texto auxiliar */
+:where(
+    .section-link,
+    .clear-filter,
+    .go,
+    .money-title,
+    .card-link,
+    .link,
+    .open,
+    .decision-action,
+    .convert-link
+) {
+    color: var(--central-link) !important;
+    font-weight: 800;
+    text-decoration: none !important;
+}
+
+:where(
+    .section-link,
+    .clear-filter,
+    .go,
+    .money-title,
+    .card-link,
+    .link,
+    .open,
+    .decision-action,
+    .convert-link
+):hover {
+    color: var(--central-brand-blue-dark) !important;
+    text-decoration: underline !important;
+    text-underline-offset: 3px;
+}
+
+/* Iconografía lineal coherente con Mi día. */
+:where(
+    .focus-action,
+    .primary-link,
+    .primary,
+    .secondary,
+    .secondary-link,
+    .admin-link,
+    .service-primary-action,
+    .service-secondary-action,
+    .header-action,
+    .read-all
+) > svg {
+    width: var(--central-icon-sm) !important;
+    height: var(--central-icon-sm) !important;
+    flex: 0 0 var(--central-icon-sm);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Estados semánticos conservan color, no cambian el lenguaje estructural. */
+:where(.pill, .badge, .status) {
+    border-radius: var(--central-radius-pill) !important;
+    font-size: var(--central-font-xs) !important;
+    font-weight: 800 !important;
+}
+
+/* Navegación: misma densidad y subrayado/acento de Mi día. */
+.topbar .op-nav-link,
+.topbar .op-nav-more > summary {
+    min-height: 38px !important;
+    padding: 7px 10px !important;
+    border-radius: var(--central-radius-sm) !important;
+    font-size: var(--central-font-md) !important;
+    font-weight: 800 !important;
+}
+
+.topbar .op-nav-link.is-active {
+    border-color: transparent !important;
+    box-shadow:
+        inset 0 -3px 0 var(--central-brand-orange) !important;
+}
+
+/* Flash, vacío y errores con el mismo ritmo vertical. */
+:where(.success, .errors, .readonly, .empty) {
+    border-radius: var(--central-radius-md) !important;
+    font-size: var(--central-font-md) !important;
+    line-height: 1.45;
+}
+
+@media (min-width: 720px) {
+    .shell {
+        padding-top: 30px !important;
+        padding-bottom: 80px !important;
+    }
+}
+
+@media (max-width: 719px) {
+    .shell {
+        padding-top: 14px !important;
+    }
+
+    .hero h1,
+    .hero > h1 {
+        font-size: clamp(30px, 10vw, 42px) !important;
+    }
+
+    :where(
+        .primary-link,
+        .primary,
+        .admin-link,
+        .submit,
+        .save,
+        .save-edit,
+        .pay-button,
+        .search-button,
+        .search button,
+        .filters button
+    ) {
+        min-height: var(--central-mobile-tap-target);
+    }
+}
+
+/*
+ * El producto FRONT se diseña en tema claro. El bloque oscuro histórico se
+ * mantiene por compatibilidad interna, pero los componentes estructurales
+ * conservan el lenguaje de Mi día cuando el navegador solicita dark mode.
+ */
+@media (prefers-color-scheme: dark) {
+    .topbar {
+        background:
+            linear-gradient(
+                135deg,
+                var(--central-brand-blue-dark) 0%,
+                var(--central-brand-blue) 100%
+            ) !important;
+    }
+}
