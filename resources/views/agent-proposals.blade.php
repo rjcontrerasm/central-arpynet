@@ -8,7 +8,7 @@
 <x-operational-theme />
 <link
         rel="stylesheet"
-        href="{{ asset('central-assets/pages/agent-proposals.css') }}?v=2.39.2"
+        href="{{ asset('central-assets/pages/agent-proposals.css') }}?v={{ filemtime(public_path('central-assets/pages/agent-proposals.css')) }}"
     >
 </head>
 <body>
