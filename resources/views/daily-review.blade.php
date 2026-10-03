@@ -8,7 +8,7 @@
 
     <link
         rel="stylesheet"
-        href="{{ asset('central-assets/pages/daily-review.css') }}?v=2.39.2"
+        href="{{ asset('central-assets/pages/daily-review.css') }}?v={{ filemtime(public_path('central-assets/pages/daily-review.css')) }}"
     >
 </head>
 
