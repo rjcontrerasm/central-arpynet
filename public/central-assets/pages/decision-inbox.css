@@ -406,3 +406,65 @@
                 border-color: #cbd5e1;
             }
         }
+
+
+/* 2.43.1 — Decisiones: ARPYNET palette + contrast */
+.decision-score {
+    background: #eaf3fa !important;
+    color: #024883 !important;
+}
+.decision-band {
+    background: #eef2f6 !important;
+    color: #334e68 !important;
+}
+.evidence {
+    background: #eefaf3 !important;
+    color: #18794e !important;
+}
+.recommendation {
+    color: #024883 !important;
+}
+.reason,
+.score-breakdown,
+.delegation-copy {
+    color: #5f7285 !important;
+}
+.why-now {
+    color: #334e68 !important;
+}
+.delegation-box {
+    border-color: #9abbd1 !important;
+    background: #f5f9fc !important;
+}
+.delegation-title {
+    color: #024883 !important;
+}
+.delegation-action {
+    border-color: #78a9cc !important;
+    background: #eef6fb !important;
+    color: #024883 !important;
+}
+.delegation-action:hover {
+    border-color: #024883 !important;
+    background: #eaf3fa !important;
+}
+.current-next {
+    border-left-color: #024883 !important;
+    background: #f5f9fc !important;
+    color: #334e68 !important;
+}
+.next-form button,
+.decision-action:not(.secondary):not(.done) {
+    background: #024883 !important;
+    color: #fff !important;
+}
+.next-form button:hover,
+.decision-action:not(.secondary):not(.done):hover {
+    background: #004371 !important;
+}
+.open-module {
+    color: #024883 !important;
+}
+.signal {
+    color: #9a6509 !important;
+}
