@@ -14,10 +14,11 @@
 
 <body>
 <div class="shell">
-    <div class="topbar">
-        <div class="brand">Central ARPYNET</div>
-        <x-operational-nav active="decisions" />
-    </div>
+    <x-operational-page-header
+        active="decisions"
+        title="Decisiones"
+        subtitle="Decision Engine · priorización explicable y determinística."
+    />
 
     @if (session('decision_success'))
         <div class="success">{{ session('decision_success') }}</div>
@@ -26,13 +27,6 @@
     @if (session('daily_action_success'))
         <div class="success">{{ session('daily_action_success') }}</div>
     @endif
-
-    <section class="hero">
-        <div>
-            <h1>Decisiones</h1>
-            <div class="subtitle">Decision Engine · priorización explicable y determinística.</div>
-        </div>
-    </section>
 
     <div class="engine-summary">
         <strong>{{ $decisionEngineSummary }}</strong>
