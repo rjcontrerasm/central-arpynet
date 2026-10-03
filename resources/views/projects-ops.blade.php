@@ -137,11 +137,11 @@ $canWriteProject=in_array((int)$project->organization_id,$writableOrganizationId
 @if($canWriteProject)
 <details class="project-quick-actions">
 <summary>Acciones rápidas</summary>
-<div class="quick-grid">
+<div class="project-quick-grid">
 
-<div class="quick-panel">
-<div class="quick-title">Actualizar proyecto</div>
-<form class="quick-form" method="post" action="{{ route('project-ops.update', $project) }}">
+<div class="project-quick-panel">
+<div class="project-quick-title">Actualizar proyecto</div>
+<form class="project-quick-form" method="post" action="{{ route('project-ops.update', $project) }}">
 @csrf
 <input type="hidden" name="scope" value="{{ $selectedScope }}">
 <input type="hidden" name="focus" value="{{ $focus }}">
@@ -160,9 +160,9 @@ $canWriteProject=in_array((int)$project->organization_id,$writableOrganizationId
 </form>
 </div>
 
-<div class="quick-panel">
-<div class="quick-title">Crear tarea vinculada</div>
-<form class="quick-form" method="post" action="{{ route('project-ops.task.store', $project) }}">
+<div class="project-quick-panel">
+<div class="project-quick-title">Crear tarea vinculada</div>
+<form class="project-quick-form" method="post" action="{{ route('project-ops.task.store', $project) }}">
 @csrf
 <input type="hidden" name="scope" value="{{ $selectedScope }}">
 <input type="hidden" name="focus" value="{{ $focus }}">
