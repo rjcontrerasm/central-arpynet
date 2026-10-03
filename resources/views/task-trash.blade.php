@@ -20,19 +20,11 @@
 
 <body>
 <div class="shell">
-    <div class="topbar">
-        <div class="brand">
-            Central ARPYNET
-        </div>
-
-        <x-operational-nav active="trash" />
-    </div>
-
-    <h1>Papelera</h1>
-
-    <div class="subtitle">
-        Restaurar es reversible. Eliminar definitivamente no se puede deshacer.
-    </div>
+    <x-operational-page-header
+        active="trash"
+        title="Papelera"
+        subtitle="Restaurar es reversible. Eliminar definitivamente no se puede deshacer."
+    />
 
     @if (session('trash_success'))
         <div class="success">
