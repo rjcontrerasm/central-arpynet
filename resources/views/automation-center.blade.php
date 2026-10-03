@@ -7,18 +7,16 @@
     <x-operational-theme />
     <link
         rel="stylesheet"
-        href="{{ asset('central-assets/pages/automation-center.css') }}?v=2.39.2"
+        href="{{ asset('central-assets/pages/automation-center.css') }}?v={{ filemtime(public_path('central-assets/pages/automation-center.css')) }}"
     >
 </head>
 <body>
 <div class="automation-page">
-    <header class="automation-header">
-        <div>
-            <h1>Automatizaciones</h1>
-            <p>Reglas internas, controladas y auditables. L1 prepara propuestas; L2 puede iniciar tareas críticas pendientes; L3 puede crear una tarea interna de cobranza desde una factura vencida sin siguiente acción. Cada nivel conserva límites, audit y undo; los canales externos permanecen fuera de la autonomía.</p>
-        </div>
-        <x-operational-nav active="automations" />
-    </header>
+    <x-operational-page-header
+        active="automations"
+        title="Automatizaciones"
+        subtitle="Reglas internas, controladas y auditables. L1 prepara propuestas; L2 y L3 conservan autorización, auditoría y deshacer."
+    />
 
     @if(session('automation_success'))
         <div class="automation-flash">{{ session('automation_success') }}</div>

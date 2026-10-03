@@ -11,35 +11,19 @@
 
     <link
         rel="stylesheet"
-        href="{{ asset('central-assets/pages/executive-summary.css') }}?v=2.39.2"
+        href="{{ asset('central-assets/pages/executive-summary.css') }}?v={{ filemtime(public_path('central-assets/pages/executive-summary.css')) }}"
     >
 </head>
 
 <body>
 <div class="shell">
-    <div class="topbar">
-        <div class="brand">Central ARPYNET</div>
-
-        <x-operational-nav active="summary" />
-    </div>
-
-    <section class="hero">
-        <div>
-            <h1>
-                {{ $period === 'week'
-                    ? 'Próximos 7 días'
-                    : 'Resumen de hoy' }}
-            </h1>
-
-            <div class="subtitle">
-                {{ $summary['start']->format('d/m/Y') }}
-                @if ($period === 'week')
-                    →
-                    {{ $summary['end']->format('d/m/Y') }}
-                @endif
-            </div>
-        </div>
-    </section>
+    <x-operational-page-header
+        active="summary"
+        :title="$period === 'week' ? 'Próximos 7 días' : 'Resumen de hoy'"
+        :subtitle="$period === 'week'
+            ? $summary['start']->format('d/m/Y').' → '.$summary['end']->format('d/m/Y')
+            : $summary['start']->format('d/m/Y')"
+    />
 
     <section class="filters">
         <div class="scroll">

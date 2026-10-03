@@ -14,25 +14,17 @@
 
     <link
         rel="stylesheet"
-        href="{{ asset('central-assets/pages/task-trash.css') }}?v=2.39.2"
+        href="{{ asset('central-assets/pages/task-trash.css') }}?v={{ filemtime(public_path('central-assets/pages/task-trash.css')) }}"
     >
 </head>
 
 <body>
 <div class="shell">
-    <div class="topbar">
-        <div class="brand">
-            Central ARPYNET
-        </div>
-
-        <x-operational-nav active="trash" />
-    </div>
-
-    <h1>Papelera</h1>
-
-    <div class="subtitle">
-        Restaurar es reversible. Eliminar definitivamente no se puede deshacer.
-    </div>
+    <x-operational-page-header
+        active="trash"
+        title="Papelera"
+        subtitle="Restaurar es reversible. Eliminar definitivamente no se puede deshacer."
+    />
 
     @if (session('trash_success'))
         <div class="success">

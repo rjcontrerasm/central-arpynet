@@ -28,6 +28,12 @@ class VisualSystemConsistencyTest extends TestCase
             '--central-primary-hover:#004371',
             '--central-brand-orange:#f9a02c',
             '--central-bg:#eef4f9',
+            '--central-font:Inter',
+            '--central-radius-md:12px',
+            '--central-radius-lg:15px',
+            '--central-control-height:44px',
+            '--central-icon-sm:16px',
+            '--central-link:#024883',
         ] as $brandToken) {
             $this->assertStringContainsString(
                 $brandToken,
@@ -39,11 +45,11 @@ class VisualSystemConsistencyTest extends TestCase
             '/mi-dia' => ['daily-ops', null],
             '/captura' => ['quick-capture', null],
             '/servicios' => ['service-orders-ops', null],
-            '/vencimientos' => ['obligations-ops', '2.39.2'],
-            '/seguimiento' => ['global-tracking', '2.39.2'],
-            '/resumen' => ['executive-summary', '2.39.2'],
-            '/notificaciones' => ['notification-center', '2.39.2'],
-            '/historial' => ['audit-history', '2.39.2'],
+            '/vencimientos' => ['obligations-ops', null],
+            '/seguimiento' => ['global-tracking', null],
+            '/resumen' => ['executive-summary', null],
+            '/notificaciones' => ['notification-center', null],
+            '/historial' => ['audit-history', null],
         ] as $page => [$asset, $version]) {
             $response = $this->actingAs($user)
                 ->get($page)
@@ -60,6 +66,11 @@ class VisualSystemConsistencyTest extends TestCase
                 false,
             );
 
+            $response
+                ->assertSee('class="topbar"', false)
+                ->assertSee('class="brand"', false)
+                ->assertSee('class="hero"', false);
+
             $css = $this->pageCss(
                 $response->getContent(),
                 $asset,
@@ -69,6 +80,32 @@ class VisualSystemConsistencyTest extends TestCase
                 'width:min(100%,1200px)',
                 $css,
                 'El shell operativo debe conservar el ancho desktop común en '.$page,
+            );
+        }
+    }
+
+    public function test_mi_dia_visual_contract_exposes_common_controls_and_navigation(): void
+    {
+        $css = $this->compactCss(
+            (string) file_get_contents(
+                public_path('central-assets/operational.css'),
+            ),
+        );
+
+        foreach ([
+            '.topbar.op-nav-link.is-active',
+            'inset0-3px0var(--central-brand-orange)',
+            '.heroh1',
+            'color:var(--central-brand-blue-dark)!important',
+            '.primary-link',
+            '.secondary-link',
+            '.scope.active',
+            '.priority-filter.active',
+            '.chip.active',
+        ] as $contractRule) {
+            $this->assertStringContainsString(
+                $contractRule,
+                $css,
             );
         }
     }

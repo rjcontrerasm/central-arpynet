@@ -8,22 +8,16 @@
 <x-operational-theme />
 <link
         rel="stylesheet"
-        href="{{ asset('central-assets/pages/central-copilot.css') }}?v=2.39.2"
+        href="{{ asset('central-assets/pages/central-copilot.css') }}?v={{ filemtime(public_path('central-assets/pages/central-copilot.css')) }}"
     >
 </head>
 <body>
 <div class="copilot">
-<header class="topbar">
-<a class="brand" href="{{ route('daily-ops.show') }}">Central ARPYNET</a>
-<x-operational-nav active="copilot" />
-</header>
-
-<section class="hero">
-<div>
-<h1>CENTRAL Copilot</h1>
-<div class="subtitle">Pregunta por tu jornada, riesgos, panorama, decisiones o cierre diario. Copilot responde solo con contexto verificable que ya existe en CENTRAL.</div>
-</div>
-</section>
+<x-operational-page-header
+    active="copilot"
+    title="CENTRAL Copilot"
+    subtitle="Pregunta por tu jornada, riesgos, panorama, decisiones o cierre diario. Copilot responde solo con contexto verificable que ya existe en CENTRAL."
+/>
 
 <form class="ask shell-card" method="get" action="{{ route('central-copilot.index') }}">
 <div class="ask-grid">

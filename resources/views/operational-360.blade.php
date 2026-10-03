@@ -8,18 +8,16 @@
 <x-operational-theme />
 <link
         rel="stylesheet"
-        href="{{ asset('central-assets/pages/operational-360.css') }}?v=2.39.2"
+        href="{{ asset('central-assets/pages/operational-360.css') }}?v={{ filemtime(public_path('central-assets/pages/operational-360.css')) }}"
     >
 </head>
 <body>
 <div class="o360">
-<header class="o360-head">
-<div>
-<h1>Vista 360</h1>
-<div class="meta">Ámbito → clientes → servicios → proyectos → tareas → vencimientos → incidentes → finanzas.</div>
-</div>
-<x-operational-nav active="overview360" />
-</header>
+<x-operational-page-header
+    active="overview360"
+    title="Vista 360"
+    subtitle="Ámbito → clientes → servicios → proyectos → tareas → vencimientos → incidentes → finanzas."
+/>
 
 <nav class="scopes" aria-label="Filtrar por ámbito">
 <a class="chip {{ $selectedScope ? '' : 'active' }}" href="{{ route('operational-360.show') }}">Todos</a>

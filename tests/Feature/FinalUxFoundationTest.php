@@ -236,33 +236,53 @@ class FinalUxFoundationTest extends TestCase
             'The operational theme must load the shared static assets.',
         );
 
+        $navComponent = file_get_contents(
+            resource_path(
+                'views/components/operational-nav.blade.php',
+            ),
+        );
+        $headerComponent = file_get_contents(
+            resource_path(
+                'views/components/operational-page-header.blade.php',
+            ),
+        );
+
+        $this->assertIsString($navComponent);
+        $this->assertIsString($headerComponent);
+        $this->assertStringContainsString(
+            '<x-operational-assets />',
+            $navComponent,
+            'Operational navigation must load the shared UX assets.',
+        );
+        $this->assertStringContainsString(
+            '<x-operational-nav',
+            $headerComponent,
+            'Operational page header must compose the shared navigation.',
+        );
+
         $paths = glob(resource_path('views/*.blade.php')) ?: [];
         $checked = 0;
-        $missingTheme = [];
 
         foreach ($paths as $path) {
             $contents = file_get_contents($path);
 
-            if (
-                ! is_string($contents)
-                || ! str_contains($contents, '<x-operational-nav')
-            ) {
+            if (! is_string($contents)) {
+                continue;
+            }
+
+            $usesOperationalChrome =
+                str_contains($contents, '<x-operational-nav')
+                || str_contains(
+                    $contents,
+                    '<x-operational-page-header',
+                );
+
+            if (! $usesOperationalChrome) {
                 continue;
             }
 
             $checked++;
-
-            if (! str_contains($contents, '<x-operational-theme')) {
-                $missingTheme[] = basename($path);
-            }
         }
-
-        $this->assertSame(
-            [],
-            $missingTheme,
-            'Operational FRONT views missing the shared theme: '
-                .implode(', ', $missingTheme),
-        );
 
         $this->assertGreaterThanOrEqual(
             12,

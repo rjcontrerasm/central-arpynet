@@ -5,7 +5,7 @@
 <title>Vencimientos · Central ARPYNET</title>
 <link
         rel="stylesheet"
-        href="{{ asset('central-assets/pages/obligations-ops.css') }}?v=2.39.2"
+        href="{{ asset('central-assets/pages/obligations-ops.css') }}?v={{ filemtime(public_path('central-assets/pages/obligations-ops.css')) }}"
     >
 </head>
 <body>

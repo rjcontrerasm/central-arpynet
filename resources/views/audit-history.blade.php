@@ -14,7 +14,7 @@
 
     <link
         rel="stylesheet"
-        href="{{ asset('central-assets/pages/audit-history.css') }}?v=2.39.2"
+        href="{{ asset('central-assets/pages/audit-history.css') }}?v={{ filemtime(public_path('central-assets/pages/audit-history.css')) }}"
     >
 </head>
 
@@ -104,21 +104,11 @@
 @endphp
 
 <div class="shell">
-    <div class="topbar">
-        <div class="brand">Central ARPYNET</div>
-
-        <x-operational-nav active="history" />
-    </div>
-
-    <section class="hero">
-        <div>
-            <h1>Historial</h1>
-
-            <div class="subtitle">
-                Cambios operativos registrados en Central.
-            </div>
-        </div>
-    </section>
+    <x-operational-page-header
+        active="history"
+        title="Historial"
+        subtitle="Cambios operativos registrados en Central."
+    />
 
     <div class="stats">
         <div class="stat">

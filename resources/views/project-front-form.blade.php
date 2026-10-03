@@ -8,15 +8,16 @@
 
     <link
         rel="stylesheet"
-        href="{{ asset('central-assets/pages/project-front-form.css') }}?v=2.39.2"
+        href="{{ asset('central-assets/pages/project-front-form.css') }}?v={{ filemtime(public_path('central-assets/pages/project-front-form.css')) }}"
     >
 </head>
 <body>
 <div class="shell">
-    <div class="topbar">
-        <div class="brand">Central ARPYNET</div>
-        <x-operational-nav active="projects" />
-    </div>
+    <x-operational-page-header
+        active="projects"
+        :title="$project ? 'Editar proyecto' : 'Nuevo proyecto'"
+        subtitle="Planificación completa desde CENTRAL Front."
+    />
 
     @if (session('project_front_success'))
         <div class="success">{{ session('project_front_success') }}</div>
@@ -29,13 +30,6 @@
             @endforeach
         </div>
     @endif
-
-    <section class="hero">
-        <div>
-            <h1>{{ $project ? 'Editar proyecto' : 'Nuevo proyecto' }}</h1>
-            <div class="subtitle">Planificación completa desde CENTRAL Front.</div>
-        </div>
-    </section>
 
     @if (! $canWrite)
         <div class="readonly">Tienes acceso de solo lectura a este proyecto.</div>
