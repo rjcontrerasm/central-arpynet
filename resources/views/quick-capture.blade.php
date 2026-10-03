@@ -20,19 +20,11 @@
 
 <body>
 <div class="shell">
-    <div class="topbar">
-        <div class="brand">Central ARPYNET</div>
-
-        <x-operational-nav active="capture" />
-    </div>
-
-    <section class="hero">
-        <h1>Captura rápida</h1>
-        <p>
-            Escribe la tarea, elige cuándo y guarda.
-            Lo demás puede esperar.
-        </p>
-    </section>
+    <x-operational-page-header
+        active="capture"
+        title="Captura rápida"
+        subtitle="Escribe la tarea, elige cuándo y guarda. Lo demás puede esperar."
+    />
 
     @if (session('quick_capture_success'))
         <div class="success">
