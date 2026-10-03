@@ -20,6 +20,12 @@
         :subtitle="$now->locale('es')->translatedFormat('l d \\d\\e F').' · confirma cada bloque después de revisarlo'"
     />
 
+    @if (session('daily_review_success'))
+        <div class="success">
+            {{ session('daily_review_success') }}
+        </div>
+    @endif
+
     <section class="progress-card">
         <div class="progress-head">
             <div class="progress-title">
