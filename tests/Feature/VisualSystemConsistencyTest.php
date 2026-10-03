@@ -110,6 +110,90 @@ class VisualSystemConsistencyTest extends TestCase
         }
     }
 
+    public function test_visual_hotfix_guards_known_regressions(): void
+    {
+        $shared = $this->compactCss(
+            (string) file_get_contents(
+                public_path('central-assets/operational.css'),
+            ),
+        );
+
+        foreach ([
+            'accent-color:var(--central-brand-blue)',
+            '.topbar.op-nav-link.is-active',
+            'background:transparent!important',
+            '.topbar.op-nav-menua{min-height:34px',
+            '.paginationsvg',
+            'width:16px!important',
+        ] as $rule) {
+            $this->assertStringContainsString($rule, $shared);
+        }
+
+        $capture = $this->compactCss(
+            (string) file_get_contents(
+                public_path(
+                    'central-assets/pages/quick-capture.css',
+                ),
+            ),
+        );
+
+        $this->assertStringContainsString(
+            '.chips>.chip{min-height:0!important;padding:0!important;border:0!important',
+            $capture,
+        );
+
+        $projects = $this->compactCss(
+            (string) file_get_contents(
+                public_path(
+                    'central-assets/pages/projects-ops.css',
+                ),
+            ),
+        );
+
+        $this->assertStringContainsString(
+            'details.quick{margin-top:12px',
+            $projects,
+        );
+        $this->assertStringContainsString(
+            'background:#024883!important',
+            $projects,
+        );
+
+        $history = (string) file_get_contents(
+            resource_path('views/audit-history.blade.php'),
+        );
+
+        $this->assertStringNotContainsString(
+            '$changes->links()',
+            $history,
+        );
+        $this->assertStringContainsString(
+            'audit-pagination',
+            $history,
+        );
+
+        foreach ([
+            'clients-ops.css',
+            'weekly-review.css',
+            'decision-inbox.css',
+            'agent-proposals.css',
+        ] as $asset) {
+            $css = $this->compactCss(
+                (string) file_get_contents(
+                    public_path(
+                        'central-assets/pages/'.$asset,
+                    ),
+                ),
+            );
+
+            $this->assertStringContainsString(
+                '#024883',
+                $css,
+                $asset.' debe usar azul ARPYNET.',
+            );
+        }
+    }
+
     public function test_specialized_pages_keep_intentional_inner_widths(): void
     {
         [$user] = $this->context();
