@@ -24,17 +24,17 @@
         .subjects { display:grid; grid-template-columns:repeat(auto-fit,minmax(245px,1fr)); gap:10px; }
         .subject, .comment { border:1px solid #24304b; border-radius:15px; background:#11182b; }
         .subject { padding:14px; transition:transform 120ms ease,border-color 120ms ease; }
-        .subject:hover { transform:translateY(-1px); border-color:#3b82f6; }
-        .badge { display:inline-flex; padding:4px 8px; border-radius:999px; background:#172554; color:#bfdbfe; font-size:10px; font-weight:850; text-transform:uppercase; letter-spacing:.04em; }
+        .subject:hover { transform:translateY(-1px); border-color:#78a9cc; }
+        .badge { display:inline-flex; padding:4px 8px; border-radius:999px; background:#eaf3fa; color:#024883; font-size:10px; font-weight:850; text-transform:uppercase; letter-spacing:.04em; }
         .subject-title { margin-top:10px; font-size:14px; font-weight:820; line-height:1.35; }
         .meta { margin-top:6px; color:#94a3b8; font-size:11px; line-height:1.45; }
-        .open { margin-top:12px; color:#93c5fd; font-size:11px; font-weight:850; }
+        .open { margin-top:12px; color:#024883; font-size:11px; font-weight:850; }
         .feed { display:grid; gap:10px; }
         .comment { padding:15px; }
         .comment-head { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
         .author { font-weight:850; }
         .body { margin-top:9px; color:#e2e8f0; font-size:13px; line-height:1.55; white-space:pre-wrap; }
-        .mentions { margin-top:8px; color:#93c5fd; font-size:11px; }
+        .mentions { margin-top:8px; color:#024883; font-size:11px; }
         .empty { padding:24px; border:1px dashed #334155; border-radius:15px; color:#94a3b8; text-align:center; font-size:12px; }
         .pagination { margin-top:18px; }
         @media (prefers-color-scheme: light) {
@@ -42,25 +42,18 @@
             .subtitle,.section-title,.meta,.empty { color:#64748b; }
             .subject,.comment { background:#fff; border-color:#e2e8f0; }
             .body { color:#334155; }
-            .badge { background:#eff6ff; color:#1d4ed8; }
-            .open,.mentions { color:#2563eb; }
+            .badge { background:#eaf3fa; color:#024883; }
+            .open,.mentions { color:#024883; }
         }
     </style>
 </head>
 <body>
 <div class="shell">
-    <div class="topbar">
-        <div class="brand">Central ARPYNET</div>
-        <x-operational-nav active="collaboration" />
-    </div>
-
-    <section class="hero">
-        <h1>Colaboración</h1>
-        <div class="subtitle">
-            Conversaciones operativas dentro de tareas, proyectos, servicios e incidentes.
-            Las menciones generan una notificación interna y respetan el ámbito de cada empresa.
-        </div>
-    </section>
+    <x-operational-page-header
+        active="collaboration"
+        title="Colaboración"
+        subtitle="Conversaciones operativas dentro de tareas, proyectos, servicios e incidentes. Las menciones generan una notificación interna y respetan el ámbito de cada empresa."
+    />
 
     <div class="section-title">Abrir una conversación</div>
 
