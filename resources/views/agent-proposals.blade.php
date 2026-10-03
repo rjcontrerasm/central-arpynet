@@ -13,19 +13,17 @@
 </head>
 <body>
 <div class="jarvis">
-<header class="head">
-<div>
-<h1>Jarvis</h1>
-<div class="sub">Centro de control para propuestas y contexto operativo.</div>
+<x-operational-page-header
+    active="agent"
+    title="Jarvis"
+    subtitle="Centro de control para propuestas y contexto operativo."
+/>
 <div class="safety">
-<span class="safe">✓ Confirmación humana</span>
-<span class="locked">Autonomía: deshabilitada</span>
-<span class="locked">Red externa: deshabilitada</span>
-<span class="locked">Contrato {{ $contract['contract'] }}</span>
+    <span class="safe">✓ Confirmación humana</span>
+    <span class="locked">Autonomía: deshabilitada</span>
+    <span class="locked">Red externa: deshabilitada</span>
+    <span class="locked">Contrato {{ $contract['contract'] }}</span>
 </div>
-</div>
-<x-operational-nav active="agent" />
-</header>
 
 @if(session('agent_proposal_message'))
 <div class="notice">{{ session('agent_proposal_message') }}</div>
