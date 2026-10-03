@@ -12,10 +12,17 @@
 </head>
 <body>
 <div class="shell">
-    <a class="back" href="{{ route('daily-ops.show') }}">← Volver a Mi día</a>
-
-    <h1>Convertir tarea</h1>
-    <div class="subtitle">Promueve la tarea sin volver a ingresar la información.</div>
+    <x-operational-page-header
+        active="daily"
+        title="Convertir tarea"
+        subtitle="Promueve la tarea sin volver a ingresar la información."
+    >
+        <x-slot:actions>
+            <a class="secondary-link" href="{{ route('daily-ops.show') }}">
+                ← Volver a Mi día
+            </a>
+        </x-slot:actions>
+    </x-operational-page-header>
 
     <div class="task">
         <div class="task-title">{{ $task->title }}</div>
