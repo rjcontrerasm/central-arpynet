@@ -8,7 +8,7 @@
 <x-operational-theme />
 <link
         rel="stylesheet"
-        href="{{ asset('central-assets/pages/projects-ops.css') }}?v=2.39.1"
+        href="{{ asset('central-assets/pages/projects-ops.css') }}?v={{ filemtime(public_path('central-assets/pages/projects-ops.css')) }}"
     >
 </head>
 <body>
@@ -135,7 +135,7 @@ $canWriteProject=in_array((int)$project->organization_id,$writableOrganizationId
 @endif
 
 @if($canWriteProject)
-<details class="quick">
+<details class="project-quick-actions">
 <summary>Acciones rápidas</summary>
 <div class="quick-grid">
 
