@@ -14,30 +14,11 @@
 
 <body>
 <div class="shell">
-    <div class="topbar">
-        <div class="brand">Central ARPYNET</div>
-
-        <x-operational-nav active="review" />
-    </div>
-
-    @if (session('daily_review_success'))
-        <div class="success">
-            {{ session('daily_review_success') }}
-        </div>
-    @endif
-
-    <section class="hero">
-        <div>
-            <h1>Revisión diaria</h1>
-
-            <div class="subtitle">
-                {{ $now->locale('es')->translatedFormat(
-                    'l d \d\e F',
-                ) }}
-                · confirma cada bloque después de revisarlo
-            </div>
-        </div>
-    </section>
+    <x-operational-page-header
+        active="review"
+        title="Revisión diaria"
+        :subtitle="$now->locale('es')->translatedFormat('l d \\d\\e F').' · confirma cada bloque después de revisarlo'"
+    />
 
     <section class="progress-card">
         <div class="progress-head">
