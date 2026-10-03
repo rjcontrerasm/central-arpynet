@@ -182,8 +182,7 @@
 
     .search-button,
     .search button,
-    .quick,
-    .fab,
+        .fab,
     .submit,
     .admin-link,
     .save,
@@ -195,8 +194,7 @@
 
     .search-button:hover,
     .search button:hover,
-    .quick:hover,
-    .fab:hover,
+        .fab:hover,
     .submit:hover,
     .admin-link:hover,
     .save:hover,
@@ -1169,7 +1167,6 @@ body {
     color: #fff;
 }
 
-.quick,
 .fab {
     background:
         linear-gradient(
@@ -1182,7 +1179,6 @@ body {
         0 10px 22px rgba(249, 160, 44, .24) !important;
 }
 
-.quick:hover,
 .fab:hover {
     background:
         linear-gradient(
@@ -1568,7 +1564,6 @@ textarea:focus,
     box-shadow: none !important;
 }
 
-.quick,
 .fab {
     background: var(--central-brand-orange) !important;
     color: #fff !important;
@@ -1577,7 +1572,6 @@ textarea:focus,
         0 9px 22px rgba(249, 160, 44, .24) !important;
 }
 
-.quick:hover,
 .fab:hover {
     background: #ed8d13 !important;
     border-color: #ed8d13 !important;
@@ -2001,7 +1995,6 @@ body {
     background: rgba(249, 160, 44, .13);
 }
 
-.quick,
 .fab {
     border: 0 !important;
     border-radius: 12px !important;
@@ -2021,7 +2014,6 @@ body {
         background-color 140ms ease;
 }
 
-.quick:hover,
 .fab:hover {
     background:
         linear-gradient(
@@ -2408,7 +2400,6 @@ h2 {
         height: 36px;
     }
 
-    .quick,
     .fab {
         border-radius: 13px !important;
     }
@@ -3316,4 +3307,119 @@ input[type="radio"] {
     .topbar .op-nav-group-title {
         padding: 8px 9px 4px;
     }
+}
+
+
+/* 2.43.2 — Canonical operational header/nav based on Mi día */
+@media (min-width: 760px) {
+    .topbar {
+        display: flex !important;
+        min-height: 70px !important;
+        height: 70px !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 18px !important;
+        padding: 0 18px !important;
+        margin-bottom: 22px !important;
+        border-radius: 16px !important;
+        overflow: visible !important;
+    }
+
+    .topbar .brand {
+        display: inline-flex !important;
+        min-width: 0;
+        height: 100%;
+        align-items: center !important;
+        flex: 0 0 auto;
+        margin: 0 18px 0 0 !important;
+        padding: 0 18px 0 0 !important;
+    }
+
+    .topbar .op-nav {
+        display: flex !important;
+        width: auto !important;
+        min-width: 0;
+        height: 100%;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        flex: 1 1 auto;
+        gap: 2px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .topbar .op-nav-link,
+    .topbar .op-nav-more > summary {
+        position: relative;
+        display: inline-flex !important;
+        min-height: 38px !important;
+        height: 38px !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 10px !important;
+        margin: 0 !important;
+        border: 0 !important;
+        border-radius: 9px !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        color: rgba(255,255,255,.86) !important;
+        font-size: 12px !important;
+        font-weight: 800 !important;
+        line-height: 1 !important;
+    }
+
+    .topbar .op-nav-link:hover,
+    .topbar .op-nav-more > summary:hover {
+        background: rgba(255,255,255,.08) !important;
+        color: #fff !important;
+    }
+
+    .topbar .op-nav-link.is-active {
+        border-radius: 0 !important;
+        background: transparent !important;
+        color: #fff !important;
+        box-shadow: inset 0 -2px 0 var(--central-brand-orange) !important;
+    }
+
+    /* Disable legacy underline so active navigation has exactly one line. */
+    .topbar .op-nav-link.is-active::after {
+        display: none !important;
+        content: none !important;
+    }
+
+    .topbar .op-nav-more > summary {
+        border-radius: 10px !important;
+        background: rgba(255,255,255,.07) !important;
+    }
+
+    .topbar .op-nav-more[open] > summary {
+        border-radius: 10px !important;
+        background: rgba(255,255,255,.11) !important;
+        box-shadow: none !important;
+    }
+
+    .topbar .op-nav-menu {
+        top: calc(100% + 8px) !important;
+        width: 220px !important;
+        max-height: min(58vh, 470px) !important;
+        padding: 7px !important;
+        border-radius: 14px !important;
+    }
+
+    .topbar .op-nav-menu a {
+        min-height: 34px !important;
+        padding: 7px 9px !important;
+        border-radius: 8px !important;
+        font-size: 12px !important;
+        line-height: 1.2 !important;
+    }
+
+    .topbar .op-nav-group-title {
+        padding: 8px 9px 4px !important;
+    }
+}
+
+/* Quick is a page-local class; never style it globally. */
+.quick:not(a):not(button) {
+    background: initial;
 }
