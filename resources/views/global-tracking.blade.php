@@ -17,21 +17,11 @@
 
 <body>
 <div class="shell">
-    <div class="topbar">
-        <div class="brand">Central ARPYNET</div>
-
-        <x-operational-nav active="tracking" />
-    </div>
-
-    <section class="hero">
-        <div>
-            <h1>Seguimiento</h1>
-
-            <div class="subtitle">
-                Todo lo que requiere atención en un solo lugar
-            </div>
-        </div>
-    </section>
+    <x-operational-page-header
+        active="tracking"
+        title="Seguimiento"
+        subtitle="Todo lo que requiere atención en un solo lugar"
+    />
 
     @php
         $base = array_filter([
