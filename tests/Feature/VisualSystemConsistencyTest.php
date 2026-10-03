@@ -122,7 +122,9 @@ class VisualSystemConsistencyTest extends TestCase
             'accent-color:var(--central-brand-blue)',
             '.topbar.op-nav-link.is-active',
             'background:transparent!important',
-            '.topbar.op-nav-menua{min-height:34px',
+            '.topbar.op-nav-link.is-active::after{display:none!important;content:none!important',
+            '.topbar{display:flex!important;min-height:70px!important;height:70px!important',
+            '.topbar.op-nav-menua{min-height:34px!important',
             '.paginationsvg',
             'width:16px!important',
         ] as $rule) {
@@ -151,7 +153,7 @@ class VisualSystemConsistencyTest extends TestCase
         );
 
         $this->assertStringContainsString(
-            'details.quick{margin-top:12px',
+            'details.project-quick-actions{margin-top:12px',
             $projects,
         );
         $this->assertStringContainsString(
