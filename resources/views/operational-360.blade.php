@@ -8,7 +8,7 @@
 <x-operational-theme />
 <link
         rel="stylesheet"
-        href="{{ asset('central-assets/pages/operational-360.css') }}?v=2.39.2"
+        href="{{ asset('central-assets/pages/operational-360.css') }}?v={{ filemtime(public_path('central-assets/pages/operational-360.css')) }}"
     >
 </head>
 <body>
