@@ -13,29 +13,11 @@
 </head>
 <body>
 <div class="shell">
-    <div class="topbar">
-        <div class="brand">Central ARPYNET</div>
-        <x-operational-nav active="projects" />
-    </div>
-
-    @if (session('project_front_success'))
-        <div class="success">{{ session('project_front_success') }}</div>
-    @endif
-
-    @if ($errors->any())
-        <div class="errors">
-            @foreach ($errors->all() as $error)
-                <div>{{ $error }}</div>
-            @endforeach
-        </div>
-    @endif
-
-    <section class="hero">
-        <div>
-            <h1>{{ $project ? 'Editar proyecto' : 'Nuevo proyecto' }}</h1>
-            <div class="subtitle">Planificación completa desde CENTRAL Front.</div>
-        </div>
-    </section>
+    <x-operational-page-header
+        active="projects"
+        :title="$project ? 'Editar proyecto' : 'Nuevo proyecto'"
+        subtitle="Planificación completa desde CENTRAL Front."
+    />
 
     @if (! $canWrite)
         <div class="readonly">Tienes acceso de solo lectura a este proyecto.</div>
