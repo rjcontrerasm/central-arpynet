@@ -25,3 +25,77 @@
 .progress-native::-webkit-progress-bar{background:#1e293b;border-radius:999px}
 .progress-native::-webkit-progress-value{background:#3b82f6;border-radius:999px}
 .progress-native::-moz-progress-bar{background:#3b82f6;border-radius:999px}
+
+
+/* 2.43.1 — Proyectos: restore component geometry, keep brand palette */
+.progress-native,
+.progress-native::-webkit-progress-bar {
+    background: #e2e8f0 !important;
+}
+.progress-native::-webkit-progress-value,
+.progress-native::-moz-progress-bar {
+    background: #024883 !important;
+}
+.badge {
+    background: #eef2f6 !important;
+    color: #425466 !important;
+}
+.badge.critical {
+    background: #fff1f0 !important;
+    color: #b93b36 !important;
+}
+.badge.attention {
+    background: #fff4e8 !important;
+    color: #b45309 !important;
+}
+.badge.watch {
+    background: #eaf3fa !important;
+    color: #024883 !important;
+}
+.next {
+    border-left-color: #024883 !important;
+    background: #f5f9fc !important;
+    color: #334e68 !important;
+}
+.reasons .reason {
+    background: #f1f5f9 !important;
+    color: #526277 !important;
+}
+details.quick {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #d9e4ef !important;
+    background: transparent !important;
+    color: inherit !important;
+    box-shadow: none !important;
+}
+details.quick > summary {
+    width: auto !important;
+    min-height: 34px;
+    padding: 6px 10px !important;
+    border: 1px solid #c2d3e3 !important;
+    border-radius: 10px !important;
+    background: #fff !important;
+    color: #024883 !important;
+}
+details.quick[open] > summary {
+    background: #eef6fb !important;
+}
+.quick-panel {
+    border-color: #d9e4ef !important;
+    background: #f8fbfd !important;
+}
+.quick-title {
+    color: #16324a !important;
+}
+.quick-form button {
+    background: #024883 !important;
+}
+.quick-form button:hover {
+    background: #004371 !important;
+}
+.quick-form .secondary {
+    border: 1px solid #c2d3e3 !important;
+    background: #fff !important;
+    color: #294b65 !important;
+}

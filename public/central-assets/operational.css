@@ -589,7 +589,7 @@
     }
 
     .op-nav-menu a {
-        min-height: var(--central-mobile-tap-target);
+        min-height: var(--central-control-compact);
     }
 
     .global-undo-bar {
@@ -2962,6 +2962,11 @@ textarea {
     box-shadow: 0 0 0 3px rgba(2, 72, 131, .07) !important;
 }
 
+input[type="checkbox"],
+input[type="radio"] {
+    accent-color: var(--central-brand-blue);
+}
+
 /* Botones primarios: azul estructural. */
 :where(
     .primary-link,
@@ -3022,7 +3027,14 @@ textarea {
 }
 
 /* El naranja queda reservado para captura/creación rápida, como en Mi día. */
-:where(.quick, .fab, .central-accent-action) {
+:where(
+    .hero a.quick,
+    .hero button.quick,
+    .operational-header-actions a.quick,
+    .operational-header-actions button.quick,
+    .fab,
+    .central-accent-action
+) {
     border-color: var(--central-brand-orange) !important;
     background:
         linear-gradient(
@@ -3196,8 +3208,10 @@ textarea {
 
 .topbar .op-nav-link.is-active {
     border-color: transparent !important;
+    border-radius: 0 !important;
+    background: transparent !important;
     box-shadow:
-        inset 0 -3px 0 var(--central-brand-orange) !important;
+        inset 0 -2px 0 var(--central-brand-orange) !important;
 }
 
 /* Flash, vacío y errores con el mismo ritmo vertical. */
@@ -3253,5 +3267,53 @@ textarea {
                 var(--central-brand-blue-dark) 0%,
                 var(--central-brand-blue) 100%
             ) !important;
+    }
+}
+
+/* Paginación FRONT sin dependencia de utilidades Tailwind. */
+.pagination svg,
+[aria-label="Pagination Navigation"] svg {
+    width: 16px !important;
+    height: 16px !important;
+    max-width: 16px !important;
+    flex: 0 0 16px;
+}
+
+.pagination nav,
+[aria-label="Pagination Navigation"] {
+    font-size: 12px;
+}
+
+
+
+/* 2.43.1 — Navegación desktop plana y estable */
+@media (min-width: 760px) {
+    .topbar .op-nav {
+        flex-wrap: nowrap;
+        align-items: center;
+    }
+
+    .topbar .op-nav-more[open] > summary {
+        border-color: transparent !important;
+        border-radius: 0 !important;
+        background: rgba(255,255,255,.06) !important;
+        box-shadow: inset 0 -2px 0 var(--central-brand-orange) !important;
+    }
+
+    .topbar .op-nav-menu {
+        width: 220px;
+        max-height: min(58vh, 470px);
+        padding: 7px;
+    }
+
+    .topbar .op-nav-menu a {
+        min-height: 34px;
+        padding: 7px 9px;
+        border-radius: 8px;
+        font-size: 12px;
+    }
+
+    .topbar .op-nav-group-title {
+        padding: 8px 9px 4px;
     }
 }

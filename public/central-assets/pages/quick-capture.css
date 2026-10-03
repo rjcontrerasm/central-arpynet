@@ -435,3 +435,36 @@
         }
 
 .when-label{font-size:14px;font-weight:700;margin-bottom:7px}
+
+
+/* 2.43.1 — Due date choices: single frame, ARPYNET palette */
+.chips > .chip {
+    min-height: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+.chips > .chip:hover {
+    border: 0 !important;
+    background: transparent !important;
+}
+.chips > .chip span {
+    border-color: #c2d3e3;
+    background: #fff;
+    color: #294b65;
+}
+.chips > .chip input:checked + span {
+    border-color: #78a9cc;
+    background: #eef6fb;
+    color: #024883;
+    box-shadow: inset 0 0 0 1px rgba(2,72,131,.04);
+}
+.chips > .chip input:focus-visible + span {
+    outline: 3px solid rgba(249,160,44,.28);
+    outline-offset: 2px;
+}
+.advanced summary::after {
+    color: #024883;
+}

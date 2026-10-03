@@ -275,3 +275,31 @@
 .progress-60{width:60%}
 .progress-80{width:80%}
 .progress-100{width:100%}
+
+
+/* 2.43.1 — Revisión semanal: ARPYNET palette */
+.progress-track {
+    background: #e2e8f0 !important;
+}
+.progress-fill {
+    background: #024883 !important;
+}
+.count {
+    background: #eaf3fa !important;
+    color: #024883 !important;
+}
+.mini,
+.metric,
+.open-link {
+    border-color: #d9e4ef !important;
+    background: #fff !important;
+    color: #334e68 !important;
+}
+.review-button {
+    border: 1px solid #024883 !important;
+    background: #024883 !important;
+    color: #fff !important;
+}
+.review-button:hover {
+    background: #004371 !important;
+}

@@ -317,9 +317,25 @@
         @endforelse
     </div>
 
-    <div class="pagination">
-        {{ $changes->links() }}
-    </div>
+    <nav class="pagination audit-pagination" aria-label="Paginación del historial">
+        <div class="audit-pagination-actions">
+            @if ($changes->onFirstPage())
+                <span class="audit-page-button is-disabled" aria-disabled="true">← Anterior</span>
+            @else
+                <a class="audit-page-button" href="{{ $changes->previousPageUrl() }}">← Anterior</a>
+            @endif
+
+            @if ($changes->hasMorePages())
+                <a class="audit-page-button" href="{{ $changes->nextPageUrl() }}">Siguiente →</a>
+            @else
+                <span class="audit-page-button is-disabled" aria-disabled="true">Siguiente →</span>
+            @endif
+        </div>
+        <div class="audit-pagination-meta">
+            Mostrando {{ $changes->firstItem() ?? 0 }}–{{ $changes->lastItem() ?? 0 }}
+            de {{ $changes->total() }} resultados
+        </div>
+    </nav>
 </div>
     <x-operational-theme />
     <x-operational-interactions />

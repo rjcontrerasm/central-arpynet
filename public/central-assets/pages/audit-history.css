@@ -319,3 +319,48 @@
                 background: #f8fafc;
             }
         }
+
+
+/* 2.43.1 — Historial pagination */
+.audit-pagination {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-top:18px;
+    padding:12px 0;
+}
+.audit-pagination-actions {
+    display:flex;
+    gap:8px;
+}
+.audit-page-button {
+    display:inline-flex;
+    min-height:36px;
+    align-items:center;
+    justify-content:center;
+    padding:7px 11px;
+    border:1px solid #c2d3e3;
+    border-radius:10px;
+    background:#fff;
+    color:#024883;
+    font-size:11px;
+    font-weight:800;
+}
+.audit-page-button:hover {
+    border-color:#78a9cc;
+    background:#eef6fb;
+}
+.audit-page-button.is-disabled {
+    color:#94a3b8;
+    background:#f8fafc;
+    cursor:not-allowed;
+}
+.audit-pagination-meta {
+    color:#5f7285;
+    font-size:11px;
+}
+@media(max-width:620px){
+    .audit-pagination{align-items:stretch;flex-direction:column}
+    .audit-pagination-actions{display:grid;grid-template-columns:1fr 1fr}
+}
