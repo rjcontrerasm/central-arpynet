@@ -11,7 +11,7 @@
 
     <link
         rel="stylesheet"
-        href="{{ asset('central-assets/pages/notification-center.css') }}?v=2.39.2"
+        href="{{ asset('central-assets/pages/notification-center.css') }}?v={{ filemtime(public_path('central-assets/pages/notification-center.css')) }}"
     >
 </head>
 
