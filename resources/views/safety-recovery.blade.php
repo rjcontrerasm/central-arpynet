@@ -12,14 +12,17 @@
 </head>
 <body>
 <div class="safety-page">
-    <header class="safety-header">
-        <div>
-            <h1>Estado y recuperación</h1>
-            <p>Señales operativas de seguridad, automatización y recuperación. Esta vista no expone secretos ni ejecuta reparaciones automáticas.</p>
-            <span class="safety-status {{ $snapshot['status'] }}">{{ $snapshot['status_label'] }}</span>
-        </div>
-        <x-operational-nav active="safety" />
-    </header>
+    <x-operational-page-header
+        active="safety"
+        title="Estado y recuperación"
+        subtitle="Señales operativas de seguridad, automatización y recuperación. No expone secretos ni ejecuta reparaciones automáticas."
+    >
+        <x-slot:actions>
+            <span class="safety-status {{ $snapshot['status'] }}">
+                {{ $snapshot['status_label'] }}
+            </span>
+        </x-slot:actions>
+    </x-operational-page-header>
 
     <section class="safety-kpis">
         <div class="safety-kpi"><span>Automatizaciones activas</span><strong>{{ $snapshot['counts']['automation_active'] }}</strong></div>
