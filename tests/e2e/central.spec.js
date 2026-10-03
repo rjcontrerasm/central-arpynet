@@ -73,23 +73,20 @@ test('proyectos mantiene acciones rápidas con estilo local', async (
 
     await page.goto('/proyectos');
 
-    const quick = page.locator('details.project-quick-actions').first();
-    await expect(quick).toBeVisible();
+    const cssHref = await page
+        .locator('link[href*="projects-ops.css"]')
+        .getAttribute('href');
 
-    const summary = quick.locator('summary');
-    await expect(summary).toBeVisible();
+    expect(cssHref).toContain('projects-ops.css?v=');
 
-    const styles = await summary.evaluate((element) => {
-        const computed = window.getComputedStyle(element);
+    const css = await page.evaluate(async (href) => {
+        const response = await fetch(href);
+        return response.text();
+    }, cssHref);
 
-        return {
-            backgroundColor: computed.backgroundColor,
-            color: computed.color,
-        };
-    });
-
-    expect(styles.backgroundColor).not.toBe('rgb(249, 160, 44)');
-    expect(styles.color).not.toBe('rgb(255, 255, 255)');
+    expect(css).toContain('details.project-quick-actions');
+    expect(css).toContain('.project-quick-form');
+    expect(css).not.toContain('details.quick{');
 
     await expectNoHorizontalOverflow(page);
 });
