@@ -14,7 +14,7 @@
 
     <link
         rel="stylesheet"
-        href="{{ asset('central-assets/pages/task-trash.css') }}?v=2.39.2"
+        href="{{ asset('central-assets/pages/task-trash.css') }}?v={{ filemtime(public_path('central-assets/pages/task-trash.css')) }}"
     >
 </head>
 
