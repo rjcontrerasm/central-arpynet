@@ -17,48 +17,31 @@
 
 <body>
 <div class="shell">
-    <div class="topbar">
-        <div class="brand">Central ARPYNET</div>
-
-        <x-operational-nav active="notifications" />
-    </div>
+    <x-operational-page-header
+        active="notifications"
+        title="Notificaciones"
+        :subtitle="$unreadCount.' sin leer'"
+    >
+        @if ($unreadCount > 0)
+            <x-slot:actions>
+                <form
+                    method="POST"
+                    action="{{ route('notification-center.read-all') }}"
+                >
+                    @csrf
+                    <button class="read-all" type="submit">
+                        Marcar todas leídas
+                    </button>
+                </form>
+            </x-slot:actions>
+        @endif
+    </x-operational-page-header>
 
     @if (session('notification_success'))
         <div class="success">
             {{ session('notification_success') }}
         </div>
     @endif
-
-    <section class="hero">
-        <div>
-            <h1>Notificaciones</h1>
-
-            <div class="subtitle">
-                {{ $unreadCount }}
-                {{ $unreadCount === 1
-                    ? 'sin leer'
-                    : 'sin leer' }}
-            </div>
-        </div>
-
-        @if ($unreadCount > 0)
-            <form
-                method="POST"
-                action="{{ route(
-                    'notification-center.read-all'
-                ) }}"
-            >
-                @csrf
-
-                <button
-                    class="read-all"
-                    type="submit"
-                >
-                    Marcar todas leídas
-                </button>
-            </form>
-        @endif
-    </section>
 
     <div class="list">
         @forelse ($notifications as $notification)
