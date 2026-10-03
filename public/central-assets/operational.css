@@ -3073,6 +3073,25 @@ textarea {
     color: var(--central-brand-blue) !important;
 }
 
+/* Estados de acción conservan significado semántico. */
+:where(.action.done, .resume-button, .small-action.reopen) {
+    border-color: #a9dec0 !important;
+    background: var(--central-success-soft) !important;
+    color: var(--central-success) !important;
+}
+
+:where(.wait-button, .small-action.skip) {
+    border-color: #e7c987 !important;
+    background: var(--central-warning-soft) !important;
+    color: var(--central-warning) !important;
+}
+
+:where(.action.danger, .action.delete, .delete-button) {
+    border-color: #efb4b0 !important;
+    background: var(--central-danger-soft) !important;
+    color: var(--central-danger) !important;
+}
+
 /* Filtros: azul claro, nunca CTA naranja. */
 :where(.scope, .priority-filter, .chip) {
     min-height: 36px;
