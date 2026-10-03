@@ -19,6 +19,18 @@
         subtitle="Planificación completa desde CENTRAL Front."
     />
 
+    @if (session('project_front_success'))
+        <div class="success">{{ session('project_front_success') }}</div>
+    @endif
+
+    @if ($errors->any())
+        <div class="errors">
+            @foreach ($errors->all() as $error)
+                <div>{{ $error }}</div>
+            @endforeach
+        </div>
+    @endif
+
     @if (! $canWrite)
         <div class="readonly">Tienes acceso de solo lectura a este proyecto.</div>
     @endif
