@@ -95,7 +95,7 @@ class VisualSystemConsistencyTest extends TestCase
         foreach ([
             '.topbar.op-nav-link.is-active',
             'inset0-3px0var(--central-brand-orange)',
-            '.hero h1',
+            '.heroh1',
             'color:var(--central-brand-blue-dark)!important',
             '.primary-link',
             '.secondary-link',
