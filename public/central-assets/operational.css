@@ -2832,7 +2832,6 @@ body {
     line-height: 1.45;
 }
 
-.shell,
 .jarvis,
 .automation-page,
 .safety-page,
@@ -2844,6 +2843,9 @@ body {
 }
 
 .shell {
+    max-width: 1200px;
+    margin-right: auto !important;
+    margin-left: auto !important;
     padding-right: 16px !important;
     padding-left: 16px !important;
 }
