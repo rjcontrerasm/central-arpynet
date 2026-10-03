@@ -7,7 +7,7 @@
     <x-operational-theme />
     <link
         rel="stylesheet"
-        href="{{ asset('central-assets/pages/automation-center.css') }}?v=2.39.2"
+        href="{{ asset('central-assets/pages/automation-center.css') }}?v={{ filemtime(public_path('central-assets/pages/automation-center.css')) }}"
     >
 </head>
 <body>
