@@ -1,6 +1,99 @@
 import { test, expect } from '@playwright/test';
 import { expectNoHorizontalOverflow } from './helpers.js';
 
+test('navegación operativa mantiene geometría de Mi día', async (
+    { page },
+    testInfo,
+) => {
+    test.skip(
+        testInfo.project.name !== 'desktop-1366',
+        'La geometría desktop se compara una sola vez.',
+    );
+
+    const paths = [
+        '/mi-dia',
+        '/proyectos',
+        '/360',
+        '/jarvis',
+        '/clientes',
+        '/decisiones',
+        '/colaboracion',
+    ];
+
+    let referenceHeight = null;
+
+    for (const path of paths) {
+        await page.goto(path);
+
+        const topbar = page.locator('.topbar').first();
+        await expect(topbar).toBeVisible();
+
+        const box = await topbar.boundingBox();
+        expect(box).not.toBeNull();
+
+        if (referenceHeight === null) {
+            referenceHeight = box.height;
+        } else {
+            expect(
+                Math.abs(box.height - referenceHeight),
+                `Altura distinta en ${path}`,
+            ).toBeLessThanOrEqual(1);
+        }
+
+        const more = page.locator('.op-nav-more > summary').first();
+        await expect(more).toBeVisible();
+
+        const moreBox = await more.boundingBox();
+        expect(moreBox).not.toBeNull();
+        expect(Math.abs(moreBox.height - 38)).toBeLessThanOrEqual(1);
+    }
+
+    await page.goto('/mi-dia');
+
+    const active = page.locator('.op-nav-link.is-active').first();
+    await expect(active).toBeVisible();
+
+    const legacyUnderline = await active.evaluate((element) => (
+        window.getComputedStyle(element, '::after').display
+    ));
+
+    expect(legacyUnderline).toBe('none');
+
+    await expectNoHorizontalOverflow(page);
+});
+
+test('proyectos mantiene acciones rápidas con estilo local', async (
+    { page },
+    testInfo,
+) => {
+    test.skip(
+        testInfo.project.name !== 'desktop-1366',
+        'La regresión visual de proyectos se valida en desktop.',
+    );
+
+    await page.goto('/proyectos');
+
+    const quick = page.locator('details.project-quick-actions').first();
+    await expect(quick).toBeVisible();
+
+    const summary = quick.locator('summary');
+    await expect(summary).toBeVisible();
+
+    const styles = await summary.evaluate((element) => {
+        const computed = window.getComputedStyle(element);
+
+        return {
+            backgroundColor: computed.backgroundColor,
+            color: computed.color,
+        };
+    });
+
+    expect(styles.backgroundColor).not.toBe('rgb(249, 160, 44)');
+    expect(styles.color).not.toBe('rgb(255, 255, 255)');
+
+    await expectNoHorizontalOverflow(page);
+});
+
 test('Mi Día muestra foco operativo sin overflow', async ({ page }) => {
     await page.goto('/mi-dia');
 
