@@ -215,6 +215,12 @@ test('Mi Día completa tarea en vivo con mini confetti y undo inferior', async (
 
     await done.click();
 
+    await expect.poll(
+        () => page.evaluate(
+            () => window.__centralAudioFrequencies,
+        ),
+    ).toEqual([740, 990, 1320]);
+
     const confetti = page.locator(
         '.daily-complete-confetti-portal',
     );
@@ -239,12 +245,6 @@ test('Mi Día completa tarea en vivo con mini confetti y undo inferior', async (
     expect(payload.ok).toBe(true);
     expect(payload.action).toBe('complete');
     expect(payload.undo?.id).toBeTruthy();
-
-    await expect.poll(
-        () => page.evaluate(
-            () => window.__centralAudioFrequencies,
-        ),
-    ).toEqual([660, 880]);
 
     await expect(card).toHaveClass(
         /daily-task-leaving/,
@@ -324,7 +324,7 @@ test('Mi Día completa tarea en vivo con mini confetti y undo inferior', async (
         () => page.evaluate(
             () => window.__centralAudioFrequencies,
         ),
-    ).toEqual([660, 880, 560, 420]);
+    ).toEqual([740, 990, 1320, 560, 420]);
 
     await expect(taskTitle).toBeVisible();
 
