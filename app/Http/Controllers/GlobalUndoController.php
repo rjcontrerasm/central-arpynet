@@ -27,7 +27,12 @@ class GlobalUndoController extends Controller
                 : null,
         );
 
-        if ($request->expectsJson()) {
+        if (
+            $request->expectsJson()
+            || $request->header(
+                'X-Central-Live-Action',
+            ) === '1'
+        ) {
             return response()->json(
                 $result,
                 $result['ok'] ? 200 : 409,
