@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Organization;
 use App\Models\Task;
+use App\Models\UndoAction;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -136,7 +137,7 @@ class GlobalUndoTaskLifecycleTest extends TestCase
         );
     }
 
-    public function test_only_latest_action_is_undoable(): void
+    public function test_last_ten_actions_are_undoable_in_lifo_order(): void
     {
         CarbonImmutable::setTestNow(
             '2026-09-03 10:00:00',
@@ -168,11 +169,83 @@ class GlobalUndoTaskLifecycleTest extends TestCase
         );
 
         $this->post('/deshacer')
+            ->assertRedirect('/mi-dia');
+
+        $this->assertSame(
+            '2026-09-10',
+            $task->fresh()
+                ->due_at
+                ?->format('Y-m-d'),
+        );
+
+        $this->post('/deshacer')
             ->assertRedirect('/mi-dia')
             ->assertSessionHas(
                 'global_undo_success',
                 'Ya no hay una acción para deshacer.',
             );
+    }
+
+    public function test_stack_keeps_only_ten_active_actions(): void
+    {
+        CarbonImmutable::setTestNow(
+            '2026-09-03 10:00:00',
+        );
+
+        [$user, $organization] =
+            $this->context();
+
+        for ($index = 1; $index <= 11; $index++) {
+            $task = Task::query()->create([
+                'organization_id' =>
+                    $organization->id,
+                'title' =>
+                    "Undo stack {$index}",
+                'status' => 'pending',
+                'urgency' => 'normal',
+                'impact' => 'normal',
+                'created_by' => $user->id,
+            ]);
+
+            app(
+                \App\Support\GlobalUndoService::class,
+            )->rememberTaskCreated(
+                $user,
+                $task,
+                "Tarea {$index} creada",
+                '/mi-dia',
+            );
+        }
+
+        $active = UndoAction::query()
+            ->where(
+                'user_id',
+                $user->id,
+            )
+            ->whereNull('undone_at')
+            ->whereNull('superseded_at')
+            ->where(
+                'expires_at',
+                '>',
+                now(),
+            )
+            ->count();
+
+        $this->assertSame(
+            10,
+            $active,
+        );
+
+        $this->assertNotNull(
+            UndoAction::query()
+                ->where(
+                    'user_id',
+                    $user->id,
+                )
+                ->oldest('id')
+                ->first()
+                ?->superseded_at,
+        );
     }
 
     public function test_foreign_user_cannot_use_another_users_undo_action(): void
