@@ -323,6 +323,7 @@
         class="global-undo-bar"
         role="status"
         aria-live="polite"
+        data-undo-expires-at="{{ $globalUndo->expires_at?->toIso8601String() }}"
     >
         <span
             class="global-undo-status-icon"
@@ -334,7 +335,18 @@
         </span>
 
         <span class="global-undo-message">
-            {{ $globalUndo->label }}.
+            <strong class="global-undo-title">
+                {{ $globalUndo->label }}
+            </strong>
+            <span class="global-undo-detail">
+                Puedes deshacer la acción.
+            </span>
+            <span
+                class="global-undo-progress"
+                aria-hidden="true"
+            >
+                <span class="global-undo-progress-fill"></span>
+            </span>
         </span>
 
         <form
@@ -383,7 +395,9 @@
         </span>
 
         <span class="global-undo-message">
-            {{ $globalUndoFlash }}
+            <strong class="global-undo-title">
+                {{ $globalUndoFlash }}
+            </strong>
         </span>
     </div>
 @endif
