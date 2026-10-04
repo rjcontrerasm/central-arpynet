@@ -334,8 +334,13 @@
                         card,
                         parent,
                         placeholder,
+                        leaveTimer,
                         removeTimer,
                     } = completed;
+
+                    if (leaveTimer) {
+                        window.clearTimeout(leaveTimer);
+                    }
 
                     if (removeTimer) {
                         window.clearTimeout(removeTimer);
@@ -711,18 +716,20 @@
                         addConfetti(button);
                     }
 
-                    if (reducedMotion()) {
-                        card.classList.add(
-                            'daily-task-leaving',
-                        );
-                    } else {
-                        window.setTimeout(
+                    const leaveTimer = reducedMotion()
+                        ? null
+                        : window.setTimeout(
                             () => {
                                 card.classList.add(
                                     'daily-task-leaving',
                                 );
                             },
                             280,
+                        );
+
+                    if (reducedMotion()) {
+                        card.classList.add(
+                            'daily-task-leaving',
                         );
                     }
 
@@ -797,6 +804,7 @@
                                     card,
                                     parent,
                                     placeholder,
+                                    leaveTimer,
                                     removeTimer,
                                 },
                             );
@@ -804,6 +812,9 @@
                             placeholder.remove();
                         }
                     } catch (error) {
+                        if (leaveTimer) {
+                            window.clearTimeout(leaveTimer);
+                        }
                         window.clearTimeout(removeTimer);
 
                         const before = (
