@@ -145,6 +145,41 @@
                 document.body.classList.add(
                     'has-global-undo-toast',
                 );
+
+                const progressFill = undoToast.querySelector(
+                    '.global-undo-progress-fill',
+                );
+                const expiresAt = undoToast.dataset.undoExpiresAt
+                    ? Date.parse(undoToast.dataset.undoExpiresAt)
+                    : Number.NaN;
+
+                if (
+                    progressFill
+                    && Number.isFinite(expiresAt)
+                ) {
+                    const fullWindow = 10 * 60 * 1000;
+                    const remaining = Math.max(
+                        0,
+                        expiresAt - Date.now(),
+                    );
+                    const ratio = Math.min(
+                        1,
+                        remaining / fullWindow,
+                    );
+
+                    progressFill.style.transition = 'none';
+                    progressFill.style.transform =
+                        `scaleX(${ratio})`;
+
+                    window.requestAnimationFrame(() => {
+                        window.requestAnimationFrame(() => {
+                            progressFill.style.transition =
+                                `transform ${remaining}ms linear`;
+                            progressFill.style.transform =
+                                'scaleX(0)';
+                        });
+                    });
+                }
             }
 
             const homeUrl = '/mi-dia';

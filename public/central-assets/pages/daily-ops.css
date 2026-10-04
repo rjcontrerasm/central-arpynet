@@ -1585,3 +1585,16 @@ body > .daily-live-undo-toast {
         display: none !important;
     }
 }
+
+
+/* 2.44.3 — El confetti vive en body para no deformarse con el colapso. */
+.daily-complete-confetti-portal {
+    position: fixed !important;
+    z-index: 900 !important;
+    top: auto;
+    right: auto;
+    width: 1px;
+    height: 1px;
+    overflow: visible;
+    pointer-events: none;
+}
