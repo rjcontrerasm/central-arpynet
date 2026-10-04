@@ -1486,6 +1486,10 @@
     overflow: visible !important;
 }
 
+.item.daily-task-reflowing {
+    will-change: transform;
+}
+
 .item.daily-task-restoring {
     animation:
         daily-task-restore-bounce 520ms
