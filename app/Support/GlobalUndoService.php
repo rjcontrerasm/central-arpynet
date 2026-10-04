@@ -387,6 +387,27 @@ class GlobalUndoService
         User $user,
         ?int $requestedId = null,
     ): array {
+        $sessionId = (int) session()->get(
+            self::SESSION_KEY,
+            0,
+        );
+
+        $ownershipId = $requestedId
+            ?: $sessionId;
+
+        if ($ownershipId > 0) {
+            $requestedAction = UndoAction::query()
+                ->find($ownershipId);
+
+            if ($requestedAction) {
+                abort_unless(
+                    $requestedAction->user_id
+                        === $user->id,
+                    403,
+                );
+            }
+        }
+
         $action = $this->latestActive(
             $user,
         );
