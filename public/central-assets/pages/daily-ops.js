@@ -57,7 +57,7 @@
                 );
                 gain.gain.exponentialRampToValueAtTime(
                     type === 'complete'
-                        ? 0.032
+                        ? 0.028
                         : 0.025,
                     now + 0.008,
                 );
@@ -65,7 +65,7 @@
                     0.0001,
                     now + (
                         type === 'complete'
-                            ? 0.15
+                            ? 0.145
                             : 0.13
                     ),
                 );
@@ -73,8 +73,9 @@
 
                 const notes = type === 'complete'
                     ? [
-                        [660, 0, 0.075],
-                        [880, 0.055, 0.15],
+                        [740, 0, 0.055],
+                        [990, 0.035, 0.095],
+                        [1320, 0.075, 0.145],
                     ]
                     : [
                         [560, 0, 0.065],
@@ -785,6 +786,7 @@
                     }
 
                     primeFeedbackAudio();
+                    playFeedbackSound('complete');
 
                     const button = form.querySelector(
                         'button[type="submit"]',
@@ -893,8 +895,6 @@
                                 || 'No se pudo completar la tarea.',
                             );
                         }
-
-                        playFeedbackSound('complete');
 
                         if (payload.undo) {
                             showUndoToast(
