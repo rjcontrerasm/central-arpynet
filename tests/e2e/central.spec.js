@@ -151,6 +151,18 @@ test('Mi Día completa tarea en vivo con mini confetti y undo inferior', async (
 
     await done.click();
 
+    const confetti = page.locator(
+        '.daily-complete-confetti-portal',
+    );
+
+    await expect(confetti).toBeVisible();
+
+    const confettiParent = await confetti.evaluate(
+        (element) => element.parentElement?.tagName,
+    );
+
+    expect(confettiParent).toBe('BODY');
+
     const response = await completionResponse;
 
     expect(response.status()).toBe(200);
@@ -177,6 +189,18 @@ test('Mi Día completa tarea en vivo con mini confetti y undo inferior', async (
         toast.getByText('Deshacer', {
             exact: true,
         }),
+    ).toBeVisible();
+
+    await expect(
+        toast.locator('.global-undo-title'),
+    ).toHaveText('Tarea completada');
+
+    await expect(
+        toast.locator('.global-undo-detail'),
+    ).toHaveText('Puedes deshacer la acción.');
+
+    await expect(
+        toast.locator('.global-undo-progress-fill'),
     ).toBeVisible();
 
     await expect(
