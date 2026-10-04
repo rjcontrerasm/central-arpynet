@@ -75,6 +75,9 @@
                 }
 
                 animation.cancel();
+                element.classList.remove(
+                    'daily-task-reflowing',
+                );
                 delete element.__centralDailyReflowAnimation;
             });
         };
@@ -124,6 +127,10 @@
                     ? -3
                     : (deltaY < 0 ? 3 : 0);
 
+                element.classList.add(
+                    'daily-task-reflowing',
+                );
+
                 const animation = element.animate(
                     [
                         {
@@ -156,6 +163,9 @@
                             element.__centralDailyReflowAnimation
                             === animation
                         ) {
+                            element.classList.remove(
+                                'daily-task-reflowing',
+                            );
                             delete element
                                 .__centralDailyReflowAnimation;
                         }
