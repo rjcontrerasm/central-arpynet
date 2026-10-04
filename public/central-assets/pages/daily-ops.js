@@ -9,6 +9,7 @@
         window.__centralDailyCompletionInstalled = true;
 
         let lastCompletion = null;
+        let completionStack = [];
         let undoExpiryTimer = null;
 
         const parseJsonResponse = async (response) => {
@@ -56,11 +57,11 @@
         );
 
         const clearPreviousCompletion = () => {
-            if (! lastCompletion) {
-                return;
-            }
+            completionStack.forEach((entry) => {
+                entry.placeholder?.remove();
+            });
 
-            lastCompletion.placeholder?.remove();
+            completionStack = [];
             lastCompletion = null;
         };
 
@@ -169,20 +170,25 @@
                         );
                     }
 
+                    const completed =
+                        lastCompletion;
                     const {
                         card,
                         parent,
                         placeholder,
-                    } = lastCompletion;
+                    } = completed;
 
-                    card.classList.remove(
-                        'daily-task-completing',
-                        'daily-task-leaving',
-                    );
+                    if (card) {
+                        card.classList.remove(
+                            'daily-task-completing',
+                            'daily-task-leaving',
+                        );
+                    }
 
                     if (
-                        parent.isConnected
-                        && placeholder.isConnected
+                        card
+                        && parent?.isConnected
+                        && placeholder?.isConnected
                     ) {
                         parent.insertBefore(
                             card,
@@ -191,31 +197,83 @@
                         placeholder.remove();
                     }
 
-                    toast.classList.add(
-                        'global-undo-bar--restored',
-                    );
-                    const title = toast.querySelector(
-                        '.global-undo-title',
-                    );
-                    const detail = toast.querySelector(
-                        '.global-undo-detail',
-                    );
-
-                    title.textContent = payload.message
-                        || 'Acción deshecha.';
-                    detail.textContent = '';
-
-                    window.setTimeout(() => {
-                        toast.hidden = true;
-                        toast.classList.remove(
-                            'global-undo-bar--restored',
+                    completionStack =
+                        completionStack.filter(
+                            (entry) =>
+                                entry.undo?.id
+                                !== completed.undo?.id,
                         );
-                    }, 1800);
 
                     window.clearTimeout(
                         undoExpiryTimer,
                     );
-                    lastCompletion = null;
+
+                    const nextUndo =
+                        payload.next_undo || null;
+
+                    if (nextUndo) {
+                        const localNext =
+                            [...completionStack]
+                                .reverse()
+                                .find(
+                                    (entry) =>
+                                        entry.undo?.id
+                                        === nextUndo.id,
+                                );
+
+                        lastCompletion = localNext
+                            || {
+                                undo: nextUndo,
+                                csrf: completed.csrf,
+                                card: null,
+                                parent: null,
+                                placeholder: null,
+                                external: true,
+                            };
+
+                        toast.classList.remove(
+                            'global-undo-bar--restored',
+                        );
+
+                        toast.querySelector(
+                            '.global-undo-title',
+                        ).textContent =
+                            nextUndo.label
+                            || 'Acción anterior';
+
+                        toast.querySelector(
+                            '.global-undo-detail',
+                        ).textContent =
+                            'Puedes deshacer la acción anterior.';
+
+                        animateUndoProgress(
+                            toast,
+                            nextUndo.expires_at,
+                        );
+                    } else {
+                        toast.classList.add(
+                            'global-undo-bar--restored',
+                        );
+
+                        toast.querySelector(
+                            '.global-undo-title',
+                        ).textContent =
+                            payload.message
+                            || 'Acción deshecha.';
+
+                        toast.querySelector(
+                            '.global-undo-detail',
+                        ).textContent = '';
+
+                        lastCompletion = null;
+
+                        window.setTimeout(() => {
+                            toast.hidden = true;
+                            toast.classList.remove(
+                                'global-undo-bar--restored',
+                            );
+                        }, 1800);
+                    }
                 } catch (error) {
                     toast.querySelector(
                         '.global-undo-title',
@@ -317,6 +375,28 @@
                 csrf,
             };
 
+            completionStack = completionStack
+                .filter(
+                    (entry) =>
+                        entry.undo?.id !== undo?.id,
+                );
+
+            completionStack.push(
+                lastCompletion,
+            );
+
+            if (completionStack.length > 10) {
+                const removed =
+                    completionStack.splice(
+                        0,
+                        completionStack.length - 10,
+                    );
+
+                removed.forEach((entry) => {
+                    entry.placeholder?.remove();
+                });
+            }
+
             window.clearTimeout(
                 undoExpiryTimer,
             );
@@ -338,8 +418,18 @@
                             === undo.id
                         ) {
                             toast.hidden = true;
+
+                            completionStack =
+                                completionStack.filter(
+                                    (entry) =>
+                                        entry.undo?.id
+                                        !== undo.id,
+                                );
+
                             lastCompletion?.placeholder?.remove();
-                            lastCompletion = null;
+                            lastCompletion =
+                                completionStack.at(-1)
+                                || null;
                         }
                     },
                     delay,
@@ -392,8 +482,6 @@
                     if (form.dataset.submitting === 'yes') {
                         return;
                     }
-
-                    clearPreviousCompletion();
 
                     const button = form.querySelector(
                         'button[type="submit"]',
