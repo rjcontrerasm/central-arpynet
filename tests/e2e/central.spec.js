@@ -325,9 +325,9 @@ test('Mi Día reacomoda fichas con micro-rebote y deshacer estable', async (
     const undoResponse = page.waitForResponse(
         (undoResponseCandidate) => (
             undoResponseCandidate.request().method() === 'POST'
-            && undoResponseCandidate.url().includes(
-                '/mi-dia/deshacer',
-            )
+            && new URL(
+                undoResponseCandidate.url(),
+            ).pathname === '/deshacer'
         ),
     );
 
@@ -403,7 +403,7 @@ test('Mi Día permite deshacer antes de terminar la salida sin borrar la ficha r
     const undoResponse = page.waitForResponse(
         (response) => (
             response.request().method() === 'POST'
-            && response.url().includes('/mi-dia/deshacer')
+            && new URL(response.url()).pathname === '/deshacer'
         ),
     );
 
