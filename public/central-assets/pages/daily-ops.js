@@ -331,17 +331,24 @@
                         addConfetti(card);
                     }
 
-                    window.requestAnimationFrame(() => {
-                        window.requestAnimationFrame(() => {
-                            card.classList.add(
-                                'daily-task-leaving',
-                            );
-                        });
-                    });
+                    if (reducedMotion()) {
+                        card.classList.add(
+                            'daily-task-leaving',
+                        );
+                    } else {
+                        window.setTimeout(
+                            () => {
+                                card.classList.add(
+                                    'daily-task-leaving',
+                                );
+                            },
+                            180,
+                        );
+                    }
 
                     const removeDelay = reducedMotion()
                         ? 0
-                        : 900;
+                        : 1050;
 
                     const removeTimer = window.setTimeout(
                         () => {
@@ -356,8 +363,18 @@
                         const formData = new FormData(form);
                         formData.set('_live', '1');
 
+                        const actionUrl = form.getAttribute(
+                            'action',
+                        );
+
+                        if (! actionUrl) {
+                            throw new Error(
+                                'No se encontró la URL de la acción.',
+                            );
+                        }
+
                         const response = await fetch(
-                            form.action,
+                            actionUrl,
                             {
                                 method: 'POST',
                                 credentials: 'same-origin',
