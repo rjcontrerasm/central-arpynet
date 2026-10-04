@@ -120,6 +120,70 @@ test('Mi Día completa tarea en vivo con mini confetti y undo inferior', async (
         'La escritura y geometría del toast se validan una sola vez.',
     );
 
+    await page.addInitScript(() => {
+        window.__centralAudioFrequencies = [];
+
+        class FakeAudioParam {
+            constructor(kind) {
+                this.kind = kind;
+            }
+
+            setValueAtTime(value) {
+                if (this.kind === 'frequency') {
+                    window.__centralAudioFrequencies.push(
+                        value,
+                    );
+                }
+            }
+
+            exponentialRampToValueAtTime() {}
+        }
+
+        class FakeOscillator {
+            constructor() {
+                this.frequency =
+                    new FakeAudioParam('frequency');
+                this.type = 'sine';
+            }
+
+            connect() {}
+            start() {}
+            stop() {}
+        }
+
+        class FakeGain {
+            constructor() {
+                this.gain =
+                    new FakeAudioParam('gain');
+            }
+
+            connect() {}
+        }
+
+        class FakeAudioContext {
+            constructor() {
+                this.state = 'running';
+                this.currentTime = 0;
+                this.destination = {};
+            }
+
+            createGain() {
+                return new FakeGain();
+            }
+
+            createOscillator() {
+                return new FakeOscillator();
+            }
+
+            resume() {
+                return Promise.resolve();
+            }
+        }
+
+        window.AudioContext = FakeAudioContext;
+        window.webkitAudioContext = FakeAudioContext;
+    });
+
     await page.goto('/mi-dia');
 
     const taskTitle = page.getByText(
@@ -175,6 +239,12 @@ test('Mi Día completa tarea en vivo con mini confetti y undo inferior', async (
     expect(payload.ok).toBe(true);
     expect(payload.action).toBe('complete');
     expect(payload.undo?.id).toBeTruthy();
+
+    await expect.poll(
+        () => page.evaluate(
+            () => window.__centralAudioFrequencies,
+        ),
+    ).toEqual([660, 880]);
 
     await expect(card).toHaveClass(
         /daily-task-leaving/,
@@ -235,9 +305,26 @@ test('Mi Día completa tarea en vivo con mini confetti y undo inferior', async (
         Math.abs(afterScroll - beforeScroll),
     ).toBeLessThanOrEqual(4);
 
+    const undoResponse = page.waitForResponse(
+        (responseCandidate) => (
+            responseCandidate.request().method() === 'POST'
+            && new URL(
+                responseCandidate.url(),
+            ).pathname === '/deshacer'
+        ),
+    );
+
     await toast.getByRole('button', {
         name: /Deshacer/,
     }).click();
+
+    expect((await undoResponse).status()).toBe(200);
+
+    await expect.poll(
+        () => page.evaluate(
+            () => window.__centralAudioFrequencies,
+        ),
+    ).toEqual([660, 880, 560, 420]);
 
     await expect(taskTitle).toBeVisible();
 
