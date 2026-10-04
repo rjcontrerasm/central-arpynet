@@ -286,7 +286,7 @@
 
                     const removeDelay = reducedMotion()
                         ? 0
-                        : 320;
+                        : 900;
 
                     const removeTimer = window.setTimeout(
                         () => {
@@ -318,10 +318,6 @@
                                 payload.message
                                 || 'No se pudo completar la tarea.',
                             );
-                        }
-
-                        if (card.isConnected) {
-                            card.remove();
                         }
 
                         if (payload.undo) {
