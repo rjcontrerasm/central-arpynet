@@ -250,6 +250,11 @@
                             toast,
                             nextUndo.expires_at,
                         );
+
+                        scheduleUndoExpiry(
+                            toast,
+                            nextUndo,
+                        );
                     } else {
                         toast.classList.add(
                             'global-undo-bar--restored',
@@ -336,6 +341,54 @@
             });
         };
 
+        const scheduleUndoExpiry = (
+            toast,
+            undo,
+        ) => {
+            window.clearTimeout(
+                undoExpiryTimer,
+            );
+
+            const expiresAt = undo?.expires_at
+                ? Date.parse(undo.expires_at)
+                : Number.NaN;
+
+            if (! Number.isFinite(expiresAt)) {
+                return;
+            }
+
+            const delay = Math.max(
+                0,
+                expiresAt - Date.now(),
+            );
+
+            undoExpiryTimer = window.setTimeout(
+                () => {
+                    if (
+                        lastCompletion?.undo?.id
+                        !== undo.id
+                    ) {
+                        return;
+                    }
+
+                    toast.hidden = true;
+
+                    completionStack =
+                        completionStack.filter(
+                            (entry) =>
+                                entry.undo?.id
+                                !== undo.id,
+                        );
+
+                    lastCompletion?.placeholder?.remove();
+                    lastCompletion =
+                        completionStack.at(-1)
+                        || null;
+                },
+                delay,
+            );
+        };
+
         const showUndoToast = (
             undo,
             label,
@@ -397,44 +450,10 @@
                 });
             }
 
-            window.clearTimeout(
-                undoExpiryTimer,
+            scheduleUndoExpiry(
+                toast,
+                undo,
             );
-
-            const expiresAt = undo?.expires_at
-                ? Date.parse(undo.expires_at)
-                : Number.NaN;
-
-            if (Number.isFinite(expiresAt)) {
-                const delay = Math.max(
-                    0,
-                    expiresAt - Date.now(),
-                );
-
-                undoExpiryTimer = window.setTimeout(
-                    () => {
-                        if (
-                            lastCompletion?.undo?.id
-                            === undo.id
-                        ) {
-                            toast.hidden = true;
-
-                            completionStack =
-                                completionStack.filter(
-                                    (entry) =>
-                                        entry.undo?.id
-                                        !== undo.id,
-                                );
-
-                            lastCompletion?.placeholder?.remove();
-                            lastCompletion =
-                                completionStack.at(-1)
-                                || null;
-                        }
-                    },
-                    delay,
-                );
-            }
         };
 
         const addConfetti = (button) => {
