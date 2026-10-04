@@ -18,6 +18,8 @@ class GlobalUndoService
     public const SESSION_KEY =
         'central_global_undo_id';
 
+    private const STACK_LIMIT = 10;
+
     private const PROJECT_FIELDS = [
         'organization_id',
         'name',
@@ -342,38 +344,11 @@ class GlobalUndoService
             return null;
         }
 
-        $id = (int) session()->get(
-            self::SESSION_KEY,
-            0,
+        $action = $this->latestActive(
+            $user,
         );
 
-        $action = $id > 0
-            ? UndoAction::query()
-                ->find($id)
-            : null;
-
-        if (
-            ! $action
-            || $action->user_id
-                !== $user->id
-        ) {
-            $action = UndoAction::query()
-                ->where(
-                    'user_id',
-                    $user->id,
-                )
-                ->whereNull('undone_at')
-                ->whereNull('superseded_at')
-                ->latest('id')
-                ->first();
-        }
-
-        if (
-            ! $action
-            || $action->undone_at
-            || $action->superseded_at
-            || $action->expires_at->isPast()
-        ) {
+        if (! $action) {
             session()->forget(
                 self::SESSION_KEY,
             );
@@ -389,17 +364,38 @@ class GlobalUndoService
         return $action;
     }
 
+    public function clientPayload(
+        ?UndoAction $action,
+    ): ?array {
+        if (! $action) {
+            return null;
+        }
+
+        return [
+            'id' => $action->id,
+            'label' => $action->label,
+            'expires_at' =>
+                $action->expires_at
+                    ?->toIso8601String(),
+            'url' => route(
+                'global-undo.restore',
+            ),
+        ];
+    }
+
     public function undo(
         User $user,
         ?int $requestedId = null,
     ): array {
-        $id = $requestedId
-            ?: (int) session()->get(
+        $action = $this->latestActive(
+            $user,
+        );
+
+        if (! $action) {
+            session()->forget(
                 self::SESSION_KEY,
-                0,
             );
 
-        if ($id <= 0) {
             return [
                 'ok' => false,
                 'message' =>
@@ -413,49 +409,21 @@ class GlobalUndoService
             ];
         }
 
-        $action = UndoAction::query()
-            ->find($id);
-
-        if (! $action) {
-            session()->forget(
-                self::SESSION_KEY,
-            );
-
-            return [
-                'ok' => false,
-                'message' =>
-                    'La acción para deshacer ya no está disponible.',
-                'return_url' =>
-                    route(
-                        'daily-ops.show',
-                        [],
-                        false,
-                    ),
-            ];
-        }
-
-        abort_unless(
-            $action->user_id
-                === $user->id,
-            403,
-        );
-
         if (
-            $action->undone_at
-            || $action->superseded_at
-            || $action->expires_at->isPast()
+            $requestedId
+            && $requestedId !== $action->id
         ) {
-            session()->forget(
-                self::SESSION_KEY,
-            );
-
             return [
                 'ok' => false,
                 'message' =>
-                    'La opción de deshacer expiró o fue reemplazada.',
+                    'Primero debes deshacer la acción más reciente.',
                 'return_url' =>
                     $this->safeReturnUrl(
                         $action->return_url,
+                    ),
+                'next_undo' =>
+                    $this->clientPayload(
+                        $action,
                     ),
             ];
         }
@@ -480,6 +448,26 @@ class GlobalUndoService
                         'ok' => false,
                         'message' =>
                             'La acción ya no puede deshacerse.',
+                        'return_url' =>
+                            $this->safeReturnUrl(
+                                $locked->return_url,
+                            ),
+                    ];
+                }
+
+                $latest = $this->latestActive(
+                    $user,
+                );
+
+                if (
+                    ! $latest
+                    || $latest->id
+                        !== $locked->id
+                ) {
+                    return [
+                        'ok' => false,
+                        'message' =>
+                            'Primero debes deshacer la acción más reciente.',
                         'return_url' =>
                             $this->safeReturnUrl(
                                 $locked->return_url,
@@ -541,6 +529,11 @@ class GlobalUndoService
                     'undone_at' => now(),
                 ])->save();
 
+                $this->rebasePreviousForEntity(
+                    $user,
+                    $locked,
+                );
+
                 return [
                     'ok' => true,
                     'message' => 'Acción deshecha.',
@@ -552,11 +545,28 @@ class GlobalUndoService
             },
         );
 
-        session()->forget(
-            self::SESSION_KEY,
+        $next = $this->latestActive(
+            $user,
         );
 
-        return $result;
+        if ($next) {
+            session()->put(
+                self::SESSION_KEY,
+                $next->id,
+            );
+        } else {
+            session()->forget(
+                self::SESSION_KEY,
+            );
+        }
+
+        return [
+            ...$result,
+            'next_undo' =>
+                $this->clientPayload(
+                    $next,
+                ),
+        ];
     }
 
     public function invalidateCurrent(
@@ -610,21 +620,7 @@ class GlobalUndoService
                 $payload,
                 $returnUrl,
             ): UndoAction {
-                UndoAction::query()
-                    ->where(
-                        'user_id',
-                        $user->id,
-                    )
-                    ->whereNull('undone_at')
-                    ->whereNull(
-                        'superseded_at',
-                    )
-                    ->update([
-                        'superseded_at' =>
-                            now(),
-                    ]);
-
-                return UndoAction::query()
+                $action = UndoAction::query()
                     ->create([
                         'user_id' =>
                             $user->id,
@@ -650,6 +646,44 @@ class GlobalUndoService
                             CarbonImmutable::now()
                                 ->addMinutes(10),
                     ]);
+
+                $overflowIds =
+                    UndoAction::query()
+                        ->where(
+                            'user_id',
+                            $user->id,
+                        )
+                        ->whereNull(
+                            'undone_at',
+                        )
+                        ->whereNull(
+                            'superseded_at',
+                        )
+                        ->where(
+                            'expires_at',
+                            '>',
+                            now(),
+                        )
+                        ->orderByDesc('id')
+                        ->skip(
+                            self::STACK_LIMIT,
+                        )
+                        ->take(100)
+                        ->pluck('id');
+
+                if ($overflowIds->isNotEmpty()) {
+                    UndoAction::query()
+                        ->whereIn(
+                            'id',
+                            $overflowIds,
+                        )
+                        ->update([
+                            'superseded_at' =>
+                                now(),
+                        ]);
+                }
+
+                return $action;
             },
         );
 
@@ -1383,6 +1417,127 @@ class GlobalUndoService
                 true,
             )
             ->exists();
+    }
+
+    private function latestActive(
+        User $user,
+    ): ?UndoAction {
+        return UndoAction::query()
+            ->where(
+                'user_id',
+                $user->id,
+            )
+            ->whereNull('undone_at')
+            ->whereNull('superseded_at')
+            ->where(
+                'expires_at',
+                '>',
+                now(),
+            )
+            ->latest('id')
+            ->first();
+    }
+
+    private function rebasePreviousForEntity(
+        User $user,
+        UndoAction $undone,
+    ): void {
+        if (
+            ! $undone->entity_type
+            || ! $undone->entity_id
+        ) {
+            return;
+        }
+
+        $previous = UndoAction::query()
+            ->where(
+                'user_id',
+                $user->id,
+            )
+            ->where(
+                'entity_type',
+                $undone->entity_type,
+            )
+            ->where(
+                'entity_id',
+                $undone->entity_id,
+            )
+            ->whereNull('undone_at')
+            ->whereNull('superseded_at')
+            ->where(
+                'expires_at',
+                '>',
+                now(),
+            )
+            ->latest('id')
+            ->first();
+
+        if (! $previous) {
+            return;
+        }
+
+        $expected = match (
+            $undone->entity_type
+        ) {
+            'task' => (
+                $model = Task::withTrashed()
+                    ->find(
+                        $undone->entity_id,
+                    )
+            )
+                ? $this->taskFingerprint(
+                    $model,
+                )
+                : null,
+            'project' => (
+                $model = Project::query()
+                    ->find(
+                        $undone->entity_id,
+                    )
+            )
+                ? $this->updatedAtFingerprint(
+                    $model,
+                )
+                : null,
+            'service_order' => (
+                $model = ServiceOrder::query()
+                    ->find(
+                        $undone->entity_id,
+                    )
+            )
+                ? $this->updatedAtFingerprint(
+                    $model,
+                )
+                : null,
+            'obligation_occurrence' => (
+                $model =
+                    ObligationOccurrence::query()
+                        ->find(
+                            $undone->entity_id,
+                        )
+            )
+                ? $this->updatedAtFingerprint(
+                    $model,
+                )
+                : null,
+            default => null,
+        };
+
+        if ($expected === null) {
+            return;
+        }
+
+        $payload = is_array(
+            $previous->payload,
+        )
+            ? $previous->payload
+            : [];
+
+        $payload['expected'] = $expected;
+
+        $previous->forceFill([
+            'payload' => $payload,
+        ])->save();
     }
 
     private function safeReturnUrl(
