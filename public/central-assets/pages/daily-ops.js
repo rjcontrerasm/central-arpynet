@@ -10,6 +10,23 @@
 
         let lastCompletion = null;
 
+        const existingUndoToast = document.querySelector(
+            '.global-undo-bar:not(#daily-live-undo-toast)',
+        );
+
+        if (
+            existingUndoToast
+            && existingUndoToast.parentElement !== document.body
+        ) {
+            document.body.appendChild(existingUndoToast);
+        }
+
+        if (existingUndoToast) {
+            document.body.classList.add(
+                'has-global-undo-toast',
+            );
+        }
+
         const reducedMotion = () => window.matchMedia(
             '(prefers-reduced-motion: reduce)',
         ).matches;
