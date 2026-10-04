@@ -1458,3 +1458,130 @@
         transform: none !important;
     }
 }
+
+
+/* 2.44.0 — Live completion: mini confetti + immediate card exit */
+.item.daily-task-completing {
+    position: relative;
+    overflow: visible;
+    transform-origin: center;
+}
+
+.item.daily-task-leaving {
+    opacity: 0 !important;
+    transform: translateY(-6px) scale(.985) !important;
+    max-height: 0 !important;
+    min-height: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border-width: 0 !important;
+    overflow: visible !important;
+    transition:
+        opacity 260ms ease,
+        transform 260ms ease,
+        max-height 320ms ease,
+        min-height 320ms ease,
+        margin 320ms ease,
+        padding 320ms ease,
+        border-width 320ms ease !important;
+}
+
+.daily-complete-confetti {
+    position: absolute;
+    z-index: 80;
+    top: 34px;
+    right: 38px;
+    width: 1px;
+    height: 1px;
+    overflow: visible;
+    pointer-events: none;
+}
+
+.daily-complete-confetti i {
+    position: absolute;
+    width: 7px;
+    height: 12px;
+    border-radius: 2px;
+    opacity: 0;
+    transform: translate(0, 0) rotate(0deg);
+    animation:
+        daily-confetti-burst 820ms
+        cubic-bezier(.16, .75, .25, 1)
+        forwards;
+}
+
+.daily-complete-confetti i:nth-child(1) { background:#f9a02c; --x:-76px; --y:-72px; --r:190deg; }
+.daily-complete-confetti i:nth-child(2) { background:#024883; --x:-47px; --y:-96px; --r:280deg; animation-delay:25ms; }
+.daily-complete-confetti i:nth-child(3) { background:#18794e; --x:-12px; --y:-110px; --r:135deg; animation-delay:50ms; }
+.daily-complete-confetti i:nth-child(4) { background:#b93b36; --x:28px; --y:-102px; --r:310deg; animation-delay:75ms; }
+.daily-complete-confetti i:nth-child(5) { background:#f9a02c; --x:66px; --y:-78px; --r:225deg; animation-delay:100ms; }
+.daily-complete-confetti i:nth-child(6) { background:#024883; --x:-95px; --y:-36px; --r:150deg; animation-delay:40ms; }
+.daily-complete-confetti i:nth-child(7) { background:#18794e; --x:91px; --y:-30px; --r:275deg; animation-delay:20ms; }
+.daily-complete-confetti i:nth-child(8) { background:#d97706; --x:-30px; --y:-126px; --r:345deg; animation-delay:85ms; }
+.daily-complete-confetti i:nth-child(9) { background:#7c3aed; --x:20px; --y:-128px; --r:160deg; animation-delay:35ms; }
+.daily-complete-confetti i:nth-child(10) { background:#0f766e; --x:55px; --y:-112px; --r:295deg; animation-delay:110ms; }
+.daily-complete-confetti i:nth-child(11) { background:#f9a02c; --x:-68px; --y:-118px; --r:260deg; animation-delay:60ms; }
+.daily-complete-confetti i:nth-child(12) { background:#024883; --x:83px; --y:-96px; --r:110deg; animation-delay:70ms; }
+
+@keyframes daily-confetti-burst {
+    0% {
+        opacity: 0;
+        transform: translate(0, 0) rotate(0deg) scale(.65);
+    }
+    10% {
+        opacity: 1;
+    }
+    70% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        transform:
+            translate(var(--x), var(--y))
+            rotate(var(--r))
+            scale(1);
+    }
+}
+
+/*
+ * El toast reversible de Mi día vive como hijo directo de body.
+ * Esto evita que topbar, shell o cualquier contenedor creen un contexto
+ * de posicionamiento que lo haga aparecer en la parte superior.
+ */
+body > .global-undo-bar,
+body > .daily-live-undo-toast {
+    position: fixed !important;
+    z-index: 520 !important;
+    top: auto !important;
+    right: max(18px, env(safe-area-inset-right)) !important;
+    bottom: max(20px, env(safe-area-inset-bottom)) !important;
+    left: auto !important;
+    width: auto !important;
+    max-width: min(430px, calc(100vw - 36px)) !important;
+}
+
+.daily-live-undo-toast[hidden] {
+    display: none !important;
+}
+
+@media (max-width: 759px) {
+    body > .global-undo-bar,
+    body > .daily-live-undo-toast {
+        right: max(12px, env(safe-area-inset-right)) !important;
+        bottom: max(12px, env(safe-area-inset-bottom)) !important;
+        left: max(12px, env(safe-area-inset-left)) !important;
+        max-width: none !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .item.daily-task-leaving {
+        transition: none !important;
+    }
+
+    .daily-complete-confetti {
+        display: none !important;
+    }
+}
