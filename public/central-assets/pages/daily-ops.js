@@ -286,6 +286,13 @@
         ) => {
             const toast = ensureToast();
 
+            if (
+                existingUndoToast
+                && existingUndoToast !== toast
+            ) {
+                existingUndoToast.hidden = true;
+            }
+
             toast.hidden = false;
             toast.classList.remove(
                 'global-undo-bar--restored',
