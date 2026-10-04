@@ -340,6 +340,7 @@
                             card.classList.remove(
                                 'daily-task-leaving',
                             );
+                            placeholder.remove();
 
                             window.setTimeout(() => {
                                 resetCompletedCard(card);
