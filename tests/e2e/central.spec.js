@@ -244,6 +244,190 @@ test('Mi Día completa tarea en vivo con mini confetti y undo inferior', async (
     await expectNoHorizontalOverflow(page);
 });
 
+test('Mi Día reacomoda fichas con micro-rebote y deshacer estable', async (
+    { page },
+    testInfo,
+) => {
+    test.skip(
+        ! ['desktop-1366', 'mobile-390'].includes(
+            testInfo.project.name,
+        ),
+        'El reacomodo se valida en grilla desktop y lista móvil.',
+    );
+
+    await page.goto('/mi-dia');
+
+    const title = page.getByText(
+        'E2E reflow dos',
+        { exact: true },
+    ).first();
+    const followingTitle = page.getByText(
+        'E2E reflow tres',
+        { exact: true },
+    ).first();
+
+    await expect(title).toBeVisible();
+    await expect(followingTitle).toBeVisible();
+
+    const card = title.locator(
+        'xpath=ancestor::*[contains(@class,"item")][1]',
+    );
+    const followingCard = followingTitle.locator(
+        'xpath=ancestor::*[contains(@class,"item")][1]',
+    );
+    const done = card.getByRole('button', {
+        name: '✓ Hecho',
+        exact: true,
+    });
+
+    const before = await followingCard.boundingBox();
+    expect(before).not.toBeNull();
+
+    const completionResponse = page.waitForResponse(
+        (response) => (
+            response.request().method() === 'POST'
+            && response.url().includes('/mi-dia/tareas/')
+            && response.url().includes('/accion')
+        ),
+    );
+
+    await done.click();
+
+    const response = await completionResponse;
+    expect(response.status()).toBe(200);
+
+    await page.waitForTimeout(760);
+
+    await expect(card).toBeHidden();
+    await expect(followingCard).toHaveClass(
+        /daily-task-reflowing/,
+    );
+
+    const during = await followingCard.boundingBox();
+    expect(during).not.toBeNull();
+
+    const moved = (
+        Math.abs(during.x - before.x) > 4
+        || Math.abs(during.y - before.y) > 4
+    );
+
+    expect(moved).toBe(true);
+
+    await expect(followingCard).not.toHaveClass(
+        /daily-task-reflowing/,
+        { timeout: 1500 },
+    );
+
+    const toast = page.locator(
+        '#daily-live-undo-toast',
+    );
+
+    const undoResponse = page.waitForResponse(
+        (undoResponseCandidate) => (
+            undoResponseCandidate.request().method() === 'POST'
+            && new URL(
+                undoResponseCandidate.url(),
+            ).pathname === '/deshacer'
+        ),
+    );
+
+    await toast.getByRole('button', {
+        name: /Deshacer/,
+    }).click();
+
+    const undoResult = await undoResponse;
+    expect(undoResult.status()).toBe(200);
+
+    await expect(title).toBeVisible();
+
+    const restoredCard = title.locator(
+        'xpath=ancestor::*[contains(@class,"item")][1]',
+    );
+
+    await expect(restoredCard).toHaveClass(
+        /daily-task-restoring/,
+    );
+
+    await page.waitForTimeout(650);
+
+    await expect(restoredCard).not.toHaveClass(
+        /daily-task-restoring/,
+    );
+    await expect(title).toBeVisible();
+
+    await expectNoHorizontalOverflow(page);
+});
+
+test('Mi Día permite deshacer antes de terminar la salida sin borrar la ficha restaurada', async (
+    { page },
+    testInfo,
+) => {
+    test.skip(
+        testInfo.project.name !== 'desktop-1366',
+        'El caso de carrera se ejecuta una sola vez.',
+    );
+
+    await page.goto('/mi-dia');
+
+    const title = page.getByText(
+        'E2E reflow uno',
+        { exact: true },
+    ).first();
+
+    await expect(title).toBeVisible();
+
+    const card = title.locator(
+        'xpath=ancestor::*[contains(@class,"item")][1]',
+    );
+
+    const completionResponse = page.waitForResponse(
+        (response) => (
+            response.request().method() === 'POST'
+            && response.url().includes('/mi-dia/tareas/')
+            && response.url().includes('/accion')
+        ),
+    );
+
+    await card.getByRole('button', {
+        name: '✓ Hecho',
+        exact: true,
+    }).click();
+
+    await completionResponse;
+
+    const toast = page.locator(
+        '#daily-live-undo-toast',
+    );
+    await expect(toast).toBeVisible();
+
+    const undoResponse = page.waitForResponse(
+        (response) => (
+            response.request().method() === 'POST'
+            && new URL(response.url()).pathname === '/deshacer'
+        ),
+    );
+
+    await toast.getByRole('button', {
+        name: /Deshacer/,
+    }).click();
+
+    const undoResult = await undoResponse;
+    expect(undoResult.status()).toBe(200);
+
+    await expect(title).toBeVisible();
+
+    // Espera más que el temporizador original de retiro (720 ms).
+    // Si no se canceló correctamente, la ficha desaparecería aquí.
+    await page.waitForTimeout(900);
+
+    await expect(title).toBeVisible();
+    await expect(card).not.toHaveClass(
+        /daily-task-leaving/,
+    );
+
+    await expectNoHorizontalOverflow(page);
+});
+
 test('búsqueda global encuentra módulos operativos', async ({ page }) => {
     await page.goto('/buscar?q=E2E');
 
