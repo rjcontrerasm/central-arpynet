@@ -249,8 +249,13 @@ class GlobalUndoOperationsTest extends TestCase
         $this->post('/deshacer')
             ->assertSessionHas(
                 'global_undo_success',
-                'Ya no hay una acción para deshacer.',
+                'Acción deshecha.',
             );
+
+        $this->assertSame(
+            'opportunity',
+            $service->fresh()->stage,
+        );
     }
 
     private function context(
