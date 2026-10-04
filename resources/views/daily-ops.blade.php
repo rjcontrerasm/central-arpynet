@@ -13,6 +13,10 @@
         rel="stylesheet"
         href="{{ asset('central-assets/pages/daily-ops.css') }}?v={{ filemtime(public_path('central-assets/pages/daily-ops.css')) }}"
     >
+    <script
+        src="{{ asset('central-assets/pages/daily-ops.js') }}?v={{ filemtime(public_path('central-assets/pages/daily-ops.js')) }}"
+        defer
+    ></script>
 </head>
 
 <body>

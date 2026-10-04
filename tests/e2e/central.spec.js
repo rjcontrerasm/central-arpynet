@@ -111,6 +111,90 @@ test('Mi Día muestra foco operativo sin overflow', async ({ page }) => {
     await expectNoHorizontalOverflow(page);
 });
 
+test('Mi Día completa tarea en vivo con mini confetti y undo inferior', async (
+    { page },
+    testInfo,
+) => {
+    test.skip(
+        testInfo.project.name !== 'desktop-1366',
+        'La escritura y geometría del toast se validan una sola vez.',
+    );
+
+    await page.goto('/mi-dia');
+
+    const taskTitle = page.getByText(
+        'E2E tarea crítica',
+        { exact: true },
+    ).first();
+
+    await expect(taskTitle).toBeVisible();
+
+    const card = taskTitle.locator('xpath=ancestor::*[contains(@class,"item")][1]');
+    const done = card.getByRole('button', {
+        name: '✓ Hecho',
+        exact: true,
+    });
+
+    await card.scrollIntoViewIfNeeded();
+
+    const beforeScroll = await page.evaluate(
+        () => window.scrollY,
+    );
+
+    await done.click();
+
+    await expect(card).toHaveClass(
+        /daily-task-leaving/,
+    );
+
+    const toast = page.locator(
+        '#daily-live-undo-toast',
+    );
+
+    await expect(toast).toBeVisible();
+    await expect(
+        toast.getByText('Deshacer', {
+            exact: true,
+        }),
+    ).toBeVisible();
+
+    const toastBox = await toast.boundingBox();
+    const viewport = page.viewportSize();
+
+    expect(toastBox).not.toBeNull();
+    expect(viewport).not.toBeNull();
+    expect(
+        Math.abs(
+            viewport.height
+            - (toastBox.y + toastBox.height)
+            - 20,
+        ),
+    ).toBeLessThanOrEqual(4);
+    expect(
+        Math.abs(
+            viewport.width
+            - (toastBox.x + toastBox.width)
+            - 18,
+        ),
+    ).toBeLessThanOrEqual(4);
+
+    const afterScroll = await page.evaluate(
+        () => window.scrollY,
+    );
+
+    expect(
+        Math.abs(afterScroll - beforeScroll),
+    ).toBeLessThanOrEqual(4);
+
+    await toast.getByRole('button', {
+        name: /Deshacer/,
+    }).click();
+
+    await expect(taskTitle).toBeVisible();
+
+    await expectNoHorizontalOverflow(page);
+});
+
 test('búsqueda global encuentra módulos operativos', async ({ page }) => {
     await page.goto('/buscar?q=E2E');
 

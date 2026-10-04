@@ -41,6 +41,61 @@ class DailyTaskActionsTest extends TestCase
         ]);
     }
 
+    public function test_user_can_complete_task_with_json_response_and_undo_metadata(): void
+    {
+        [$user, $organization] = $this->context();
+
+        $task = $this->task(
+            $user,
+            $organization,
+        );
+
+        $response = $this->actingAs($user)
+            ->postJson(
+                "/mi-dia/tareas/{$task->id}/accion",
+                ['action' => 'complete'],
+            )
+            ->assertOk()
+            ->assertJson([
+                'ok' => true,
+                'task_id' => $task->id,
+                'action' => 'complete',
+            ])
+            ->assertJsonPath(
+                'undo.url',
+                route('global-undo.restore'),
+            );
+
+        $undoId = (int) $response->json(
+            'undo.id',
+        );
+
+        $this->assertGreaterThan(
+            0,
+            $undoId,
+        );
+
+        $this->assertSame(
+            'completed',
+            $task->fresh()->status,
+        );
+
+        $this->postJson(
+            '/deshacer',
+            ['undo_id' => $undoId],
+        )
+            ->assertOk()
+            ->assertJson([
+                'ok' => true,
+                'message' => 'Acción deshecha.',
+            ]);
+
+        $this->assertSame(
+            'pending',
+            $task->fresh()->status,
+        );
+    }
+
     public function test_user_can_move_task_to_tomorrow(): void
     {
         Carbon::setTestNow('2026-09-01 12:00:00');

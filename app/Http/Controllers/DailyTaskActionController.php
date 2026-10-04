@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Task;
 use App\Support\GlobalUndoService;
 use App\Support\OperationalTaskActionService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -15,7 +16,7 @@ class DailyTaskActionController extends Controller
         Task $task,
         GlobalUndoService $undo,
         OperationalTaskActionService $actions,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $validated = $request->validate([
             'action' => [
                 'required',
@@ -63,7 +64,7 @@ class DailyTaskActionController extends Controller
             confirmed: true,
         );
 
-        $undo->rememberTaskMutation(
+        $undoAction = $undo->rememberTaskMutation(
             $request->user(),
             $task,
             $before,
@@ -74,6 +75,23 @@ class DailyTaskActionController extends Controller
                 false,
             ),
         );
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'ok' => true,
+                'task_id' => $task->id,
+                'action' => $validated['action'],
+                'label' => $result['label'],
+                'undo' => $undoAction
+                    ? [
+                        'id' => $undoAction->id,
+                        'label' => $undoAction->label,
+                        'expires_at' => $undoAction->expires_at?->toIso8601String(),
+                        'url' => route('global-undo.restore'),
+                    ]
+                    : null,
+            ]);
+        }
 
         return redirect()
             ->route(

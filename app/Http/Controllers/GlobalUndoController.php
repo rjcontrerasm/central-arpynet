@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Support\GlobalUndoService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -11,7 +12,7 @@ class GlobalUndoController extends Controller
     public function restore(
         Request $request,
         GlobalUndoService $undo,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $validated = $request->validate([
             'undo_id' => [
                 'nullable',
@@ -25,6 +26,13 @@ class GlobalUndoController extends Controller
                 ? (int) $validated['undo_id']
                 : null,
         );
+
+        if ($request->expectsJson()) {
+            return response()->json(
+                $result,
+                $result['ok'] ? 200 : 409,
+            );
+        }
 
         return redirect()
             ->to($result['return_url'])
