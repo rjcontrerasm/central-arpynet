@@ -141,7 +141,28 @@ test('Mi Día completa tarea en vivo con mini confetti y undo inferior', async (
         () => window.scrollY,
     );
 
+    const completionResponse = page.waitForResponse(
+        (response) => (
+            response.request().method() === 'POST'
+            && response.url().includes('/mi-dia/tareas/')
+            && response.url().includes('/accion')
+        ),
+    );
+
     await done.click();
+
+    const response = await completionResponse;
+
+    expect(response.status()).toBe(200);
+    expect(
+        response.headers()['content-type'] || '',
+    ).toContain('application/json');
+
+    const payload = await response.json();
+
+    expect(payload.ok).toBe(true);
+    expect(payload.action).toBe('complete');
+    expect(payload.undo?.id).toBeTruthy();
 
     await expect(card).toHaveClass(
         /daily-task-leaving/,
@@ -157,6 +178,10 @@ test('Mi Día completa tarea en vivo con mini confetti y undo inferior', async (
             exact: true,
         }),
     ).toBeVisible();
+
+    await expect(
+        toast.locator('.global-undo-message'),
+    ).not.toContainText('Error');
 
     const toastBox = await toast.boundingBox();
     const viewport = page.viewportSize();
