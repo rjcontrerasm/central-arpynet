@@ -96,6 +96,35 @@ class DailyTaskActionsTest extends TestCase
         );
     }
 
+    public function test_live_flag_forces_json_without_relying_on_accept_header(): void
+    {
+        [$user, $organization] = $this->context();
+
+        $task = $this->task(
+            $user,
+            $organization,
+        );
+
+        $this->actingAs($user)
+            ->post(
+                "/mi-dia/tareas/{$task->id}/accion",
+                [
+                    'action' => 'complete',
+                    '_live' => 1,
+                ],
+            )
+            ->assertOk()
+            ->assertHeader(
+                'content-type',
+                'application/json',
+            )
+            ->assertJson([
+                'ok' => true,
+                'task_id' => $task->id,
+                'action' => 'complete',
+            ]);
+    }
+
     public function test_user_can_move_task_to_tomorrow(): void
     {
         Carbon::setTestNow('2026-09-01 12:00:00');
