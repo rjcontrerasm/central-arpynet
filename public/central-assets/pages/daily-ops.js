@@ -89,7 +89,18 @@
                     </svg>
                 </span>
                 <span class="global-undo-message">
-                    Tarea completada.
+                    <strong class="global-undo-title">
+                        Tarea completada
+                    </strong>
+                    <span class="global-undo-detail">
+                        Puedes deshacer la acción.
+                    </span>
+                    <span
+                        class="global-undo-progress"
+                        aria-hidden="true"
+                    >
+                        <span class="global-undo-progress-fill"></span>
+                    </span>
                 </span>
                 <button
                     class="global-undo-button"
@@ -183,10 +194,16 @@
                     toast.classList.add(
                         'global-undo-bar--restored',
                     );
-                    toast.querySelector(
-                        '.global-undo-message',
-                    ).textContent = payload.message
+                    const title = toast.querySelector(
+                        '.global-undo-title',
+                    );
+                    const detail = toast.querySelector(
+                        '.global-undo-detail',
+                    );
+
+                    title.textContent = payload.message
                         || 'Acción deshecha.';
+                    detail.textContent = '';
 
                     window.setTimeout(() => {
                         toast.hidden = true;
@@ -201,9 +218,12 @@
                     lastCompletion = null;
                 } catch (error) {
                     toast.querySelector(
-                        '.global-undo-message',
+                        '.global-undo-title',
                     ).textContent = error.message
                         || 'No se pudo deshacer.';
+                    toast.querySelector(
+                        '.global-undo-detail',
+                    ).textContent = '';
                 } finally {
                     button.disabled = false;
                     button.classList.remove('is-busy');
@@ -211,6 +231,51 @@
             });
 
             return toast;
+        };
+
+        const animateUndoProgress = (
+            toast,
+            expiresAt,
+        ) => {
+            const fill = toast.querySelector(
+                '.global-undo-progress-fill',
+            );
+
+            if (! fill) {
+                return;
+            }
+
+            const expiry = expiresAt
+                ? Date.parse(expiresAt)
+                : Number.NaN;
+
+            if (! Number.isFinite(expiry)) {
+                fill.style.transition = 'none';
+                fill.style.transform = 'scaleX(1)';
+                return;
+            }
+
+            const fullWindow = 10 * 60 * 1000;
+            const remaining = Math.max(
+                0,
+                expiry - Date.now(),
+            );
+            const ratio = Math.min(
+                1,
+                remaining / fullWindow,
+            );
+
+            fill.style.transition = 'none';
+            fill.style.transform =
+                `scaleX(${ratio})`;
+
+            window.requestAnimationFrame(() => {
+                window.requestAnimationFrame(() => {
+                    fill.style.transition =
+                        `transform ${remaining}ms linear`;
+                    fill.style.transform = 'scaleX(0)';
+                });
+            });
         };
 
         const showUndoToast = (
@@ -225,9 +290,19 @@
             toast.classList.remove(
                 'global-undo-bar--restored',
             );
-            toast.querySelector(
-                '.global-undo-message',
-            ).textContent = `${label || 'Tarea completada'}.`;
+            const title = toast.querySelector(
+                '.global-undo-title',
+            );
+            const detail = toast.querySelector(
+                '.global-undo-detail',
+            );
+
+            title.textContent = 'Tarea completada';
+            detail.textContent = 'Puedes deshacer la acción.';
+            animateUndoProgress(
+                toast,
+                undo?.expires_at,
+            );
 
             lastCompletion = {
                 ...state,
@@ -265,21 +340,28 @@
             }
         };
 
-        const addConfetti = (card) => {
+        const addConfetti = (button) => {
+            const rect = button.getBoundingClientRect();
             const stage = document.createElement('span');
-            stage.className = 'daily-complete-confetti';
+
+            stage.className =
+                'daily-complete-confetti daily-complete-confetti-portal';
             stage.setAttribute('aria-hidden', 'true');
+            stage.style.left =
+                `${rect.left + rect.width / 2}px`;
+            stage.style.top =
+                `${rect.top + rect.height / 2}px`;
 
             for (let index = 0; index < 12; index += 1) {
                 const particle = document.createElement('i');
                 stage.appendChild(particle);
             }
 
-            card.appendChild(stage);
+            document.body.appendChild(stage);
 
             window.setTimeout(() => {
                 stage.remove();
-            }, 950);
+            }, 1100);
         };
 
         document.querySelectorAll(
@@ -328,7 +410,7 @@
                     );
 
                     if (! reducedMotion()) {
-                        addConfetti(card);
+                        addConfetti(button);
                     }
 
                     if (reducedMotion()) {
@@ -342,13 +424,13 @@
                                     'daily-task-leaving',
                                 );
                             },
-                            180,
+                            280,
                         );
                     }
 
                     const removeDelay = reducedMotion()
                         ? 0
-                        : 1050;
+                        : 1150;
 
                     const removeTimer = window.setTimeout(
                         () => {
@@ -436,9 +518,12 @@
                         const toast = ensureToast();
                         toast.hidden = false;
                         toast.querySelector(
-                            '.global-undo-message',
+                            '.global-undo-title',
                         ).textContent = error.message
                             || 'No se pudo completar la tarea.';
+                        toast.querySelector(
+                            '.global-undo-detail',
+                        ).textContent = '';
 
                         window.setTimeout(() => {
                             toast.hidden = true;
