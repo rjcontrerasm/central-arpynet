@@ -76,7 +76,13 @@ class DailyTaskActionController extends Controller
             ),
         );
 
-        if ($request->expectsJson()) {
+        if (
+            $request->boolean('_live')
+            || $request->expectsJson()
+            || $request->header(
+                'X-Central-Live-Action',
+            ) === '1'
+        ) {
             return response()->json([
                 'ok' => true,
                 'task_id' => $task->id,

@@ -9,6 +9,25 @@
         window.__centralDailyCompletionInstalled = true;
 
         let lastCompletion = null;
+        let undoExpiryTimer = null;
+
+        const parseJsonResponse = async (response) => {
+            const contentType = response.headers.get(
+                'content-type',
+            ) || '';
+
+            if (! contentType.includes('application/json')) {
+                const body = await response.text();
+
+                throw new Error(
+                    response.ok
+                        ? 'El servidor devolvió una respuesta inesperada.'
+                        : `Error ${response.status}: el servidor no devolvió JSON.`,
+                );
+            }
+
+            return response.json();
+        };
 
         const existingUndoToast = document.querySelector(
             '.global-undo-bar:not(#daily-live-undo-toast)',
@@ -117,16 +136,20 @@
                                 Accept: 'application/json',
                                 'X-Requested-With': 'XMLHttpRequest',
                                 'X-CSRF-TOKEN': lastCompletion.csrf,
+                                'X-Central-Live-Action': '1',
                             },
                             body: new URLSearchParams({
                                 undo_id: String(
                                     lastCompletion.undo.id,
                                 ),
+                                _live: '1',
                             }),
                         },
                     );
 
-                    const payload = await response.json();
+                    const payload = await parseJsonResponse(
+                        response,
+                    );
 
                     if (! response.ok || ! payload.ok) {
                         throw new Error(
@@ -172,6 +195,9 @@
                         );
                     }, 1800);
 
+                    window.clearTimeout(
+                        undoExpiryTimer,
+                    );
                     lastCompletion = null;
                 } catch (error) {
                     toast.querySelector(
@@ -208,6 +234,35 @@
                 undo,
                 csrf,
             };
+
+            window.clearTimeout(
+                undoExpiryTimer,
+            );
+
+            const expiresAt = undo?.expires_at
+                ? Date.parse(undo.expires_at)
+                : Number.NaN;
+
+            if (Number.isFinite(expiresAt)) {
+                const delay = Math.max(
+                    0,
+                    expiresAt - Date.now(),
+                );
+
+                undoExpiryTimer = window.setTimeout(
+                    () => {
+                        if (
+                            lastCompletion?.undo?.id
+                            === undo.id
+                        ) {
+                            toast.hidden = true;
+                            lastCompletion?.placeholder?.remove();
+                            lastCompletion = null;
+                        }
+                    },
+                    delay,
+                );
+            }
         };
 
         const addConfetti = (card) => {
@@ -298,6 +353,9 @@
                     );
 
                     try {
+                        const formData = new FormData(form);
+                        formData.set('_live', '1');
+
                         const response = await fetch(
                             form.action,
                             {
@@ -306,12 +364,15 @@
                                 headers: {
                                     Accept: 'application/json',
                                     'X-Requested-With': 'XMLHttpRequest',
+                                    'X-Central-Live-Action': '1',
                                 },
-                                body: new FormData(form),
+                                body: formData,
                             },
                         );
 
-                        const payload = await response.json();
+                        const payload = await parseJsonResponse(
+                            response,
+                        );
 
                         if (! response.ok || ! payload.ok) {
                             throw new Error(

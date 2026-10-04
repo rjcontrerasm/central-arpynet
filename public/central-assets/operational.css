@@ -3454,3 +3454,25 @@ input[type="radio"] {
 .quick:not(a):not(button) {
     background: initial;
 }
+
+
+/* 2.44.1 — El toast reversible debe ser fixed desde el primer render. */
+.global-undo-bar {
+    position: fixed !important;
+    top: auto !important;
+    right: max(18px, env(safe-area-inset-right)) !important;
+    bottom: max(20px, env(safe-area-inset-bottom)) !important;
+    left: auto !important;
+    z-index: 520 !important;
+    width: auto;
+    max-width: min(430px, calc(100vw - 36px));
+}
+
+@media (max-width: 759px) {
+    .global-undo-bar {
+        right: max(12px, env(safe-area-inset-right)) !important;
+        bottom: max(12px, env(safe-area-inset-bottom)) !important;
+        left: max(12px, env(safe-area-inset-left)) !important;
+        max-width: none;
+    }
+}
