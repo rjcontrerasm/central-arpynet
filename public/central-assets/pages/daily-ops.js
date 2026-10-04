@@ -142,6 +142,7 @@
                                 undo_id: String(
                                     lastCompletion.undo.id,
                                 ),
+                                _live: '1',
                             }),
                         },
                     );
@@ -352,6 +353,9 @@
                     );
 
                     try {
+                        const formData = new FormData(form);
+                        formData.set('_live', '1');
+
                         const response = await fetch(
                             form.action,
                             {
@@ -362,7 +366,7 @@
                                     'X-Requested-With': 'XMLHttpRequest',
                                     'X-Central-Live-Action': '1',
                                 },
-                                body: new FormData(form),
+                                body: formData,
                             },
                         );
 
