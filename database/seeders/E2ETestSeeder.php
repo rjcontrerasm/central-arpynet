@@ -93,6 +93,27 @@ class E2ETestSeeder extends Seeder
             ],
         );
 
+        foreach ([
+            ['E2E reflow uno', 9],
+            ['E2E reflow dos', 8],
+            ['E2E reflow tres', 7],
+        ] as [$title, $hoursOverdue]) {
+            Task::query()->updateOrCreate(
+                [
+                    'organization_id' => $organization->id,
+                    'title' => $title,
+                ],
+                [
+                    'status' => 'pending',
+                    'urgency' => 'high',
+                    'impact' => 'medium',
+                    'due_at' => now()->subHours($hoursOverdue),
+                    'assigned_to' => $user->id,
+                    'created_by' => $user->id,
+                ],
+            );
+        }
+
         Project::query()->updateOrCreate(
             [
                 'organization_id' => $organization->id,
