@@ -11,6 +11,99 @@
         let lastCompletion = null;
         let completionStack = [];
         let undoExpiryTimer = null;
+        let audioContext = null;
+
+        const primeFeedbackAudio = () => {
+            try {
+                const AudioContextClass =
+                    window.AudioContext
+                    || window.webkitAudioContext;
+
+                if (! AudioContextClass) {
+                    return null;
+                }
+
+                if (! audioContext) {
+                    audioContext =
+                        new AudioContextClass();
+                }
+
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume()
+                        .catch(() => {});
+                }
+
+                return audioContext;
+            } catch (error) {
+                return null;
+            }
+        };
+
+        const playFeedbackSound = (type) => {
+            try {
+                const context =
+                    primeFeedbackAudio();
+
+                if (! context) {
+                    return;
+                }
+
+                const now = context.currentTime;
+                const gain = context.createGain();
+
+                gain.gain.setValueAtTime(
+                    0.0001,
+                    now,
+                );
+                gain.gain.exponentialRampToValueAtTime(
+                    type === 'complete'
+                        ? 0.032
+                        : 0.025,
+                    now + 0.008,
+                );
+                gain.gain.exponentialRampToValueAtTime(
+                    0.0001,
+                    now + (
+                        type === 'complete'
+                            ? 0.15
+                            : 0.13
+                    ),
+                );
+                gain.connect(context.destination);
+
+                const notes = type === 'complete'
+                    ? [
+                        [660, 0, 0.075],
+                        [880, 0.055, 0.15],
+                    ]
+                    : [
+                        [560, 0, 0.065],
+                        [420, 0.045, 0.13],
+                    ];
+
+                notes.forEach(
+                    ([frequency, offset, end]) => {
+                        const oscillator =
+                            context.createOscillator();
+
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(
+                            frequency,
+                            now + offset,
+                        );
+                        oscillator.connect(gain);
+                        oscillator.start(
+                            now + offset,
+                        );
+                        oscillator.stop(
+                            now + end,
+                        );
+                    },
+                );
+            } catch (error) {
+                // El feedback sonoro nunca debe afectar la acción principal.
+            }
+        };
 
         const parseJsonResponse = async (response) => {
             const contentType = response.headers.get(
@@ -289,6 +382,8 @@
                     return;
                 }
 
+                primeFeedbackAudio();
+
                 const button = toast.querySelector(
                     '.global-undo-button',
                 );
@@ -327,6 +422,8 @@
                             || 'No se pudo deshacer.',
                         );
                     }
+
+                    playFeedbackSound('undo');
 
                     const completed =
                         lastCompletion;
@@ -687,6 +784,8 @@
                         return;
                     }
 
+                    primeFeedbackAudio();
+
                     const button = form.querySelector(
                         'button[type="submit"]',
                     );
@@ -794,6 +893,8 @@
                                 || 'No se pudo completar la tarea.',
                             );
                         }
+
+                        playFeedbackSound('complete');
 
                         if (payload.undo) {
                             showUndoToast(
