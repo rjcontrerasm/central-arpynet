@@ -336,7 +336,7 @@
 
         <span class="global-undo-message">
             <strong class="global-undo-title">
-                {{ $globalUndo->label }}
+                {{ $globalUndo->label }}.
             </strong>
             <span class="global-undo-detail">
                 Puedes deshacer la acción.
