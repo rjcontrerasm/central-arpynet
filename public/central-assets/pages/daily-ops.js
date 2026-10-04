@@ -51,6 +51,154 @@
             '(prefers-reduced-motion: reduce)',
         ).matches;
 
+        const taskCards = (parent) => (
+            parent
+                ? [...parent.children].filter(
+                    (element) => element.classList?.contains('item'),
+                )
+                : []
+        );
+
+        const settleReflowAnimations = (parent) => {
+            taskCards(parent).forEach((element) => {
+                const animation =
+                    element.__centralDailyReflowAnimation;
+
+                if (! animation) {
+                    return;
+                }
+
+                try {
+                    animation.finish();
+                } catch (error) {
+                    // A cancelled animation has nothing left to settle.
+                }
+
+                animation.cancel();
+                delete element.__centralDailyReflowAnimation;
+            });
+        };
+
+        const captureTaskPositions = (parent) => {
+            settleReflowAnimations(parent);
+
+            return new Map(
+                taskCards(parent).map((element) => [
+                    element,
+                    element.getBoundingClientRect(),
+                ]),
+            );
+        };
+
+        const animateTaskReflow = (
+            parent,
+            previousPositions,
+        ) => {
+            if (
+                reducedMotion()
+                || ! parent?.isConnected
+                || ! previousPositions
+            ) {
+                return;
+            }
+
+            taskCards(parent).forEach((element) => {
+                const before = previousPositions.get(element);
+
+                if (! before) {
+                    return;
+                }
+
+                const after = element.getBoundingClientRect();
+                const deltaX = before.left - after.left;
+                const deltaY = before.top - after.top;
+
+                if (
+                    Math.abs(deltaX) < 0.5
+                    && Math.abs(deltaY) < 0.5
+                ) {
+                    return;
+                }
+
+                const settleY = deltaY > 0
+                    ? -3
+                    : (deltaY < 0 ? 3 : 0);
+
+                const animation = element.animate(
+                    [
+                        {
+                            transform:
+                                `translate(${deltaX}px, ${deltaY}px)`,
+                        },
+                        {
+                            offset: 0.78,
+                            transform:
+                                `translate(0, ${settleY}px)`,
+                        },
+                        {
+                            transform: 'translate(0, 0)',
+                        },
+                    ],
+                    {
+                        duration: 460,
+                        easing:
+                            'cubic-bezier(.2, .82, .25, 1)',
+                    },
+                );
+
+                element.__centralDailyReflowAnimation =
+                    animation;
+
+                animation.addEventListener(
+                    'finish',
+                    () => {
+                        if (
+                            element.__centralDailyReflowAnimation
+                            === animation
+                        ) {
+                            delete element
+                                .__centralDailyReflowAnimation;
+                        }
+                    },
+                    { once: true },
+                );
+            });
+        };
+
+        const resetCompletedCard = (card) => {
+            if (! card) {
+                return;
+            }
+
+            card.classList.remove(
+                'daily-task-completing',
+                'daily-task-leaving',
+            );
+            card.style.removeProperty(
+                '--daily-task-exit-height',
+            );
+        };
+
+        const pulseRestoredCard = (card) => {
+            if (! card || reducedMotion()) {
+                return;
+            }
+
+            card.classList.remove(
+                'daily-task-restoring',
+            );
+            void card.offsetWidth;
+            card.classList.add(
+                'daily-task-restoring',
+            );
+
+            window.setTimeout(() => {
+                card.classList.remove(
+                    'daily-task-restoring',
+                );
+            }, 560);
+        };
+
         const csrfToken = (form) => (
             form.querySelector('input[name="_token"]')?.value
             || ''
@@ -176,13 +324,11 @@
                         card,
                         parent,
                         placeholder,
+                        removeTimer,
                     } = completed;
 
-                    if (card) {
-                        card.classList.remove(
-                            'daily-task-completing',
-                            'daily-task-leaving',
-                        );
+                    if (removeTimer) {
+                        window.clearTimeout(removeTimer);
                     }
 
                     if (
@@ -190,11 +336,34 @@
                         && parent?.isConnected
                         && placeholder?.isConnected
                     ) {
-                        parent.insertBefore(
-                            card,
-                            placeholder,
-                        );
-                        placeholder.remove();
+                        if (card.isConnected) {
+                            card.classList.remove(
+                                'daily-task-leaving',
+                            );
+
+                            window.setTimeout(() => {
+                                resetCompletedCard(card);
+                                pulseRestoredCard(card);
+                            }, reducedMotion() ? 0 : 480);
+                        } else {
+                            const before =
+                                captureTaskPositions(parent);
+
+                            resetCompletedCard(card);
+                            parent.insertBefore(
+                                card,
+                                placeholder,
+                            );
+                            placeholder.remove();
+
+                            animateTaskReflow(
+                                parent,
+                                before,
+                            );
+                            pulseRestoredCard(card);
+                        }
+                    } else {
+                        resetCompletedCard(card);
                     }
 
                     completionStack =
@@ -519,6 +688,10 @@
                     form.dataset.submitting = 'yes';
                     button.disabled = true;
 
+                    card.style.setProperty(
+                        '--daily-task-exit-height',
+                        `${card.getBoundingClientRect().height}px`,
+                    );
                     card.classList.add(
                         'daily-task-completing',
                     );
@@ -544,13 +717,23 @@
 
                     const removeDelay = reducedMotion()
                         ? 0
-                        : 1150;
+                        : 720;
 
                     const removeTimer = window.setTimeout(
                         () => {
-                            if (card.isConnected) {
-                                card.remove();
+                            if (! card.isConnected) {
+                                return;
                             }
+
+                            const before =
+                                captureTaskPositions(parent);
+
+                            card.remove();
+
+                            animateTaskReflow(
+                                parent,
+                                before,
+                            );
                         },
                         removeDelay,
                     );
@@ -603,6 +786,7 @@
                                     card,
                                     parent,
                                     placeholder,
+                                    removeTimer,
                                 },
                             );
                         } else {
@@ -611,10 +795,15 @@
                     } catch (error) {
                         window.clearTimeout(removeTimer);
 
-                        card.classList.remove(
-                            'daily-task-completing',
-                            'daily-task-leaving',
-                        );
+                        const before = (
+                            ! card.isConnected
+                            && parent.isConnected
+                            && placeholder.isConnected
+                        )
+                            ? captureTaskPositions(parent)
+                            : null;
+
+                        resetCompletedCard(card);
 
                         if (
                             ! card.isConnected
@@ -625,6 +814,12 @@
                                 card,
                                 placeholder,
                             );
+
+                            animateTaskReflow(
+                                parent,
+                                before,
+                            );
+                            pulseRestoredCard(card);
                         }
 
                         placeholder.remove();
