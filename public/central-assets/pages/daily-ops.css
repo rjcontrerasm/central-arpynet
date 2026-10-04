@@ -1479,13 +1479,13 @@
     border-width: 0 !important;
     overflow: visible !important;
     transition:
-        opacity 260ms ease,
-        transform 260ms ease,
-        max-height 320ms ease,
-        min-height 320ms ease,
-        margin 320ms ease,
-        padding 320ms ease,
-        border-width 320ms ease !important;
+        opacity 320ms ease,
+        transform 320ms ease,
+        max-height 420ms ease,
+        min-height 420ms ease,
+        margin 420ms ease,
+        padding 420ms ease,
+        border-width 420ms ease !important;
 }
 
 .daily-complete-confetti {
@@ -1507,7 +1507,7 @@
     opacity: 0;
     transform: translate(0, 0) rotate(0deg);
     animation:
-        daily-confetti-burst 820ms
+        daily-confetti-burst 950ms
         cubic-bezier(.16, .75, .25, 1)
         forwards;
 }
