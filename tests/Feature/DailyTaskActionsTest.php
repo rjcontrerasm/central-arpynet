@@ -125,6 +125,82 @@ class DailyTaskActionsTest extends TestCase
             ]);
     }
 
+    public function test_live_undo_returns_previous_stack_action(): void
+    {
+        [$user, $organization] = $this->context();
+
+        $first = $this->task(
+            $user,
+            $organization,
+        );
+
+        $second = Task::query()->create([
+            'organization_id' =>
+                $organization->id,
+            'title' =>
+                'Segunda tarea undo',
+            'status' => 'pending',
+            'urgency' => 'medium',
+            'impact' => 'medium',
+            'due_at' => now(),
+            'created_by' => $user->id,
+        ]);
+
+        $firstResponse = $this->actingAs($user)
+            ->postJson(
+                "/mi-dia/tareas/{$first->id}/accion",
+                ['action' => 'complete'],
+            )
+            ->assertOk();
+
+        $firstUndoId = (int) $firstResponse
+            ->json('undo.id');
+
+        $secondResponse = $this->postJson(
+            "/mi-dia/tareas/{$second->id}/accion",
+            ['action' => 'complete'],
+        )
+            ->assertOk();
+
+        $secondUndoId = (int) $secondResponse
+            ->json('undo.id');
+
+        $this->postJson(
+            '/deshacer',
+            ['undo_id' => $secondUndoId],
+        )
+            ->assertOk()
+            ->assertJsonPath(
+                'next_undo.id',
+                $firstUndoId,
+            );
+
+        $this->assertSame(
+            'pending',
+            $second->fresh()->status,
+        );
+
+        $this->assertSame(
+            'completed',
+            $first->fresh()->status,
+        );
+
+        $this->postJson(
+            '/deshacer',
+            ['undo_id' => $firstUndoId],
+        )
+            ->assertOk()
+            ->assertJsonPath(
+                'next_undo',
+                null,
+            );
+
+        $this->assertSame(
+            'pending',
+            $first->fresh()->status,
+        );
+    }
+
     public function test_user_can_move_task_to_tomorrow(): void
     {
         Carbon::setTestNow('2026-09-01 12:00:00');
