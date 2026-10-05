@@ -391,6 +391,16 @@ test('Mi Día reacomoda fichas con micro-rebote y deshacer estable', async (
     const before = await followingCard.boundingBox();
     expect(before).not.toBeNull();
 
+    const overdueStat = page.locator(
+        '[data-daily-stat="overdue"]',
+    );
+    const overdueBefore = Number.parseInt(
+        await overdueStat.textContent(),
+        10,
+    );
+
+    expect(overdueBefore).toBeGreaterThan(0);
+
     const completionResponse = page.waitForResponse(
         (response) => (
             response.request().method() === 'POST'
@@ -403,6 +413,16 @@ test('Mi Día reacomoda fichas con micro-rebote y deshacer estable', async (
 
     const response = await completionResponse;
     expect(response.status()).toBe(200);
+
+    await expect(overdueStat).toHaveText(
+        String(overdueBefore - 1),
+    );
+
+    await expect(
+        page.locator('[data-daily-focus-title]'),
+    ).toContainText(
+        String(overdueBefore - 1),
+    );
 
     await page.waitForTimeout(760);
 
@@ -445,6 +465,16 @@ test('Mi Día reacomoda fichas con micro-rebote y deshacer estable', async (
 
     const undoResult = await undoResponse;
     expect(undoResult.status()).toBe(200);
+
+    await expect(overdueStat).toHaveText(
+        String(overdueBefore),
+    );
+
+    await expect(
+        page.locator('[data-daily-focus-title]'),
+    ).toContainText(
+        String(overdueBefore),
+    );
 
     await expect(title).toBeVisible();
 
