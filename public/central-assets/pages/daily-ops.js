@@ -11,6 +11,7 @@
         let lastCompletion = null;
         let completionStack = [];
         let undoExpiryTimer = null;
+        let undoRestoreHideTimer = null;
         let audioContext = null;
 
         const primeFeedbackAudio = () => {
@@ -915,12 +916,18 @@
 
                         lastCompletion = null;
 
-                        window.setTimeout(() => {
-                            toast.hidden = true;
-                            toast.classList.remove(
-                                'global-undo-bar--restored',
-                            );
-                        }, 1200);
+                        window.clearTimeout(
+                            undoRestoreHideTimer,
+                        );
+
+                        undoRestoreHideTimer =
+                            window.setTimeout(() => {
+                                toast.hidden = true;
+                                toast.classList.remove(
+                                    'global-undo-bar--restored',
+                                );
+                                undoRestoreHideTimer = null;
+                            }, 1200);
                     }
                 } catch (error) {
                     toast.querySelector(
@@ -1039,6 +1046,11 @@
             state,
         ) => {
             const toast = ensureToast();
+
+            window.clearTimeout(
+                undoRestoreHideTimer,
+            );
+            undoRestoreHideTimer = null;
 
             if (
                 existingUndoToast
