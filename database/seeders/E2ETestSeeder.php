@@ -102,7 +102,7 @@ class E2ETestSeeder extends Seeder
                 'status' => 'pending',
                 'urgency' => 'high',
                 'impact' => 'medium',
-                'due_at' => now()->subHours(6),
+                'due_at' => now()->subDays(2),
                 'assigned_to' => $user->id,
                 'created_by' => $user->id,
                 'waiting_since' => null,
@@ -176,7 +176,9 @@ class E2ETestSeeder extends Seeder
                     'status' => 'pending',
                     'urgency' => 'high',
                     'impact' => 'medium',
-                    'due_at' => now()->subHours($hoursOverdue),
+                    'due_at' => now()
+                        ->subDay()
+                        ->subHours($hoursOverdue),
                     'assigned_to' => $user->id,
                     'created_by' => $user->id,
                 ],
