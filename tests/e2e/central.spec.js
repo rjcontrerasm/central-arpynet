@@ -1582,6 +1582,116 @@ test('búsqueda global encuentra módulos operativos', async ({ page }) => {
     await expectNoHorizontalOverflow(page);
 });
 
+test('captura rápida filtra responsables y proyectos por empresa', async (
+    { page },
+    testInfo,
+) => {
+    test.skip(
+        testInfo.project.name !== 'desktop-1366',
+        'La lógica dinámica de captura se valida una sola vez.',
+    );
+
+    await page.goto('/captura');
+
+    const organization = page.locator(
+        '#organization-select',
+    );
+    const assignee = page.locator(
+        'select[name="assigned_to"]',
+    );
+    const project = page.locator(
+        '#project-select',
+    );
+    const primaryOnly = assignee.locator(
+        'option',
+        { hasText: 'E2E ARPYNET solo' },
+    );
+    const primaryProject = project.locator(
+        'option',
+        { hasText: 'E2E proyecto' },
+    );
+    const secondaryProject = project.locator(
+        'option',
+        {
+            hasText:
+                'Proyecto secundario captura',
+        },
+    );
+
+    await expect(primaryOnly).not.toHaveAttribute(
+        'disabled',
+        '',
+    );
+    await expect(primaryProject).not.toHaveAttribute(
+        'disabled',
+        '',
+    );
+    await expect(secondaryProject).toHaveAttribute(
+        'disabled',
+        '',
+    );
+    await expect(secondaryProject).toHaveAttribute(
+        'hidden',
+        '',
+    );
+
+    const secondaryValue = await organization
+        .locator(
+            'option',
+            {
+                hasText:
+                    'ARPYNET E2E Secundaria',
+            },
+        )
+        .getAttribute('value');
+
+    expect(secondaryValue).toBeTruthy();
+
+    await organization.selectOption(
+        secondaryValue,
+    );
+
+    await expect(primaryOnly).toHaveAttribute(
+        'disabled',
+        '',
+    );
+    await expect(primaryOnly).toHaveAttribute(
+        'hidden',
+        '',
+    );
+    await expect(primaryProject).toHaveAttribute(
+        'disabled',
+        '',
+    );
+    await expect(primaryProject).toHaveAttribute(
+        'hidden',
+        '',
+    );
+    await expect(secondaryProject).not.toHaveAttribute(
+        'disabled',
+        '',
+    );
+    await expect(
+        assignee.locator('option:checked'),
+    ).toHaveText('Central E2E');
+
+    await page.goto(
+        `/captura?organization_id=${secondaryValue}`,
+    );
+
+    await expect(organization).toHaveValue(
+        secondaryValue,
+    );
+    await expect(
+        page.getByText(
+            'Empresa: ARPYNET E2E Secundaria',
+            { exact: true },
+        ),
+    ).toBeVisible();
+
+    await expectNoHorizontalOverflow(page);
+});
+
 test('captura rápida crea una tarea desde FRONT', async (
     { page },
     testInfo,

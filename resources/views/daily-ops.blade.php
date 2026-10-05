@@ -89,6 +89,7 @@
                     'quick-capture.show',
                     array_filter([
                         'work_team' => $selectedWorkTeam,
+                        'organization_id' => $selectedScope,
                     ]),
                 ) }}"
             >
@@ -519,6 +520,7 @@
                     'quick-capture.show',
                     array_filter([
                         'work_team' => $selectedWorkTeam,
+                        'organization_id' => $selectedScope,
                     ]),
                 ) }}"
                 >
@@ -1165,6 +1167,7 @@
                     'quick-capture.show',
                     array_filter([
                         'work_team' => $selectedWorkTeam,
+                        'organization_id' => $selectedScope,
                     ]),
                 ) }}"
     >

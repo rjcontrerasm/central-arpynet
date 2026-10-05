@@ -23,6 +23,7 @@ class QuickCaptureController extends Controller
     {
         $validated = $request->validate([
             'work_team' => ['nullable', 'integer'],
+            'organization_id' => ['nullable', 'integer'],
         ]);
 
         $user = $request->user();
@@ -46,6 +47,28 @@ class QuickCaptureController extends Controller
             $contextWorkTeamId
             && ! $accessibleTeamIds->contains(
                 $contextWorkTeamId,
+            )
+        ) {
+            abort(403);
+        }
+
+        $contextWorkTeam = $contextWorkTeamId
+            ? $workTeams->firstWhere(
+                'id',
+                $contextWorkTeamId,
+            )
+            : null;
+
+        $contextOrganizationId = isset(
+            $validated['organization_id'],
+        )
+            ? (int) $validated['organization_id']
+            : null;
+
+        if (
+            $contextOrganizationId
+            && ! $organizationIds->contains(
+                $contextOrganizationId,
             )
         ) {
             abort(403);
@@ -116,7 +139,9 @@ class QuickCaptureController extends Controller
             ->limit(5)
             ->get();
 
-        $defaultOrganizationId = $user->current_organization_id;
+        $defaultOrganizationId =
+            $contextOrganizationId
+            ?? $user->current_organization_id;
 
         if (
             ! $defaultOrganizationId
@@ -124,6 +149,56 @@ class QuickCaptureController extends Controller
         ) {
             $defaultOrganizationId = $organizations->first()?->id;
         }
+
+        $assigneeIds = $assignees->pluck('id');
+
+        $assigneeOrganizationIds = DB::table(
+            'organization_user',
+        )
+            ->whereIn('user_id', $assigneeIds)
+            ->where('is_active', true)
+            ->whereIn(
+                'role',
+                ['owner', 'admin', 'member'],
+            )
+            ->get([
+                'user_id',
+                'organization_id',
+            ])
+            ->groupBy('user_id')
+            ->map(
+                fn ($rows) => $rows
+                    ->pluck('organization_id')
+                    ->map(fn ($id): int => (int) $id)
+                    ->values()
+                    ->all(),
+            );
+
+        $assigneeWorkTeamIds = DB::table(
+            'work_team_user',
+        )
+            ->whereIn('user_id', $assigneeIds)
+            ->whereIn(
+                'work_team_id',
+                $accessibleTeamIds,
+            )
+            ->where('is_active', true)
+            ->whereIn(
+                'role',
+                ['lead', 'member'],
+            )
+            ->get([
+                'user_id',
+                'work_team_id',
+            ])
+            ->groupBy('user_id')
+            ->map(
+                fn ($rows) => $rows
+                    ->pluck('work_team_id')
+                    ->map(fn ($id): int => (int) $id)
+                    ->values()
+                    ->all(),
+            );
 
         return view('quick-capture', compact(
             'organizations',
@@ -133,9 +208,13 @@ class QuickCaptureController extends Controller
             'workTeams',
             'assignees',
             'contextWorkTeamId',
+            'contextWorkTeam',
+            'contextOrganizationId',
             'defaultWorkTeamId',
             'defaultVisibilityScope',
             'defaultTeamByAssignee',
+            'assigneeOrganizationIds',
+            'assigneeWorkTeamIds',
         ));
     }
 
@@ -169,6 +248,10 @@ class QuickCaptureController extends Controller
                 'distinct',
             ],
             'capture_context_work_team_id' => [
+                'nullable',
+                'integer',
+            ],
+            'capture_context_organization_id' => [
                 'nullable',
                 'integer',
             ],
@@ -404,6 +487,28 @@ class QuickCaptureController extends Controller
         ) {
             $redirectParams['work_team'] =
                 $contextWorkTeamId;
+            $redirectParams['organization_id'] =
+                $organizationId;
+        } elseif (
+            (int) (
+                $validated[
+                    'capture_context_organization_id'
+                ] ?? 0
+            ) > 0
+        ) {
+            $contextOrganizationId = (int) $validated[
+                'capture_context_organization_id'
+            ];
+
+            abort_unless(
+                $organizationIds->contains(
+                    $contextOrganizationId,
+                ),
+                403,
+            );
+
+            $redirectParams['organization_id'] =
+                $organizationId;
         }
 
         return redirect()

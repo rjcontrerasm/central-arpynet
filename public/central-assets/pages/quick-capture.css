@@ -100,6 +100,54 @@
             font-size: 14px;
         }
 
+        .capture-context {
+            display: grid;
+            gap: 8px;
+            padding: 12px 13px;
+            border: 1px solid #334155;
+            border-radius: 14px;
+            background: #0f172a;
+        }
+
+        .capture-context-title {
+            font-size: 12px;
+            font-weight: 850;
+            color: #93c5fd;
+            text-transform: uppercase;
+            letter-spacing: .045em;
+        }
+
+        .capture-context-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+        }
+
+        .capture-context-badge {
+            display: inline-flex;
+            align-items: center;
+            min-height: 26px;
+            padding: 4px 9px;
+            border: 1px solid #1d4ed8;
+            border-radius: 999px;
+            background: #172554;
+            color: #dbeafe;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .capture-context-badge.secondary {
+            border-color: #b45309;
+            background: #78350f;
+            color: #fef3c7;
+        }
+
+        .capture-context-help {
+            color: #94a3b8;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
         .smart-hint {
             margin-top: -7px;
             padding: 10px 11px;
@@ -391,6 +439,31 @@
             .hero p,
             .back,
             .recent-meta {
+                color: #64748b;
+            }
+
+            .capture-context {
+                border-color: #dbe5ef;
+                background: #f8fbff;
+            }
+
+            .capture-context-title {
+                color: #024883;
+            }
+
+            .capture-context-badge {
+                border-color: #bfdbfe;
+                background: #eff6ff;
+                color: #1d4ed8;
+            }
+
+            .capture-context-badge.secondary {
+                border-color: #fde68a;
+                background: #fffbeb;
+                color: #92400e;
+            }
+
+            .capture-context-help {
                 color: #64748b;
             }
 
