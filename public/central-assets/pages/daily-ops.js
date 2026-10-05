@@ -1255,16 +1255,21 @@
                                 );
                             }
 
-                            adjustDailySummary(
-                                activeCard,
-                                1,
-                            );
-
                             const remainsInFilter =
                                 matchesPriorityFilter(
                                     selectedPriority,
                                     presentation,
                                 );
+                            const countedInSummary =
+                                ! selectedPriority
+                                || remainsInFilter;
+
+                            if (countedInSummary) {
+                                adjustDailySummary(
+                                    activeCard,
+                                    1,
+                                );
+                            }
                             const destination =
                                 remainsInFilter
                                     ? destinationList(
@@ -1333,10 +1338,12 @@
                                                 );
                                             }
 
-                                            adjustDailySummary(
-                                                activeCard,
-                                                -1,
-                                            );
+                                            if (countedInSummary) {
+                                                adjustDailySummary(
+                                                    activeCard,
+                                                    -1,
+                                                );
+                                            }
 
                                             if (! selectedPriority) {
                                                 setWaitingCount(
