@@ -42,7 +42,7 @@
                                     @endif
                                 </div>
 
-                                <div class="pills">
+                                <div class="pills" data-daily-pills>
                                     @if ($isOverdue)
                                         <span class="pill overdue">
                                             Vencida
@@ -219,6 +219,7 @@
                                         )
                                             <form
                                                 class="action-form"
+                                                data-daily-action="{{ $action }}"
                                                 method="POST"
                                                 action="{{ route(
                                                     'daily-task-action.update',
