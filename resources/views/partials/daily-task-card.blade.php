@@ -25,11 +25,11 @@
                                 data-daily-priority-band="{{ $band }}"
                                 data-daily-priority-score="{{ $task->display_priority_score }}"
                             >
-                                <div class="item-title">
-                                    {{ $task->title }}
-                                </div>
+                                <div class="task-card-heading">
+                                    <div class="item-title">
+                                        {{ $task->title }}
+                                    </div>
 
-                                <div class="meta task-context-line">
                                     <span
                                         class="task-organization-badge organization-tone-{{ $organizationTone }}"
                                     >
@@ -40,11 +40,9 @@
                                         {{ $task->organization?->name
                                             ?? 'Sin ámbito' }}
                                     </span>
+                                </div>
 
-                                    <span class="task-context-separator">
-                                        ·
-                                    </span>
-
+                                <div class="meta task-context-line">
                                     <span data-daily-due-date>
                                         @if ($task->due_at)
                                             {{ $task->due_at->format(
@@ -94,9 +92,15 @@
 
                                     @if ($task->workTeams?->isNotEmpty())
                                         @foreach ($task->workTeams as $workTeam)
-                                            <span class="pill team-context">
-                                                Equipo: {{ $workTeam->name }}
-                                            </span>
+                                            @if (
+                                                ! $selectedWorkTeam
+                                                || (int) $workTeam->id
+                                                    !== (int) $selectedWorkTeam
+                                            )
+                                                <span class="pill team-context">
+                                                    Equipo: {{ $workTeam->name }}
+                                                </span>
+                                            @endif
                                         @endforeach
                                     @endif
 
