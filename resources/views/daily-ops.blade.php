@@ -657,6 +657,57 @@
 
     <div class="two-column">
         <main>
+            @php
+                $criticalSection = $taskSections[0];
+            @endphp
+
+            @if ($criticalSection['tasks']->isNotEmpty())
+                <section
+                    class="section"
+                    id="{{ $criticalSection['id'] }}"
+                    data-daily-hide-when-empty="1"
+                >
+                    <div class="section-head">
+                        <h2>{{ $criticalSection['title'] }}</h2>
+
+                        <a
+                            class="section-link"
+                            href="{{ route(
+                                'daily-ops.show',
+                                array_filter([
+                                    'view' =>
+                                        $selectedWorkView,
+                                    'scope' =>
+                                        $selectedScope,
+                                    'q' =>
+                                        $search !== ''
+                                            ? $search
+                                            : null,
+                                    'priority' =>
+                                        'critical',
+                                    'recurring_rule' =>
+                                        $selectedRecurringRule,
+                                ]),
+                            ) }}"
+                        >
+                            Ver tareas
+                        </a>
+                    </div>
+
+                    <div
+                        class="list"
+                        data-daily-empty-message="{{ $criticalSection['empty'] }}"
+                    >
+                        @foreach ($criticalSection['tasks'] as $task)
+                            @include(
+                                'partials.daily-task-card',
+                                ['task' => $task]
+                            )
+                        @endforeach
+                    </div>
+                </section>
+            @endif
+
             <section
                 class="section"
                 id="vencidas"
@@ -737,6 +788,10 @@
             </section>
 
             @foreach ($taskSections as $section)
+                @if ($section['id'] === 'prioridad-critica')
+                    @continue
+                @endif
+
                 @if (
                     ($section['hide_when_empty'] ?? false)
                     && $section['tasks']->isEmpty()

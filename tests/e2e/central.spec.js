@@ -352,6 +352,56 @@ test('Mi Día completa tarea en vivo con mini confetti y undo inferior', async (
     await expectNoHorizontalOverflow(page);
 });
 
+test('Mi Día muestra prioridad crítica primero y con tratamiento distintivo', async (
+    { page },
+    testInfo,
+) => {
+    test.skip(
+        testInfo.project.name !== 'desktop-1366',
+        'La jerarquía visual crítica se valida una sola vez.',
+    );
+
+    await page.goto(
+        '/mi-dia?q=E2E%20foco%20cr%C3%ADtico%20%C3%BAnico',
+    );
+
+    const criticalSection = page.locator(
+        '#prioridad-critica',
+    );
+    const overdueSection = page.locator(
+        '#vencidas',
+    );
+    const criticalCard = criticalSection.locator(
+        '.daily-task-critical',
+    ).first();
+
+    await expect(criticalSection).toBeVisible();
+    await expect(criticalCard).toBeVisible();
+    await expect(
+        criticalCard.locator('.pill.critical').first(),
+    ).toBeVisible();
+
+    const criticalBox = await criticalSection.boundingBox();
+    const overdueBox = await overdueSection.boundingBox();
+
+    expect(criticalBox).not.toBeNull();
+    expect(overdueBox).not.toBeNull();
+    expect(criticalBox.y).toBeLessThan(overdueBox.y);
+
+    const leftBorder = await criticalCard.evaluate(
+        (element) => (
+            window.getComputedStyle(
+                element,
+                '::before',
+            ).width
+        ),
+    );
+
+    expect(leftBorder).toBe('4px');
+
+    await expectNoHorizontalOverflow(page);
+});
+
 test('Mi Día oculta y restaura foco crítico cuando cambia en vivo', async (
     { page },
     testInfo,
