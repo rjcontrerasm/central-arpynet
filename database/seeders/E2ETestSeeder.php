@@ -129,6 +129,21 @@ class E2ETestSeeder extends Seeder
             );
         }
 
+        Task::query()->updateOrCreate(
+            [
+                'organization_id' => $organization->id,
+                'title' => 'E2E reprogramación live',
+            ],
+            [
+                'status' => 'pending',
+                'urgency' => 'low',
+                'impact' => 'low',
+                'due_at' => null,
+                'assigned_to' => $user->id,
+                'created_by' => $user->id,
+            ],
+        );
+
         Project::query()->updateOrCreate(
             [
                 'organization_id' => $organization->id,
