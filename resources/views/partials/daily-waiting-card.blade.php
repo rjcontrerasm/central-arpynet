@@ -11,7 +11,7 @@
 @endphp
 
 <div
-    class="item daily-waiting-card"
+    class="item daily-waiting-card daily-waiting-live"
     data-operational-card
     data-daily-waiting-card
     data-daily-task-id="{{ $task->id }}"
