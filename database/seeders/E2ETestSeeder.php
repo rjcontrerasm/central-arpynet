@@ -214,6 +214,11 @@ class E2ETestSeeder extends Seeder
         );
 
         foreach ([
+            ['E2E mover fechas', 15],
+            ['E2E reflow desktop uno', 14],
+            ['E2E reflow desktop dos', 13],
+            ['E2E reflow mobile uno', 12],
+            ['E2E reflow mobile dos', 11],
             ['E2E reflow uno', 9],
             ['E2E reflow dos', 8],
             ['E2E reflow tres', 7],
