@@ -7,6 +7,9 @@
         ) ?? false;
 
     $ruleId = $row['rule_id'];
+
+    $organizationTone =
+        ((int) ($task->organization_id ?? 0)) % 6;
 @endphp
 
 <div
@@ -14,15 +17,26 @@
     data-operational-card
     data-daily-live-complete="reload"
 >
-    <div class="item-title">
-        {{ $task->title }}
+    <div class="task-card-heading">
+        <div class="item-title">
+            {{ $task->title }}
+        </div>
+
+        <span
+            class="task-organization-badge organization-tone-{{ $organizationTone }}"
+        >
+            <span
+                class="task-organization-dot"
+                aria-hidden="true"
+            ></span>
+            {{ $task->organization?->name
+                ?? 'Sin ámbito' }}
+        </span>
     </div>
 
     <div class="recurring-overdue-summary-row">
         <div class="meta">
-            {{ $task->organization?->name
-                ?? 'Sin ámbito' }}
-            · {{ $row['count'] }}
+            {{ $row['count'] }}
             {{ $row['count'] === 1
                 ? 'pendiente vencida'
                 : 'pendientes vencidas' }}
