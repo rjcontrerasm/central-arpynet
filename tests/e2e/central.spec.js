@@ -352,6 +352,86 @@ test('Mi Día completa tarea en vivo con mini confetti y undo inferior', async (
     await expectNoHorizontalOverflow(page);
 });
 
+test('Mi Día cambia En curso en vivo y permite deshacer', async (
+    { page },
+    testInfo,
+) => {
+    test.skip(
+        testInfo.project.name !== 'desktop-1366',
+        'La acción inline se valida una sola vez.',
+    );
+
+    await page.goto(
+        '/mi-dia?q=E2E%20reflow%20uno',
+    );
+
+    const title = page.getByText(
+        'E2E reflow uno',
+        { exact: true },
+    ).first();
+
+    await expect(title).toBeVisible();
+
+    const card = title.locator(
+        'xpath=ancestor::*[contains(@class,"item")][1]',
+    );
+    const startForm = card.locator(
+        'form[data-daily-action="start"]',
+    );
+
+    await expect(startForm).toBeVisible();
+
+    const startResponse = page.waitForResponse(
+        (response) => (
+            response.request().method() === 'POST'
+            && response.url().includes('/mi-dia/tareas/')
+            && response.url().includes('/accion')
+        ),
+    );
+
+    await startForm.getByRole('button', {
+        name: 'En curso',
+        exact: true,
+    }).click();
+
+    expect((await startResponse).status()).toBe(200);
+
+    await expect(
+        card.locator('[data-daily-in-progress]'),
+    ).toHaveText('En curso');
+    await expect(startForm).toBeHidden();
+
+    const toast = page.locator(
+        '#daily-live-undo-toast',
+    );
+
+    await expect(toast).toBeVisible();
+    await expect(
+        toast.locator('.global-undo-title'),
+    ).toHaveText('Tarea en curso');
+
+    const undoResponse = page.waitForResponse(
+        (response) => (
+            response.request().method() === 'POST'
+            && new URL(response.url()).pathname === '/deshacer'
+        ),
+    );
+
+    await toast.getByRole('button', {
+        name: /Deshacer/,
+    }).click();
+
+    expect((await undoResponse).status()).toBe(200);
+
+    await expect(
+        card.locator('[data-daily-in-progress]'),
+    ).toHaveCount(0);
+    await expect(startForm).toBeVisible();
+    await expect(title).toBeVisible();
+
+    await expectNoHorizontalOverflow(page);
+});
+
 test('Mi Día muestra prioridad crítica primero y con tratamiento distintivo', async (
     { page },
     testInfo,
