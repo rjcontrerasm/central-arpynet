@@ -1261,10 +1261,20 @@ test('Mi Día permite deshacer antes de terminar la salida sin borrar la ficha r
 });
 
 test('búsqueda global encuentra módulos operativos', async ({ page }) => {
+    await page.goto(
+        '/buscar?q=E2E%20b%C3%BAsqueda%20tarea',
+    );
+
+    await expect(
+        page.getByText(
+            'E2E búsqueda tarea',
+            { exact: true },
+        ).first(),
+    ).toBeVisible();
+
     await page.goto('/buscar?q=E2E');
 
     for (const label of [
-        'E2E búsqueda tarea',
         'E2E proyecto',
         'E2E cliente',
         'E2E servicio',
