@@ -187,13 +187,15 @@ test('Mi Día completa tarea en vivo con mini confetti y undo inferior', async (
     await page.goto('/mi-dia');
 
     const taskTitle = page.getByText(
-        'E2E tarea crítica',
+        'E2E completar live',
         { exact: true },
     ).first();
 
     await expect(taskTitle).toBeVisible();
 
-    const card = taskTitle.locator('xpath=ancestor::*[contains(@class,"item")][1]');
+    const card = taskTitle.locator(
+        'xpath=ancestor::*[@data-operational-card][1]',
+    );
     const done = card.getByRole('button', {
         name: '✓ Hecho',
         exact: true,
