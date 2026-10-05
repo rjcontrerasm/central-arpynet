@@ -432,6 +432,149 @@ test('Mi Día cambia En curso en vivo y permite deshacer', async (
     await expectNoHorizontalOverflow(page);
 });
 
+test('Mi Día mueve Hoy, Mañana y +1 semana en vivo con Deshacer', async (
+    { page },
+    testInfo,
+) => {
+    test.skip(
+        testInfo.project.name !== 'desktop-1366',
+        'Los movimientos de fecha se validan una sola vez.',
+    );
+
+    await page.goto(
+        '/mi-dia?q=E2E%20reflow%20dos',
+    );
+
+    const title = page.getByText(
+        'E2E reflow dos',
+        { exact: true },
+    ).first();
+
+    await expect(title).toBeVisible();
+
+    const card = title.locator(
+        'xpath=ancestor::*[contains(@class,"item")][1]',
+    );
+    const originalDue = (
+        await card.locator(
+            '[data-daily-due-date]',
+        ).textContent()
+    ).trim();
+
+    await expect(
+        card.locator('[data-daily-overdue-pill]'),
+    ).toBeVisible();
+
+    const runMove = async (
+        action,
+        buttonName,
+        expectedSection,
+        expectedToast,
+    ) => {
+        const actionForm = card.locator(
+            `form[data-daily-action="${action}"]`,
+        );
+
+        await expect(actionForm).toBeVisible();
+
+        const responsePromise = page.waitForResponse(
+            (response) => (
+                response.request().method() === 'POST'
+                && response.url().includes('/mi-dia/tareas/')
+                && response.url().includes('/accion')
+            ),
+        );
+
+        await actionForm.getByRole('button', {
+            name: buttonName,
+            exact: true,
+        }).click();
+
+        const response = await responsePromise;
+        expect(response.status()).toBe(200);
+
+        const payload = await response.json();
+
+        expect(
+            payload.presentation.destination,
+        ).toBe(expectedSection);
+
+        await expect(
+            page.locator(
+                `#${expectedSection} > .list`,
+            ).locator('.item', {
+                hasText: 'E2E reflow dos',
+            }),
+        ).toBeVisible();
+
+        await expect(
+            card.locator('[data-daily-overdue-pill]'),
+        ).toHaveCount(0);
+
+        const toast = page.locator(
+            '#daily-live-undo-toast',
+        );
+
+        await expect(toast).toBeVisible();
+        await expect(
+            toast.locator('.global-undo-title'),
+        ).toHaveText(expectedToast);
+
+        const undoResponse = page.waitForResponse(
+            (responseCandidate) => (
+                responseCandidate.request().method() === 'POST'
+                && new URL(
+                    responseCandidate.url(),
+                ).pathname === '/deshacer'
+            ),
+        );
+
+        await toast.getByRole('button', {
+            name: /Deshacer/,
+        }).click();
+
+        expect((await undoResponse).status()).toBe(200);
+
+        await expect(
+            page.locator('#vencidas > .list')
+                .locator('.item', {
+                    hasText: 'E2E reflow dos',
+                }),
+        ).toBeVisible();
+
+        await expect(
+            card.locator('[data-daily-overdue-pill]'),
+        ).toBeVisible();
+
+        await expect(
+            card.locator('[data-daily-due-date]'),
+        ).toHaveText(originalDue);
+    };
+
+    await runMove(
+        'today',
+        'Hoy',
+        'hoy',
+        'Movida a hoy',
+    );
+
+    await runMove(
+        'tomorrow',
+        'Mañana',
+        'esta-semana',
+        'Movida a mañana',
+    );
+
+    await runMove(
+        'next_week',
+        '+1 semana',
+        'esta-semana',
+        'Movida una semana',
+    );
+
+    await expectNoHorizontalOverflow(page);
+});
+
 test('Mi Día muestra prioridad crítica primero y con tratamiento distintivo', async (
     { page },
     testInfo,
