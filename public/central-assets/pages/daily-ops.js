@@ -365,20 +365,7 @@
 
             if (todayForm) {
                 todayForm.hidden =
-                    presentation.destination === 'hoy'
-                    || (
-                        presentation.priority_band === 'critical'
-                        && presentation.due_date
-                        === new Intl.DateTimeFormat(
-                            'en-GB',
-                            {
-                                timeZone: 'America/Lima',
-                                day: '2-digit',
-                                month: '2-digit',
-                                year: 'numeric',
-                            },
-                        ).format(new Date())
-                    );
+                    Boolean(presentation.due_today);
             }
         };
 
