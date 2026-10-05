@@ -369,6 +369,21 @@
             }
         };
 
+        const matchesPriorityFilter = (
+            filter,
+            presentation,
+        ) => {
+            if (! filter) {
+                return true;
+            }
+
+            if (filter === 'overdue') {
+                return Boolean(presentation.overdue);
+            }
+
+            return presentation.priority_band === filter;
+        };
+
         const destinationList = (destination) => (
             destination
                 ? document.querySelector(
@@ -1100,10 +1115,6 @@
                 return;
             }
 
-            if (form.querySelector('input[name="priority"]')) {
-                return;
-            }
-
             form.addEventListener(
                 'submit',
                 async (event) => {
@@ -1118,6 +1129,10 @@
                         'button[type="submit"]',
                     );
                     const csrf = csrfToken(form);
+                    const selectedPriority =
+                        form.querySelector(
+                            'input[name="priority"]',
+                        )?.value || '';
                     const sourceParent = card.parentNode;
                     const sourceMarker =
                         document.createComment(
@@ -1201,12 +1216,22 @@
 
                         const presentation =
                             payload.presentation;
-                        const targetParent =
-                            destinationList(
-                                presentation.destination,
+                        const remainsInFilter =
+                            matchesPriorityFilter(
+                                selectedPriority,
+                                presentation,
                             );
+                        const targetParent =
+                            remainsInFilter
+                                ? destinationList(
+                                    presentation.destination,
+                                )
+                                : null;
 
-                        if (! targetParent) {
+                        if (
+                            remainsInFilter
+                            && ! targetParent
+                        ) {
                             window.location.reload();
                             return;
                         }
@@ -1215,33 +1240,72 @@
                             captureTaskPositions(
                                 sourceParent,
                             );
-                        const targetBefore =
-                            targetParent === sourceParent
-                                ? sourceBefore
-                                : captureTaskPositions(
-                                    targetParent,
+                        const targetBefore = (
+                            targetParent
+                            && targetParent !== sourceParent
+                        )
+                            ? captureTaskPositions(
+                                targetParent,
+                            )
+                            : sourceBefore;
+
+                        if (selectedPriority) {
+                            adjustDailySummary(
+                                card,
+                                -1,
+                            );
+
+                            card.dataset.dailyOverdue =
+                                presentation.overdue
+                                    ? '1'
+                                    : '0';
+                            card.dataset.dailyPriorityBand =
+                                presentation.priority_band
+                                || 'planned';
+                            card.dataset.dailyPriorityScore =
+                                String(
+                                    presentation.priority_score
+                                    ?? 0,
                                 );
 
-                        transitionDailySummary(
-                            card,
-                            presentation,
-                        );
+                            if (remainsInFilter) {
+                                adjustDailySummary(
+                                    card,
+                                    1,
+                                );
+                            } else {
+                                renderDailyFocus();
+                            }
+                        } else {
+                            transitionDailySummary(
+                                card,
+                                presentation,
+                            );
+                        }
+
                         updateDatePresentation(
                             card,
                             presentation,
                         );
 
-                        insertCardByPriority(
-                            targetParent,
-                            card,
-                        );
+                        if (remainsInFilter) {
+                            insertCardByPriority(
+                                targetParent,
+                                card,
+                            );
+                        } else {
+                            card.remove();
+                        }
 
                         animateTaskReflow(
                             sourceParent,
                             sourceBefore,
                         );
 
-                        if (targetParent !== sourceParent) {
+                        if (
+                            targetParent
+                            && targetParent !== sourceParent
+                        ) {
                             animateTaskReflow(
                                 targetParent,
                                 targetBefore,
@@ -1249,8 +1313,16 @@
                         }
 
                         syncDailyEmptyState(sourceParent);
-                        syncDailyEmptyState(targetParent);
-                        pulseRestoredCard(card);
+
+                        if (targetParent) {
+                            syncDailyEmptyState(
+                                targetParent,
+                            );
+                        }
+
+                        if (card.isConnected) {
+                            pulseRestoredCard(card);
+                        }
 
                         if (payload.undo) {
                             const titleByAction = {
@@ -1278,9 +1350,11 @@
                                         const currentParent =
                                             card.parentNode;
                                         const currentBefore =
-                                            captureTaskPositions(
-                                                currentParent,
-                                            );
+                                            currentParent
+                                                ? captureTaskPositions(
+                                                    currentParent,
+                                                )
+                                                : null;
                                         const originBefore =
                                             sourceParent
                                                 === currentParent
@@ -1289,10 +1363,12 @@
                                                     sourceParent,
                                                 );
 
-                                        adjustDailySummary(
-                                            card,
-                                            -1,
-                                        );
+                                        if (card.isConnected) {
+                                            adjustDailySummary(
+                                                card,
+                                                -1,
+                                            );
+                                        }
 
                                         card.dataset.dailyOverdue =
                                             snapshot.overdue;
@@ -1381,10 +1457,12 @@
                                         );
                                         sourceMarker.remove();
 
-                                        animateTaskReflow(
-                                            currentParent,
-                                            currentBefore,
-                                        );
+                                        if (currentParent) {
+                                            animateTaskReflow(
+                                                currentParent,
+                                                currentBefore,
+                                            );
+                                        }
 
                                         if (
                                             sourceParent
@@ -1396,9 +1474,11 @@
                                             );
                                         }
 
-                                        syncDailyEmptyState(
-                                            currentParent,
-                                        );
+                                        if (currentParent) {
+                                            syncDailyEmptyState(
+                                                currentParent,
+                                            );
+                                        }
                                         syncDailyEmptyState(
                                             sourceParent,
                                         );
