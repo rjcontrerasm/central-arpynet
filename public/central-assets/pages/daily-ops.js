@@ -617,10 +617,15 @@
                     const completed =
                         lastCompletion;
 
-                    adjustDailySummary(
-                        completed.card,
-                        1,
-                    );
+                    if (completed.mode === 'inline') {
+                        completed.restoreInline?.();
+                    } else {
+                        adjustDailySummary(
+                            completed.card,
+                            1,
+                        );
+                    }
+
                     const {
                         card,
                         parent,
@@ -638,7 +643,8 @@
                     }
 
                     if (
-                        card
+                        completed.mode !== 'inline'
+                        && card
                         && parent?.isConnected
                         && placeholder?.isConnected
                     ) {
@@ -671,7 +677,7 @@
                             );
                             pulseRestoredCard(card);
                         }
-                    } else {
+                    } else if (completed.mode !== 'inline') {
                         resetCompletedCard(card);
                     }
 
@@ -906,7 +912,8 @@
                 '.global-undo-detail',
             );
 
-            title.textContent = 'Tarea completada';
+            title.textContent =
+                state.toastTitle || 'Tarea completada';
             detail.textContent = 'Puedes deshacer la acción.';
             animateUndoProgress(
                 toast,
@@ -970,6 +977,125 @@
                 stage.remove();
             }, 1100);
         };
+
+        document.querySelectorAll(
+            '.action-form input[name="action"][value="start"]',
+        ).forEach((input) => {
+            const form = input.closest('form');
+            const card = form?.closest('.item');
+
+            if (! form || ! card) {
+                return;
+            }
+
+            form.addEventListener(
+                'submit',
+                async (event) => {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+
+                    if (form.dataset.submitting === 'yes') {
+                        return;
+                    }
+
+                    const button = form.querySelector(
+                        'button[type="submit"]',
+                    );
+                    const pills = card.querySelector(
+                        '[data-daily-pills]',
+                    );
+                    const csrf = csrfToken(form);
+
+                    form.dataset.submitting = 'yes';
+                    button.disabled = true;
+
+                    try {
+                        const formData = new FormData(form);
+                        formData.set('_live', '1');
+
+                        const response = await fetch(
+                            form.getAttribute('action'),
+                            {
+                                method: 'POST',
+                                credentials: 'same-origin',
+                                headers: {
+                                    Accept: 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'X-Central-Live-Action': '1',
+                                },
+                                body: formData,
+                            },
+                        );
+
+                        const payload = await parseJsonResponse(
+                            response,
+                        );
+
+                        if (! response.ok || ! payload.ok) {
+                            throw new Error(
+                                payload.message
+                                || 'No se pudo iniciar la tarea.',
+                            );
+                        }
+
+                        let progressPill = card.querySelector(
+                            '[data-daily-in-progress]',
+                        );
+
+                        if (! progressPill && pills) {
+                            progressPill =
+                                document.createElement('span');
+                            progressPill.className =
+                                'pill today';
+                            progressPill.dataset.dailyInProgress =
+                                '1';
+                            progressPill.textContent = 'En curso';
+                            pills.appendChild(progressPill);
+                        }
+
+                        form.hidden = true;
+
+                        if (payload.undo) {
+                            showUndoToast(
+                                payload.undo,
+                                payload.label,
+                                csrf,
+                                {
+                                    mode: 'inline',
+                                    toastTitle: 'Tarea en curso',
+                                    card,
+                                    restoreInline: () => {
+                                        card.querySelector(
+                                            '[data-daily-in-progress]',
+                                        )?.remove();
+                                        form.hidden = false;
+                                        pulseRestoredCard(card);
+                                    },
+                                },
+                            );
+                        }
+                    } catch (error) {
+                        const toast = ensureToast();
+                        toast.hidden = false;
+                        toast.querySelector(
+                            '.global-undo-title',
+                        ).textContent = error.message
+                            || 'No se pudo iniciar la tarea.';
+                        toast.querySelector(
+                            '.global-undo-detail',
+                        ).textContent = '';
+
+                        window.setTimeout(() => {
+                            toast.hidden = true;
+                        }, 2600);
+                    } finally {
+                        delete form.dataset.submitting;
+                        button.disabled = false;
+                    }
+                },
+                { capture: true },
+            );
+        });
 
         document.querySelectorAll(
             '.action-form input[name="action"][value="complete"]',

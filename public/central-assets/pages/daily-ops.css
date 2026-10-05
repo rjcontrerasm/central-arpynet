@@ -716,6 +716,10 @@
 
         .action-form { margin: 0; }
 
+        .action-form[hidden] {
+            display: none !important;
+        }
+
         .action,
         .task-edit summary {
             min-height: 34px;
