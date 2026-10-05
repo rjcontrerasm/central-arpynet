@@ -669,6 +669,234 @@ test('Mi Día mantiene acciones de fecha en vivo dentro del filtro Vencidas', as
     await expectNoHorizontalOverflow(page);
 });
 
+test('Mi Día pone una tarea En espera en vivo y permite deshacer', async (
+    { page },
+    testInfo,
+) => {
+    test.skip(
+        testInfo.project.name !== 'desktop-1366',
+        'La transición En espera se valida una sola vez.',
+    );
+
+    await page.goto(
+        '/mi-dia?q=E2E%20espera%20live',
+    );
+
+    const title = page.getByText(
+        'E2E espera live',
+        { exact: true },
+    ).first();
+
+    await expect(title).toBeVisible();
+
+    const card = title.locator(
+        'xpath=ancestor::*[contains(@class,"item")][1]',
+    );
+    const waitingStat = page.locator(
+        '[data-daily-stat="waiting"]',
+    );
+    const waitingBefore = Number.parseInt(
+        await waitingStat.textContent(),
+        10,
+    );
+    const details = card.locator(
+        'details.task-edit',
+        { hasText: 'En espera' },
+    );
+
+    await details.locator('summary').click();
+
+    const form = details.locator(
+        'form.waiting-form',
+    );
+
+    await form.locator(
+        'input[name="waiting_reason"]',
+    ).fill('Esperando validación E2E');
+
+    const responsePromise = page.waitForResponse(
+        (response) => (
+            response.request().method() === 'POST'
+            && new URL(
+                response.url(),
+            ).pathname.includes('/esperar')
+        ),
+    );
+
+    await form.getByRole('button', {
+        name: 'Poner en espera',
+        exact: true,
+    }).click();
+
+    const response = await responsePromise;
+    expect(response.status()).toBe(200);
+
+    const payload = await response.json();
+    expect(payload.ok).toBe(true);
+
+    await expect(title).toBeHidden();
+    await expect(waitingStat).toHaveText(
+        String(waitingBefore + 1),
+    );
+
+    const waitingList = page.locator(
+        '#en-espera > .list',
+    );
+
+    await expect(
+        waitingList.locator('.daily-waiting-live', {
+            hasText: 'E2E espera live',
+        }),
+    ).toBeVisible();
+
+    await expect(
+        waitingList.locator('.daily-waiting-live', {
+            hasText: 'Esperando validación E2E',
+        }),
+    ).toBeVisible();
+
+    const toast = page.locator(
+        '#daily-live-undo-toast',
+    );
+
+    await expect(toast).toBeVisible();
+    await expect(
+        toast.locator('.global-undo-title'),
+    ).toHaveText('Tarea en espera');
+
+    const undoResponse = page.waitForResponse(
+        (responseCandidate) => (
+            responseCandidate.request().method() === 'POST'
+            && new URL(
+                responseCandidate.url(),
+            ).pathname === '/deshacer'
+        ),
+    );
+
+    await toast.getByRole('button', {
+        name: /Deshacer/,
+    }).click();
+
+    expect((await undoResponse).status()).toBe(200);
+
+    await expect(title).toBeVisible();
+    await expect(waitingStat).toHaveText(
+        String(waitingBefore),
+    );
+    await expect(
+        waitingList.locator('.daily-waiting-live', {
+            hasText: 'E2E espera live',
+        }),
+    ).toHaveCount(0);
+
+    await expectNoHorizontalOverflow(page);
+});
+
+test('Mi Día pone En espera sin recargar dentro del filtro Vencidas', async (
+    { page },
+    testInfo,
+) => {
+    test.skip(
+        testInfo.project.name !== 'desktop-1366',
+        'El caso filtrado En espera se valida una sola vez.',
+    );
+
+    await page.goto(
+        '/mi-dia?priority=overdue&view=mine&q=E2E%20espera%20live',
+    );
+
+    const originalUrl = page.url();
+    const title = page.getByText(
+        'E2E espera live',
+        { exact: true },
+    ).first();
+
+    await expect(title).toBeVisible();
+
+    const card = title.locator(
+        'xpath=ancestor::*[contains(@class,"item")][1]',
+    );
+    const overdueStat = page.locator(
+        '[data-daily-stat="overdue"]',
+    );
+    const overdueBefore = Number.parseInt(
+        await overdueStat.textContent(),
+        10,
+    );
+    const waitingBefore = Number.parseInt(
+        await page.locator(
+            '[data-daily-stat="waiting"]',
+        ).textContent(),
+        10,
+    );
+    const details = card.locator(
+        'details.task-edit',
+        { hasText: 'En espera' },
+    );
+
+    await details.locator('summary').click();
+
+    const form = details.locator(
+        'form.waiting-form',
+    );
+
+    await form.locator(
+        'input[name="waiting_reason"]',
+    ).fill('Esperando filtro E2E');
+
+    const responsePromise = page.waitForResponse(
+        (response) => (
+            response.request().method() === 'POST'
+            && new URL(
+                response.url(),
+            ).pathname.includes('/esperar')
+        ),
+    );
+
+    await form.getByRole('button', {
+        name: 'Poner en espera',
+        exact: true,
+    }).click();
+
+    expect((await responsePromise).status()).toBe(200);
+
+    await expect(title).toBeHidden();
+    await expect(overdueStat).toHaveText(
+        String(overdueBefore - 1),
+    );
+    await expect(
+        page.locator('[data-daily-stat="waiting"]'),
+    ).toHaveText(String(waitingBefore));
+    expect(page.url()).toBe(originalUrl);
+
+    const toast = page.locator(
+        '#daily-live-undo-toast',
+    );
+
+    const undoResponse = page.waitForResponse(
+        (responseCandidate) => (
+            responseCandidate.request().method() === 'POST'
+            && new URL(
+                responseCandidate.url(),
+            ).pathname === '/deshacer'
+        ),
+    );
+
+    await toast.getByRole('button', {
+        name: /Deshacer/,
+    }).click();
+
+    expect((await undoResponse).status()).toBe(200);
+
+    await expect(title).toBeVisible();
+    await expect(overdueStat).toHaveText(
+        String(overdueBefore),
+    );
+    expect(page.url()).toBe(originalUrl);
+
+    await expectNoHorizontalOverflow(page);
+});
+
 test('Mi Día muestra prioridad crítica primero y con tratamiento distintivo', async (
     { page },
     testInfo,
