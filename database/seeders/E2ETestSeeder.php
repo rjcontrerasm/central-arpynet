@@ -9,6 +9,7 @@ use App\Models\Project;
 use App\Models\ServiceOrder;
 use App\Models\Task;
 use App\Models\User;
+use App\Models\WorkTeam;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use RuntimeException;
@@ -95,6 +96,26 @@ class E2ETestSeeder extends Seeder
         $user->forceFill([
             'current_organization_id' => $organization->id,
         ])->save();
+
+        $workTeam = WorkTeam::query()->updateOrCreate(
+            [
+                'home_organization_id' => $organization->id,
+                'name' => 'E2E Administración',
+            ],
+            [
+                'description' =>
+                    'Equipo operativo para pruebas E2E de captura.',
+                'is_active' => true,
+                'created_by' => $user->id,
+            ],
+        );
+
+        $workTeam->users()->syncWithoutDetaching([
+            $user->id => [
+                'role' => 'lead',
+                'is_active' => true,
+            ],
+        ]);
 
         Task::query()->updateOrCreate(
             [

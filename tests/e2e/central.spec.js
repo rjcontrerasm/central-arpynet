@@ -1825,6 +1825,57 @@ test('captura rápida filtra responsables y proyectos por empresa', async (
     await expectNoHorizontalOverflow(page);
 });
 
+test('captura rápida permite elegir equipo desde contexto general', async (
+    { page },
+    testInfo,
+) => {
+    test.skip(
+        testInfo.project.name !== 'desktop-1366',
+        'La transición de visibilidad se valida una sola vez.',
+    );
+
+    await page.goto('/captura');
+
+    const visibility = page.locator(
+        '#visibility-scope',
+    );
+    const teams = page.locator(
+        '#work-team-select',
+    );
+
+    await expect(visibility).toHaveValue(
+        'organization',
+    );
+    await expect(teams).toBeEnabled();
+
+    const firstTeamValue = await teams
+        .locator('option')
+        .first()
+        .getAttribute('value');
+
+    expect(firstTeamValue).toBeTruthy();
+
+    await teams.selectOption(
+        firstTeamValue,
+    );
+
+    await expect(visibility).toHaveValue(
+        'teams',
+    );
+    await expect(teams).toHaveValues([
+        firstTeamValue,
+    ]);
+
+    await visibility.selectOption(
+        'organization',
+    );
+
+    await expect(teams).toBeEnabled();
+    await expect(teams).toHaveValues([]);
+
+    await expectNoHorizontalOverflow(page);
+});
+
 test('captura rápida crea una tarea desde FRONT', async (
     { page },
     testInfo,
