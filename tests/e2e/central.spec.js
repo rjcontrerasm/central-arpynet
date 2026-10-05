@@ -1098,13 +1098,13 @@ test('Mi Día filtra responsable y proyecto al editar empresa', async (
         'xpath=ancestor::*[@data-operational-card][1]',
     );
 
-    await card.locator(
-        'details.task-edit > summary',
-    ).click();
-
     const form = card.locator(
         'form[data-daily-edit-form]',
     );
+
+    await form.locator(
+        'xpath=../summary',
+    ).click();
 
     await expect(form).toHaveAttribute(
         'data-daily-edit-bound',
