@@ -68,6 +68,28 @@ class DailyOpsController extends Controller
             ? (int) $validated['work_team']
             : null;
 
+        $hasExplicitWorkContext =
+            $request->has('work_team')
+            || $request->has('view');
+
+        if (! $hasExplicitWorkContext) {
+            $defaultWorkTeamId = (int) (
+                $user->default_work_team_id
+                ?? 0
+            );
+
+            if (
+                $defaultWorkTeamId > 0
+                && $workTeams->contains(
+                    'id',
+                    $defaultWorkTeamId,
+                )
+            ) {
+                $selectedWorkTeam =
+                    $defaultWorkTeamId;
+            }
+        }
+
         if (
             $selectedWorkTeam
             && ! $workTeams->contains('id', $selectedWorkTeam)
