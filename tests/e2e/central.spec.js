@@ -763,6 +763,17 @@ test('Mi Día pone una tarea En espera en vivo y permite deshacer', async (
             }),
         ).toBeVisible();
 
+        await expect(
+            waitingList
+                .locator('.daily-waiting-live', {
+                    hasText: 'E2E espera live',
+                })
+                .getByRole('button', {
+                    name: 'Reactivar',
+                    exact: true,
+                }),
+        ).toBeVisible();
+
         await expect(toast).toBeVisible();
         await expect(
             toast.locator('.global-undo-title'),
@@ -795,6 +806,153 @@ test('Mi Día pone una tarea En espera en vivo y permite deshacer', async (
             hasText: 'E2E espera live',
         }),
     ).toHaveCount(0);
+
+    await expectNoHorizontalOverflow(page);
+});
+
+test('Mi Día reactiva una tarea En espera en vivo y permite deshacer', async (
+    { page },
+    testInfo,
+) => {
+    test.skip(
+        testInfo.project.name !== 'desktop-1366',
+        'La reactivación live se valida una sola vez.',
+    );
+
+    await page.goto(
+        '/mi-dia?q=E2E%20reactivar%20espera',
+    );
+
+    const originalUrl = page.url();
+    const waitingList = page.locator(
+        '#en-espera > .list',
+    );
+    const waitingCard = waitingList.locator(
+        '.daily-waiting-card',
+        { hasText: 'E2E reactivar espera' },
+    ).first();
+    const waitingStat = page.locator(
+        '[data-daily-stat="waiting"]',
+    );
+    const waitingHeader = page.locator(
+        '[data-daily-waiting-count]',
+    );
+    const overdueStat = page.locator(
+        '[data-daily-stat="overdue"]',
+    );
+
+    await expect(waitingCard).toBeVisible();
+    await expect(
+        waitingCard.getByText(
+            'Esperando aprobación E2E',
+            { exact: false },
+        ),
+    ).toBeVisible();
+
+    const waitingBefore = Number.parseInt(
+        await waitingStat.textContent(),
+        10,
+    );
+    const overdueBefore = Number.parseInt(
+        await overdueStat.textContent(),
+        10,
+    );
+
+    const resumeResponse = page.waitForResponse(
+        (response) => (
+            response.request().method() === 'POST'
+            && new URL(
+                response.url(),
+            ).pathname.includes('/reactivar')
+        ),
+    );
+
+    await waitingCard.getByRole('button', {
+        name: 'Reactivar',
+        exact: true,
+    }).click();
+
+    const response = await resumeResponse;
+    expect(response.status()).toBe(200);
+
+    const payload = await response.json();
+    expect(payload.ok).toBe(true);
+    expect(payload.presentation.overdue).toBe(true);
+    expect(payload.presentation.destination).toBe(
+        'vencidas',
+    );
+
+    await expect(waitingCard).toBeHidden();
+    await expect(waitingStat).toHaveText(
+        String(waitingBefore - 1),
+    );
+    await expect(waitingHeader).toHaveText(
+        String(waitingBefore - 1),
+    );
+    await expect(overdueStat).toHaveText(
+        String(overdueBefore + 1),
+    );
+    expect(page.url()).toBe(originalUrl);
+
+    const activeCard = page.locator(
+        '#vencidas > .list .item',
+        { hasText: 'E2E reactivar espera' },
+    ).first();
+
+    await expect(activeCard).toBeVisible();
+    await expect(
+        activeCard.locator(
+            'form[data-daily-action="complete"]',
+        ),
+    ).toHaveAttribute(
+        'data-live-complete',
+        'true',
+    );
+    await expect(
+        activeCard.locator(
+            'form.waiting-form',
+        ),
+    ).toHaveAttribute(
+        'data-daily-live-waiting-bound',
+        '1',
+    );
+
+    const toast = page.locator(
+        '#daily-live-undo-toast',
+    );
+
+    await expect(toast).toBeVisible();
+    await expect(
+        toast.locator('.global-undo-title'),
+    ).toHaveText('Tarea reactivada');
+
+    const undoResponse = page.waitForResponse(
+        (responseCandidate) => (
+            responseCandidate.request().method() === 'POST'
+            && new URL(
+                responseCandidate.url(),
+            ).pathname === '/deshacer'
+        ),
+    );
+
+    await toast.getByRole('button', {
+        name: /Deshacer/,
+    }).click();
+
+    expect((await undoResponse).status()).toBe(200);
+
+    await expect(waitingCard).toBeVisible();
+    await expect(waitingStat).toHaveText(
+        String(waitingBefore),
+    );
+    await expect(waitingHeader).toHaveText(
+        String(waitingBefore),
+    );
+    await expect(overdueStat).toHaveText(
+        String(overdueBefore),
+    );
+    await expect(activeCard).toHaveCount(0);
+    expect(page.url()).toBe(originalUrl);
 
     await expectNoHorizontalOverflow(page);
 });
