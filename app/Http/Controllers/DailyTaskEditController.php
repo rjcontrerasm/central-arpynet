@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\WorkTeam;
@@ -20,6 +21,10 @@ class DailyTaskEditController extends Controller
         $validated = $request->validate([
             'organization_id' => [
                 'required',
+                'integer',
+            ],
+            'project_id' => [
+                'nullable',
                 'integer',
             ],
             'due_date' => [
@@ -104,6 +109,32 @@ class DailyTaskEditController extends Controller
                     ),
                 403,
             );
+        }
+
+        $projectId = isset($validated['project_id'])
+            && $validated['project_id'] !== ''
+                ? (int) $validated['project_id']
+                : null;
+
+        if ($projectId) {
+            $projectAllowed = Project::query()
+                ->whereKey($projectId)
+                ->where(
+                    'organization_id',
+                    $targetOrganizationId,
+                )
+                ->whereNotIn(
+                    'status',
+                    ['completed', 'cancelled'],
+                )
+                ->exists();
+
+            if (! $projectAllowed) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'project_id' =>
+                        'El proyecto debe pertenecer a la empresa seleccionada y estar activo.',
+                ]);
+            }
         }
 
         $visibilityScope =
@@ -217,6 +248,7 @@ class DailyTaskEditController extends Controller
         $task->forceFill([
             'organization_id' =>
                 $validated['organization_id'],
+            'project_id' => $projectId,
             'due_at' => $dueAt,
             'urgency' => $validated['urgency'],
             'impact' => $validated['impact'],
