@@ -74,6 +74,85 @@ class DailyOpsWorkViewTest extends TestCase
             ->assertSee('Sin responsable');
     }
 
+    public function test_default_team_opens_mi_dia_in_team_context(): void
+    {
+        [$owner, $teammate, $organization, $team] =
+            $this->context();
+
+        $teammate->forceFill([
+            'default_work_team_id' => $team->id,
+        ])->save();
+
+        $teamTask = $this->task(
+            $organization,
+            'Administración compartida',
+            $owner,
+        );
+
+        $teamTask->forceFill([
+            'visibility_scope' => 'teams',
+        ])->save();
+        $teamTask->workTeams()->attach($team->id);
+
+        $this->actingAs($teammate)
+            ->get('/mi-dia')
+            ->assertOk()
+            ->assertViewHas(
+                'selectedWorkTeam',
+                $team->id,
+            )
+            ->assertViewHas(
+                'selectedWorkView',
+                'team',
+            )
+            ->assertSee('Administración compartida')
+            ->assertSee('Equipo: Administración')
+            ->assertSee('task-organization-badge', false);
+    }
+
+    public function test_explicit_mine_view_overrides_default_team(): void
+    {
+        [$owner, $teammate, $organization, $team] =
+            $this->context();
+
+        $teammate->forceFill([
+            'default_work_team_id' => $team->id,
+        ])->save();
+
+        $mine = $this->task(
+            $organization,
+            'Tarea personal explícita',
+            $teammate,
+        );
+
+        $shared = $this->task(
+            $organization,
+            'Tarea de equipo explícita',
+            $owner,
+        );
+
+        $shared->forceFill([
+            'visibility_scope' => 'teams',
+        ])->save();
+        $shared->workTeams()->attach($team->id);
+
+        $this->actingAs($teammate)
+            ->get('/mi-dia?view=mine')
+            ->assertOk()
+            ->assertViewHas(
+                'selectedWorkTeam',
+                null,
+            )
+            ->assertViewHas(
+                'selectedWorkView',
+                'mine',
+            )
+            ->assertSee('Tarea personal explícita')
+            ->assertDontSee('Tarea de equipo explícita');
+
+        $this->assertNotNull($mine);
+    }
+
     public function test_service_orders_follow_selected_work_view(): void
     {
         [$owner, $teammate, $organization] = $this->context();
