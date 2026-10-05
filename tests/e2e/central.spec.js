@@ -1618,9 +1618,22 @@ test('captura rápida filtra responsables y proyectos por empresa', async (
         },
     );
 
-    await expect(primaryOnly).toBeEnabled();
-    await expect(primaryProject).toBeEnabled();
-    await expect(secondaryProject).toBeDisabled();
+    await expect(primaryOnly).not.toHaveAttribute(
+        'disabled',
+        '',
+    );
+    await expect(primaryProject).not.toHaveAttribute(
+        'disabled',
+        '',
+    );
+    await expect(secondaryProject).toHaveAttribute(
+        'disabled',
+        '',
+    );
+    await expect(secondaryProject).toHaveAttribute(
+        'hidden',
+        '',
+    );
 
     const secondaryValue = await organization
         .locator(
@@ -1638,9 +1651,26 @@ test('captura rápida filtra responsables y proyectos por empresa', async (
         secondaryValue,
     );
 
-    await expect(primaryOnly).toBeDisabled();
-    await expect(primaryProject).toBeDisabled();
-    await expect(secondaryProject).toBeEnabled();
+    await expect(primaryOnly).toHaveAttribute(
+        'disabled',
+        '',
+    );
+    await expect(primaryOnly).toHaveAttribute(
+        'hidden',
+        '',
+    );
+    await expect(primaryProject).toHaveAttribute(
+        'disabled',
+        '',
+    );
+    await expect(primaryProject).toHaveAttribute(
+        'hidden',
+        '',
+    );
+    await expect(secondaryProject).not.toHaveAttribute(
+        'disabled',
+        '',
+    );
     await expect(
         assignee.locator('option:checked'),
     ).toHaveText('Central E2E');
