@@ -802,12 +802,12 @@ test('Mi Día pone En espera sin recargar dentro del filtro Vencidas', async (
     );
 
     await page.goto(
-        '/mi-dia?priority=overdue&view=mine&q=E2E%20espera%20live',
+        '/mi-dia?priority=overdue&view=mine&q=E2E%20espera%20filtro',
     );
 
     const originalUrl = page.url();
     const title = page.getByText(
-        'E2E espera live',
+        'E2E espera filtro',
         { exact: true },
     ).first();
 
