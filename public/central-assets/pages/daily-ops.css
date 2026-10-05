@@ -511,6 +511,61 @@
             border-radius: 16px;
         }
 
+        #prioridad-critica > .section-head h2 {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            color: #fca5a5;
+        }
+
+        #prioridad-critica > .section-head h2::before {
+            content: "!";
+            display: inline-grid;
+            place-items: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 7px;
+            background: #7f1d1d;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .item.daily-task-critical {
+            position: relative;
+            overflow: hidden;
+            border-color: #7f1d1d;
+            background:
+                linear-gradient(
+                    90deg,
+                    rgba(127, 29, 29, .18),
+                    rgba(17, 24, 43, 0) 34%
+                ),
+                #11182b;
+            box-shadow:
+                0 10px 30px rgba(127, 29, 29, .10);
+        }
+
+        .item.daily-task-critical::before {
+            content: "";
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 4px;
+            background: #ef4444;
+        }
+
+        .item.daily-task-critical .item-title {
+            color: #fecaca;
+        }
+
+        .item.daily-task-critical .pill.critical {
+            border: 1px solid #991b1b;
+            background: #7f1d1d;
+            color: #fff;
+            font-weight: 850;
+        }
+
         .item-title {
             font-weight: 760;
             line-height: 1.35;
@@ -1068,6 +1123,41 @@
             .pill.overdue {
                 background: #fef2f2;
                 color: #b91c1c;
+            }
+
+            #prioridad-critica > .section-head h2 {
+                color: #991b1b;
+            }
+
+            #prioridad-critica > .section-head h2::before {
+                background: #dc2626;
+                color: #fff;
+            }
+
+            .item.daily-task-critical {
+                border-color: #fca5a5;
+                background:
+                    linear-gradient(
+                        90deg,
+                        #fff1f2 0%,
+                        #ffffff 38%
+                    );
+                box-shadow:
+                    0 10px 28px rgba(185, 28, 28, .08);
+            }
+
+            .item.daily-task-critical::before {
+                background: #dc2626;
+            }
+
+            .item.daily-task-critical .item-title {
+                color: #7f1d1d;
+            }
+
+            .item.daily-task-critical .pill.critical {
+                border-color: #fecaca;
+                background: #dc2626;
+                color: #fff;
             }
 
             .pill.today {
