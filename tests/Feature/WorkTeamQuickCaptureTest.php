@@ -233,6 +233,59 @@ class WorkTeamQuickCaptureTest extends TestCase
             );
     }
 
+    public function test_contextual_capture_prefills_team_and_company(): void
+    {
+        [$rolando, $lissette, $arpynet, $pcsotec, $team] =
+            $this->context();
+
+        $this->actingAs($rolando)
+            ->get(
+                '/captura?work_team='.$team->id
+                .'&organization_id='.$pcsotec->id,
+            )
+            ->assertOk()
+            ->assertViewHas(
+                'contextWorkTeamId',
+                $team->id,
+            )
+            ->assertViewHas(
+                'defaultOrganizationId',
+                $pcsotec->id,
+            )
+            ->assertSee('Contexto de captura')
+            ->assertSee('Equipo: Administración')
+            ->assertSee('Empresa: PC SOTEC')
+            ->assertSee(
+                'data-work-team-ids="'.$team->id.'"',
+                false,
+            )
+            ->assertSee(
+                'data-organization-ids="'.$arpynet->id.'"',
+                false,
+            );
+    }
+
+    public function test_capture_rejects_foreign_company_context(): void
+    {
+        [$rolando] = $this->context();
+
+        $foreign = Organization::query()->create([
+            'name' => 'Empresa fuera de contexto',
+            'slug' => 'empresa-fuera-captura',
+            'category' => 'company',
+            'timezone' => 'America/Lima',
+            'is_active' => true,
+            'created_by' => $rolando->id,
+        ]);
+
+        $this->actingAs($rolando)
+            ->get(
+                '/captura?organization_id='
+                .$foreign->id,
+            )
+            ->assertForbidden();
+    }
+
     public function test_contextual_capture_preserves_team_after_save(): void
     {
         [$rolando, $lissette, $arpynet, , $team] =
@@ -252,7 +305,8 @@ class WorkTeamQuickCaptureTest extends TestCase
                     $team->id,
             ])
             ->assertRedirect(
-                '/captura?work_team='.$team->id,
+                '/captura?work_team='.$team->id
+                .'&organization_id='.$arpynet->id,
             );
 
         $task = Task::query()
