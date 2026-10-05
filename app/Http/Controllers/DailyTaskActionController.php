@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Task;
+use App\Support\DailyTaskPriority;
 use App\Support\GlobalUndoService;
 use App\Support\OperationalTaskActionService;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -83,11 +85,29 @@ class DailyTaskActionController extends Controller
                 'X-Central-Live-Action',
             ) === '1'
         ) {
+            $returnUrl = route(
+                'daily-ops.show',
+                $filters,
+                false,
+            );
+
             return response()->json([
                 'ok' => true,
                 'task_id' => $task->id,
                 'action' => $validated['action'],
                 'label' => $result['label'],
+                'return_url' => $returnUrl,
+                'presentation' => in_array(
+                    $validated['action'],
+                    [
+                        'today',
+                        'tomorrow',
+                        'next_week',
+                    ],
+                    true,
+                )
+                    ? $this->livePresentation($task)
+                    : null,
                 'undo' => $undoAction
                     ? [
                         'id' => $undoAction->id,
@@ -108,6 +128,72 @@ class DailyTaskActionController extends Controller
                 'daily_action_success',
                 $result['label'].'.',
             );
+    }
+
+    private function livePresentation(
+        Task $task,
+    ): array {
+        $task->refresh();
+
+        $timezone = config(
+            'app.timezone',
+            'America/Lima',
+        );
+
+        $now = CarbonImmutable::now(
+            $timezone,
+        );
+
+        $dueAt = $task->due_at;
+        $band = DailyTaskPriority::band(
+            $task,
+            $now,
+        );
+        $score = DailyTaskPriority::score(
+            $task,
+            $now,
+        );
+
+        $overdue = $dueAt
+            && $dueAt->isBefore(
+                $now->startOfDay(),
+            );
+
+        $sectionId = match (true) {
+            $overdue => 'vencidas',
+            $band === 'critical' =>
+                'prioridad-critica',
+            $dueAt
+                && $dueAt->isSameDay($now) =>
+                'hoy',
+            $dueAt
+                && $dueAt->isAfter(
+                    $now->endOfDay(),
+                )
+                && $dueAt->lessThanOrEqualTo(
+                    $now
+                        ->addDays(7)
+                        ->endOfDay(),
+                ) =>
+                'esta-semana',
+            is_null($dueAt) =>
+                'planificados',
+            default => null,
+        };
+
+        return [
+            'due_at' =>
+                $dueAt?->toIso8601String(),
+            'due_label' =>
+                $dueAt?->format('d/m/Y')
+                ?? 'sin fecha',
+            'overdue' => (bool) $overdue,
+            'priority_band' => $band,
+            'priority_label' =>
+                DailyTaskPriority::label($band),
+            'priority_score' => $score,
+            'section_id' => $sectionId,
+        ];
     }
 
     private function filterParams(
