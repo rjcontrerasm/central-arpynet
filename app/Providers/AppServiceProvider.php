@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\CollaborationComment;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -125,6 +126,33 @@ class AppServiceProvider extends ServiceProvider
                 )
             ) {
                 continue;
+            }
+
+            if (
+                $model instanceof CollaborationComment
+                && ! $model->exists
+                && request()->routeIs(
+                    'collaboration.store',
+                )
+                && $model->commentable_type
+                    === Task::class
+            ) {
+                $task = Task::query()
+                    ->whereKey(
+                        $model->commentable_id,
+                    )
+                    ->where(
+                        'organization_id',
+                        $organizationId,
+                    )
+                    ->first();
+
+                if (
+                    $task
+                    && $task->canBeUpdatedBy($user)
+                ) {
+                    continue;
+                }
             }
 
             throw new AuthorizationException(
