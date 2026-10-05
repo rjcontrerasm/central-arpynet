@@ -291,17 +291,37 @@ class QuickCaptureController extends Controller
             ->pluck('id')
             ->map(fn ($id): int => (int) $id);
 
-        abort_unless(
-            $selectedTeamIds
-                ->diff($accessibleTeamIds)
-                ->isEmpty(),
-            403,
-        );
+        foreach ($selectedTeamIds as $workTeamId) {
+            abort_unless(
+                $user->canAccessWorkTeam(
+                    (int) $workTeamId,
+                ),
+                403,
+            );
+        }
+
+        $directOrganizationIds = collect(
+            $user->writableOrganizationIds(),
+        )
+            ->map(fn ($id): int => (int) $id);
+
+        $requestedOrganizationId =
+            (int) $validated['organization_id'];
+
+        if (
+            $selectedTeamIds->isEmpty()
+            && ! $directOrganizationIds->contains(
+                $requestedOrganizationId,
+            )
+        ) {
+            abort(403);
+        }
 
         $organizations = $this->organizationsFor(
             $user,
             $selectedTeamIds->all(),
         );
+        $organizationIds = $organizations->pluck('id');
         $projects = $this->projectsFor($user);
 
         $parsed = $parser->parse(
@@ -338,11 +358,6 @@ class QuickCaptureController extends Controller
                     'Selecciona al menos un equipo para una tarea compartida.',
             ]);
         }
-
-        $directOrganizationIds = collect(
-            $user->writableOrganizationIds(),
-        )
-            ->map(fn ($id): int => (int) $id);
 
         if (
             ! $directOrganizationIds->contains(
