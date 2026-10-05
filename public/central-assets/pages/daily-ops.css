@@ -566,6 +566,17 @@
             font-weight: 850;
         }
 
+        .task-card-heading {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: start;
+            gap: 10px;
+        }
+
+        .task-card-heading .item-title {
+            min-width: 0;
+        }
+
         .item-title {
             font-weight: 760;
             line-height: 1.35;
@@ -590,22 +601,28 @@
         .task-organization-badge {
             display: inline-flex;
             align-items: center;
+            justify-self: end;
             gap: 5px;
-            min-height: 22px;
-            padding: 2px 7px;
+            max-width: min(46%, 190px);
+            min-height: 20px;
+            padding: 1px 6px;
+            overflow: hidden;
             border: 1px solid #475569;
             border-radius: 999px;
             background: #172033;
             color: #e2e8f0;
-            font-size: 10px;
+            font-size: 9.5px;
             font-weight: 850;
             letter-spacing: .015em;
+            line-height: 1.35;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .task-organization-dot {
-            width: 7px;
-            height: 7px;
-            flex: 0 0 7px;
+            width: 6px;
+            height: 6px;
+            flex: 0 0 6px;
             border-radius: 999px;
             background: #94a3b8;
         }
@@ -1625,6 +1642,16 @@
 }
 
 @media (max-width: 620px) {
+    .task-card-heading {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    .task-card-heading .task-organization-badge {
+        justify-self: start;
+        max-width: 100%;
+    }
+
     .daily-context-panel {
         margin-right: -2px;
         margin-left: -2px;
