@@ -10,6 +10,19 @@
                                 $canWriteTask = $currentUser
                                     ? $task->canBeUpdatedBy($currentUser)
                                     : false;
+
+                                $organizationColor =
+                                    $task->organization?->color;
+
+                                $organizationAccent = (
+                                    is_string($organizationColor)
+                                    && preg_match(
+                                        '/^#[0-9A-Fa-f]{6}$/',
+                                        $organizationColor,
+                                    )
+                                )
+                                    ? $organizationColor
+                                    : '#64748b';
                             @endphp
 
                             <div
@@ -23,11 +36,23 @@
                                     {{ $task->title }}
                                 </div>
 
-                                <div class="meta">
-                                    {{ $task->organization?->name
-                                        ?? 'Sin ámbito' }}
+                                <div class="meta task-context-line">
+                                    <span
+                                        class="task-organization-badge"
+                                        style="--organization-accent: {{ $organizationAccent }}"
+                                    >
+                                        <span
+                                            class="task-organization-dot"
+                                            aria-hidden="true"
+                                        ></span>
+                                        {{ $task->organization?->name
+                                            ?? 'Sin ámbito' }}
+                                    </span>
 
-                                    ·
+                                    <span class="task-context-separator">
+                                        ·
+                                    </span>
+
                                     <span data-daily-due-date>
                                         @if ($task->due_at)
                                             {{ $task->due_at->format(
@@ -39,9 +64,14 @@
                                     </span>
 
                                     @if ($selectedWorkView === 'team')
-                                        · Responsable:
-                                        {{ $task->assignee?->name
-                                            ?? 'Sin asignar' }}
+                                        <span class="task-context-separator">
+                                            ·
+                                        </span>
+                                        <span>
+                                            Responsable:
+                                            {{ $task->assignee?->name
+                                                ?? 'Sin asignar' }}
+                                        </span>
                                     @endif
                                 </div>
 
@@ -72,7 +102,7 @@
 
                                     @if ($task->workTeams?->isNotEmpty())
                                         @foreach ($task->workTeams as $workTeam)
-                                            <span class="pill">
+                                            <span class="pill team-context">
                                                 Equipo: {{ $workTeam->name }}
                                             </span>
                                         @endforeach
