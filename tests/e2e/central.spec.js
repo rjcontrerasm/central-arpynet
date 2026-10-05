@@ -1264,7 +1264,7 @@ test('búsqueda global encuentra módulos operativos', async ({ page }) => {
     await page.goto('/buscar?q=E2E');
 
     for (const label of [
-        'E2E tarea crítica',
+        'E2E búsqueda tarea',
         'E2E proyecto',
         'E2E cliente',
         'E2E servicio',
