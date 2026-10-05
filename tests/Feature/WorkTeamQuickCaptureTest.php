@@ -301,6 +301,8 @@ class WorkTeamQuickCaptureTest extends TestCase
             )
             ->assertSee('Empresa: PC SOTEC');
 
+        $this->withoutExceptionHandling();
+
         $this->actingAs($lissette)
             ->post('/captura', [
                 'organization_id' => $pcsotec->id,
