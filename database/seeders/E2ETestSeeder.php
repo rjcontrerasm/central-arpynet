@@ -147,6 +147,24 @@ class E2ETestSeeder extends Seeder
         Task::query()->updateOrCreate(
             [
                 'organization_id' => $organization->id,
+                'title' => 'E2E reactivar espera',
+            ],
+            [
+                'status' => 'pending',
+                'urgency' => 'high',
+                'impact' => 'medium',
+                'due_at' => now()->subDays(2),
+                'assigned_to' => $user->id,
+                'created_by' => $user->id,
+                'waiting_since' => now()->subDay(),
+                'waiting_until' => now()->addDay(),
+                'waiting_reason' => 'Esperando aprobación E2E',
+            ],
+        );
+
+        Task::query()->updateOrCreate(
+            [
+                'organization_id' => $organization->id,
                 'title' => 'E2E espera filtro',
             ],
             [

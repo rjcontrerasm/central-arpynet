@@ -124,6 +124,16 @@
             return response.json();
         };
 
+        const htmlCard = (html) => {
+            const template = document.createElement(
+                'template',
+            );
+
+            template.innerHTML = String(html || '').trim();
+
+            return template.content.firstElementChild;
+        };
+
         const existingUndoToast = document.querySelector(
             '.global-undo-bar:not(#daily-live-undo-toast)',
         );
@@ -170,6 +180,24 @@
             target.textContent = String(
                 Math.max(0, value),
             );
+        };
+
+        const setWaitingCount = (value) => {
+            const normalized = Math.max(
+                0,
+                Number.parseInt(value || '0', 10) || 0,
+            );
+
+            setDailyStatValue(
+                'waiting',
+                normalized,
+            );
+
+            document.querySelectorAll(
+                '[data-daily-waiting-count]',
+            ).forEach((target) => {
+                target.textContent = String(normalized);
+            });
         };
 
         const renderDailyFocus = () => {
@@ -1105,7 +1133,282 @@
             }, 1100);
         };
 
-        document.querySelectorAll(
+        const bindResumeForms = (root = document) => {
+            root.querySelectorAll(
+                '.resume-form',
+            ).forEach((form) => {
+                const waitingCard = form.closest('.item');
+
+                if (! waitingCard) {
+                    return;
+                }
+
+                if (form.dataset.dailyLiveResumeBound === '1') {
+                    return;
+                }
+
+                form.dataset.dailyLiveResumeBound = '1';
+
+                form.addEventListener(
+                    'submit',
+                    async (event) => {
+                        event.preventDefault();
+                        event.stopImmediatePropagation();
+
+                        if (form.dataset.submitting === 'yes') {
+                            return;
+                        }
+
+                        const button = form.querySelector(
+                            'button[type="submit"]',
+                        );
+                        const csrf = csrfToken(form);
+                        const selectedPriority =
+                            form.querySelector(
+                                'input[name="priority"]',
+                            )?.value || '';
+                        const waitingParent =
+                            waitingCard.parentNode;
+                        const sourceMarker =
+                            document.createComment(
+                                'central-resume-origin',
+                            );
+
+                        waitingParent.insertBefore(
+                            sourceMarker,
+                            waitingCard,
+                        );
+
+                        form.dataset.submitting = 'yes';
+                        button.disabled = true;
+
+                        try {
+                            const formData =
+                                new FormData(form);
+                            formData.set('_live', '1');
+
+                            const response = await fetch(
+                                form.getAttribute('action'),
+                                {
+                                    method: 'POST',
+                                    credentials: 'same-origin',
+                                    headers: {
+                                        Accept: 'application/json',
+                                        'X-Requested-With':
+                                            'XMLHttpRequest',
+                                        'X-Central-Live-Action':
+                                            '1',
+                                    },
+                                    body: formData,
+                                },
+                            );
+
+                            const payload =
+                                await parseJsonResponse(
+                                    response,
+                                );
+
+                            if (
+                                ! response.ok
+                                || ! payload.ok
+                                || ! payload.presentation
+                            ) {
+                                throw new Error(
+                                    payload.message
+                                    || 'No se pudo reactivar la tarea.',
+                                );
+                            }
+
+                            const presentation =
+                                payload.presentation;
+                            const activeCard =
+                                htmlCard(
+                                    payload.card_html,
+                                );
+
+                            if (! activeCard) {
+                                throw new Error(
+                                    'No se pudo construir la ficha reactivada.',
+                                );
+                            }
+
+                            const waitingBefore =
+                                captureTaskPositions(
+                                    waitingParent,
+                                );
+
+                            waitingCard.remove();
+
+                            animateTaskReflow(
+                                waitingParent,
+                                waitingBefore,
+                            );
+                            syncDailyEmptyState(
+                                waitingParent,
+                            );
+
+                            if (! selectedPriority) {
+                                setWaitingCount(
+                                    dailyStatValue(
+                                        'waiting',
+                                    ) - 1,
+                                );
+                            }
+
+                            const remainsInFilter =
+                                matchesPriorityFilter(
+                                    selectedPriority,
+                                    presentation,
+                                );
+                            const countedInSummary =
+                                ! selectedPriority
+                                || remainsInFilter;
+
+                            if (countedInSummary) {
+                                adjustDailySummary(
+                                    activeCard,
+                                    1,
+                                );
+                            }
+                            const destination =
+                                remainsInFilter
+                                    ? destinationList(
+                                        presentation.destination,
+                                    )
+                                    : null;
+
+                            if (destination) {
+                                const destinationBefore =
+                                    captureTaskPositions(
+                                        destination,
+                                    );
+
+                                insertCardByPriority(
+                                    destination,
+                                    activeCard,
+                                );
+                                syncDailyEmptyState(
+                                    destination,
+                                );
+                                animateTaskReflow(
+                                    destination,
+                                    destinationBefore,
+                                );
+                                pulseRestoredCard(
+                                    activeCard,
+                                );
+                                bindLiveTaskForms(
+                                    activeCard,
+                                );
+                            }
+
+                            renderDailyFocus();
+
+                            if (payload.undo) {
+                                showUndoToast(
+                                    payload.undo,
+                                    payload.label,
+                                    csrf,
+                                    {
+                                        mode: 'resume-waiting',
+                                        toastTitle:
+                                            'Tarea reactivada',
+                                        card: activeCard,
+                                        placeholder:
+                                            sourceMarker,
+                                        restoreAction: () => {
+                                            const activeParent =
+                                                activeCard
+                                                    .parentNode;
+
+                                            if (activeParent) {
+                                                const activeBefore =
+                                                    captureTaskPositions(
+                                                        activeParent,
+                                                    );
+
+                                                activeCard.remove();
+
+                                                animateTaskReflow(
+                                                    activeParent,
+                                                    activeBefore,
+                                                );
+                                                syncDailyEmptyState(
+                                                    activeParent,
+                                                );
+                                            }
+
+                                            if (countedInSummary) {
+                                                adjustDailySummary(
+                                                    activeCard,
+                                                    -1,
+                                                );
+                                            }
+
+                                            if (! selectedPriority) {
+                                                setWaitingCount(
+                                                    dailyStatValue(
+                                                        'waiting',
+                                                    ) + 1,
+                                                );
+                                            }
+
+                                            const waitingBeforeUndo =
+                                                captureTaskPositions(
+                                                    waitingParent,
+                                                );
+
+                                            waitingParent.insertBefore(
+                                                waitingCard,
+                                                sourceMarker,
+                                            );
+                                            sourceMarker.remove();
+
+                                            animateTaskReflow(
+                                                waitingParent,
+                                                waitingBeforeUndo,
+                                            );
+                                            syncDailyEmptyState(
+                                                waitingParent,
+                                            );
+                                            renderDailyFocus();
+                                            pulseRestoredCard(
+                                                waitingCard,
+                                            );
+                                        },
+                                    },
+                                );
+                            } else {
+                                sourceMarker.remove();
+                            }
+                        } catch (error) {
+                            sourceMarker.remove();
+
+                            const toast = ensureToast();
+                            toast.hidden = false;
+                            toast.querySelector(
+                                '.global-undo-title',
+                            ).textContent = error.message
+                                || 'No se pudo reactivar la tarea.';
+                            toast.querySelector(
+                                '.global-undo-detail',
+                            ).textContent = '';
+
+                            window.setTimeout(() => {
+                                toast.hidden = true;
+                            }, 2600);
+                        } finally {
+                            delete form.dataset.submitting;
+                            button.disabled = false;
+                        }
+                    },
+                    { capture: true },
+                );
+            });
+        };
+
+        const bindWaitingForms = (root = document) => {
+        root.querySelectorAll(
             '.waiting-form',
         ).forEach((form) => {
             const card = form.closest('.item');
@@ -1113,6 +1416,12 @@
             if (! card) {
                 return;
             }
+
+            if (form.dataset.dailyLiveWaitingBound === '1') {
+                return;
+            }
+
+            form.dataset.dailyLiveWaitingBound = '1';
 
             form.addEventListener(
                 'submit',
@@ -1137,19 +1446,6 @@
                         document.createComment(
                             'central-waiting-origin',
                         );
-                    const title =
-                        card.querySelector(
-                            '.item-title',
-                        )?.textContent?.trim()
-                        || 'Tarea';
-                    const waitingReason =
-                        form.querySelector(
-                            'input[name="waiting_reason"]',
-                        )?.value?.trim() || '';
-                    const waitingUntil =
-                        form.querySelector(
-                            'input[name="waiting_until"]',
-                        )?.value || '';
 
                     sourceParent.insertBefore(
                         sourceMarker,
@@ -1198,8 +1494,7 @@
                             -1,
                         );
                         if (! selectedPriority) {
-                            setDailyStatValue(
-                                'waiting',
+                            setWaitingCount(
                                 dailyStatValue('waiting') + 1,
                             );
                         }
@@ -1222,47 +1517,13 @@
                                 );
 
                         if (waitingParent) {
-                            waitingCard =
-                                document.createElement('div');
-                            waitingCard.className =
-                                'item daily-waiting-live';
-                            waitingCard.dataset
-                                .operationalCard = '1';
-
-                            const liveTitle =
-                                document.createElement('div');
-                            liveTitle.className =
-                                'item-title';
-                            liveTitle.textContent = title;
-
-                            const reason =
-                                document.createElement('div');
-                            reason.className = 'meta';
-                            reason.textContent =
-                                payload.waiting?.reason
-                                || waitingReason;
-
-                            waitingCard.appendChild(
-                                liveTitle,
-                            );
-                            waitingCard.appendChild(
-                                reason,
+                            waitingCard = htmlCard(
+                                payload.waiting?.card_html,
                             );
 
-                            const until =
-                                payload.waiting?.until
-                                || waitingUntil;
-
-                            if (until) {
-                                const followUp =
-                                    document.createElement(
-                                        'div',
-                                    );
-                                followUp.className = 'meta';
-                                followUp.textContent =
-                                    `Seguimiento: ${until}`;
-                                waitingCard.appendChild(
-                                    followUp,
+                            if (! waitingCard) {
+                                throw new Error(
+                                    'No se pudo construir la ficha En espera.',
                                 );
                             }
 
@@ -1282,6 +1543,9 @@
                                 waitingBefore,
                             );
                             pulseRestoredCard(
+                                waitingCard,
+                            );
+                            bindResumeForms(
                                 waitingCard,
                             );
                         }
@@ -1328,8 +1592,7 @@
                                         }
 
                                         if (! selectedPriority) {
-                                            setDailyStatValue(
-                                                'waiting',
+                                            setWaitingCount(
                                                 dailyStatValue(
                                                     'waiting',
                                                 ) - 1,
@@ -1393,7 +1656,10 @@
             );
         });
 
-        document.querySelectorAll(
+        };
+
+        const bindDateActionForms = (root = document) => {
+        root.querySelectorAll(
             '.action-form input[name="action"][value="today"],'
             + ' .action-form input[name="action"][value="tomorrow"],'
             + ' .action-form input[name="action"][value="next_week"]',
@@ -1404,6 +1670,12 @@
             if (! form || ! card) {
                 return;
             }
+
+            if (form.dataset.dailyLiveDateBound === '1') {
+                return;
+            }
+
+            form.dataset.dailyLiveDateBound = '1';
 
             form.addEventListener(
                 'submit',
@@ -1804,7 +2076,10 @@
             );
         });
 
-        document.querySelectorAll(
+        };
+
+        const bindStartActionForms = (root = document) => {
+        root.querySelectorAll(
             '.action-form input[name="action"][value="start"]',
         ).forEach((input) => {
             const form = input.closest('form');
@@ -1813,6 +2088,12 @@
             if (! form || ! card) {
                 return;
             }
+
+            if (form.dataset.dailyLiveStartBound === '1') {
+                return;
+            }
+
+            form.dataset.dailyLiveStartBound = '1';
 
             form.addEventListener(
                 'submit',
@@ -1923,7 +2204,10 @@
             );
         });
 
-        document.querySelectorAll(
+        };
+
+        const bindCompleteActionForms = (root = document) => {
+        root.querySelectorAll(
             '.action-form input[name="action"][value="complete"]',
         ).forEach((input) => {
             const form = input.closest('form');
@@ -1932,6 +2216,12 @@
             if (! form || ! card) {
                 return;
             }
+
+            if (form.dataset.dailyLiveCompleteBound === '1') {
+                return;
+            }
+
+            form.dataset.dailyLiveCompleteBound = '1';
 
             if (card.dataset.dailyLiveComplete === 'reload') {
                 return;
@@ -2135,6 +2425,17 @@
                 { capture: true },
             );
         });
+        };
+
+        const bindLiveTaskForms = (root = document) => {
+            bindResumeForms(root);
+            bindWaitingForms(root);
+            bindDateActionForms(root);
+            bindStartActionForms(root);
+            bindCompleteActionForms(root);
+        };
+
+        bindLiveTaskForms();
     };
 
     if (document.readyState === 'loading') {

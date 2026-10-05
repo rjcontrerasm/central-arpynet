@@ -2,12 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Organization;
+use App\Models\RecurringTaskRule;
 use App\Models\Task;
+use App\Models\User;
+use App\Models\WorkTeam;
+use App\Support\DailyTaskPriority;
 use App\Support\GlobalUndoService;
+use App\Support\RecurringTaskGenerator;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DailyTaskWaitingController extends Controller
 {
@@ -59,15 +66,14 @@ class DailyTaskWaitingController extends Controller
             'app.timezone',
             'America/Lima',
         );
+        $now = CarbonImmutable::now($timezone);
 
         $before = $undo->captureTask(
             $task,
         );
 
         $task->forceFill([
-            'waiting_since' => CarbonImmutable::now(
-                $timezone,
-            ),
+            'waiting_since' => $now,
             'waiting_until' =>
                 $validated['waiting_until'],
             'waiting_reason' =>
@@ -91,13 +97,13 @@ class DailyTaskWaitingController extends Controller
             ),
         );
 
-        if (
-            $request->expectsJson()
-            || $request->boolean('_live')
-            || $request->header(
-                'X-Central-Live-Action',
-            ) === '1'
-        ) {
+        if ($this->isLive($request)) {
+            $task->loadMissing([
+                'organization',
+                'assignee',
+                'workTeams',
+            ]);
+
             return response()->json([
                 'ok' => true,
                 'task_id' => $task->id,
@@ -108,6 +114,17 @@ class DailyTaskWaitingController extends Controller
                     'until' =>
                         $task->waiting_until
                             ?->format('d/m/Y'),
+                    'card_html' => view(
+                        'partials.daily-waiting-card',
+                        array_merge(
+                            ['task' => $task],
+                            $this->viewContext(
+                                $request,
+                                $filters,
+                                $now,
+                            ),
+                        ),
+                    )->render(),
                 ],
                 'undo' =>
                     $undo->clientPayload(
@@ -131,7 +148,8 @@ class DailyTaskWaitingController extends Controller
         Request $request,
         Task $task,
         GlobalUndoService $undo,
-    ): RedirectResponse {
+        RecurringTaskGenerator $recurringGenerator,
+    ): RedirectResponse|JsonResponse {
         $validated = $request->validate([
             'scope' => [
                 'nullable',
@@ -154,6 +172,10 @@ class DailyTaskWaitingController extends Controller
                 'nullable',
                 'integer',
             ],
+            'work_team' => [
+                'nullable',
+                'integer',
+            ],
         ]);
 
         $this->authorizeTask($request, $task);
@@ -173,7 +195,7 @@ class DailyTaskWaitingController extends Controller
             $validated,
         );
 
-        $undo->rememberTaskMutation(
+        $undoAction = $undo->rememberTaskMutation(
             $request->user(),
             $task,
             $before,
@@ -185,6 +207,58 @@ class DailyTaskWaitingController extends Controller
             ),
         );
 
+        if ($this->isLive($request)) {
+            $now = CarbonImmutable::now(
+                config(
+                    'app.timezone',
+                    'America/Lima',
+                ),
+            );
+
+            $task->loadMissing([
+                'organization',
+                'assignee',
+                'workTeams',
+                'recurringRun.rule',
+            ]);
+
+            $presentation = $this->presentation(
+                $task,
+                $now,
+            );
+
+            $this->decorateTask(
+                $task,
+                $presentation,
+                $recurringGenerator,
+            );
+
+            return response()->json([
+                'ok' => true,
+                'task_id' => $task->id,
+                'label' => 'Tarea reactivada',
+                'presentation' => $presentation,
+                'card_html' => view(
+                    'partials.daily-task-card',
+                    array_merge(
+                        ['task' => $task],
+                        $this->viewContext(
+                            $request,
+                            $filters,
+                            $now,
+                        ),
+                        $this->editorContext(
+                            $request,
+                        ),
+                    ),
+                )->render(),
+                'undo' =>
+                    $undo->clientPayload(
+                        $undoAction,
+                    ),
+            ]);
+        }
+
         return redirect()
             ->route(
                 'daily-ops.show',
@@ -194,6 +268,227 @@ class DailyTaskWaitingController extends Controller
                 'daily_action_success',
                 'Tarea reactivada.',
             );
+    }
+
+    private function isLive(
+        Request $request,
+    ): bool {
+        return $request->expectsJson()
+            || $request->boolean('_live')
+            || $request->header(
+                'X-Central-Live-Action',
+            ) === '1';
+    }
+
+    private function presentation(
+        Task $task,
+        CarbonImmutable $now,
+    ): array {
+        $todayStart = $now->startOfDay();
+        $todayEnd = $now->endOfDay();
+        $weekEnd = $now->addDays(7)->endOfDay();
+        $band = DailyTaskPriority::band(
+            $task,
+            $now,
+        );
+        $score = DailyTaskPriority::score(
+            $task,
+            $now,
+        );
+        $isOverdue = $task->due_at
+            && $task->due_at->isBefore(
+                $todayStart,
+            );
+
+        $destination = null;
+
+        if ($isOverdue) {
+            $destination = 'vencidas';
+        } elseif ($band === 'critical') {
+            $destination = 'prioridad-critica';
+        } elseif (
+            $task->due_at
+            && $task->due_at->isSameDay($now)
+        ) {
+            $destination = 'hoy';
+        } elseif (
+            $task->due_at
+            && $task->due_at->isAfter($todayEnd)
+            && $task->due_at
+                ->lessThanOrEqualTo($weekEnd)
+        ) {
+            $destination = 'esta-semana';
+        } elseif (is_null($task->due_at)) {
+            $destination = 'planificados';
+        }
+
+        return [
+            'due_date' => $task->due_at
+                ?->format('d/m/Y'),
+            'due_today' => (bool) (
+                $task->due_at
+                && $task->due_at->isSameDay($now)
+            ),
+            'overdue' => (bool) $isOverdue,
+            'priority_band' => $band,
+            'priority_label' =>
+                DailyTaskPriority::label($band),
+            'priority_score' => $score,
+            'destination' => $destination,
+        ];
+    }
+
+    private function viewContext(
+        Request $request,
+        array $filters,
+        CarbonImmutable $now,
+    ): array {
+        return [
+            'now' => $now,
+            'currentUser' => $request->user(),
+            'selectedWorkView' =>
+                $filters['view'] ?? 'mine',
+            'selectedScope' =>
+                $filters['scope'] ?? null,
+            'search' =>
+                $filters['q'] ?? '',
+            'selectedPriority' =>
+                $filters['priority'] ?? null,
+            'selectedRecurringRule' =>
+                $filters['recurring_rule'] ?? null,
+            'selectedWorkTeam' =>
+                $filters['work_team'] ?? null,
+        ];
+    }
+
+    private function decorateTask(
+        Task $task,
+        array $presentation,
+        RecurringTaskGenerator $recurringGenerator,
+    ): void {
+        $task->setAttribute(
+            'display_priority_score',
+            $presentation['priority_score'],
+        );
+        $task->setAttribute(
+            'display_priority_band',
+            $presentation['priority_band'],
+        );
+        $task->setAttribute(
+            'display_priority_label',
+            $presentation['priority_label'],
+        );
+
+        $run = $task->recurringRun;
+        $rule = $run?->rule;
+
+        if ($rule && $run?->scheduled_for) {
+            $task->setAttribute(
+                'recurrence_label',
+                RecurringTaskRule::frequencyOptions()[
+                    $rule->frequency
+                ] ?? $rule->frequency,
+            );
+            $task->setAttribute(
+                'recurrence_next_date',
+                $recurringGenerator
+                    ->nextScheduledDate(
+                        $rule,
+                        $run->scheduled_for,
+                    ),
+            );
+
+            return;
+        }
+
+        $task->setAttribute(
+            'recurrence_label',
+            null,
+        );
+        $task->setAttribute(
+            'recurrence_next_date',
+            null,
+        );
+    }
+
+    private function editorContext(
+        Request $request,
+    ): array {
+        $user = $request->user();
+
+        $workTeams = WorkTeam::query()
+            ->visibleTo($user)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get([
+                'work_teams.id',
+                'work_teams.name',
+            ]);
+
+        $visibleScopeOrganizationIds = collect(
+            $user->activeOrganizationIds(),
+        )
+            ->merge(
+                $user->taskScopeOrganizationIds(),
+            )
+            ->unique()
+            ->values();
+
+        $organizations = Organization::query()
+            ->whereIn(
+                'id',
+                $visibleScopeOrganizationIds,
+            )
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $organizationAssigneeIds = DB::table(
+            'organization_user',
+        )
+            ->whereIn(
+                'organization_id',
+                $visibleScopeOrganizationIds,
+            )
+            ->where('is_active', true)
+            ->whereIn(
+                'role',
+                ['owner', 'admin', 'member'],
+            )
+            ->pluck('user_id');
+
+        $teamAssigneeIds = DB::table(
+            'work_team_user',
+        )
+            ->whereIn(
+                'work_team_id',
+                $workTeams->pluck('id'),
+            )
+            ->where('is_active', true)
+            ->whereIn(
+                'role',
+                ['lead', 'member'],
+            )
+            ->pluck('user_id');
+
+        $taskAssignees = User::query()
+            ->whereIn(
+                'id',
+                $organizationAssigneeIds
+                    ->merge($teamAssigneeIds)
+                    ->push($user->id)
+                    ->unique()
+                    ->values(),
+            )
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'email']);
+
+        return compact(
+            'organizations',
+            'workTeams',
+            'taskAssignees',
+        );
     }
 
     private function authorizeTask(
