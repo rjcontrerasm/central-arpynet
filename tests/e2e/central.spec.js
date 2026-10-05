@@ -633,32 +633,35 @@ test('Mi Día mantiene acciones de fecha en vivo dentro del filtro Vencidas', as
 
     expect(payload.presentation.overdue).toBe(false);
 
-    await expect(title).toBeHidden();
-    await expect(overdueStat).toHaveText(
-        String(overdueBefore - 1),
-    );
-    expect(page.url()).toBe(originalUrl);
-
     const toast = page.locator(
         '#daily-live-undo-toast',
     );
 
-    await expect(toast).toBeVisible();
+    try {
+        await expect(title).toBeHidden();
+        await expect(overdueStat).toHaveText(
+            String(overdueBefore - 1),
+        );
+        expect(page.url()).toBe(originalUrl);
+        await expect(toast).toBeVisible();
+    } finally {
+        if (await toast.isVisible().catch(() => false)) {
+            const undoResponse = page.waitForResponse(
+                (responseCandidate) => (
+                    responseCandidate.request().method() === 'POST'
+                    && new URL(
+                        responseCandidate.url(),
+                    ).pathname === '/deshacer'
+                ),
+            );
 
-    const undoResponse = page.waitForResponse(
-        (responseCandidate) => (
-            responseCandidate.request().method() === 'POST'
-            && new URL(
-                responseCandidate.url(),
-            ).pathname === '/deshacer'
-        ),
-    );
+            await toast.getByRole('button', {
+                name: /Deshacer/,
+            }).click();
 
-    await toast.getByRole('button', {
-        name: /Deshacer/,
-    }).click();
-
-    expect((await undoResponse).status()).toBe(200);
+            expect((await undoResponse).status()).toBe(200);
+        }
+    }
 
     await expect(title).toBeVisible();
     await expect(overdueStat).toHaveText(
@@ -735,50 +738,53 @@ test('Mi Día pone una tarea En espera en vivo y permite deshacer', async (
     const payload = await response.json();
     expect(payload.ok).toBe(true);
 
-    await expect(sourceCard).toBeHidden();
-    await expect(waitingStat).toHaveText(
-        String(waitingBefore + 1),
-    );
-
     const waitingList = page.locator(
         '#en-espera > .list',
     );
-
-    await expect(
-        waitingList.locator('.daily-waiting-live', {
-            hasText: 'E2E espera live',
-        }),
-    ).toBeVisible();
-
-    await expect(
-        waitingList.locator('.daily-waiting-live', {
-            hasText: 'Esperando validación E2E',
-        }),
-    ).toBeVisible();
-
     const toast = page.locator(
         '#daily-live-undo-toast',
     );
 
-    await expect(toast).toBeVisible();
-    await expect(
-        toast.locator('.global-undo-title'),
-    ).toHaveText('Tarea en espera');
+    try {
+        await expect(sourceCard).toBeHidden();
+        await expect(waitingStat).toHaveText(
+            String(waitingBefore + 1),
+        );
 
-    const undoResponse = page.waitForResponse(
-        (responseCandidate) => (
-            responseCandidate.request().method() === 'POST'
-            && new URL(
-                responseCandidate.url(),
-            ).pathname === '/deshacer'
-        ),
-    );
+        await expect(
+            waitingList.locator('.daily-waiting-live', {
+                hasText: 'E2E espera live',
+            }),
+        ).toBeVisible();
 
-    await toast.getByRole('button', {
-        name: /Deshacer/,
-    }).click();
+        await expect(
+            waitingList.locator('.daily-waiting-live', {
+                hasText: 'Esperando validación E2E',
+            }),
+        ).toBeVisible();
 
-    expect((await undoResponse).status()).toBe(200);
+        await expect(toast).toBeVisible();
+        await expect(
+            toast.locator('.global-undo-title'),
+        ).toHaveText('Tarea en espera');
+    } finally {
+        if (await toast.isVisible().catch(() => false)) {
+            const undoResponse = page.waitForResponse(
+                (responseCandidate) => (
+                    responseCandidate.request().method() === 'POST'
+                    && new URL(
+                        responseCandidate.url(),
+                    ).pathname === '/deshacer'
+                ),
+            );
+
+            await toast.getByRole('button', {
+                name: /Deshacer/,
+            }).click();
+
+            expect((await undoResponse).status()).toBe(200);
+        }
+    }
 
     await expect(sourceCard).toBeVisible();
     await expect(waitingStat).toHaveText(
@@ -861,33 +867,37 @@ test('Mi Día pone En espera sin recargar dentro del filtro Vencidas', async (
 
     expect((await responsePromise).status()).toBe(200);
 
-    await expect(title).toBeHidden();
-    await expect(overdueStat).toHaveText(
-        String(overdueBefore - 1),
-    );
-    await expect(
-        page.locator('[data-daily-stat="waiting"]'),
-    ).toHaveText(String(waitingBefore));
-    expect(page.url()).toBe(originalUrl);
-
     const toast = page.locator(
         '#daily-live-undo-toast',
     );
 
-    const undoResponse = page.waitForResponse(
-        (responseCandidate) => (
-            responseCandidate.request().method() === 'POST'
-            && new URL(
-                responseCandidate.url(),
-            ).pathname === '/deshacer'
-        ),
-    );
+    try {
+        await expect(title).toBeHidden();
+        await expect(overdueStat).toHaveText(
+            String(overdueBefore - 1),
+        );
+        await expect(
+            page.locator('[data-daily-stat="waiting"]'),
+        ).toHaveText(String(waitingBefore));
+        expect(page.url()).toBe(originalUrl);
+    } finally {
+        if (await toast.isVisible().catch(() => false)) {
+            const undoResponse = page.waitForResponse(
+                (responseCandidate) => (
+                    responseCandidate.request().method() === 'POST'
+                    && new URL(
+                        responseCandidate.url(),
+                    ).pathname === '/deshacer'
+                ),
+            );
 
-    await toast.getByRole('button', {
-        name: /Deshacer/,
-    }).click();
+            await toast.getByRole('button', {
+                name: /Deshacer/,
+            }).click();
 
-    expect((await undoResponse).status()).toBe(200);
+            expect((await undoResponse).status()).toBe(200);
+        }
+    }
 
     await expect(title).toBeVisible();
     await expect(overdueStat).toHaveText(
