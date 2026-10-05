@@ -137,6 +137,10 @@ class DailyTaskActionController extends Controller
                 'presentation' => [
                     'due_date' => $task->due_at
                         ?->format('d/m/Y'),
+                    'due_today' => (bool) (
+                        $task->due_at
+                        && $task->due_at->isSameDay($now)
+                    ),
                     'overdue' => (bool) $isOverdue,
                     'priority_band' => $band,
                     'priority_label' =>
