@@ -8,6 +8,9 @@
         ?->canWriteToOrganization(
             (int) $task->organization_id,
         ) ?? false;
+
+    $organizationTone =
+        ((int) ($task->organization_id ?? 0)) % 6;
 @endphp
 
 <div
@@ -16,22 +19,37 @@
     data-daily-waiting-card
     data-daily-task-id="{{ $task->id }}"
 >
-    <div class="item-title">
-        {{ $task->title }}
+    <div class="task-card-heading">
+        <div class="item-title">
+            {{ $task->title }}
+        </div>
+
+        <span
+            class="task-organization-badge organization-tone-{{ $organizationTone }}"
+        >
+            <span
+                class="task-organization-dot"
+                aria-hidden="true"
+            ></span>
+            {{ $task->organization?->name
+                ?? 'Sin ámbito' }}
+        </span>
     </div>
 
-    <div class="meta">
-        {{ $task->organization?->name
-            ?? 'Sin ámbito' }}
-
+    <div class="meta task-context-line">
         @if ($task->waiting_reason)
-            · {{ $task->waiting_reason }}
+            <span>{{ $task->waiting_reason }}</span>
         @endif
 
         @if ($selectedWorkView === 'team')
-            · Responsable:
-            {{ $task->assignee?->name
-                ?? 'Sin asignar' }}
+            @if ($task->waiting_reason)
+                <span class="task-context-separator">·</span>
+            @endif
+            <span>
+                Responsable:
+                {{ $task->assignee?->name
+                    ?? 'Sin asignar' }}
+            </span>
         @endif
     </div>
 
