@@ -916,6 +916,14 @@ test('Mi Día reactiva una tarea En espera en vivo y permite deshacer', async (
         'data-daily-live-waiting-bound',
         '1',
     );
+    await expect(
+        activeCard.locator(
+            'form[data-daily-edit-form]',
+        ),
+    ).toHaveAttribute(
+        'data-daily-edit-bound',
+        '1',
+    );
 
     const toast = page.locator(
         '#daily-live-undo-toast',
@@ -1062,6 +1070,117 @@ test('Mi Día pone En espera sin recargar dentro del filtro Vencidas', async (
         String(overdueBefore),
     );
     expect(page.url()).toBe(originalUrl);
+
+    await expectNoHorizontalOverflow(page);
+});
+
+test('Mi Día filtra responsable y proyecto al editar empresa', async (
+    { page },
+    testInfo,
+) => {
+    test.skip(
+        testInfo.project.name !== 'desktop-1366',
+        'La prevención dinámica del editor se valida una sola vez.',
+    );
+
+    await page.goto(
+        '/mi-dia?q=E2E%20reflow%20uno',
+    );
+
+    const title = page.getByText(
+        'E2E reflow uno',
+        { exact: true },
+    ).first();
+
+    await expect(title).toBeVisible();
+
+    const card = title.locator(
+        'xpath=ancestor::*[contains(@class,"item")][1]',
+    );
+
+    await card.locator(
+        'details.task-edit > summary',
+    ).click();
+
+    const form = card.locator(
+        'form[data-daily-edit-form]',
+    );
+
+    await expect(form).toHaveAttribute(
+        'data-daily-edit-bound',
+        '1',
+    );
+
+    const organization = form.locator(
+        '[data-edit-organization]',
+    );
+    const project = form.locator(
+        '[data-edit-project]',
+    );
+    const assignee = form.locator(
+        '[data-edit-assignee]',
+    );
+
+    const primaryProject = project.locator(
+        'option',
+        { hasText: 'E2E proyecto' },
+    );
+    const secondaryProject = project.locator(
+        'option',
+        {
+            hasText:
+                'Proyecto secundario captura',
+        },
+    );
+    const primaryOnly = assignee.locator(
+        'option',
+        { hasText: 'E2E ARPYNET solo' },
+    );
+
+    await expect(primaryProject).not.toHaveAttribute(
+        'disabled',
+        '',
+    );
+    await expect(secondaryProject).toHaveAttribute(
+        'disabled',
+        '',
+    );
+    await expect(primaryOnly).not.toHaveAttribute(
+        'disabled',
+        '',
+    );
+
+    const secondaryValue = await organization
+        .locator(
+            'option',
+            {
+                hasText:
+                    'ARPYNET E2E Secundaria',
+            },
+        )
+        .getAttribute('value');
+
+    expect(secondaryValue).toBeTruthy();
+
+    await organization.selectOption(
+        secondaryValue,
+    );
+
+    await expect(primaryProject).toHaveAttribute(
+        'disabled',
+        '',
+    );
+    await expect(secondaryProject).not.toHaveAttribute(
+        'disabled',
+        '',
+    );
+    await expect(primaryOnly).toHaveAttribute(
+        'disabled',
+        '',
+    );
+    await expect(
+        assignee.locator('option:checked'),
+    ).toHaveText('Central E2E');
 
     await expectNoHorizontalOverflow(page);
 });
