@@ -117,17 +117,29 @@ class DailyTaskEditController extends Controller
                 : null;
 
         if ($projectId) {
-            $projectAllowed = Project::query()
+            $project = Project::query()
                 ->whereKey($projectId)
                 ->where(
                     'organization_id',
                     $targetOrganizationId,
                 )
-                ->whereNotIn(
-                    'status',
-                    ['completed', 'cancelled'],
-                )
-                ->exists();
+                ->first();
+
+            $keepsCurrentProject =
+                $project
+                && (int) $task->project_id
+                    === $projectId;
+
+            $projectAllowed =
+                $project
+                && (
+                    $keepsCurrentProject
+                    || ! in_array(
+                        $project->status,
+                        ['completed', 'cancelled'],
+                        true,
+                    )
+                );
 
             if (! $projectAllowed) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
