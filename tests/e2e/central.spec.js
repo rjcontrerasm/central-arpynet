@@ -1685,6 +1685,88 @@ test('Mi Día permite deshacer antes de terminar la salida sin borrar la ficha r
     await expectNoHorizontalOverflow(page);
 });
 
+test('colaboración usa composer natural y menciones con un clic', async (
+    { page },
+) => {
+    await page.goto(
+        '/mi-dia?q=E2E%20tarea%20cr%C3%ADtica',
+    );
+
+    const title = page.getByText(
+        'E2E tarea crítica',
+        { exact: true },
+    ).first();
+
+    await expect(title).toBeVisible();
+
+    const card = title.locator(
+        'xpath=ancestor::*[@data-operational-card][1]',
+    );
+
+    await card.getByRole('link', {
+        name: 'Conversación',
+        exact: true,
+    }).click();
+
+    await expect(page).toHaveURL(
+        /\/colaboracion\/task\/\d+/,
+    );
+
+    const composer = page.locator(
+        '.collaboration-composer',
+    );
+    const textarea = page.locator(
+        '.collaboration-textarea',
+    );
+
+    await expect(composer).toBeVisible();
+    await expect(textarea).toBeVisible();
+    await expect(
+        page.getByText('Avisar a', {
+            exact: true,
+        }),
+    ).toBeVisible();
+
+    const composerBox = await composer.boundingBox();
+    const textareaBox = await textarea.boundingBox();
+
+    expect(composerBox).not.toBeNull();
+    expect(textareaBox).not.toBeNull();
+    expect(
+        textareaBox.width / composerBox.width,
+    ).toBeGreaterThan(0.88);
+
+    await expect(
+        page.locator('select[name="mentions[]"]'),
+    ).toHaveCount(0);
+
+    await expect(
+        page.getByText(/Ctrl\/Cmd/),
+    ).toHaveCount(0);
+
+    const person = page.locator(
+        '.collaboration-person',
+    ).first();
+
+    await expect(person).toBeVisible();
+
+    const checkbox = person.locator(
+        'input[type="checkbox"]',
+    );
+
+    await expect(checkbox).not.toBeChecked();
+
+    await person.click();
+
+    await expect(checkbox).toBeChecked();
+
+    await textarea.fill(
+        'Comentario de prueba sin publicar.',
+    );
+
+    await expectNoHorizontalOverflow(page);
+});
+
 test('búsqueda global encuentra módulos operativos', async ({ page }) => {
     await page.goto(
         '/buscar?q=E2E%20b%C3%BAsqueda%20tarea',
