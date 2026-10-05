@@ -576,6 +576,64 @@
             line-height: 1.45;
         }
 
+        .task-context-line {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .task-context-separator {
+            color: #475569;
+        }
+
+        .task-organization-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            min-height: 22px;
+            padding: 2px 7px;
+            border: 1px solid
+                color-mix(
+                    in srgb,
+                    var(--organization-accent) 58%,
+                    #334155
+                );
+            border-radius: 999px;
+            background:
+                color-mix(
+                    in srgb,
+                    var(--organization-accent) 12%,
+                    #0f172a
+                );
+            color: #e2e8f0;
+            font-size: 10px;
+            font-weight: 850;
+            letter-spacing: .015em;
+        }
+
+        .task-organization-dot {
+            width: 7px;
+            height: 7px;
+            flex: 0 0 7px;
+            border-radius: 999px;
+            background: var(--organization-accent);
+            box-shadow:
+                0 0 0 2px
+                color-mix(
+                    in srgb,
+                    var(--organization-accent) 22%,
+                    transparent
+                );
+        }
+
+        .pill.team-context {
+            border: 1px solid #1d4ed8;
+            background: #172554;
+            color: #bfdbfe;
+            font-weight: 820;
+        }
+
         .pills,
         .actions {
             display: flex;
@@ -1162,6 +1220,32 @@
                 border-color: #fecaca;
                 background: #dc2626;
                 color: #fff;
+            }
+
+            .task-organization-badge {
+                border-color:
+                    color-mix(
+                        in srgb,
+                        var(--organization-accent) 45%,
+                        #cbd5e1
+                    );
+                background:
+                    color-mix(
+                        in srgb,
+                        var(--organization-accent) 8%,
+                        #ffffff
+                    );
+                color: #334155;
+            }
+
+            .task-context-separator {
+                color: #94a3b8;
+            }
+
+            .pill.team-context {
+                border-color: #bfdbfe;
+                background: #eff6ff;
+                color: #1d4ed8;
             }
 
             .pill.today {
