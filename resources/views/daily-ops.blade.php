@@ -689,7 +689,7 @@
                                 ]),
                             ) }}"
                         >
-                            Ver las <span data-daily-overdue-link-count>{{ $overdueCount }}</span>
+                            Ver las {{ $overdueCount }}
                         </a>
                     @endif
                 </div>
