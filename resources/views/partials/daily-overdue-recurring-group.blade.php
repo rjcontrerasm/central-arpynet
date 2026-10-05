@@ -12,6 +12,7 @@
 <div
     class="item recurring-overdue-group"
     data-operational-card
+    data-daily-live-complete="reload"
 >
     <div class="item-title">
         {{ $task->title }}
