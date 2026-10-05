@@ -2637,6 +2637,10 @@ h2 {
         transform 120ms ease;
 }
 
+.global-undo-button[hidden] {
+    display: none !important;
+}
+
 .global-undo-button:hover {
     border-color: #8db1cb !important;
     background: #eaf3f9 !important;
