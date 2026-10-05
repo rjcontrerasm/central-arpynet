@@ -84,9 +84,10 @@ class ServiceOrderFrontController extends Controller
         ServiceOrder $serviceOrder,
     ): View {
         abort_unless(
-            $request->user()->canAccessOrganization(
-                (int) $serviceOrder->organization_id,
-            ),
+            ServiceOrder::query()
+                ->visibleTo($request->user())
+                ->whereKey($serviceOrder->id)
+                ->exists(),
             403,
         );
 
