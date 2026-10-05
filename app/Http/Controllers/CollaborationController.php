@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CollaborationComment;
+use App\Models\Task;
 use App\Models\User;
 use App\Notifications\CollaborationMentionNotification;
 use App\Support\CollaborationSubjectResolver;
@@ -67,19 +68,14 @@ class CollaborationController extends Controller
             ->oldest()
             ->get();
 
-        $members = User::query()
-            ->where('is_active', true)
-            ->whereHas(
-                'organizations',
-                fn (Builder $query): Builder => $query
-                    ->where('organizations.id', $organizationId)
-                    ->where('organizations.is_active', true)
-                    ->where('organization_user.is_active', true),
-            )
-            ->orderBy('name')
-            ->get(['users.id', 'users.name']);
+        $members = $this->mentionableUsers(
+            $subject,
+            $organizationId,
+        );
 
-        $canWrite = $user->canWriteToOrganization($organizationId);
+        $canWrite = $subject instanceof Task
+            ? $subject->canBeUpdatedBy($user)
+            : $user->canWriteToOrganization($organizationId);
         $subjectLabel = $this->subjects->label($subject);
         $subjectTitle = $this->subjects->title($subject);
 
@@ -108,9 +104,11 @@ class CollaborationController extends Controller
         $organizationId = (int) $subject->organization_id;
 
         abort_unless(
-            $user->canWriteToOrganization($organizationId),
+            $subject instanceof Task
+                ? $subject->canBeUpdatedBy($user)
+                : $user->canWriteToOrganization($organizationId),
             403,
-            'Tu acceso a esta empresa es de solo lectura.',
+            'Tu acceso a este elemento es de solo lectura.',
         );
 
         $validated = $request->validate([
@@ -124,18 +122,13 @@ class CollaborationController extends Controller
             ->unique()
             ->values();
 
-        $mentionedUsers = User::query()
+        $mentionedUsers = $this->mentionableUsers(
+            $subject,
+            $organizationId,
+        )
             ->whereIn('id', $requestedMentions)
-            ->where('is_active', true)
-            ->whereHas(
-                'organizations',
-                fn (Builder $query): Builder => $query
-                    ->where('organizations.id', $organizationId)
-                    ->where('organizations.is_active', true)
-                    ->where('organization_user.is_active', true),
-            )
-            ->orderBy('id')
-            ->get(['users.id', 'users.name']);
+            ->sortBy('id')
+            ->values();
 
         if (
             $requestedMentions->sort()->values()->all()
@@ -144,7 +137,7 @@ class CollaborationController extends Controller
         ) {
             throw ValidationException::withMessages([
                 'mentions' =>
-                    'Todas las menciones deben pertenecer a usuarios activos de la misma empresa.',
+                    'Todas las menciones deben corresponder a personas con acceso a este elemento.',
             ]);
         }
 
@@ -200,6 +193,59 @@ class CollaborationController extends Controller
                 'collaboration_success',
                 'Comentario publicado.',
             );
+    }
+
+    private function mentionableUsers(
+        Model $subject,
+        int $organizationId,
+    ) {
+        if (
+            $subject instanceof Task
+            && ($subject->visibility_scope ?: 'organization')
+                === 'teams'
+        ) {
+            $teamIds = $subject->workTeams()
+                ->pluck('work_teams.id');
+
+            return User::query()
+                ->where('is_active', true)
+                ->where(
+                    function (Builder $visibility) use (
+                        $subject,
+                        $teamIds,
+                    ): void {
+                        $visibility
+                            ->whereKey($subject->assigned_to)
+                            ->orWhereHas(
+                                'workTeams',
+                                fn (Builder $teams): Builder =>
+                                    $teams
+                                        ->whereIn(
+                                            'work_teams.id',
+                                            $teamIds,
+                                        )
+                                        ->where(
+                                            'work_team_user.is_active',
+                                            true,
+                                        ),
+                            );
+                    },
+                )
+                ->orderBy('name')
+                ->get(['users.id', 'users.name']);
+        }
+
+        return User::query()
+            ->where('is_active', true)
+            ->whereHas(
+                'organizations',
+                fn (Builder $query): Builder => $query
+                    ->where('organizations.id', $organizationId)
+                    ->where('organizations.is_active', true)
+                    ->where('organization_user.is_active', true),
+            )
+            ->orderBy('name')
+            ->get(['users.id', 'users.name']);
     }
 
     private function touchSubject(Model $subject): void
