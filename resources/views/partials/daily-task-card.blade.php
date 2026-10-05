@@ -136,6 +136,21 @@
                                     </div>
                                 @endif
 
+                                <div class="task-collaboration-row">
+                                    <a
+                                        class="task-collaboration-link"
+                                        href="{{ route(
+                                            'collaboration.thread',
+                                            [
+                                                'type' => 'task',
+                                                'id' => $task->id,
+                                            ],
+                                        ) }}"
+                                    >
+                                        Conversación
+                                    </a>
+                                </div>
+
                                 @if (
                                     $task->recurrence_label
                                     && $task->recurrence_next_date
