@@ -1101,6 +1101,21 @@ test('Mi Día jerarquiza empresa en cabecera según viewport', async (
     await expect(heading).toBeVisible();
     await expect(company).toBeVisible();
 
+    if (testInfo.project.name === 'desktop-1366') {
+        await expect(company).toHaveText(
+            'ARPYNET E2E',
+        );
+
+        const badgeFits = await company.evaluate(
+            (element) => (
+                element.scrollWidth
+                <= element.clientWidth + 1
+            ),
+        );
+
+        expect(badgeFits).toBe(true);
+    }
+
     const titleBox = await title.boundingBox();
     const companyBox = await company.boundingBox();
 

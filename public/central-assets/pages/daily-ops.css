@@ -603,7 +603,8 @@
             align-items: center;
             justify-self: end;
             gap: 5px;
-            max-width: min(46%, 190px);
+            width: max-content;
+            max-width: 210px;
             min-height: 20px;
             padding: 1px 6px;
             overflow: hidden;
