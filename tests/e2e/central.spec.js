@@ -1066,6 +1066,66 @@ test('Mi Día pone En espera sin recargar dentro del filtro Vencidas', async (
     await expectNoHorizontalOverflow(page);
 });
 
+test('Mi Día jerarquiza empresa en cabecera según viewport', async (
+    { page },
+    testInfo,
+) => {
+    test.skip(
+        ! ['desktop-1366', 'mobile-390'].includes(
+            testInfo.project.name,
+        ),
+        'La cabecera se valida en desktop y móvil.',
+    );
+
+    await page.goto(
+        '/mi-dia?q=E2E%20reflow%20uno',
+    );
+
+    const title = page.getByText(
+        'E2E reflow uno',
+        { exact: true },
+    ).first();
+
+    await expect(title).toBeVisible();
+
+    const card = title.locator(
+        'xpath=ancestor::*[contains(@class,"item")][1]',
+    );
+    const heading = card.locator(
+        '.task-card-heading',
+    );
+    const company = card.locator(
+        '.task-organization-badge',
+    );
+
+    await expect(heading).toBeVisible();
+    await expect(company).toBeVisible();
+
+    const titleBox = await title.boundingBox();
+    const companyBox = await company.boundingBox();
+
+    expect(titleBox).not.toBeNull();
+    expect(companyBox).not.toBeNull();
+
+    if (testInfo.project.name === 'desktop-1366') {
+        expect(companyBox.x).toBeGreaterThan(
+            titleBox.x + 40,
+        );
+        expect(
+            Math.abs(companyBox.y - titleBox.y),
+        ).toBeLessThan(18);
+    } else {
+        expect(companyBox.y).toBeGreaterThan(
+            titleBox.y + 10,
+        );
+        expect(
+            Math.abs(companyBox.x - titleBox.x),
+        ).toBeLessThan(12);
+    }
+
+    await expectNoHorizontalOverflow(page);
+});
+
 test('Mi Día muestra prioridad crítica primero y con tratamiento distintivo', async (
     { page },
     testInfo,
