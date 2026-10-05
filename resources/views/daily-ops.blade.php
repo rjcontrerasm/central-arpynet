@@ -402,7 +402,7 @@
             <div class="focus-eyebrow">Foco del día</div>
 
             @if ($overdueCount > 0)
-                <h2 class="focus-title">
+                <h2 class="focus-title" data-daily-focus-title>
                     {{ $overdueCount }}
                     {{ $overdueCount === 1 ? 'tarea vencida requiere' : 'tareas vencidas requieren' }}
                     revisión
@@ -426,8 +426,8 @@
             @endif
 
             <div class="focus-meta">
-                {{ $criticalCount }} críticas
-                · {{ $waitingCount }} en espera
+                <span data-daily-focus-critical>{{ $criticalCount }}</span> críticas
+                · <span data-daily-focus-waiting>{{ $waitingCount }}</span> en espera
                 · {{ $projectsAttentionCount }} proyectos a revisar
                 · {{ $upcomingObligations->count() }} vencimientos próximos
             </div>
@@ -532,7 +532,7 @@
                     $selectedRecurringRule,
             ])) }}"
         >
-            <div class="stat-value danger-value">
+            <div class="stat-value danger-value" data-daily-stat="overdue">
                 {{ $overdueCount }}
             </div>
             <div class="stat-label">Vencidas</div>
@@ -549,7 +549,7 @@
                     $selectedRecurringRule,
             ])) }}"
         >
-            <div class="stat-value critical-value">
+            <div class="stat-value critical-value" data-daily-stat="critical">
                 {{ $criticalCount }}
             </div>
             <div class="stat-label">Críticas</div>
@@ -566,7 +566,7 @@
                     $selectedRecurringRule,
             ])) }}"
         >
-            <div class="stat-value today-value">
+            <div class="stat-value today-value" data-daily-stat="today">
                 {{ $priorityTodayCount }}
             </div>
             <div class="stat-label">Hoy</div>
@@ -583,7 +583,7 @@
                     $selectedRecurringRule,
             ])) }}"
         >
-            <div class="stat-value">
+            <div class="stat-value" data-daily-stat="week">
                 {{ $priorityWeekCount }}
             </div>
             <div class="stat-label">Semana</div>
@@ -600,14 +600,14 @@
                     $selectedRecurringRule,
             ])) }}"
         >
-            <div class="stat-value">
+            <div class="stat-value" data-daily-stat="planned">
                 {{ $plannedCount }}
             </div>
             <div class="stat-label">Planificados</div>
         </a>
 
         <div class="stat">
-            <div class="stat-value">
+            <div class="stat-value" data-daily-stat="waiting">
                 {{ $waitingCount }}
             </div>
             <div class="stat-label">En espera</div>
@@ -682,7 +682,10 @@
                     @endif
                 </div>
 
-                <div class="list">
+                <div
+                    class="list"
+                    data-daily-empty-message="No hay tareas vencidas pendientes."
+                >
                     @forelse (
                         $visibleOverdueGroups
                         as $row
@@ -771,7 +774,10 @@
                         </a>
                     </div>
 
-                    <div class="list">
+                    <div
+                        class="list"
+                        data-daily-empty-message="{{ $section['empty'] }}"
+                    >
                         @forelse ($section['tasks'] as $task)
                             @include(
                                 'partials.daily-task-card',
