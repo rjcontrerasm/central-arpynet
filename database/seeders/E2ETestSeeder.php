@@ -74,6 +74,24 @@ class E2ETestSeeder extends Seeder
             ],
         ]);
 
+        $primaryOnlyUser = User::query()->updateOrCreate(
+            ['email' => 'e2e-primary-only@arpynet.test'],
+            [
+                'name' => 'E2E ARPYNET solo',
+                'password' => Hash::make(self::PASSWORD),
+                'email_verified_at' => now(),
+                'is_active' => true,
+            ],
+        );
+
+        $organization->users()->syncWithoutDetaching([
+            $primaryOnlyUser->id => [
+                'role' => 'member',
+                'is_default' => false,
+                'is_active' => true,
+            ],
+        ]);
+
         $user->forceFill([
             'current_organization_id' => $organization->id,
         ])->save();
@@ -227,6 +245,22 @@ class E2ETestSeeder extends Seeder
                 'type' => 'project',
                 'status' => 'active',
                 'next_action' => 'Validar experiencia E2E',
+                'created_by' => $user->id,
+            ],
+        );
+
+        Project::query()->updateOrCreate(
+            [
+                'organization_id' =>
+                    $secondaryOrganization->id,
+                'name' =>
+                    'Proyecto secundario captura',
+            ],
+            [
+                'type' => 'project',
+                'status' => 'active',
+                'next_action' =>
+                    'Validar filtro de empresa',
                 'created_by' => $user->id,
             ],
         );
