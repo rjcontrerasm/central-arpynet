@@ -442,11 +442,11 @@ test('Mi Día mueve Hoy, Mañana y +1 semana en vivo con Deshacer', async (
     );
 
     await page.goto(
-        '/mi-dia?q=E2E%20reflow%20dos',
+        '/mi-dia?q=E2E%20mover%20fechas',
     );
 
     const title = page.getByText(
-        'E2E reflow dos',
+        'E2E mover fechas',
         { exact: true },
     ).first();
 
@@ -503,7 +503,7 @@ test('Mi Día mueve Hoy, Mañana y +1 semana en vivo con Deshacer', async (
             page.locator(
                 `#${expectedSection} > .list`,
             ).locator('.item', {
-                hasText: 'E2E reflow dos',
+                hasText: 'E2E mover fechas',
             }),
         ).toBeVisible();
 
@@ -538,7 +538,7 @@ test('Mi Día mueve Hoy, Mañana y +1 semana en vivo con Deshacer', async (
         await expect(
             page.locator('#vencidas > .list')
                 .locator('.item', {
-                    hasText: 'E2E reflow dos',
+                    hasText: 'E2E mover fechas',
                 }),
         ).toBeVisible();
 
@@ -1411,12 +1411,17 @@ test('Mi Día reacomoda fichas con micro-rebote y deshacer estable', async (
 
     await page.goto('/mi-dia');
 
+    const fixturePrefix =
+        testInfo.project.name === 'mobile-390'
+            ? 'E2E reflow mobile'
+            : 'E2E reflow desktop';
+
     const title = page.getByText(
-        'E2E reflow dos',
+        `${fixturePrefix} uno`,
         { exact: true },
     ).first();
     const followingTitle = page.getByText(
-        'E2E reflow tres',
+        `${fixturePrefix} dos`,
         { exact: true },
     ).first();
 
