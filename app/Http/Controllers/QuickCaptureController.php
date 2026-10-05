@@ -27,14 +27,7 @@ class QuickCaptureController extends Controller
         ]);
 
         $user = $request->user();
-        $organizations = $this->organizationsFor($user->id);
-        $projects = $this->projectsFor($user);
         $workTeams = $this->workTeamsFor($user);
-        $assignees = $this->assigneesFor(
-            $user,
-            $workTeams,
-        );
-        $organizationIds = $organizations->pluck('id');
         $accessibleTeamIds = $workTeams
             ->pluck('id')
             ->map(fn ($id): int => (int) $id);
@@ -58,6 +51,19 @@ class QuickCaptureController extends Controller
                 $contextWorkTeamId,
             )
             : null;
+
+        $organizations = $this->organizationsFor(
+            $user,
+            $contextWorkTeamId
+                ? [$contextWorkTeamId]
+                : [],
+        );
+        $projects = $this->projectsFor($user);
+        $assignees = $this->assigneesFor(
+            $user,
+            $workTeams,
+        );
+        $organizationIds = $organizations->pluck('id');
 
         $contextOrganizationId = isset(
             $validated['organization_id'],
@@ -272,9 +278,31 @@ class QuickCaptureController extends Controller
             ?? $user->id
         );
 
-        $organizations = $this->organizationsFor($user->id);
-        $projects = $this->projectsFor($user);
         $workTeams = $this->workTeamsFor($user);
+
+        $selectedTeamIds = collect(
+            $validated['work_team_ids'] ?? [],
+        )
+            ->map(fn ($id): int => (int) $id)
+            ->unique()
+            ->values();
+
+        $accessibleTeamIds = $workTeams
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id);
+
+        abort_unless(
+            $selectedTeamIds
+                ->diff($accessibleTeamIds)
+                ->isEmpty(),
+            403,
+        );
+
+        $organizations = $this->organizationsFor(
+            $user,
+            $selectedTeamIds->all(),
+        );
+        $projects = $this->projectsFor($user);
 
         $parsed = $parser->parse(
             $validated['title'],
@@ -298,24 +326,6 @@ class QuickCaptureController extends Controller
             403,
         );
 
-        $selectedTeamIds = collect(
-            $validated['work_team_ids'] ?? [],
-        )
-            ->map(fn ($id): int => (int) $id)
-            ->unique()
-            ->values();
-
-        $accessibleTeamIds = $workTeams
-            ->pluck('id')
-            ->map(fn ($id): int => (int) $id);
-
-        abort_unless(
-            $selectedTeamIds
-                ->diff($accessibleTeamIds)
-                ->isEmpty(),
-            403,
-        );
-
         // A selected team always means team visibility.
         // This also protects against stale or contradictory
         // browser state such as organization + team selected.
@@ -332,6 +342,35 @@ class QuickCaptureController extends Controller
                 'work_team_ids' =>
                     'Selecciona al menos un equipo para una tarea compartida.',
             ]);
+        }
+
+        $directOrganizationIds = collect(
+            $user->writableOrganizationIds(),
+        )
+            ->map(fn ($id): int => (int) $id);
+
+        if (
+            ! $directOrganizationIds->contains(
+                $organizationId,
+            )
+        ) {
+            $transversalOrganizationIds =
+                $this->transversalOrganizationIdsFor(
+                    $user,
+                    $selectedTeamIds->all(),
+                );
+
+            if (
+                $visibilityScope !== 'teams'
+                || ! $transversalOrganizationIds->contains(
+                    $organizationId,
+                )
+            ) {
+                throw ValidationException::withMessages([
+                    'organization_id' =>
+                        'Esta empresa solo puede usarse mediante un equipo que ya opera en ese ámbito.',
+                ]);
+            }
         }
 
         if ($visibilityScope === 'organization') {
@@ -519,22 +558,76 @@ class QuickCaptureController extends Controller
             ->with('quick_capture_success', $message);
     }
 
-    private function organizationsFor(int $userId): Collection
-    {
-        $organizationIds = DB::table('organization_user')
-            ->where('user_id', $userId)
-            ->where('is_active', true)
-            ->whereIn(
-                'role',
-                ['owner', 'admin', 'member'],
+    private function organizationsFor(
+        User $user,
+        array $workTeamIds = [],
+    ): Collection {
+        $organizationIds = collect(
+            $user->writableOrganizationIds(),
+        )
+            ->merge(
+                $this->transversalOrganizationIdsFor(
+                    $user,
+                    $workTeamIds,
+                ),
             )
-            ->pluck('organization_id');
+            ->unique()
+            ->values();
 
         return Organization::query()
             ->whereIn('id', $organizationIds)
             ->where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'name']);
+    }
+
+    private function transversalOrganizationIdsFor(
+        User $user,
+        array $workTeamIds,
+    ): Collection {
+        $teamIds = collect($workTeamIds)
+            ->map(fn ($id): int => (int) $id)
+            ->filter(fn (int $id): bool => $id > 0)
+            ->unique()
+            ->values();
+
+        if ($teamIds->isEmpty()) {
+            return collect();
+        }
+
+        $operationalTeamIds = DB::table(
+            'work_team_user',
+        )
+            ->where('user_id', $user->id)
+            ->whereIn('work_team_id', $teamIds)
+            ->where('is_active', true)
+            ->whereIn('role', ['lead', 'member'])
+            ->pluck('work_team_id')
+            ->map(fn ($id): int => (int) $id);
+
+        if ($operationalTeamIds->isEmpty()) {
+            return collect();
+        }
+
+        return Task::query()
+            ->whereHas(
+                'workTeams',
+                fn ($query) => $query
+                    ->whereIn(
+                        'work_teams.id',
+                        $operationalTeamIds,
+                    ),
+            )
+            ->whereHas(
+                'organization',
+                fn ($query) => $query
+                    ->where('is_active', true),
+            )
+            ->select('organization_id')
+            ->distinct()
+            ->pluck('organization_id')
+            ->map(fn ($id): int => (int) $id)
+            ->values();
     }
 
     private function projectsFor(User $user): Collection
