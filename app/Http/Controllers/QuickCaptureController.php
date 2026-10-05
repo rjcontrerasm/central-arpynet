@@ -321,11 +321,6 @@ class QuickCaptureController extends Controller
         $organizationId = $parsed['organization_id']
             ?? (int) $validated['organization_id'];
 
-        abort_unless(
-            $organizations->contains('id', $organizationId),
-            403,
-        );
-
         // A selected team always means team visibility.
         // This also protects against stale or contradictory
         // browser state such as organization + team selected.
