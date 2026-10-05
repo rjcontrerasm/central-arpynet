@@ -26,14 +26,16 @@
                                     {{ $task->organization?->name
                                         ?? 'Sin ámbito' }}
 
-                                    @if ($task->due_at)
-                                        ·
-                                        {{ $task->due_at->format(
-                                            'd/m/Y',
-                                        ) }}
-                                    @else
-                                        · sin fecha
-                                    @endif
+                                    ·
+                                    <span data-daily-due>
+                                        @if ($task->due_at)
+                                            {{ $task->due_at->format(
+                                                'd/m/Y',
+                                            ) }}
+                                        @else
+                                            sin fecha
+                                        @endif
+                                    </span>
 
                                     @if ($selectedWorkView === 'team')
                                         · Responsable:
@@ -51,6 +53,7 @@
 
                                     <span
                                         class="pill {{ $band }}"
+                                        data-daily-priority-pill
                                     >
                                         {{
                                             $task
@@ -78,7 +81,10 @@
                                     @endif
 
                                     @if ($task->status === 'in_progress')
-                                        <span class="pill today">
+                                        <span
+                                            class="pill today"
+                                            data-daily-in-progress
+                                        >
                                             En curso
                                         </span>
                                     @endif
