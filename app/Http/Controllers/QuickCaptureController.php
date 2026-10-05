@@ -595,49 +595,11 @@ class QuickCaptureController extends Controller
         User $user,
         array $workTeamIds,
     ): Collection {
-        $teamIds = collect($workTeamIds)
-            ->map(fn ($id): int => (int) $id)
-            ->filter(fn (int $id): bool => $id > 0)
-            ->unique()
-            ->values();
-
-        if ($teamIds->isEmpty()) {
-            return collect();
-        }
-
-        $operationalTeamIds = DB::table(
-            'work_team_user',
-        )
-            ->where('user_id', $user->id)
-            ->whereIn('work_team_id', $teamIds)
-            ->where('is_active', true)
-            ->whereIn('role', ['lead', 'member'])
-            ->pluck('work_team_id')
-            ->map(fn ($id): int => (int) $id);
-
-        if ($operationalTeamIds->isEmpty()) {
-            return collect();
-        }
-
-        return Task::query()
-            ->whereHas(
-                'workTeams',
-                fn ($query) => $query
-                    ->whereIn(
-                        'work_teams.id',
-                        $operationalTeamIds,
-                    ),
-            )
-            ->whereHas(
-                'organization',
-                fn ($query) => $query
-                    ->where('is_active', true),
-            )
-            ->select('organization_id')
-            ->distinct()
-            ->pluck('organization_id')
-            ->map(fn ($id): int => (int) $id)
-            ->values();
+        return collect(
+            $user->transversalTaskScopeOrganizationIds(
+                $workTeamIds,
+            ),
+        );
     }
 
     private function projectsFor(User $user): Collection
