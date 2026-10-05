@@ -1,0 +1,417 @@
+/* Central ARPYNET 2.48.5 — Natural collaboration composer */
+
+.collaboration-shell {
+    width: min(100%, 1080px) !important;
+    margin: 0 auto;
+    padding: 24px 16px 80px;
+}
+
+.collaboration-back {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    color: #155a8d;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.collaboration-subject {
+    margin-top: 18px;
+    padding: 18px 20px;
+    border: 1px solid var(--central-border, #d9e3ea);
+    border-radius: 16px;
+    background: var(--central-surface, #fff);
+    box-shadow: 0 8px 22px rgba(0, 67, 113, .045);
+}
+
+.collaboration-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #eaf3fa;
+    color: #024883;
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.collaboration-subject h1 {
+    max-width: 920px;
+    margin: 8px 0 0;
+    color: #064c7a;
+    font-size: clamp(24px, 4vw, 34px);
+    line-height: 1.12;
+    letter-spacing: -.035em;
+    overflow-wrap: anywhere;
+}
+
+.collaboration-subject-meta {
+    margin-top: 6px;
+    color: #718394;
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+.collaboration-feedback {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 11px;
+    font-size: 12px;
+    font-weight: 720;
+}
+
+.collaboration-feedback.success {
+    border: 1px solid #a9dec0;
+    background: #e8f7ee;
+    color: #1a7a4d;
+}
+
+.collaboration-feedback.error {
+    border: 1px solid #efc0bd;
+    background: #fff0ef;
+    color: #b73d37;
+}
+
+.collaboration-readonly {
+    margin-top: 18px;
+    padding: 14px 16px;
+    border: 1px solid #d9e3ea;
+    border-radius: 14px;
+    background: #f8fafc;
+    color: #607384;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.collaboration-composer {
+    display: grid !important;
+    width: 100% !important;
+    margin-top: 18px;
+    padding: 18px;
+    gap: 16px;
+    border: 1px solid var(--central-border, #d9e3ea);
+    border-radius: 16px;
+    background: var(--central-surface, #fff);
+    box-shadow: 0 8px 22px rgba(0, 67, 113, .045);
+}
+
+.collaboration-composer-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.collaboration-composer-title {
+    margin: 0;
+    color: #143d5d;
+    font-size: 15px;
+    font-weight: 850;
+    letter-spacing: -.015em;
+}
+
+.collaboration-composer-subtitle {
+    margin-top: 4px;
+    color: #718394;
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+.collaboration-field {
+    display: grid !important;
+    width: 100% !important;
+    gap: 7px;
+    margin: 0 !important;
+    color: inherit !important;
+}
+
+.collaboration-label {
+    display: block !important;
+    margin: 0 !important;
+    color: #334f66 !important;
+    font-size: 11.5px;
+    font-weight: 820;
+}
+
+.collaboration-textarea {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    min-height: 132px !important;
+    padding: 13px 14px !important;
+    border-radius: 12px !important;
+    line-height: 1.55;
+    resize: vertical;
+}
+
+.collaboration-textarea::placeholder {
+    color: #8a9bab;
+}
+
+.collaboration-people {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+}
+
+.collaboration-person {
+    position: relative;
+    display: inline-flex !important;
+    margin: 0 !important;
+    color: inherit !important;
+    cursor: pointer;
+}
+
+.collaboration-person input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.collaboration-person-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 38px;
+    padding: 6px 10px 6px 7px;
+    border: 1px solid #cfdbe4;
+    border-radius: 999px;
+    background: #f8fbfd;
+    color: #405a6e;
+    font-size: 11.5px;
+    font-weight: 760;
+    transition:
+        border-color 120ms ease,
+        background-color 120ms ease,
+        color 120ms ease,
+        transform 120ms ease;
+}
+
+.collaboration-person-chip:hover {
+    border-color: #9dbbd0;
+    background: #f1f7fb;
+    transform: translateY(-1px);
+}
+
+.collaboration-person-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 25px;
+    height: 25px;
+    flex: 0 0 25px;
+    border-radius: 50%;
+    background: #e5eff6;
+    color: #155a8d;
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.collaboration-person input:checked + .collaboration-person-chip {
+    border-color: #77a7c8;
+    background: #e9f2f8;
+    color: #064c7a;
+    box-shadow: inset 0 0 0 1px rgba(2, 72, 131, .05);
+}
+
+.collaboration-person input:checked
+    + .collaboration-person-chip
+    .collaboration-person-avatar {
+    background: #024883;
+    color: #fff;
+}
+
+.collaboration-person input:focus-visible + .collaboration-person-chip {
+    outline: 3px solid rgba(96, 165, 250, .42);
+    outline-offset: 2px;
+}
+
+.collaboration-hint {
+    color: #718394;
+    font-size: 10.5px;
+    line-height: 1.45;
+}
+
+.collaboration-composer-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.collaboration-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 9px 16px;
+    border: 0;
+    border-radius: 11px;
+    background: #024883;
+    color: #fff;
+    box-shadow: 0 5px 12px rgba(2, 72, 131, .12);
+    font-size: 12px;
+    font-weight: 850;
+    cursor: pointer;
+}
+
+.collaboration-submit:hover {
+    background: #004371;
+}
+
+.collaboration-thread {
+    margin-top: 22px;
+}
+
+.collaboration-thread-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.collaboration-thread-title {
+    margin: 0;
+    color: #143d5d;
+    font-size: 13px;
+    font-weight: 850;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+}
+
+.collaboration-thread-count {
+    color: #718394;
+    font-size: 10.5px;
+}
+
+.collaboration-comments {
+    display: grid;
+    gap: 10px;
+}
+
+.collaboration-comment {
+    padding: 14px 15px;
+    border: 1px solid var(--central-border, #d9e3ea);
+    border-radius: 14px;
+    background: var(--central-surface, #fff);
+    box-shadow: 0 3px 12px rgba(0, 67, 113, .03);
+}
+
+.collaboration-comment-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.collaboration-comment-author {
+    color: #143d5d;
+    font-size: 12.5px;
+    font-weight: 850;
+}
+
+.collaboration-comment-time {
+    color: #8091a0;
+    font-size: 10.5px;
+    white-space: nowrap;
+}
+
+.collaboration-comment-body {
+    margin-top: 8px;
+    color: #334f66;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.collaboration-comment-mentions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+    margin-top: 9px;
+    color: #718394;
+    font-size: 10.5px;
+}
+
+.collaboration-mention-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: #edf4f8;
+    color: #155a8d;
+    font-weight: 760;
+}
+
+.collaboration-empty {
+    padding: 22px;
+    border: 1px dashed #cbd8e1;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .55);
+    color: #718394;
+    text-align: center;
+    font-size: 12px;
+}
+
+@media (max-width: 759px) {
+    .collaboration-shell {
+        padding: 16px 12px 72px;
+    }
+
+    .collaboration-subject {
+        padding: 15px;
+    }
+
+    .collaboration-composer {
+        padding: 14px;
+    }
+
+    .collaboration-textarea {
+        min-height: 118px !important;
+        font-size: 16px !important;
+    }
+
+    .collaboration-person {
+        flex: 1 1 calc(50% - 8px);
+    }
+
+    .collaboration-person-chip {
+        width: 100%;
+    }
+
+    .collaboration-composer-footer {
+        align-items: stretch;
+    }
+
+    .collaboration-submit {
+        width: 100%;
+    }
+}
+
+@media (max-width: 420px) {
+    .collaboration-person {
+        flex-basis: 100%;
+    }
+
+    .collaboration-comment-head {
+        display: grid;
+        gap: 3px;
+    }
+
+    .collaboration-comment-time {
+        white-space: normal;
+    }
+}
