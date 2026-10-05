@@ -81,6 +81,21 @@ class E2ETestSeeder extends Seeder
         Task::query()->updateOrCreate(
             [
                 'organization_id' => $organization->id,
+                'title' => 'E2E búsqueda tarea',
+            ],
+            [
+                'status' => 'pending',
+                'urgency' => 'normal',
+                'impact' => 'medium',
+                'due_at' => now()->addDays(3),
+                'assigned_to' => $user->id,
+                'created_by' => $user->id,
+            ],
+        );
+
+        Task::query()->updateOrCreate(
+            [
+                'organization_id' => $organization->id,
                 'title' => 'E2E tarea crítica',
             ],
             [
