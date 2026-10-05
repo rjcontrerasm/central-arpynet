@@ -978,6 +978,365 @@
             }, 1100);
         };
 
+        const liveScheduleActions = new Set([
+            'today',
+            'tomorrow',
+            'next_week',
+        ]);
+
+        const scheduleToastTitles = {
+            today: 'Tarea movida a hoy',
+            tomorrow: 'Tarea movida a mañana',
+            next_week: 'Tarea movida una semana',
+        };
+
+        document.querySelectorAll(
+            '.action-form input[name="action"]',
+        ).forEach((input) => {
+            const action = input.value;
+
+            if (! liveScheduleActions.has(action)) {
+                return;
+            }
+
+            const form = input.closest('form');
+            const card = form?.closest('.item');
+
+            if (
+                ! form
+                || ! card
+                || form.querySelector(
+                    'input[name="priority"]',
+                )
+            ) {
+                return;
+            }
+
+            form.addEventListener(
+                'submit',
+                async (event) => {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+
+                    if (form.dataset.submitting === 'yes') {
+                        return;
+                    }
+
+                    const button = form.querySelector(
+                        'button[type="submit"]',
+                    );
+                    const due = card.querySelector(
+                        '[data-daily-due]',
+                    );
+                    const priorityPill = card.querySelector(
+                        '[data-daily-priority-pill]',
+                    );
+                    const todayForm = card.querySelector(
+                        'form[data-daily-action="today"]',
+                    );
+                    const csrf = csrfToken(form);
+                    const originalParent = card.parentElement;
+                    const originalNextSibling = card.nextSibling;
+                    const placeholder =
+                        document.createComment(
+                            'central-daily-schedule',
+                        );
+
+                    const originalState = {
+                        overdue:
+                            card.dataset.dailyOverdue,
+                        priorityBand:
+                            card.dataset.dailyPriorityBand,
+                        dueText:
+                            due?.textContent || '',
+                        priorityText:
+                            priorityPill?.textContent || '',
+                        priorityClass:
+                            priorityPill?.className || '',
+                        todayHidden:
+                            Boolean(todayForm?.hidden),
+                    };
+
+                    originalParent?.insertBefore(
+                        placeholder,
+                        card,
+                    );
+
+                    form.dataset.submitting = 'yes';
+                    button.disabled = true;
+
+                    try {
+                        const formData = new FormData(form);
+                        formData.set('_live', '1');
+
+                        const response = await fetch(
+                            form.getAttribute('action'),
+                            {
+                                method: 'POST',
+                                credentials: 'same-origin',
+                                headers: {
+                                    Accept: 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'X-Central-Live-Action': '1',
+                                },
+                                body: formData,
+                            },
+                        );
+
+                        const payload = await parseJsonResponse(
+                            response,
+                        );
+
+                        if (! response.ok || ! payload.ok) {
+                            throw new Error(
+                                payload.message
+                                || 'No se pudo reprogramar la tarea.',
+                            );
+                        }
+
+                        const presentation =
+                            payload.presentation;
+                        const targetSection =
+                            presentation?.section_id
+                                ? document.getElementById(
+                                    presentation.section_id,
+                                )
+                                : null;
+                        const targetList =
+                            targetSection?.querySelector(
+                                '.list',
+                            );
+
+                        if (! presentation || ! targetList) {
+                            placeholder.remove();
+
+                            window.location.assign(
+                                payload.return_url
+                                || window.location.href,
+                            );
+                            return;
+                        }
+
+                        const sourcePositions =
+                            captureTaskPositions(
+                                originalParent,
+                            );
+                        const targetPositions =
+                            targetList === originalParent
+                                ? sourcePositions
+                                : captureTaskPositions(
+                                    targetList,
+                                );
+
+                        adjustDailySummary(card, -1);
+
+                        card.dataset.dailyOverdue =
+                            presentation.overdue
+                                ? '1'
+                                : '0';
+                        card.dataset.dailyPriorityBand =
+                            presentation.priority_band;
+
+                        if (due) {
+                            due.textContent =
+                                presentation.due_label;
+                        }
+
+                        if (priorityPill) {
+                            priorityPill.className =
+                                'pill '
+                                + presentation.priority_band;
+                            priorityPill.textContent =
+                                presentation.priority_label
+                                + ' · '
+                                + presentation.priority_score;
+                        }
+
+                        if (todayForm) {
+                            todayForm.hidden =
+                                action === 'today';
+                        }
+
+                        targetList.querySelectorAll(
+                            ':scope > .empty',
+                        ).forEach(
+                            (element) => element.remove(),
+                        );
+
+                        if (
+                            card.parentElement
+                            !== targetList
+                        ) {
+                            targetList.prepend(card);
+                        }
+
+                        syncDailyEmptyState(
+                            originalParent,
+                        );
+                        syncDailyEmptyState(
+                            targetList,
+                        );
+
+                        animateTaskReflow(
+                            originalParent,
+                            sourcePositions,
+                        );
+
+                        if (
+                            targetList
+                            !== originalParent
+                        ) {
+                            animateTaskReflow(
+                                targetList,
+                                targetPositions,
+                            );
+                        }
+
+                        adjustDailySummary(card, 1);
+                        pulseRestoredCard(card);
+
+                        if (payload.undo) {
+                            showUndoToast(
+                                payload.undo,
+                                payload.label,
+                                csrf,
+                                {
+                                    mode: 'inline',
+                                    toastTitle:
+                                        scheduleToastTitles[
+                                            action
+                                        ],
+                                    card,
+                                    placeholder,
+                                    restoreInline: () => {
+                                        const currentParent =
+                                            card.parentElement;
+                                        const currentPositions =
+                                            captureTaskPositions(
+                                                currentParent,
+                                            );
+                                        const restorePositions =
+                                            originalParent
+                                            === currentParent
+                                                ? currentPositions
+                                                : captureTaskPositions(
+                                                    originalParent,
+                                                );
+
+                                        adjustDailySummary(
+                                            card,
+                                            -1,
+                                        );
+
+                                        card.dataset.dailyOverdue =
+                                            originalState
+                                                .overdue;
+                                        card.dataset.dailyPriorityBand =
+                                            originalState
+                                                .priorityBand;
+
+                                        if (due) {
+                                            due.textContent =
+                                                originalState
+                                                    .dueText;
+                                        }
+
+                                        if (priorityPill) {
+                                            priorityPill.className =
+                                                originalState
+                                                    .priorityClass;
+                                            priorityPill.textContent =
+                                                originalState
+                                                    .priorityText;
+                                        }
+
+                                        if (todayForm) {
+                                            todayForm.hidden =
+                                                originalState
+                                                    .todayHidden;
+                                        }
+
+                                        if (
+                                            placeholder.isConnected
+                                        ) {
+                                            placeholder.parentNode
+                                                .insertBefore(
+                                                    card,
+                                                    placeholder,
+                                                );
+                                            placeholder.remove();
+                                        } else if (
+                                            originalParent
+                                            ?.isConnected
+                                        ) {
+                                            originalParent.insertBefore(
+                                                card,
+                                                originalNextSibling
+                                                ?.parentNode
+                                                === originalParent
+                                                    ? originalNextSibling
+                                                    : null,
+                                            );
+                                        }
+
+                                        syncDailyEmptyState(
+                                            currentParent,
+                                        );
+                                        syncDailyEmptyState(
+                                            originalParent,
+                                        );
+
+                                        animateTaskReflow(
+                                            currentParent,
+                                            currentPositions,
+                                        );
+
+                                        if (
+                                            originalParent
+                                            !== currentParent
+                                        ) {
+                                            animateTaskReflow(
+                                                originalParent,
+                                                restorePositions,
+                                            );
+                                        }
+
+                                        adjustDailySummary(
+                                            card,
+                                            1,
+                                        );
+                                        pulseRestoredCard(card);
+                                    },
+                                },
+                            );
+                        } else {
+                            placeholder.remove();
+                        }
+                    } catch (error) {
+                        placeholder.remove();
+
+                        const toast = ensureToast();
+                        toast.hidden = false;
+                        toast.querySelector(
+                            '.global-undo-title',
+                        ).textContent = error.message
+                            || 'No se pudo reprogramar la tarea.';
+                        toast.querySelector(
+                            '.global-undo-detail',
+                        ).textContent = '';
+
+                        window.setTimeout(() => {
+                            toast.hidden = true;
+                        }, 2600);
+                    } finally {
+                        delete form.dataset.submitting;
+                        button.disabled = false;
+                    }
+                },
+                { capture: true },
+            );
+        });
+
         document.querySelectorAll(
             '.action-form input[name="action"][value="start"]',
         ).forEach((input) => {
