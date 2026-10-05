@@ -585,12 +585,12 @@ test('Mi Día mantiene acciones de fecha en vivo dentro del filtro Vencidas', as
     );
 
     await page.goto(
-        '/mi-dia?priority=overdue&view=mine&q=E2E%20reflow%20tres',
+        '/mi-dia?priority=overdue&view=mine&q=E2E%20fecha%20filtro',
     );
 
     const originalUrl = page.url();
     const title = page.getByText(
-        'E2E reflow tres',
+        'E2E fecha filtro',
         { exact: true },
     ).first();
 
@@ -682,16 +682,17 @@ test('Mi Día pone una tarea En espera en vivo y permite deshacer', async (
         '/mi-dia?q=E2E%20espera%20live',
     );
 
-    const title = page.getByText(
-        'E2E espera live',
-        { exact: true },
+    const sourceList = page.locator(
+        '#vencidas > .list',
+    );
+    const sourceCard = sourceList.locator(
+        '.item',
+        { hasText: 'E2E espera live' },
     ).first();
 
-    await expect(title).toBeVisible();
+    await expect(sourceCard).toBeVisible();
 
-    const card = title.locator(
-        'xpath=ancestor::*[contains(@class,"item")][1]',
-    );
+    const card = sourceCard;
     const waitingStat = page.locator(
         '[data-daily-stat="waiting"]',
     );
@@ -734,7 +735,7 @@ test('Mi Día pone una tarea En espera en vivo y permite deshacer', async (
     const payload = await response.json();
     expect(payload.ok).toBe(true);
 
-    await expect(title).toBeHidden();
+    await expect(sourceCard).toBeHidden();
     await expect(waitingStat).toHaveText(
         String(waitingBefore + 1),
     );
@@ -779,7 +780,7 @@ test('Mi Día pone una tarea En espera en vivo y permite deshacer', async (
 
     expect((await undoResponse).status()).toBe(200);
 
-    await expect(title).toBeVisible();
+    await expect(sourceCard).toBeVisible();
     await expect(waitingStat).toHaveText(
         String(waitingBefore),
     );
