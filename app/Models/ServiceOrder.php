@@ -207,12 +207,31 @@ class ServiceOrder extends Model
 
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
-        return $query->whereHas(
-            'organization.users',
-            fn (Builder $membershipQuery): Builder =>
-                $membershipQuery
-                    ->where('users.id', $user->id)
-                    ->where('organization_user.is_active', true),
+        if (! $user->is_active) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->where(
+            function (Builder $visibility) use ($user): void {
+                $visibility
+                    ->whereHas(
+                        'organization.users',
+                        fn (Builder $membershipQuery): Builder =>
+                            $membershipQuery
+                                ->where('users.id', $user->id)
+                                ->where('organizations.is_active', true)
+                                ->where('organization_user.is_active', true),
+                    )
+                    ->orWhereHas(
+                        'workTeam.users',
+                        fn (Builder $teamMembership): Builder =>
+                            $teamMembership
+                                ->where('users.id', $user->id)
+                                ->where('users.is_active', true)
+                                ->where('work_teams.is_active', true)
+                                ->where('work_team_user.is_active', true),
+                    );
+            },
         );
     }
 
