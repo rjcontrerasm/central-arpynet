@@ -661,11 +661,13 @@
                 $criticalSection = $taskSections[0];
             @endphp
 
-            @if ($criticalSection['tasks']->isNotEmpty())
-                <section
+            <section
                     class="section"
                     id="{{ $criticalSection['id'] }}"
                     data-daily-hide-when-empty="1"
+                    @if ($criticalSection['tasks']->isEmpty())
+                        hidden
+                    @endif
                 >
                     <div class="section-head">
                         <h2>{{ $criticalSection['title'] }}</h2>
@@ -706,7 +708,6 @@
                         @endforeach
                     </div>
                 </section>
-            @endif
 
             <section
                 class="section"
