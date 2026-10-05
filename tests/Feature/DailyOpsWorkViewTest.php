@@ -106,7 +106,8 @@ class DailyOpsWorkViewTest extends TestCase
                 'team',
             )
             ->assertSee('Administración compartida')
-            ->assertSee('Equipo: Administración')
+            ->assertDontSee('class="pill team-context"', false)
+            ->assertSee('task-card-heading', false)
             ->assertSee('task-organization-badge', false);
     }
 
