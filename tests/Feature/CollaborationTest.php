@@ -6,6 +6,7 @@ use App\Models\CollaborationComment;
 use App\Models\Organization;
 use App\Models\Task;
 use App\Models\User;
+use App\Models\WorkTeam;
 use App\Notifications\CollaborationMentionNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -126,6 +127,168 @@ class CollaborationTest extends TestCase
             ]), [
                 'body' => 'No permitido.',
             ])
+            ->assertNotFound();
+    }
+
+    public function test_team_member_can_collaborate_on_transversal_task_without_direct_company_membership(): void
+    {
+        Notification::fake();
+
+        $owner = User::factory()->create(['is_active' => true]);
+        $member = User::factory()->create(['is_active' => true]);
+        $teammate = User::factory()->create(['is_active' => true]);
+
+        $organization = Organization::query()->create([
+            'name' => 'PC SOTEC',
+            'slug' => 'pc-sotec-team-collaboration',
+            'category' => 'company',
+            'is_active' => true,
+            'created_by' => $owner->id,
+        ]);
+
+        $organization->users()->attach($owner->id, [
+            'role' => 'owner',
+            'is_default' => true,
+            'is_active' => true,
+        ]);
+
+        $team = WorkTeam::query()->create([
+            'home_organization_id' => $organization->id,
+            'name' => 'Administración transversal',
+            'is_active' => true,
+            'created_by' => $owner->id,
+        ]);
+
+        $team->users()->attach($member->id, [
+            'role' => 'member',
+            'is_active' => true,
+        ]);
+        $team->users()->attach($teammate->id, [
+            'role' => 'member',
+            'is_active' => true,
+        ]);
+
+        $task = Task::query()->create([
+            'organization_id' => $organization->id,
+            'title' => 'Facturar servicio PC SOTEC',
+            'status' => 'pending',
+            'urgency' => 'normal',
+            'impact' => 'high',
+            'assigned_to' => $owner->id,
+            'created_by' => $owner->id,
+            'visibility_scope' => 'teams',
+        ]);
+
+        $task->workTeams()->attach($team->id);
+
+        $this->assertFalse(
+            $member->canAccessOrganization($organization->id),
+        );
+
+        $this->actingAs($member)
+            ->get(route('collaboration.thread', [
+                'type' => 'task',
+                'id' => $task->id,
+            ]))
+            ->assertOk()
+            ->assertSee('Facturar servicio PC SOTEC')
+            ->assertSee($teammate->name);
+
+        $this->actingAs($member)
+            ->post(route('collaboration.store', [
+                'type' => 'task',
+                'id' => $task->id,
+            ]), [
+                'body' => 'Coordinar factura y sustento.',
+                'mentions' => [$teammate->id],
+            ])
+            ->assertRedirect(route('collaboration.thread', [
+                'type' => 'task',
+                'id' => $task->id,
+            ]));
+
+        $comment = CollaborationComment::query()->sole();
+
+        $this->assertSame($member->id, $comment->user_id);
+        $this->assertDatabaseHas(
+            'collaboration_comment_mentions',
+            [
+                'collaboration_comment_id' => $comment->id,
+                'user_id' => $teammate->id,
+            ],
+        );
+
+        Notification::assertSentTo(
+            $teammate,
+            CollaborationMentionNotification::class,
+        );
+    }
+
+    public function test_company_member_outside_team_does_not_see_team_task_comment_in_collaboration_feed(): void
+    {
+        $owner = User::factory()->create(['is_active' => true]);
+        $teamMember = User::factory()->create(['is_active' => true]);
+        $companyMember = User::factory()->create(['is_active' => true]);
+
+        $organization = Organization::query()->create([
+            'name' => 'ARPYNET restringido',
+            'slug' => 'arpynet-restricted-collaboration',
+            'category' => 'company',
+            'is_active' => true,
+            'created_by' => $owner->id,
+        ]);
+
+        foreach ([$owner, $companyMember] as $user) {
+            $organization->users()->attach($user->id, [
+                'role' => $user->is($owner) ? 'owner' : 'member',
+                'is_default' => $user->is($owner),
+                'is_active' => true,
+            ]);
+        }
+
+        $team = WorkTeam::query()->create([
+            'home_organization_id' => $organization->id,
+            'name' => 'Equipo restringido',
+            'is_active' => true,
+            'created_by' => $owner->id,
+        ]);
+
+        $team->users()->attach($teamMember->id, [
+            'role' => 'member',
+            'is_active' => true,
+        ]);
+
+        $task = Task::query()->create([
+            'organization_id' => $organization->id,
+            'title' => 'Tarea privada del equipo',
+            'status' => 'pending',
+            'urgency' => 'normal',
+            'impact' => 'normal',
+            'assigned_to' => $owner->id,
+            'created_by' => $owner->id,
+            'visibility_scope' => 'teams',
+        ]);
+
+        $task->workTeams()->attach($team->id);
+
+        CollaborationComment::query()->create([
+            'organization_id' => $organization->id,
+            'user_id' => $teamMember->id,
+            'commentable_type' => Task::class,
+            'commentable_id' => $task->id,
+            'body' => 'Comentario reservado al equipo.',
+        ]);
+
+        $this->actingAs($companyMember)
+            ->get(route('collaboration.index'))
+            ->assertOk()
+            ->assertDontSee('Comentario reservado al equipo.');
+
+        $this->actingAs($companyMember)
+            ->get(route('collaboration.thread', [
+                'type' => 'task',
+                'id' => $task->id,
+            ]))
             ->assertNotFound();
     }
 
