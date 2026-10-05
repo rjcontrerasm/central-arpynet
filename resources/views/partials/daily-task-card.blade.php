@@ -12,7 +12,12 @@
                                     : false;
                             @endphp
 
-                            <div class="item" data-operational-card>
+                            <div
+                                class="item"
+                                data-operational-card
+                                data-daily-overdue="{{ $isOverdue ? '1' : '0' }}"
+                                data-daily-priority-band="{{ $band }}"
+                            >
                                 <div class="item-title">
                                     {{ $task->title }}
                                 </div>

@@ -145,6 +145,139 @@
             '(prefers-reduced-motion: reduce)',
         ).matches;
 
+        const dailyStat = (key) => document.querySelector(
+            `[data-daily-stat="${key}"]`,
+        );
+
+        const dailyStatValue = (key) => {
+            const value = Number.parseInt(
+                dailyStat(key)?.textContent?.trim() || '0',
+                10,
+            );
+
+            return Number.isFinite(value)
+                ? value
+                : 0;
+        };
+
+        const setDailyStatValue = (key, value) => {
+            const target = dailyStat(key);
+
+            if (! target) {
+                return;
+            }
+
+            target.textContent = String(
+                Math.max(0, value),
+            );
+        };
+
+        const renderDailyFocus = () => {
+            const overdue = dailyStatValue('overdue');
+            const critical = dailyStatValue('critical');
+            const today = dailyStatValue('today');
+            const waiting = dailyStatValue('waiting');
+            const title = document.querySelector(
+                '[data-daily-focus-title]',
+            );
+            const criticalMeta = document.querySelector(
+                '[data-daily-focus-critical]',
+            );
+            const waitingMeta = document.querySelector(
+                '[data-daily-focus-waiting]',
+            );
+
+            if (title) {
+                if (overdue > 0) {
+                    title.textContent =
+                        `${overdue} ${overdue === 1
+                            ? 'tarea vencida requiere'
+                            : 'tareas vencidas requieren'} revisión`;
+                } else if (critical > 0) {
+                    title.textContent =
+                        `${critical} ${critical === 1
+                            ? 'tarea crítica requiere'
+                            : 'tareas críticas requieren'} atención inmediata`;
+                } else if (today > 0) {
+                    title.textContent =
+                        `${today} ${today === 1
+                            ? 'tarea para resolver'
+                            : 'tareas para resolver'} hoy`;
+                } else {
+                    title.textContent =
+                        'Sin urgencias en tu bandeja';
+                }
+            }
+
+            if (criticalMeta) {
+                criticalMeta.textContent = String(critical);
+            }
+
+            if (waitingMeta) {
+                waitingMeta.textContent = String(waiting);
+            }
+        };
+
+        const adjustDailySummary = (card, delta) => {
+            if (! card) {
+                return;
+            }
+
+            if (card.dataset.dailyOverdue === '1') {
+                setDailyStatValue(
+                    'overdue',
+                    dailyStatValue('overdue') + delta,
+                );
+            }
+
+            const band = card.dataset.dailyPriorityBand;
+
+            if (
+                band
+                && ['critical', 'today', 'week', 'planned']
+                    .includes(band)
+            ) {
+                setDailyStatValue(
+                    band,
+                    dailyStatValue(band) + delta,
+                );
+            }
+
+            renderDailyFocus();
+        };
+
+        const syncDailyEmptyState = (parent) => {
+            if (! parent?.isConnected) {
+                return;
+            }
+
+            const message =
+                parent.dataset?.dailyEmptyMessage;
+
+            if (! message) {
+                return;
+            }
+
+            const hasCards = taskCards(parent).length > 0;
+            const liveEmpty = parent.querySelector(
+                '.daily-live-empty',
+            );
+
+            if (hasCards) {
+                liveEmpty?.remove();
+                return;
+            }
+
+            if (liveEmpty) {
+                return;
+            }
+
+            const empty = document.createElement('div');
+            empty.className = 'empty daily-live-empty';
+            empty.textContent = message;
+            parent.appendChild(empty);
+        };
+
         const taskCards = (parent) => (
             parent
                 ? [...parent.children].filter(
@@ -428,6 +561,11 @@
 
                     const completed =
                         lastCompletion;
+
+                    adjustDailySummary(
+                        completed.card,
+                        1,
+                    );
                     const {
                         card,
                         parent,
@@ -454,6 +592,7 @@
                                 'daily-task-leaving',
                             );
                             placeholder.remove();
+                            syncDailyEmptyState(parent);
 
                             window.setTimeout(() => {
                                 resetCompletedCard(card);
@@ -469,6 +608,7 @@
                                 placeholder,
                             );
                             placeholder.remove();
+                            syncDailyEmptyState(parent);
 
                             animateTaskReflow(
                                 parent,
@@ -786,6 +926,10 @@
                 return;
             }
 
+            if (card.dataset.dailyLiveComplete === 'reload') {
+                return;
+            }
+
             form.dataset.liveComplete = 'true';
 
             form.addEventListener(
@@ -866,6 +1010,7 @@
                                 parent,
                                 before,
                             );
+                            syncDailyEmptyState(parent);
                         },
                         removeDelay,
                     );
@@ -908,6 +1053,8 @@
                                 || 'No se pudo completar la tarea.',
                             );
                         }
+
+                        adjustDailySummary(card, -1);
 
                         if (payload.undo) {
                             showUndoToast(
