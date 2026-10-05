@@ -301,8 +301,6 @@ class WorkTeamQuickCaptureTest extends TestCase
             )
             ->assertSee('Empresa: PC SOTEC');
 
-        $this->withoutExceptionHandling();
-
         $this->actingAs($lissette)
             ->post('/captura', [
                 'organization_id' => $pcsotec->id,
@@ -364,7 +362,6 @@ class WorkTeamQuickCaptureTest extends TestCase
         $seed->workTeams()->attach($team->id);
 
         $this->actingAs($lissette)
-            ->from('/captura')
             ->post('/captura', [
                 'organization_id' => $pcsotec->id,
                 'title' => 'Intento de ampliar acceso',
@@ -374,10 +371,7 @@ class WorkTeamQuickCaptureTest extends TestCase
                 'assigned_to' => $lissette->id,
                 'visibility_scope' => 'organization',
             ])
-            ->assertRedirect('/captura')
-            ->assertSessionHasErrors(
-                'organization_id',
-            );
+            ->assertForbidden();
 
         $this->assertDatabaseMissing('tasks', [
             'title' => 'Intento de ampliar acceso',
