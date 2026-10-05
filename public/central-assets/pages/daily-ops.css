@@ -576,6 +576,101 @@
             line-height: 1.45;
         }
 
+        .task-context-line {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .task-context-separator {
+            color: #475569;
+        }
+
+        .task-organization-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            min-height: 22px;
+            padding: 2px 7px;
+            border: 1px solid #475569;
+            border-radius: 999px;
+            background: #172033;
+            color: #e2e8f0;
+            font-size: 10px;
+            font-weight: 850;
+            letter-spacing: .015em;
+        }
+
+        .task-organization-dot {
+            width: 7px;
+            height: 7px;
+            flex: 0 0 7px;
+            border-radius: 999px;
+            background: #94a3b8;
+        }
+
+        .organization-tone-0 {
+            border-color: #1d4ed8;
+            background: #172554;
+        }
+
+        .organization-tone-0 .task-organization-dot {
+            background: #60a5fa;
+        }
+
+        .organization-tone-1 {
+            border-color: #0f766e;
+            background: #134e4a;
+        }
+
+        .organization-tone-1 .task-organization-dot {
+            background: #5eead4;
+        }
+
+        .organization-tone-2 {
+            border-color: #7c3aed;
+            background: #4c1d95;
+        }
+
+        .organization-tone-2 .task-organization-dot {
+            background: #c4b5fd;
+        }
+
+        .organization-tone-3 {
+            border-color: #b45309;
+            background: #78350f;
+        }
+
+        .organization-tone-3 .task-organization-dot {
+            background: #fbbf24;
+        }
+
+        .organization-tone-4 {
+            border-color: #be123c;
+            background: #881337;
+        }
+
+        .organization-tone-4 .task-organization-dot {
+            background: #fda4af;
+        }
+
+        .organization-tone-5 {
+            border-color: #0369a1;
+            background: #0c4a6e;
+        }
+
+        .organization-tone-5 .task-organization-dot {
+            background: #7dd3fc;
+        }
+
+        .pill.team-context {
+            border: 1px solid #1d4ed8;
+            background: #172554;
+            color: #bfdbfe;
+            font-weight: 820;
+        }
+
         .pills,
         .actions {
             display: flex;
@@ -1162,6 +1257,50 @@
                 border-color: #fecaca;
                 background: #dc2626;
                 color: #fff;
+            }
+
+            .task-organization-badge {
+                color: #334155;
+            }
+
+            .organization-tone-0 {
+                border-color: #bfdbfe;
+                background: #eff6ff;
+            }
+
+            .organization-tone-1 {
+                border-color: #99f6e4;
+                background: #f0fdfa;
+            }
+
+            .organization-tone-2 {
+                border-color: #ddd6fe;
+                background: #f5f3ff;
+            }
+
+            .organization-tone-3 {
+                border-color: #fde68a;
+                background: #fffbeb;
+            }
+
+            .organization-tone-4 {
+                border-color: #fecdd3;
+                background: #fff1f2;
+            }
+
+            .organization-tone-5 {
+                border-color: #bae6fd;
+                background: #f0f9ff;
+            }
+
+            .task-context-separator {
+                color: #94a3b8;
+            }
+
+            .pill.team-context {
+                border-color: #bfdbfe;
+                background: #eff6ff;
+                color: #1d4ed8;
             }
 
             .pill.today {

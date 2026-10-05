@@ -115,7 +115,9 @@ class WorkTeamTaskVisibilityTest extends TestCase
             ->get('/mi-dia?view=team&scope='.$pcsotec->id)
             ->assertOk()
             ->assertSee('Facturar servicio Y de PC SOTEC')
-            ->assertSee('PC SOTEC');
+            ->assertSee('PC SOTEC')
+            ->assertSee('task-organization-badge', false)
+            ->assertSee('Equipo: Administración');
 
         $this->actingAs($lissette)
             ->post(
