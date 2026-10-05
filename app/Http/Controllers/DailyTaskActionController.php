@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Task;
+use App\Support\DailyTaskPriority;
 use App\Support\GlobalUndoService;
 use App\Support\OperationalTaskActionService;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -83,11 +85,65 @@ class DailyTaskActionController extends Controller
                 'X-Central-Live-Action',
             ) === '1'
         ) {
+            $now = CarbonImmutable::now(
+                config(
+                    'app.timezone',
+                    'America/Lima',
+                ),
+            );
+            $todayStart = $now->startOfDay();
+            $todayEnd = $now->endOfDay();
+            $weekEnd = $now->addDays(7)->endOfDay();
+            $band = DailyTaskPriority::band(
+                $task,
+                $now,
+            );
+            $score = DailyTaskPriority::score(
+                $task,
+                $now,
+            );
+            $isOverdue = $task->due_at
+                && $task->due_at->isBefore(
+                    $todayStart,
+                );
+
+            $destination = null;
+
+            if ($isOverdue) {
+                $destination = 'vencidas';
+            } elseif ($band === 'critical') {
+                $destination = 'prioridad-critica';
+            } elseif (
+                $task->due_at
+                && $task->due_at->isSameDay($now)
+            ) {
+                $destination = 'hoy';
+            } elseif (
+                $task->due_at
+                && $task->due_at->isAfter($todayEnd)
+                && $task->due_at
+                    ->lessThanOrEqualTo($weekEnd)
+            ) {
+                $destination = 'esta-semana';
+            } elseif (is_null($task->due_at)) {
+                $destination = 'planificados';
+            }
+
             return response()->json([
                 'ok' => true,
                 'task_id' => $task->id,
                 'action' => $validated['action'],
                 'label' => $result['label'],
+                'presentation' => [
+                    'due_date' => $task->due_at
+                        ?->format('d/m/Y'),
+                    'overdue' => (bool) $isOverdue,
+                    'priority_band' => $band,
+                    'priority_label' =>
+                        DailyTaskPriority::label($band),
+                    'priority_score' => $score,
+                    'destination' => $destination,
+                ],
                 'undo' => $undoAction
                     ? [
                         'id' => $undoAction->id,
