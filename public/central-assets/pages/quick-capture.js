@@ -1,4 +1,4 @@
-/* Central ARPYNET 2.48.0 — contextual quick capture */
+/* Central ARPYNET 2.48.3 — team selection from quick capture */
 
 (() => {
     const form = document.querySelector(
@@ -254,12 +254,13 @@
             visibilitySelect.value === 'teams';
 
         if (teamWrapper) {
-            teamWrapper.hidden =
-                ! isTeamVisibility;
+            teamWrapper.hidden = false;
         }
 
-        teamSelect.disabled =
-            ! isTeamVisibility;
+        // El selector queda disponible incluso con visibilidad
+        // de empresa. Elegir un equipo cambia automáticamente
+        // la visibilidad a "teams" mediante su evento change.
+        teamSelect.disabled = false;
         teamSelect.required =
             isTeamVisibility;
 
