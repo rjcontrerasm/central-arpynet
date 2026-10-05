@@ -17,6 +17,7 @@
                                 data-operational-card
                                 data-daily-overdue="{{ $isOverdue ? '1' : '0' }}"
                                 data-daily-priority-band="{{ $band }}"
+                                data-daily-priority-score="{{ $task->display_priority_score }}"
                             >
                                 <div class="item-title">
                                     {{ $task->title }}
@@ -26,14 +27,16 @@
                                     {{ $task->organization?->name
                                         ?? 'Sin ámbito' }}
 
-                                    @if ($task->due_at)
-                                        ·
-                                        {{ $task->due_at->format(
-                                            'd/m/Y',
-                                        ) }}
-                                    @else
-                                        · sin fecha
-                                    @endif
+                                    ·
+                                    <span data-daily-due-date>
+                                        @if ($task->due_at)
+                                            {{ $task->due_at->format(
+                                                'd/m/Y',
+                                            ) }}
+                                        @else
+                                            sin fecha
+                                        @endif
+                                    </span>
 
                                     @if ($selectedWorkView === 'team')
                                         · Responsable:
@@ -44,13 +47,17 @@
 
                                 <div class="pills" data-daily-pills>
                                     @if ($isOverdue)
-                                        <span class="pill overdue">
+                                        <span
+                                            class="pill overdue"
+                                            data-daily-overdue-pill
+                                        >
                                             Vencida
                                         </span>
                                     @endif
 
                                     <span
                                         class="pill {{ $band }}"
+                                        data-daily-priority-pill
                                     >
                                         {{
                                             $task
@@ -193,15 +200,9 @@
                                             ] = 'En curso';
                                         }
 
-                                        if (
-                                            ! $task->due_at
-                                            || ! $task->due_at
-                                                ->isSameDay($now)
-                                        ) {
-                                            $quickActions[
-                                                'today'
-                                            ] = 'Hoy';
-                                        }
+                                        $quickActions[
+                                            'today'
+                                        ] = 'Hoy';
 
                                         $quickActions[
                                             'tomorrow'
@@ -220,6 +221,13 @@
                                             <form
                                                 class="action-form"
                                                 data-daily-action="{{ $action }}"
+                                                @if (
+                                                    $action === 'today'
+                                                    && $task->due_at
+                                                    && $task->due_at->isSameDay($now)
+                                                )
+                                                    hidden
+                                                @endif
                                                 method="POST"
                                                 action="{{ route(
                                                     'daily-task-action.update',

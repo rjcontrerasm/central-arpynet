@@ -296,6 +296,116 @@
             renderDailyFocus();
         };
 
+        const transitionDailySummary = (
+            card,
+            presentation,
+        ) => {
+            adjustDailySummary(card, -1);
+
+            card.dataset.dailyOverdue =
+                presentation.overdue ? '1' : '0';
+            card.dataset.dailyPriorityBand =
+                presentation.priority_band || 'planned';
+            card.dataset.dailyPriorityScore =
+                String(presentation.priority_score ?? 0);
+
+            adjustDailySummary(card, 1);
+        };
+
+        const updateDatePresentation = (
+            card,
+            presentation,
+        ) => {
+            const dueDate = card.querySelector(
+                '[data-daily-due-date]',
+            );
+            const pills = card.querySelector(
+                '[data-daily-pills]',
+            );
+            const priorityPill = card.querySelector(
+                '[data-daily-priority-pill]',
+            );
+            let overduePill = card.querySelector(
+                '[data-daily-overdue-pill]',
+            );
+
+            if (dueDate) {
+                dueDate.textContent =
+                    presentation.due_date || 'sin fecha';
+            }
+
+            if (presentation.overdue) {
+                if (! overduePill && pills) {
+                    overduePill =
+                        document.createElement('span');
+                    overduePill.className = 'pill overdue';
+                    overduePill.dataset.dailyOverduePill = '1';
+                    overduePill.textContent = 'Vencida';
+                    pills.prepend(overduePill);
+                }
+            } else {
+                overduePill?.remove();
+            }
+
+            if (priorityPill) {
+                priorityPill.className =
+                    `pill ${presentation.priority_band}`;
+                priorityPill.textContent =
+                    `${presentation.priority_label} · ${presentation.priority_score}`;
+            }
+
+            card.classList.toggle(
+                'daily-task-critical',
+                presentation.priority_band === 'critical',
+            );
+
+            const todayForm = card.querySelector(
+                'form[data-daily-action="today"]',
+            );
+
+            if (todayForm) {
+                todayForm.hidden =
+                    Boolean(presentation.due_today);
+            }
+        };
+
+        const destinationList = (destination) => (
+            destination
+                ? document.querySelector(
+                    `#${destination} > .list`,
+                )
+                : null
+        );
+
+        const insertCardByPriority = (
+            parent,
+            card,
+        ) => {
+            if (! parent) {
+                return;
+            }
+
+            const score = Number.parseInt(
+                card.dataset.dailyPriorityScore || '0',
+                10,
+            );
+            const before = taskCards(parent).find(
+                (candidate) => (
+                    candidate !== card
+                    && Number.parseInt(
+                        candidate.dataset.dailyPriorityScore || '0',
+                        10,
+                    ) < score
+                ),
+            );
+
+            if (before) {
+                parent.insertBefore(card, before);
+            } else {
+                parent.appendChild(card);
+            }
+        };
+
         const syncDailyEmptyState = (parent) => {
             if (! parent?.isConnected) {
                 return;
@@ -617,8 +727,8 @@
                     const completed =
                         lastCompletion;
 
-                    if (completed.mode === 'inline') {
-                        completed.restoreInline?.();
+                    if (completed.restoreAction) {
+                        completed.restoreAction();
                     } else {
                         adjustDailySummary(
                             completed.card,
@@ -643,7 +753,7 @@
                     }
 
                     if (
-                        completed.mode !== 'inline'
+                        ! completed.restoreAction
                         && card
                         && parent?.isConnected
                         && placeholder?.isConnected
@@ -677,7 +787,7 @@
                             );
                             pulseRestoredCard(card);
                         }
-                    } else if (completed.mode !== 'inline') {
+                    } else if (! completed.restoreAction) {
                         resetCompletedCard(card);
                     }
 
@@ -979,6 +1089,352 @@
         };
 
         document.querySelectorAll(
+            '.action-form input[name="action"][value="today"],'
+            + ' .action-form input[name="action"][value="tomorrow"],'
+            + ' .action-form input[name="action"][value="next_week"]',
+        ).forEach((input) => {
+            const form = input.closest('form');
+            const card = form?.closest('.item');
+
+            if (! form || ! card) {
+                return;
+            }
+
+            if (form.querySelector('input[name="priority"]')) {
+                return;
+            }
+
+            form.addEventListener(
+                'submit',
+                async (event) => {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+
+                    if (form.dataset.submitting === 'yes') {
+                        return;
+                    }
+
+                    const button = form.querySelector(
+                        'button[type="submit"]',
+                    );
+                    const csrf = csrfToken(form);
+                    const sourceParent = card.parentNode;
+                    const sourceMarker =
+                        document.createComment(
+                            'central-date-action-origin',
+                        );
+                    const snapshot = {
+                        overdue:
+                            card.dataset.dailyOverdue,
+                        band:
+                            card.dataset.dailyPriorityBand,
+                        score:
+                            card.dataset.dailyPriorityScore,
+                        dueDate:
+                            card.querySelector(
+                                '[data-daily-due-date]',
+                            )?.textContent?.trim() || '',
+                        priorityClass:
+                            card.querySelector(
+                                '[data-daily-priority-pill]',
+                            )?.className || '',
+                        priorityText:
+                            card.querySelector(
+                                '[data-daily-priority-pill]',
+                            )?.textContent?.trim() || '',
+                        critical:
+                            card.classList.contains(
+                                'daily-task-critical',
+                            ),
+                        todayHidden:
+                            card.querySelector(
+                                'form[data-daily-action="today"]',
+                            )?.hidden || false,
+                        hadOverduePill:
+                            Boolean(
+                                card.querySelector(
+                                    '[data-daily-overdue-pill]',
+                                ),
+                            ),
+                    };
+
+                    sourceParent.insertBefore(
+                        sourceMarker,
+                        card,
+                    );
+
+                    form.dataset.submitting = 'yes';
+                    button.disabled = true;
+
+                    try {
+                        const formData = new FormData(form);
+                        formData.set('_live', '1');
+
+                        const response = await fetch(
+                            form.getAttribute('action'),
+                            {
+                                method: 'POST',
+                                credentials: 'same-origin',
+                                headers: {
+                                    Accept: 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'X-Central-Live-Action': '1',
+                                },
+                                body: formData,
+                            },
+                        );
+
+                        const payload = await parseJsonResponse(
+                            response,
+                        );
+
+                        if (
+                            ! response.ok
+                            || ! payload.ok
+                            || ! payload.presentation
+                        ) {
+                            throw new Error(
+                                payload.message
+                                || 'No se pudo mover la tarea.',
+                            );
+                        }
+
+                        const presentation =
+                            payload.presentation;
+                        const targetParent =
+                            destinationList(
+                                presentation.destination,
+                            );
+
+                        if (! targetParent) {
+                            window.location.reload();
+                            return;
+                        }
+
+                        const sourceBefore =
+                            captureTaskPositions(
+                                sourceParent,
+                            );
+                        const targetBefore =
+                            targetParent === sourceParent
+                                ? sourceBefore
+                                : captureTaskPositions(
+                                    targetParent,
+                                );
+
+                        transitionDailySummary(
+                            card,
+                            presentation,
+                        );
+                        updateDatePresentation(
+                            card,
+                            presentation,
+                        );
+
+                        insertCardByPriority(
+                            targetParent,
+                            card,
+                        );
+
+                        animateTaskReflow(
+                            sourceParent,
+                            sourceBefore,
+                        );
+
+                        if (targetParent !== sourceParent) {
+                            animateTaskReflow(
+                                targetParent,
+                                targetBefore,
+                            );
+                        }
+
+                        syncDailyEmptyState(sourceParent);
+                        syncDailyEmptyState(targetParent);
+                        pulseRestoredCard(card);
+
+                        if (payload.undo) {
+                            const titleByAction = {
+                                today: 'Movida a hoy',
+                                tomorrow: 'Movida a mañana',
+                                next_week:
+                                    'Movida una semana',
+                            };
+
+                            showUndoToast(
+                                payload.undo,
+                                payload.label,
+                                csrf,
+                                {
+                                    mode: 'move',
+                                    toastTitle:
+                                        titleByAction[
+                                            payload.action
+                                        ]
+                                        || 'Fecha actualizada',
+                                    card,
+                                    placeholder:
+                                        sourceMarker,
+                                    restoreAction: () => {
+                                        const currentParent =
+                                            card.parentNode;
+                                        const currentBefore =
+                                            captureTaskPositions(
+                                                currentParent,
+                                            );
+                                        const originBefore =
+                                            sourceParent
+                                                === currentParent
+                                                ? currentBefore
+                                                : captureTaskPositions(
+                                                    sourceParent,
+                                                );
+
+                                        adjustDailySummary(
+                                            card,
+                                            -1,
+                                        );
+
+                                        card.dataset.dailyOverdue =
+                                            snapshot.overdue;
+                                        card.dataset.dailyPriorityBand =
+                                            snapshot.band;
+                                        card.dataset.dailyPriorityScore =
+                                            snapshot.score;
+
+                                        const dueDate =
+                                            card.querySelector(
+                                                '[data-daily-due-date]',
+                                            );
+                                        const priorityPill =
+                                            card.querySelector(
+                                                '[data-daily-priority-pill]',
+                                            );
+                                        const pills =
+                                            card.querySelector(
+                                                '[data-daily-pills]',
+                                            );
+                                        let overduePill =
+                                            card.querySelector(
+                                                '[data-daily-overdue-pill]',
+                                            );
+
+                                        if (dueDate) {
+                                            dueDate.textContent =
+                                                snapshot.dueDate;
+                                        }
+
+                                        if (priorityPill) {
+                                            priorityPill.className =
+                                                snapshot.priorityClass;
+                                            priorityPill.textContent =
+                                                snapshot.priorityText;
+                                        }
+
+                                        card.classList.toggle(
+                                            'daily-task-critical',
+                                            snapshot.critical,
+                                        );
+
+                                        if (
+                                            snapshot.hadOverduePill
+                                            && ! overduePill
+                                            && pills
+                                        ) {
+                                            overduePill =
+                                                document.createElement(
+                                                    'span',
+                                                );
+                                            overduePill.className =
+                                                'pill overdue';
+                                            overduePill.dataset
+                                                .dailyOverduePill =
+                                                '1';
+                                            overduePill.textContent =
+                                                'Vencida';
+                                            pills.prepend(
+                                                overduePill,
+                                            );
+                                        } else if (
+                                            ! snapshot.hadOverduePill
+                                        ) {
+                                            overduePill?.remove();
+                                        }
+
+                                        const todayForm =
+                                            card.querySelector(
+                                                'form[data-daily-action="today"]',
+                                            );
+
+                                        if (todayForm) {
+                                            todayForm.hidden =
+                                                snapshot.todayHidden;
+                                        }
+
+                                        adjustDailySummary(
+                                            card,
+                                            1,
+                                        );
+
+                                        sourceParent.insertBefore(
+                                            card,
+                                            sourceMarker,
+                                        );
+                                        sourceMarker.remove();
+
+                                        animateTaskReflow(
+                                            currentParent,
+                                            currentBefore,
+                                        );
+
+                                        if (
+                                            sourceParent
+                                            !== currentParent
+                                        ) {
+                                            animateTaskReflow(
+                                                sourceParent,
+                                                originBefore,
+                                            );
+                                        }
+
+                                        syncDailyEmptyState(
+                                            currentParent,
+                                        );
+                                        syncDailyEmptyState(
+                                            sourceParent,
+                                        );
+                                        pulseRestoredCard(card);
+                                    },
+                                },
+                            );
+                        } else {
+                            sourceMarker.remove();
+                        }
+                    } catch (error) {
+                        sourceMarker.remove();
+
+                        const toast = ensureToast();
+                        toast.hidden = false;
+                        toast.querySelector(
+                            '.global-undo-title',
+                        ).textContent = error.message
+                            || 'No se pudo mover la tarea.';
+                        toast.querySelector(
+                            '.global-undo-detail',
+                        ).textContent = '';
+
+                        window.setTimeout(() => {
+                            toast.hidden = true;
+                        }, 2600);
+                    } finally {
+                        delete form.dataset.submitting;
+                        button.disabled = false;
+                    }
+                },
+                { capture: true },
+            );
+        });
+
+        document.querySelectorAll(
             '.action-form input[name="action"][value="start"]',
         ).forEach((input) => {
             const form = input.closest('form');
@@ -1064,7 +1520,7 @@
                                     mode: 'inline',
                                     toastTitle: 'Tarea en curso',
                                     card,
-                                    restoreInline: () => {
+                                    restoreAction: () => {
                                         card.querySelector(
                                             '[data-daily-in-progress]',
                                         )?.remove();
