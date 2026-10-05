@@ -495,6 +495,8 @@
                         payload.next_undo || null;
 
                     if (nextUndo) {
+                        button.hidden = false;
+
                         const localNext =
                             [...completionStack]
                                 .reverse()
@@ -539,6 +541,8 @@
                             nextUndo,
                         );
                     } else {
+                        button.hidden = true;
+
                         toast.classList.add(
                             'global-undo-bar--restored',
                         );
@@ -560,7 +564,7 @@
                             toast.classList.remove(
                                 'global-undo-bar--restored',
                             );
-                        }, 1800);
+                        }, 1200);
                     }
                 } catch (error) {
                     toast.querySelector(
@@ -691,6 +695,15 @@
             toast.classList.remove(
                 'global-undo-bar--restored',
             );
+
+            const undoButton = toast.querySelector(
+                '.global-undo-button',
+            );
+
+            if (undoButton) {
+                undoButton.hidden = false;
+            }
+
             const title = toast.querySelector(
                 '.global-undo-title',
             );
