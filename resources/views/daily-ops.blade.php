@@ -434,61 +434,72 @@
         </div>
 
         <div class="focus-actions">
-            @if ($overdueCount > 0)
-                <a
-                    class="focus-action"
+            <a
+                class="focus-action"
+                data-daily-focus-primary
+                data-href-overdue="{{ route('daily-ops.show', array_filter([
+                    'view' => $selectedWorkView,
+                    'scope' => $selectedScope,
+                    'q' => $search !== '' ? $search : null,
+                    'priority' => 'overdue',
+                    'recurring_rule' => $selectedRecurringRule,
+                ])) }}"
+                data-href-critical="{{ route('daily-ops.show', array_filter([
+                    'view' => $selectedWorkView,
+                    'scope' => $selectedScope,
+                    'q' => $search !== '' ? $search : null,
+                    'priority' => 'critical',
+                    'recurring_rule' => $selectedRecurringRule,
+                ])) }}"
+                data-href-today="{{ route('daily-ops.show', array_filter([
+                    'view' => $selectedWorkView,
+                    'scope' => $selectedScope,
+                    'q' => $search !== '' ? $search : null,
+                    'priority' => 'today',
+                    'recurring_rule' => $selectedRecurringRule,
+                ])) }}"
+                @if ($overdueCount > 0)
                     href="{{ route('daily-ops.show', array_filter([
                         'view' => $selectedWorkView,
                         'scope' => $selectedScope,
                         'q' => $search !== '' ? $search : null,
                         'priority' => 'overdue',
-                        'recurring_rule' =>
-                            $selectedRecurringRule,
+                        'recurring_rule' => $selectedRecurringRule,
                     ])) }}"
-                >
-                    <svg class="focus-action-icon" viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M9 6h11M9 12h11M9 18h11"/>
-                        <path d="M4 6h.01M4 12h.01M4 18h.01"/>
-                    </svg>
-                    <span>Ver vencidas</span>
-                </a>
-            @elseif ($criticalCount > 0)
-                <a
-                    class="focus-action"
+                @elseif ($criticalCount > 0)
                     href="{{ route('daily-ops.show', array_filter([
                         'view' => $selectedWorkView,
                         'scope' => $selectedScope,
                         'q' => $search !== '' ? $search : null,
                         'priority' => 'critical',
-                        'recurring_rule' =>
-                            $selectedRecurringRule,
+                        'recurring_rule' => $selectedRecurringRule,
                     ])) }}"
-                >
-                    <svg class="focus-action-icon" viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M9 6h11M9 12h11M9 18h11"/>
-                        <path d="M4 6h.01M4 12h.01M4 18h.01"/>
-                    </svg>
-                    <span>Ver críticas</span>
-                </a>
-            @elseif ($priorityTodayCount > 0)
-                <a
-                    class="focus-action"
+                @elseif ($priorityTodayCount > 0)
                     href="{{ route('daily-ops.show', array_filter([
                         'view' => $selectedWorkView,
                         'scope' => $selectedScope,
                         'q' => $search !== '' ? $search : null,
                         'priority' => 'today',
-                        'recurring_rule' =>
-                            $selectedRecurringRule,
+                        'recurring_rule' => $selectedRecurringRule,
                     ])) }}"
-                >
-                    <svg class="focus-action-icon" viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M9 6h11M9 12h11M9 18h11"/>
-                        <path d="M4 6h.01M4 12h.01M4 18h.01"/>
-                    </svg>
-                    <span>Ver tareas de hoy</span>
-                </a>
-            @endif
+                @else
+                    hidden
+                @endif
+            >
+                <svg class="focus-action-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M9 6h11M9 12h11M9 18h11"/>
+                    <path d="M4 6h.01M4 12h.01M4 18h.01"/>
+                </svg>
+                <span data-daily-focus-primary-label>
+                    @if ($overdueCount > 0)
+                        Ver vencidas
+                    @elseif ($criticalCount > 0)
+                        Ver críticas
+                    @else
+                        Ver tareas de hoy
+                    @endif
+                </span>
+            </a>
 
             <a
                 class="focus-action secondary"
@@ -659,6 +670,7 @@
                     )
                         <a
                             class="section-link"
+                            data-daily-overdue-link
                             href="{{ route(
                                 'daily-ops.show',
                                 array_filter([
@@ -746,6 +758,9 @@
                 <section
                     class="section"
                     id="{{ $section['id'] }}"
+                    @if ($section['hide_when_empty'] ?? false)
+                        data-daily-hide-when-empty="1"
+                    @endif
                 >
                     <div class="section-head">
                         <h2>{{ $section['title'] }}</h2>

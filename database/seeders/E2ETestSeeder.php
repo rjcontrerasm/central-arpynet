@@ -93,6 +93,21 @@ class E2ETestSeeder extends Seeder
             ],
         );
 
+        Task::query()->updateOrCreate(
+            [
+                'organization_id' => $organization->id,
+                'title' => 'E2E foco crítico único',
+            ],
+            [
+                'status' => 'pending',
+                'urgency' => 'critical',
+                'impact' => 'high',
+                'due_at' => now(),
+                'assigned_to' => $user->id,
+                'created_by' => $user->id,
+            ],
+        );
+
         foreach ([
             ['E2E reflow uno', 9],
             ['E2E reflow dos', 8],

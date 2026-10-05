@@ -345,7 +345,12 @@
             gap: 8px;
         }
 
-        .focus-action {
+        .focus-action[hidden],
+.section[hidden] {
+    display: none !important;
+}
+
+.focus-action {
             display: inline-flex;
             align-items: center;
             min-height: 38px;

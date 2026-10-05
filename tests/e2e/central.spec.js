@@ -352,6 +352,94 @@ test('Mi Día completa tarea en vivo con mini confetti y undo inferior', async (
     await expectNoHorizontalOverflow(page);
 });
 
+test('Mi Día oculta y restaura foco crítico cuando cambia en vivo', async (
+    { page },
+    testInfo,
+) => {
+    test.skip(
+        testInfo.project.name !== 'desktop-1366',
+        'La transición de foco se valida una sola vez.',
+    );
+
+    await page.goto(
+        '/mi-dia?q=E2E%20foco%20cr%C3%ADtico%20%C3%BAnico',
+    );
+
+    const title = page.getByText(
+        'E2E foco crítico único',
+        { exact: true },
+    ).first();
+
+    await expect(title).toBeVisible();
+
+    const card = title.locator(
+        'xpath=ancestor::*[contains(@class,"item")][1]',
+    );
+    const done = card.getByRole('button', {
+        name: '✓ Hecho',
+        exact: true,
+    });
+    const primary = page.locator(
+        '[data-daily-focus-primary]',
+    );
+    const criticalSection = page.locator(
+        '#prioridad-critica',
+    );
+
+    await expect(primary).toBeVisible();
+    await expect(primary).toContainText('Ver críticas');
+    await expect(criticalSection).toBeVisible();
+
+    const completionResponse = page.waitForResponse(
+        (response) => (
+            response.request().method() === 'POST'
+            && response.url().includes('/mi-dia/tareas/')
+            && response.url().includes('/accion')
+        ),
+    );
+
+    await done.click();
+
+    expect((await completionResponse).status()).toBe(200);
+
+    const toast = page.locator(
+        '#daily-live-undo-toast',
+    );
+
+    try {
+        await expect(
+            page.locator('[data-daily-stat="critical"]'),
+        ).toHaveText('0');
+        await expect(primary).toBeHidden();
+        await expect(criticalSection).toBeHidden();
+    } finally {
+        if (await toast.isVisible().catch(() => false)) {
+            const undoResponse = page.waitForResponse(
+                (response) => (
+                    response.request().method() === 'POST'
+                    && new URL(response.url()).pathname === '/deshacer'
+                ),
+            );
+
+            await toast.getByRole('button', {
+                name: /Deshacer/,
+            }).click();
+
+            expect((await undoResponse).status()).toBe(200);
+        }
+    }
+
+    await expect(
+        page.locator('[data-daily-stat="critical"]'),
+    ).toHaveText('1');
+    await expect(primary).toBeVisible();
+    await expect(primary).toContainText('Ver críticas');
+    await expect(criticalSection).toBeVisible();
+    await expect(title).toBeVisible();
+
+    await expectNoHorizontalOverflow(page);
+});
+
 test('Mi Día reacomoda fichas con micro-rebote y deshacer estable', async (
     { page },
     testInfo,
