@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Task;
 use App\Support\GlobalUndoService;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -14,7 +15,7 @@ class DailyTaskWaitingController extends Controller
         Request $request,
         Task $task,
         GlobalUndoService $undo,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $validated = $request->validate([
             'waiting_until' => [
                 'required',
@@ -78,7 +79,7 @@ class DailyTaskWaitingController extends Controller
             $validated,
         );
 
-        $undo->rememberTaskMutation(
+        $undoAction = $undo->rememberTaskMutation(
             $request->user(),
             $task,
             $before,
@@ -89,6 +90,31 @@ class DailyTaskWaitingController extends Controller
                 false,
             ),
         );
+
+        if (
+            $request->expectsJson()
+            || $request->boolean('_live')
+            || $request->header(
+                'X-Central-Live-Action',
+            ) === '1'
+        ) {
+            return response()->json([
+                'ok' => true,
+                'task_id' => $task->id,
+                'label' => 'Tarea puesta en espera',
+                'waiting' => [
+                    'reason' =>
+                        $task->waiting_reason,
+                    'until' =>
+                        $task->waiting_until
+                            ?->format('d/m/Y'),
+                ],
+                'undo' =>
+                    $undo->clientPayload(
+                        $undoAction,
+                    ),
+            ]);
+        }
 
         return redirect()
             ->route(

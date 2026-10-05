@@ -863,16 +863,22 @@
                 </section>
             @endforeach
 
-            <section class="section">
+            <section
+                class="section"
+                id="en-espera"
+            >
                 <div class="section-head">
                     <h2>En espera</h2>
 
                     <span class="meta">
-                        {{ $waitingCount }} pendientes
+                        <span data-daily-waiting-count>{{ $waitingCount }}</span> pendientes
                     </span>
                 </div>
 
-                <div class="list">
+                <div
+                    class="list"
+                    data-daily-empty-message="No hay tareas en espera."
+                >
                     @forelse ($waitingTasks as $task)
                         @php
                             $followUpDue = $task->waiting_until

@@ -434,9 +434,9 @@
             }
 
             const hasCards = taskCards(parent).length > 0;
-            const liveEmpty = parent.querySelector(
-                '.daily-live-empty',
-            );
+            const emptyStates = [
+                ...parent.querySelectorAll('.empty'),
+            ];
             const section = parent.closest('.section');
 
             if (section?.dataset.dailyHideWhenEmpty === '1') {
@@ -444,11 +444,13 @@
             }
 
             if (hasCards) {
-                liveEmpty?.remove();
+                emptyStates.forEach(
+                    (empty) => empty.remove(),
+                );
                 return;
             }
 
-            if (liveEmpty) {
+            if (emptyStates.length > 0) {
                 return;
             }
 
@@ -1102,6 +1104,294 @@
                 stage.remove();
             }, 1100);
         };
+
+        document.querySelectorAll(
+            '.waiting-form',
+        ).forEach((form) => {
+            const card = form.closest('.item');
+
+            if (! card) {
+                return;
+            }
+
+            form.addEventListener(
+                'submit',
+                async (event) => {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+
+                    if (form.dataset.submitting === 'yes') {
+                        return;
+                    }
+
+                    const button = form.querySelector(
+                        'button[type="submit"]',
+                    );
+                    const csrf = csrfToken(form);
+                    const selectedPriority =
+                        form.querySelector(
+                            'input[name="priority"]',
+                        )?.value || '';
+                    const sourceParent = card.parentNode;
+                    const sourceMarker =
+                        document.createComment(
+                            'central-waiting-origin',
+                        );
+                    const title =
+                        card.querySelector(
+                            '.item-title',
+                        )?.textContent?.trim()
+                        || 'Tarea';
+                    const waitingReason =
+                        form.querySelector(
+                            'input[name="waiting_reason"]',
+                        )?.value?.trim() || '';
+                    const waitingUntil =
+                        form.querySelector(
+                            'input[name="waiting_until"]',
+                        )?.value || '';
+
+                    sourceParent.insertBefore(
+                        sourceMarker,
+                        card,
+                    );
+
+                    form.dataset.submitting = 'yes';
+                    button.disabled = true;
+
+                    try {
+                        const formData = new FormData(form);
+                        formData.set('_live', '1');
+
+                        const response = await fetch(
+                            form.getAttribute('action'),
+                            {
+                                method: 'POST',
+                                credentials: 'same-origin',
+                                headers: {
+                                    Accept: 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'X-Central-Live-Action': '1',
+                                },
+                                body: formData,
+                            },
+                        );
+
+                        const payload = await parseJsonResponse(
+                            response,
+                        );
+
+                        if (! response.ok || ! payload.ok) {
+                            throw new Error(
+                                payload.message
+                                || 'No se pudo poner la tarea en espera.',
+                            );
+                        }
+
+                        const sourceBefore =
+                            captureTaskPositions(
+                                sourceParent,
+                            );
+
+                        adjustDailySummary(
+                            card,
+                            -1,
+                        );
+                        if (! selectedPriority) {
+                            setDailyStatValue(
+                                'waiting',
+                                dailyStatValue('waiting') + 1,
+                            );
+                        }
+                        renderDailyFocus();
+
+                        card.remove();
+
+                        animateTaskReflow(
+                            sourceParent,
+                            sourceBefore,
+                        );
+                        syncDailyEmptyState(sourceParent);
+
+                        let waitingCard = null;
+                        const waitingParent =
+                            selectedPriority
+                                ? null
+                                : destinationList(
+                                    'en-espera',
+                                );
+
+                        if (waitingParent) {
+                            waitingCard =
+                                document.createElement('div');
+                            waitingCard.className =
+                                'item daily-waiting-live';
+                            waitingCard.dataset
+                                .operationalCard = '1';
+
+                            const liveTitle =
+                                document.createElement('div');
+                            liveTitle.className =
+                                'item-title';
+                            liveTitle.textContent = title;
+
+                            const reason =
+                                document.createElement('div');
+                            reason.className = 'meta';
+                            reason.textContent =
+                                payload.waiting?.reason
+                                || waitingReason;
+
+                            waitingCard.appendChild(
+                                liveTitle,
+                            );
+                            waitingCard.appendChild(
+                                reason,
+                            );
+
+                            const until =
+                                payload.waiting?.until
+                                || waitingUntil;
+
+                            if (until) {
+                                const followUp =
+                                    document.createElement(
+                                        'div',
+                                    );
+                                followUp.className = 'meta';
+                                followUp.textContent =
+                                    `Seguimiento: ${until}`;
+                                waitingCard.appendChild(
+                                    followUp,
+                                );
+                            }
+
+                            const waitingBefore =
+                                captureTaskPositions(
+                                    waitingParent,
+                                );
+
+                            waitingParent.appendChild(
+                                waitingCard,
+                            );
+                            syncDailyEmptyState(
+                                waitingParent,
+                            );
+                            animateTaskReflow(
+                                waitingParent,
+                                waitingBefore,
+                            );
+                            pulseRestoredCard(
+                                waitingCard,
+                            );
+                        }
+
+                        if (payload.undo) {
+                            showUndoToast(
+                                payload.undo,
+                                payload.label,
+                                csrf,
+                                {
+                                    mode: 'waiting',
+                                    toastTitle:
+                                        'Tarea en espera',
+                                    card,
+                                    placeholder:
+                                        sourceMarker,
+                                    restoreAction: () => {
+                                        const waitingParentNow =
+                                            waitingCard
+                                                ?.parentNode;
+
+                                        if (waitingCard) {
+                                            const waitingBefore =
+                                                waitingParentNow
+                                                    ? captureTaskPositions(
+                                                        waitingParentNow,
+                                                    )
+                                                    : null;
+
+                                            waitingCard.remove();
+
+                                            if (
+                                                waitingParentNow
+                                                && waitingBefore
+                                            ) {
+                                                animateTaskReflow(
+                                                    waitingParentNow,
+                                                    waitingBefore,
+                                                );
+                                                syncDailyEmptyState(
+                                                    waitingParentNow,
+                                                );
+                                            }
+                                        }
+
+                                        if (! selectedPriority) {
+                                            setDailyStatValue(
+                                                'waiting',
+                                                dailyStatValue(
+                                                    'waiting',
+                                                ) - 1,
+                                            );
+                                        }
+                                        adjustDailySummary(
+                                            card,
+                                            1,
+                                        );
+
+                                        const originBefore =
+                                            captureTaskPositions(
+                                                sourceParent,
+                                            );
+
+                                        sourceParent.insertBefore(
+                                            card,
+                                            sourceMarker,
+                                        );
+                                        sourceMarker.remove();
+
+                                        animateTaskReflow(
+                                            sourceParent,
+                                            originBefore,
+                                        );
+                                        syncDailyEmptyState(
+                                            sourceParent,
+                                        );
+                                        renderDailyFocus();
+                                        pulseRestoredCard(
+                                            card,
+                                        );
+                                    },
+                                },
+                            );
+                        } else {
+                            sourceMarker.remove();
+                        }
+                    } catch (error) {
+                        sourceMarker.remove();
+
+                        const toast = ensureToast();
+                        toast.hidden = false;
+                        toast.querySelector(
+                            '.global-undo-title',
+                        ).textContent = error.message
+                            || 'No se pudo poner la tarea en espera.';
+                        toast.querySelector(
+                            '.global-undo-detail',
+                        ).textContent = '';
+
+                        window.setTimeout(() => {
+                            toast.hidden = true;
+                        }, 2600);
+                    } finally {
+                        delete form.dataset.submitting;
+                        button.disabled = false;
+                    }
+                },
+                { capture: true },
+            );
+        });
 
         document.querySelectorAll(
             '.action-form input[name="action"][value="today"],'
