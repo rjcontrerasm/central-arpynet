@@ -107,7 +107,10 @@ test('Mi Día muestra foco operativo sin overflow', async ({ page }) => {
     ).toBeVisible();
 
     await expect(
-        page.getByText('E2E tarea crítica'),
+        page.getByText(
+            'E2E tarea crítica',
+            { exact: true },
+        ).first(),
     ).toBeVisible();
 
     await expectNoHorizontalOverflow(page);
