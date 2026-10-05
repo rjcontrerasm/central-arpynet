@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Organization;
+use App\Models\Project;
 use App\Models\RecurringTaskRule;
 use App\Models\Task;
 use App\Models\User;
@@ -219,6 +220,7 @@ class DailyTaskWaitingController extends Controller
                 'organization',
                 'assignee',
                 'workTeams',
+                'project',
                 'recurringRun.rule',
             ]);
 
@@ -484,10 +486,84 @@ class DailyTaskWaitingController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'email']);
 
+        $taskAssigneeIds = $taskAssignees
+            ->pluck('id');
+
+        $taskAssigneeOrganizationIds = DB::table(
+            'organization_user',
+        )
+            ->whereIn('user_id', $taskAssigneeIds)
+            ->whereIn(
+                'organization_id',
+                $visibleScopeOrganizationIds,
+            )
+            ->where('is_active', true)
+            ->whereIn(
+                'role',
+                ['owner', 'admin', 'member'],
+            )
+            ->get([
+                'user_id',
+                'organization_id',
+            ])
+            ->groupBy('user_id')
+            ->map(
+                fn ($rows) => $rows
+                    ->pluck('organization_id')
+                    ->map(fn ($id): int => (int) $id)
+                    ->values()
+                    ->all(),
+            );
+
+        $taskAssigneeWorkTeamIds = DB::table(
+            'work_team_user',
+        )
+            ->whereIn('user_id', $taskAssigneeIds)
+            ->whereIn(
+                'work_team_id',
+                $workTeams->pluck('id'),
+            )
+            ->where('is_active', true)
+            ->whereIn(
+                'role',
+                ['lead', 'member'],
+            )
+            ->get([
+                'user_id',
+                'work_team_id',
+            ])
+            ->groupBy('user_id')
+            ->map(
+                fn ($rows) => $rows
+                    ->pluck('work_team_id')
+                    ->map(fn ($id): int => (int) $id)
+                    ->values()
+                    ->all(),
+            );
+
+        $taskProjects = Project::query()
+            ->whereIn(
+                'organization_id',
+                $visibleScopeOrganizationIds,
+            )
+            ->whereNotIn(
+                'status',
+                ['completed', 'cancelled'],
+            )
+            ->orderBy('name')
+            ->get([
+                'id',
+                'organization_id',
+                'name',
+            ]);
+
         return compact(
             'organizations',
             'workTeams',
             'taskAssignees',
+            'taskAssigneeOrganizationIds',
+            'taskAssigneeWorkTeamIds',
+            'taskProjects',
         );
     }
 

@@ -161,6 +161,77 @@ class DailyOpsController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'email']);
 
+        $taskAssigneeIds = $taskAssignees
+            ->pluck('id');
+
+        $taskAssigneeOrganizationIds = DB::table(
+            'organization_user',
+        )
+            ->whereIn('user_id', $taskAssigneeIds)
+            ->whereIn(
+                'organization_id',
+                $visibleScopeOrganizationIds,
+            )
+            ->where('is_active', true)
+            ->whereIn(
+                'role',
+                ['owner', 'admin', 'member'],
+            )
+            ->get([
+                'user_id',
+                'organization_id',
+            ])
+            ->groupBy('user_id')
+            ->map(
+                fn ($rows) => $rows
+                    ->pluck('organization_id')
+                    ->map(fn ($id): int => (int) $id)
+                    ->values()
+                    ->all(),
+            );
+
+        $taskAssigneeWorkTeamIds = DB::table(
+            'work_team_user',
+        )
+            ->whereIn('user_id', $taskAssigneeIds)
+            ->whereIn(
+                'work_team_id',
+                $workTeams->pluck('id'),
+            )
+            ->where('is_active', true)
+            ->whereIn(
+                'role',
+                ['lead', 'member'],
+            )
+            ->get([
+                'user_id',
+                'work_team_id',
+            ])
+            ->groupBy('user_id')
+            ->map(
+                fn ($rows) => $rows
+                    ->pluck('work_team_id')
+                    ->map(fn ($id): int => (int) $id)
+                    ->values()
+                    ->all(),
+            );
+
+        $taskProjects = Project::query()
+            ->whereIn(
+                'organization_id',
+                $visibleScopeOrganizationIds,
+            )
+            ->whereNotIn(
+                'status',
+                ['completed', 'cancelled'],
+            )
+            ->orderBy('name')
+            ->get([
+                'id',
+                'organization_id',
+                'name',
+            ]);
+
         $selectedScope = isset($validated['scope'])
             ? (int) $validated['scope']
             : null;
@@ -201,6 +272,7 @@ class DailyOpsController extends Controller
                 'organization',
                 'assignee',
                 'workTeams',
+                'project',
                 'recurringRun.rule',
             ])
             ->whereNotIn(
@@ -865,6 +937,9 @@ class DailyOpsController extends Controller
                 'workTeams',
                 'selectedWorkTeam',
                 'taskAssignees',
+                'taskAssigneeOrganizationIds',
+                'taskAssigneeWorkTeamIds',
+                'taskProjects',
                 'search',
                 'selectedPriority',
                 'selectedRecurringRule',

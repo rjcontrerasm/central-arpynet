@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Organization;
+use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\WorkTeam;
@@ -118,6 +119,94 @@ class WorkTeamTaskAssignmentEditTest extends TestCase
         $this->assertSame(
             0,
             $task->workTeams()->count(),
+        );
+    }
+
+    public function test_task_edit_can_assign_project_from_same_company(): void
+    {
+        [$rolando, $lissette, , $pcsotec, $team] =
+            $this->context();
+
+        $project = Project::query()->create([
+            'organization_id' => $pcsotec->id,
+            'name' => 'Proyecto PC SOTEC',
+            'type' => 'project',
+            'status' => 'active',
+            'created_by' => $rolando->id,
+        ]);
+
+        $task = Task::query()->create([
+            'organization_id' => $pcsotec->id,
+            'title' => 'Tarea con proyecto PC SOTEC',
+            'status' => 'pending',
+            'urgency' => 'normal',
+            'impact' => 'normal',
+            'assigned_to' => $rolando->id,
+            'created_by' => $rolando->id,
+        ]);
+
+        $this->actingAs($rolando)
+            ->post(
+                route('daily-task-edit.update', $task),
+                [
+                    'organization_id' => $pcsotec->id,
+                    'project_id' => $project->id,
+                    'urgency' => 'normal',
+                    'impact' => 'normal',
+                    'assigned_to' => $lissette->id,
+                    'visibility_scope' => 'teams',
+                    'work_team_ids' => [$team->id],
+                ],
+            )
+            ->assertRedirect();
+
+        $this->assertSame(
+            $project->id,
+            $task->fresh()->project_id,
+        );
+    }
+
+    public function test_task_edit_rejects_project_from_other_company(): void
+    {
+        [$rolando, , $arpynet, $pcsotec] =
+            $this->context();
+
+        $foreignProject = Project::query()->create([
+            'organization_id' => $arpynet->id,
+            'name' => 'Proyecto ARPYNET ajeno',
+            'type' => 'project',
+            'status' => 'active',
+            'created_by' => $rolando->id,
+        ]);
+
+        $task = Task::query()->create([
+            'organization_id' => $pcsotec->id,
+            'title' => 'Tarea PC SOTEC sin proyecto',
+            'status' => 'pending',
+            'urgency' => 'normal',
+            'impact' => 'normal',
+            'assigned_to' => $rolando->id,
+            'created_by' => $rolando->id,
+        ]);
+
+        $this->actingAs($rolando)
+            ->from('/mi-dia')
+            ->post(
+                route('daily-task-edit.update', $task),
+                [
+                    'organization_id' => $pcsotec->id,
+                    'project_id' => $foreignProject->id,
+                    'urgency' => 'normal',
+                    'impact' => 'normal',
+                    'assigned_to' => $rolando->id,
+                    'visibility_scope' => 'organization',
+                ],
+            )
+            ->assertRedirect('/mi-dia')
+            ->assertSessionHasErrors('project_id');
+
+        $this->assertNull(
+            $task->fresh()->project_id,
         );
     }
 

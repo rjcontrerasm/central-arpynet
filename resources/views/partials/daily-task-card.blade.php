@@ -492,6 +492,8 @@
                                         <form
                                             class="edit-form"
                                             method="POST"
+                                            data-daily-edit-form
+                                            data-current-user-id="{{ $currentUser?->id ?? '' }}"
                                             action="{{ route(
                                                 'daily-task-edit.update',
                                                 $task,
@@ -508,12 +510,45 @@
                                                 >
                                             @endif
 
+                                            @if ($search !== '')
+                                                <input
+                                                    type="hidden"
+                                                    name="q"
+                                                    value="{{ $search }}"
+                                                >
+                                            @endif
+
+                                            @if ($selectedPriority)
+                                                <input
+                                                    type="hidden"
+                                                    name="priority"
+                                                    value="{{ $selectedPriority }}"
+                                                >
+                                            @endif
+
+                                            @if ($selectedRecurringRule)
+                                                <input
+                                                    type="hidden"
+                                                    name="recurring_rule"
+                                                    value="{{ $selectedRecurringRule }}"
+                                                >
+                                            @endif
+
+                                            @if ($selectedWorkTeam)
+                                                <input
+                                                    type="hidden"
+                                                    name="work_team"
+                                                    value="{{ $selectedWorkTeam }}"
+                                                >
+                                            @endif
+
                                             <div class="edit-grid">
                                                 <label class="edit-field full">
                                                     Empresa / ámbito
 
                                                     <select
                                                         name="organization_id"
+                                                        data-edit-organization
                                                         required
                                                     >
                                                         @foreach (
@@ -534,10 +569,66 @@
                                                 </label>
 
                                                 <label class="edit-field full">
+                                                    Proyecto
+
+                                                    <select
+                                                        name="project_id"
+                                                        data-edit-project
+                                                    >
+                                                        <option value="">
+                                                            Sin proyecto
+                                                        </option>
+
+                                                        @php
+                                                            $taskProjectIncluded =
+                                                                false;
+                                                        @endphp
+
+                                                        @foreach (
+                                                            $taskProjects
+                                                            as $project
+                                                        )
+                                                            @php
+                                                                $isCurrentProject =
+                                                                    (int) $task->project_id
+                                                                    === (int) $project->id;
+
+                                                                if ($isCurrentProject) {
+                                                                    $taskProjectIncluded =
+                                                                        true;
+                                                                }
+                                                            @endphp
+
+                                                            <option
+                                                                value="{{ $project->id }}"
+                                                                data-organization-id="{{ $project->organization_id }}"
+                                                                @selected($isCurrentProject)
+                                                            >
+                                                                {{ $project->name }}
+                                                            </option>
+                                                        @endforeach
+
+                                                        @if (
+                                                            $task->project
+                                                            && ! $taskProjectIncluded
+                                                        )
+                                                            <option
+                                                                value="{{ $task->project->id }}"
+                                                                data-organization-id="{{ $task->project->organization_id }}"
+                                                                selected
+                                                            >
+                                                                {{ $task->project->name }}
+                                                            </option>
+                                                        @endif
+                                                    </select>
+                                                </label>
+
+                                                <label class="edit-field full">
                                                     Responsable
 
                                                     <select
                                                         name="assigned_to"
+                                                        data-edit-assignee
                                                         required
                                                     >
                                                         @foreach (
@@ -546,6 +637,8 @@
                                                         )
                                                             <option
                                                                 value="{{ $assignee->id }}"
+                                                                data-organization-ids="{{ implode(',', $taskAssigneeOrganizationIds[$assignee->id] ?? []) }}"
+                                                                data-work-team-ids="{{ implode(',', $taskAssigneeWorkTeamIds[$assignee->id] ?? []) }}"
                                                                 @selected(
                                                                     (string) $task->assigned_to
                                                                     === (string) $assignee->id
@@ -562,6 +655,7 @@
 
                                                     <select
                                                         name="visibility_scope"
+                                                        data-edit-visibility
                                                         required
                                                     >
                                                         <option
@@ -586,11 +680,15 @@
                                                     </select>
                                                 </label>
 
-                                                <label class="edit-field full">
+                                                <label
+                                                    class="edit-field full"
+                                                    data-edit-teams-wrapper
+                                                >
                                                     Equipos con acceso
 
                                                     <select
                                                         name="work_team_ids[]"
+                                                        data-edit-teams
                                                         multiple
                                                         size="{{ min(max($workTeams->count(), 2), 5) }}"
                                                     >

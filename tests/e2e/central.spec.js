@@ -92,7 +92,9 @@ test('proyectos mantiene acciones rápidas con estilo local', async (
 });
 
 test('Mi Día muestra foco operativo sin overflow', async ({ page }) => {
-    await page.goto('/mi-dia');
+    await page.goto(
+        '/mi-dia?q=E2E%20tarea%20cr%C3%ADtica',
+    );
 
     await expect(
         page.getByRole('heading', {
@@ -105,7 +107,10 @@ test('Mi Día muestra foco operativo sin overflow', async ({ page }) => {
     ).toBeVisible();
 
     await expect(
-        page.getByText('E2E tarea crítica'),
+        page.getByText(
+            'E2E tarea crítica',
+            { exact: true },
+        ).first(),
     ).toBeVisible();
 
     await expectNoHorizontalOverflow(page);
@@ -184,16 +189,20 @@ test('Mi Día completa tarea en vivo con mini confetti y undo inferior', async (
         window.webkitAudioContext = FakeAudioContext;
     });
 
-    await page.goto('/mi-dia');
+    await page.goto(
+        '/mi-dia?q=E2E%20completar%20live',
+    );
 
     const taskTitle = page.getByText(
-        'E2E tarea crítica',
+        'E2E completar live',
         { exact: true },
     ).first();
 
     await expect(taskTitle).toBeVisible();
 
-    const card = taskTitle.locator('xpath=ancestor::*[contains(@class,"item")][1]');
+    const card = taskTitle.locator(
+        'xpath=ancestor::*[@data-operational-card][1]',
+    );
     const done = card.getByRole('button', {
         name: '✓ Hecho',
         exact: true,
@@ -442,11 +451,11 @@ test('Mi Día mueve Hoy, Mañana y +1 semana en vivo con Deshacer', async (
     );
 
     await page.goto(
-        '/mi-dia?q=E2E%20reflow%20dos',
+        '/mi-dia?q=E2E%20mover%20fechas',
     );
 
     const title = page.getByText(
-        'E2E reflow dos',
+        'E2E mover fechas',
         { exact: true },
     ).first();
 
@@ -503,7 +512,7 @@ test('Mi Día mueve Hoy, Mañana y +1 semana en vivo con Deshacer', async (
             page.locator(
                 `#${expectedSection} > .list`,
             ).locator('.item', {
-                hasText: 'E2E reflow dos',
+                hasText: 'E2E mover fechas',
             }),
         ).toBeVisible();
 
@@ -538,7 +547,7 @@ test('Mi Día mueve Hoy, Mañana y +1 semana en vivo con Deshacer', async (
         await expect(
             page.locator('#vencidas > .list')
                 .locator('.item', {
-                    hasText: 'E2E reflow dos',
+                    hasText: 'E2E mover fechas',
                 }),
         ).toBeVisible();
 
@@ -916,6 +925,14 @@ test('Mi Día reactiva una tarea En espera en vivo y permite deshacer', async (
         'data-daily-live-waiting-bound',
         '1',
     );
+    await expect(
+        activeCard.locator(
+            'form[data-daily-edit-form]',
+        ),
+    ).toHaveAttribute(
+        'data-daily-edit-bound',
+        '1',
+    );
 
     const toast = page.locator(
         '#daily-live-undo-toast',
@@ -1062,6 +1079,117 @@ test('Mi Día pone En espera sin recargar dentro del filtro Vencidas', async (
         String(overdueBefore),
     );
     expect(page.url()).toBe(originalUrl);
+
+    await expectNoHorizontalOverflow(page);
+});
+
+test('Mi Día filtra responsable y proyecto al editar empresa', async (
+    { page },
+    testInfo,
+) => {
+    test.skip(
+        testInfo.project.name !== 'desktop-1366',
+        'La prevención dinámica del editor se valida una sola vez.',
+    );
+
+    await page.goto(
+        '/mi-dia?q=E2E%20reflow%20uno',
+    );
+
+    const title = page.getByText(
+        'E2E reflow uno',
+        { exact: true },
+    ).first();
+
+    await expect(title).toBeVisible();
+
+    const card = title.locator(
+        'xpath=ancestor::*[@data-operational-card][1]',
+    );
+
+    const form = card.locator(
+        'form[data-daily-edit-form]',
+    );
+
+    await form.locator(
+        'xpath=../summary',
+    ).click();
+
+    await expect(form).toHaveAttribute(
+        'data-daily-edit-bound',
+        '1',
+    );
+
+    const organization = form.locator(
+        '[data-edit-organization]',
+    );
+    const project = form.locator(
+        '[data-edit-project]',
+    );
+    const assignee = form.locator(
+        '[data-edit-assignee]',
+    );
+
+    const primaryProject = project.locator(
+        'option',
+        { hasText: 'E2E proyecto' },
+    );
+    const secondaryProject = project.locator(
+        'option',
+        {
+            hasText:
+                'Proyecto secundario captura',
+        },
+    );
+    const primaryOnly = assignee.locator(
+        'option',
+        { hasText: 'E2E ARPYNET solo' },
+    );
+
+    await expect(primaryProject).not.toHaveAttribute(
+        'disabled',
+        '',
+    );
+    await expect(secondaryProject).toHaveAttribute(
+        'disabled',
+        '',
+    );
+    await expect(primaryOnly).not.toHaveAttribute(
+        'disabled',
+        '',
+    );
+
+    const secondaryValue = await organization
+        .locator(
+            'option',
+            {
+                hasText:
+                    'ARPYNET E2E Secundaria',
+            },
+        )
+        .getAttribute('value');
+
+    expect(secondaryValue).toBeTruthy();
+
+    await organization.selectOption(
+        secondaryValue,
+    );
+
+    await expect(primaryProject).toHaveAttribute(
+        'disabled',
+        '',
+    );
+    await expect(secondaryProject).not.toHaveAttribute(
+        'disabled',
+        '',
+    );
+    await expect(primaryOnly).toHaveAttribute(
+        'disabled',
+        '',
+    );
+    await expect(
+        assignee.locator('option:checked'),
+    ).toHaveText('Central E2E');
 
     await expectNoHorizontalOverflow(page);
 });
@@ -1292,12 +1420,17 @@ test('Mi Día reacomoda fichas con micro-rebote y deshacer estable', async (
 
     await page.goto('/mi-dia');
 
+    const fixturePrefix =
+        testInfo.project.name === 'mobile-390'
+            ? 'E2E reflow mobile'
+            : 'E2E reflow desktop';
+
     const title = page.getByText(
-        'E2E reflow dos',
+        `${fixturePrefix} uno`,
         { exact: true },
     ).first();
     const followingTitle = page.getByText(
-        'E2E reflow tres',
+        `${fixturePrefix} dos`,
         { exact: true },
     ).first();
 

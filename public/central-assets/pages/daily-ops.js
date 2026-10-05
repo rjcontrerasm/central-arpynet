@@ -11,6 +11,7 @@
         let lastCompletion = null;
         let completionStack = [];
         let undoExpiryTimer = null;
+        let undoRestoreHideTimer = null;
         let audioContext = null;
 
         const primeFeedbackAudio = () => {
@@ -915,12 +916,18 @@
 
                         lastCompletion = null;
 
-                        window.setTimeout(() => {
-                            toast.hidden = true;
-                            toast.classList.remove(
-                                'global-undo-bar--restored',
-                            );
-                        }, 1200);
+                        window.clearTimeout(
+                            undoRestoreHideTimer,
+                        );
+
+                        undoRestoreHideTimer =
+                            window.setTimeout(() => {
+                                toast.hidden = true;
+                                toast.classList.remove(
+                                    'global-undo-bar--restored',
+                                );
+                                undoRestoreHideTimer = null;
+                            }, 1200);
                     }
                 } catch (error) {
                     toast.querySelector(
@@ -1039,6 +1046,11 @@
             state,
         ) => {
             const toast = ensureToast();
+
+            window.clearTimeout(
+                undoRestoreHideTimer,
+            );
+            undoRestoreHideTimer = null;
 
             if (
                 existingUndoToast
@@ -2427,12 +2439,319 @@
         });
         };
 
+        const bindEditForms = (root = document) => {
+            root.querySelectorAll(
+                'form[data-daily-edit-form]',
+            ).forEach((form) => {
+                if (
+                    form.dataset.dailyEditBound
+                    === '1'
+                ) {
+                    return;
+                }
+
+                form.dataset.dailyEditBound = '1';
+
+                const organization =
+                    form.querySelector(
+                        '[data-edit-organization]',
+                    );
+                const project =
+                    form.querySelector(
+                        '[data-edit-project]',
+                    );
+                const assignee =
+                    form.querySelector(
+                        '[data-edit-assignee]',
+                    );
+                const visibility =
+                    form.querySelector(
+                        '[data-edit-visibility]',
+                    );
+                const teams =
+                    form.querySelector(
+                        '[data-edit-teams]',
+                    );
+                const teamsWrapper =
+                    form.querySelector(
+                        '[data-edit-teams-wrapper]',
+                    );
+                const currentUserId = Number(
+                    form.dataset.currentUserId || 0,
+                );
+                const contextWorkTeamId = Number(
+                    form.querySelector(
+                        'input[name="work_team"]',
+                    )?.value || 0,
+                );
+
+                const idsFrom = (value) => (
+                    String(value || '')
+                        .split(',')
+                        .map((id) => Number(id))
+                        .filter((id) => id > 0)
+                );
+
+                const selectedTeamIds = () => (
+                    teams
+                        ? Array.from(
+                            teams.selectedOptions,
+                        ).map(
+                            (option) =>
+                                Number(option.value),
+                        )
+                        : []
+                );
+
+                const selectOnlyTeam = (teamId) => {
+                    if (! teams) {
+                        return;
+                    }
+
+                    Array.from(teams.options)
+                        .forEach((option) => {
+                            option.selected =
+                                teamId > 0
+                                && Number(option.value)
+                                    === teamId;
+                        });
+                };
+
+                const refreshProjects = () => {
+                    if (! organization || ! project) {
+                        return;
+                    }
+
+                    const organizationId = Number(
+                        organization.value,
+                    );
+                    let selectedIsValid = false;
+
+                    Array.from(project.options)
+                        .forEach((option) => {
+                            if (! option.value) {
+                                option.hidden = false;
+                                option.disabled = false;
+
+                                if (option.selected) {
+                                    selectedIsValid = true;
+                                }
+
+                                return;
+                            }
+
+                            const matches =
+                                Number(
+                                    option.dataset
+                                        .organizationId
+                                    || 0,
+                                ) === organizationId;
+
+                            option.hidden = ! matches;
+                            option.disabled = ! matches;
+
+                            if (
+                                option.selected
+                                && matches
+                            ) {
+                                selectedIsValid = true;
+                            }
+                        });
+
+                    if (! selectedIsValid) {
+                        project.value = '';
+                    }
+                };
+
+                const assigneeAllowed = (option) => {
+                    if (! option?.value) {
+                        return false;
+                    }
+
+                    if (
+                        visibility?.value === 'teams'
+                    ) {
+                        const selectedTeams =
+                            selectedTeamIds();
+                        const memberTeams = idsFrom(
+                            option.dataset
+                                .workTeamIds,
+                        );
+
+                        return selectedTeams.length > 0
+                            && selectedTeams.some(
+                                (teamId) =>
+                                    memberTeams.includes(
+                                        teamId,
+                                    ),
+                            );
+                    }
+
+                    const organizationId = Number(
+                        organization?.value || 0,
+                    );
+                    const memberships = idsFrom(
+                        option.dataset
+                            .organizationIds,
+                    );
+
+                    return organizationId > 0
+                        && memberships.includes(
+                            organizationId,
+                        );
+                };
+
+                const refreshAssignees = () => {
+                    if (! assignee) {
+                        return;
+                    }
+
+                    const options = Array.from(
+                        assignee.options,
+                    );
+
+                    options.forEach((option) => {
+                        const allowed =
+                            assigneeAllowed(option);
+
+                        option.hidden = ! allowed;
+                        option.disabled = ! allowed;
+                    });
+
+                    if (
+                        assigneeAllowed(
+                            assignee
+                                .selectedOptions[0],
+                        )
+                    ) {
+                        return;
+                    }
+
+                    const preferred = options.find(
+                        (option) => (
+                            Number(option.value)
+                                === currentUserId
+                            && ! option.disabled
+                        ),
+                    );
+
+                    const fallback =
+                        preferred
+                        || options.find(
+                            (option) =>
+                                ! option.disabled,
+                        );
+
+                    if (fallback) {
+                        assignee.value =
+                            fallback.value;
+                    }
+                };
+
+                const ensureTeamSelection = () => {
+                    if (
+                        ! teams
+                        || selectedTeamIds().length > 0
+                    ) {
+                        return;
+                    }
+
+                    const contextTeamExists =
+                        contextWorkTeamId > 0
+                        && Array.from(
+                            teams.options,
+                        ).some(
+                            (option) => (
+                                Number(option.value)
+                                === contextWorkTeamId
+                            ),
+                        );
+
+                    if (contextTeamExists) {
+                        selectOnlyTeam(
+                            contextWorkTeamId,
+                        );
+                        return;
+                    }
+
+                    const first = teams.options[0];
+
+                    if (first) {
+                        first.selected = true;
+                    }
+                };
+
+                const refreshVisibility = () => {
+                    if (! visibility || ! teams) {
+                        return;
+                    }
+
+                    const usesTeams =
+                        visibility.value === 'teams';
+
+                    if (teamsWrapper) {
+                        teamsWrapper.hidden =
+                            ! usesTeams;
+                    }
+
+                    teams.disabled = ! usesTeams;
+                    teams.required = usesTeams;
+
+                    if (usesTeams) {
+                        ensureTeamSelection();
+                    } else {
+                        selectOnlyTeam(0);
+                    }
+
+                    refreshAssignees();
+                };
+
+                organization?.addEventListener(
+                    'change',
+                    () => {
+                        refreshProjects();
+
+                        if (
+                            visibility?.value
+                            !== 'teams'
+                        ) {
+                            refreshAssignees();
+                        }
+                    },
+                );
+
+                visibility?.addEventListener(
+                    'change',
+                    refreshVisibility,
+                );
+
+                teams?.addEventListener(
+                    'change',
+                    () => {
+                        if (
+                            selectedTeamIds()
+                                .length === 0
+                        ) {
+                            ensureTeamSelection();
+                        }
+
+                        refreshAssignees();
+                    },
+                );
+
+                refreshProjects();
+                refreshVisibility();
+                refreshAssignees();
+            });
+        };
+
         const bindLiveTaskForms = (root = document) => {
             bindResumeForms(root);
             bindWaitingForms(root);
             bindDateActionForms(root);
             bindStartActionForms(root);
             bindCompleteActionForms(root);
+            bindEditForms(root);
         };
 
         bindLiveTaskForms();
