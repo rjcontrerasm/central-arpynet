@@ -1862,7 +1862,7 @@ test('captura rápida permite elegir equipo desde contexto general', async (
     await expect(visibility).toHaveValue(
         'teams',
     );
-    await expect(teams).toHaveValue([
+    await expect(teams).toHaveValues([
         firstTeamValue,
     ]);
 
@@ -1871,7 +1871,7 @@ test('captura rápida permite elegir equipo desde contexto general', async (
     );
 
     await expect(teams).toBeEnabled();
-    await expect(teams).toHaveValue([]);
+    await expect(teams).toHaveValues([]);
 
     await expectNoHorizontalOverflow(page);
 });
