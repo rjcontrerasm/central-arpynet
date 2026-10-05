@@ -45,9 +45,70 @@ class CollaborationComment extends Model
         Builder $query,
         User $user,
     ): Builder {
-        return $query->whereIn(
-            'organization_id',
-            $user->activeOrganizationIds(),
+        return $query->where(
+            function (Builder $visibility) use ($user): void {
+                $visibility
+                    ->where(
+                        function (Builder $tasks) use ($user): void {
+                            $tasks
+                                ->where(
+                                    'commentable_type',
+                                    Task::class,
+                                )
+                                ->whereIn(
+                                    'commentable_id',
+                                    Task::query()
+                                        ->visibleTo($user)
+                                        ->select('id'),
+                                );
+                        },
+                    )
+                    ->orWhere(
+                        function (Builder $projects) use ($user): void {
+                            $projects
+                                ->where(
+                                    'commentable_type',
+                                    Project::class,
+                                )
+                                ->whereIn(
+                                    'commentable_id',
+                                    Project::query()
+                                        ->visibleTo($user)
+                                        ->select('id'),
+                                );
+                        },
+                    )
+                    ->orWhere(
+                        function (Builder $services) use ($user): void {
+                            $services
+                                ->where(
+                                    'commentable_type',
+                                    ServiceOrder::class,
+                                )
+                                ->whereIn(
+                                    'commentable_id',
+                                    ServiceOrder::query()
+                                        ->visibleTo($user)
+                                        ->select('id'),
+                                );
+                        },
+                    )
+                    ->orWhere(
+                        function (Builder $incidents) use ($user): void {
+                            $incidents
+                                ->where(
+                                    'commentable_type',
+                                    Incident::class,
+                                )
+                                ->whereIn(
+                                    'commentable_id',
+                                    Incident::query()
+                                        ->visibleTo($user)
+                                        ->select('id'),
+                                );
+                        },
+                    );
+            },
         );
     }
 }
