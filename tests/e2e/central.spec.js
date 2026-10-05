@@ -1095,7 +1095,7 @@ test('Mi Día filtra responsable y proyecto al editar empresa', async (
     await expect(title).toBeVisible();
 
     const card = title.locator(
-        'xpath=ancestor::*[contains(@class,"item")][1]',
+        'xpath=ancestor::*[@data-operational-card][1]',
     );
 
     await card.locator(
