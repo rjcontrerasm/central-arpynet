@@ -265,6 +265,119 @@ class WorkTeamQuickCaptureTest extends TestCase
             );
     }
 
+    public function test_team_member_can_capture_in_existing_transversal_company_scope(): void
+    {
+        [$rolando, $lissette, , $pcsotec, $team] =
+            $this->context();
+
+        $seed = Task::query()->create([
+            'organization_id' => $pcsotec->id,
+            'title' => 'Referencia administrativa PC SOTEC',
+            'status' => 'pending',
+            'urgency' => 'normal',
+            'impact' => 'normal',
+            'assigned_to' => $rolando->id,
+            'created_by' => $rolando->id,
+            'visibility_scope' => 'teams',
+        ]);
+
+        $seed->workTeams()->attach($team->id);
+
+        $this->assertFalse(
+            $lissette->canAccessOrganization(
+                $pcsotec->id,
+            ),
+        );
+
+        $this->actingAs($lissette)
+            ->get(
+                '/captura?work_team='.$team->id
+                .'&organization_id='.$pcsotec->id,
+            )
+            ->assertOk()
+            ->assertViewHas(
+                'defaultOrganizationId',
+                $pcsotec->id,
+            )
+            ->assertSee('Empresa: PC SOTEC');
+
+        $this->actingAs($lissette)
+            ->post('/captura', [
+                'organization_id' => $pcsotec->id,
+                'title' => 'Facturar renovación PC SOTEC',
+                'due_mode' => 'today',
+                'urgency' => 'normal',
+                'impact' => 'high',
+                'assigned_to' => $lissette->id,
+                'visibility_scope' => 'teams',
+                'work_team_ids' => [$team->id],
+                'capture_context_work_team_id' =>
+                    $team->id,
+                'capture_context_organization_id' =>
+                    $pcsotec->id,
+            ])
+            ->assertRedirect(
+                '/captura?work_team='.$team->id
+                .'&organization_id='.$pcsotec->id,
+            );
+
+        $task = Task::query()
+            ->where(
+                'title',
+                'Facturar renovación PC SOTEC',
+            )
+            ->firstOrFail();
+
+        $this->assertSame(
+            $pcsotec->id,
+            $task->organization_id,
+        );
+        $this->assertSame(
+            'teams',
+            $task->visibility_scope,
+        );
+        $this->assertTrue(
+            $task->workTeams()
+                ->whereKey($team->id)
+                ->exists(),
+        );
+    }
+
+    public function test_team_member_cannot_turn_transversal_scope_into_company_access(): void
+    {
+        [$rolando, $lissette, , $pcsotec, $team] =
+            $this->context();
+
+        $seed = Task::query()->create([
+            'organization_id' => $pcsotec->id,
+            'title' => 'Ámbito transversal existente',
+            'status' => 'pending',
+            'urgency' => 'normal',
+            'impact' => 'normal',
+            'assigned_to' => $rolando->id,
+            'created_by' => $rolando->id,
+            'visibility_scope' => 'teams',
+        ]);
+
+        $seed->workTeams()->attach($team->id);
+
+        $this->actingAs($lissette)
+            ->post('/captura', [
+                'organization_id' => $pcsotec->id,
+                'title' => 'Intento de ampliar acceso',
+                'due_mode' => 'none',
+                'urgency' => 'normal',
+                'impact' => 'normal',
+                'assigned_to' => $lissette->id,
+                'visibility_scope' => 'organization',
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('tasks', [
+            'title' => 'Intento de ampliar acceso',
+        ]);
+    }
+
     public function test_capture_rejects_foreign_company_context(): void
     {
         [$rolando] = $this->context();

@@ -109,6 +109,24 @@ class AppServiceProvider extends ServiceProvider
                 continue;
             }
 
+            if (
+                $model instanceof Task
+                && ! $model->exists
+                && request()->routeIs(
+                    'quick-capture.store',
+                )
+                && $model->visibility_scope === 'teams'
+                && $user->canCreateTransversalTeamTask(
+                    $organizationId,
+                    (array) request()->input(
+                        'work_team_ids',
+                        [],
+                    ),
+                )
+            ) {
+                continue;
+            }
+
             throw new AuthorizationException(
                 'Tu acceso a esta empresa es de solo lectura.',
             );
