@@ -216,6 +216,63 @@
             if (waitingMeta) {
                 waitingMeta.textContent = String(waiting);
             }
+
+            const primaryAction = document.querySelector(
+                '[data-daily-focus-primary]',
+            );
+            const primaryLabel = document.querySelector(
+                '[data-daily-focus-primary-label]',
+            );
+
+            if (primaryAction && primaryLabel) {
+                let key = null;
+                let label = '';
+
+                if (overdue > 0) {
+                    key = 'overdue';
+                    label = 'Ver vencidas';
+                } else if (critical > 0) {
+                    key = 'critical';
+                    label = 'Ver críticas';
+                } else if (today > 0) {
+                    key = 'today';
+                    label = 'Ver tareas de hoy';
+                }
+
+                if (key) {
+                    const href = primaryAction.dataset[
+                        `href${key.charAt(0).toUpperCase()}${key.slice(1)}`
+                    ];
+
+                    if (href) {
+                        primaryAction.setAttribute(
+                            'href',
+                            href,
+                        );
+                    }
+
+                    primaryLabel.textContent = label;
+                    primaryAction.hidden = false;
+                } else {
+                    primaryAction.hidden = true;
+                    primaryAction.removeAttribute('href');
+                }
+            }
+
+            const overdueLink = document.querySelector(
+                '[data-daily-overdue-link]',
+            );
+            const overdueLinkCount = document.querySelector(
+                '[data-daily-overdue-link-count]',
+            );
+
+            if (overdueLink) {
+                overdueLink.hidden = overdue <= 0;
+            }
+
+            if (overdueLinkCount) {
+                overdueLinkCount.textContent = String(overdue);
+            }
         };
 
         const adjustDailySummary = (card, delta) => {
@@ -262,6 +319,11 @@
             const liveEmpty = parent.querySelector(
                 '.daily-live-empty',
             );
+            const section = parent.closest('.section');
+
+            if (section?.dataset.dailyHideWhenEmpty === '1') {
+                section.hidden = ! hasCards;
+            }
 
             if (hasCards) {
                 liveEmpty?.remove();
