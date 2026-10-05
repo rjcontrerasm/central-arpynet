@@ -50,6 +50,7 @@
         action="{{ route('quick-capture.store') }}"
         autocomplete="off"
         data-context-work-team-id="{{ $contextWorkTeamId ?? '' }}"
+        data-current-user-id="{{ auth()->id() }}"
     >
         @csrf
 
@@ -59,6 +60,52 @@
                 name="capture_context_work_team_id"
                 value="{{ $contextWorkTeamId }}"
             >
+        @endif
+
+        @if ($contextOrganizationId)
+            <input
+                type="hidden"
+                name="capture_context_organization_id"
+                value="{{ $contextOrganizationId }}"
+            >
+        @endif
+
+        @if ($contextWorkTeam || $contextOrganizationId)
+            @php
+                $contextOrganization =
+                    $contextOrganizationId
+                        ? $organizations->firstWhere(
+                            'id',
+                            $contextOrganizationId,
+                        )
+                        : null;
+            @endphp
+
+            <div class="capture-context">
+                <div class="capture-context-title">
+                    Contexto de captura
+                </div>
+
+                <div class="capture-context-badges">
+                    @if ($contextWorkTeam)
+                        <span class="capture-context-badge">
+                            Equipo: {{ $contextWorkTeam->name }}
+                        </span>
+                    @endif
+
+                    @if ($contextOrganization)
+                        <span class="capture-context-badge secondary">
+                            Empresa: {{ $contextOrganization->name }}
+                        </span>
+                    @endif
+                </div>
+
+                <div class="capture-context-help">
+                    La tarea conservará este contexto como sugerencia.
+                    Puedes cambiar empresa, responsable o visibilidad
+                    antes de guardarla.
+                </div>
+            </div>
         @endif
 
         <label>
@@ -92,6 +139,7 @@
             Empresa / ámbito
 
             <select
+                id="organization-select"
                 name="organization_id"
                 required
             >
@@ -124,6 +172,8 @@
                         <option
                             value="{{ $assignee->id }}"
                             data-default-work-team-id="{{ $defaultTeamByAssignee[$assignee->id] ?? '' }}"
+                            data-organization-ids="{{ implode(',', $assigneeOrganizationIds[$assignee->id] ?? []) }}"
+                            data-work-team-ids="{{ implode(',', $assigneeWorkTeamIds[$assignee->id] ?? []) }}"
                             @selected(
                                 (string) old(
                                     'assigned_to',
@@ -180,6 +230,7 @@
             Equipos con acceso
 
             <select
+                id="work-team-select"
                 name="work_team_ids[]"
                 multiple
                 size="{{ min(max($workTeams->count(), 2), 5) }}"
@@ -265,12 +316,16 @@
                 <label class="full">
                     Proyecto
 
-                    <select name="project_id">
+                    <select
+                        id="project-select"
+                        name="project_id"
+                    >
                         <option value="">Sin proyecto</option>
 
                         @foreach ($projects as $project)
                             <option
                                 value="{{ $project->id }}"
+                                data-organization-id="{{ $project->organization_id }}"
                                 @selected(
                                     (string) old('project_id')
                                     === (string) $project->id
