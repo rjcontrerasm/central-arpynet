@@ -124,6 +124,16 @@
             return response.json();
         };
 
+        const htmlCard = (html) => {
+            const template = document.createElement(
+                'template',
+            );
+
+            template.innerHTML = String(html || '').trim();
+
+            return template.content.firstElementChild;
+        };
+
         const existingUndoToast = document.querySelector(
             '.global-undo-bar:not(#daily-live-undo-toast)',
         );
@@ -170,6 +180,24 @@
             target.textContent = String(
                 Math.max(0, value),
             );
+        };
+
+        const setWaitingCount = (value) => {
+            const normalized = Math.max(
+                0,
+                Number.parseInt(value || '0', 10) || 0,
+            );
+
+            setDailyStatValue(
+                'waiting',
+                normalized,
+            );
+
+            document.querySelectorAll(
+                '[data-daily-waiting-count]',
+            ).forEach((target) => {
+                target.textContent = String(normalized);
+            });
         };
 
         const renderDailyFocus = () => {
@@ -1105,7 +1133,8 @@
             }, 1100);
         };
 
-        document.querySelectorAll(
+        const bindWaitingForms = (root = document) => {
+        root.querySelectorAll(
             '.waiting-form',
         ).forEach((form) => {
             const card = form.closest('.item');
@@ -1113,6 +1142,12 @@
             if (! card) {
                 return;
             }
+
+            if (form.dataset.dailyLiveWaitingBound === '1') {
+                return;
+            }
+
+            form.dataset.dailyLiveWaitingBound = '1';
 
             form.addEventListener(
                 'submit',
@@ -1393,7 +1428,10 @@
             );
         });
 
-        document.querySelectorAll(
+        };
+
+        const bindDateActionForms = (root = document) => {
+        root.querySelectorAll(
             '.action-form input[name="action"][value="today"],'
             + ' .action-form input[name="action"][value="tomorrow"],'
             + ' .action-form input[name="action"][value="next_week"]',
@@ -1404,6 +1442,12 @@
             if (! form || ! card) {
                 return;
             }
+
+            if (form.dataset.dailyLiveDateBound === '1') {
+                return;
+            }
+
+            form.dataset.dailyLiveDateBound = '1';
 
             form.addEventListener(
                 'submit',
@@ -1804,7 +1848,10 @@
             );
         });
 
-        document.querySelectorAll(
+        };
+
+        const bindStartActionForms = (root = document) => {
+        root.querySelectorAll(
             '.action-form input[name="action"][value="start"]',
         ).forEach((input) => {
             const form = input.closest('form');
@@ -1813,6 +1860,12 @@
             if (! form || ! card) {
                 return;
             }
+
+            if (form.dataset.dailyLiveStartBound === '1') {
+                return;
+            }
+
+            form.dataset.dailyLiveStartBound = '1';
 
             form.addEventListener(
                 'submit',
@@ -1923,7 +1976,10 @@
             );
         });
 
-        document.querySelectorAll(
+        };
+
+        const bindCompleteActionForms = (root = document) => {
+        root.querySelectorAll(
             '.action-form input[name="action"][value="complete"]',
         ).forEach((input) => {
             const form = input.closest('form');
@@ -1932,6 +1988,12 @@
             if (! form || ! card) {
                 return;
             }
+
+            if (form.dataset.dailyLiveCompleteBound === '1') {
+                return;
+            }
+
+            form.dataset.dailyLiveCompleteBound = '1';
 
             if (card.dataset.dailyLiveComplete === 'reload') {
                 return;
@@ -2135,6 +2197,16 @@
                 { capture: true },
             );
         });
+        };
+
+        const bindLiveTaskForms = (root = document) => {
+            bindWaitingForms(root);
+            bindDateActionForms(root);
+            bindStartActionForms(root);
+            bindCompleteActionForms(root);
+        };
+
+        bindLiveTaskForms();
     };
 
     if (document.readyState === 'loading') {
