@@ -92,7 +92,9 @@ test('proyectos mantiene acciones rápidas con estilo local', async (
 });
 
 test('Mi Día muestra foco operativo sin overflow', async ({ page }) => {
-    await page.goto('/mi-dia');
+    await page.goto(
+        '/mi-dia?q=E2E%20tarea%20cr%C3%ADtica',
+    );
 
     await expect(
         page.getByRole('heading', {
@@ -184,7 +186,9 @@ test('Mi Día completa tarea en vivo con mini confetti y undo inferior', async (
         window.webkitAudioContext = FakeAudioContext;
     });
 
-    await page.goto('/mi-dia');
+    await page.goto(
+        '/mi-dia?q=E2E%20completar%20live',
+    );
 
     const taskTitle = page.getByText(
         'E2E completar live',
