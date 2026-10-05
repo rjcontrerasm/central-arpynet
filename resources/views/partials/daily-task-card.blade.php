@@ -13,7 +13,7 @@
                             @endphp
 
                             <div
-                                class="item"
+                                class="item{{ $band === 'critical' ? ' daily-task-critical' : '' }}"
                                 data-operational-card
                                 data-daily-overdue="{{ $isOverdue ? '1' : '0' }}"
                                 data-daily-priority-band="{{ $band }}"
