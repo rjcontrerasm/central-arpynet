@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 
 class User extends Authenticatable implements FilamentUser
 {
@@ -209,6 +210,70 @@ class User extends Authenticatable implements FilamentUser
         return in_array(
             $organizationId,
             $this->manageableOrganizationIds(),
+            true,
+        );
+    }
+
+    public function transversalTaskScopeOrganizationIds(
+        array $workTeamIds,
+    ): array {
+        if (! $this->is_active) {
+            return [];
+        }
+
+        $teamIds = collect($workTeamIds)
+            ->map(fn ($id): int => (int) $id)
+            ->filter(fn (int $id): bool => $id > 0)
+            ->unique()
+            ->values();
+
+        if ($teamIds->isEmpty()) {
+            return [];
+        }
+
+        $operationalTeamIds = DB::table(
+            'work_team_user',
+        )
+            ->where('user_id', $this->id)
+            ->whereIn('work_team_id', $teamIds)
+            ->where('is_active', true)
+            ->whereIn('role', ['lead', 'member'])
+            ->pluck('work_team_id');
+
+        if ($operationalTeamIds->isEmpty()) {
+            return [];
+        }
+
+        return Task::query()
+            ->whereHas(
+                'workTeams',
+                fn ($query) => $query
+                    ->whereIn(
+                        'work_teams.id',
+                        $operationalTeamIds,
+                    ),
+            )
+            ->whereHas(
+                'organization',
+                fn ($query) => $query
+                    ->where('is_active', true),
+            )
+            ->select('organization_id')
+            ->distinct()
+            ->pluck('organization_id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+    }
+
+    public function canCreateTransversalTeamTask(
+        int $organizationId,
+        array $workTeamIds,
+    ): bool {
+        return in_array(
+            $organizationId,
+            $this->transversalTaskScopeOrganizationIds(
+                $workTeamIds,
+            ),
             true,
         );
     }
