@@ -1197,10 +1197,12 @@
                             card,
                             -1,
                         );
-                        setDailyStatValue(
-                            'waiting',
-                            dailyStatValue('waiting') + 1,
-                        );
+                        if (! selectedPriority) {
+                            setDailyStatValue(
+                                'waiting',
+                                dailyStatValue('waiting') + 1,
+                            );
+                        }
                         renderDailyFocus();
 
                         card.remove();
@@ -1325,12 +1327,14 @@
                                             }
                                         }
 
-                                        setDailyStatValue(
-                                            'waiting',
-                                            dailyStatValue(
+                                        if (! selectedPriority) {
+                                            setDailyStatValue(
                                                 'waiting',
-                                            ) - 1,
-                                        );
+                                                dailyStatValue(
+                                                    'waiting',
+                                                ) - 1,
+                                            );
+                                        }
                                         adjustDailySummary(
                                             card,
                                             1,
