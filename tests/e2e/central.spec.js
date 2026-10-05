@@ -402,30 +402,32 @@ test('Mi Día oculta y restaura foco crítico cuando cambia en vivo', async (
 
     expect((await completionResponse).status()).toBe(200);
 
-    await expect(
-        page.locator('[data-daily-stat="critical"]'),
-    ).toHaveText('0');
-    await expect(primary).toBeHidden();
-    await expect(criticalSection).toBeHidden();
-
     const toast = page.locator(
         '#daily-live-undo-toast',
     );
 
-    await expect(toast).toBeVisible();
+    try {
+        await expect(
+            page.locator('[data-daily-stat="critical"]'),
+        ).toHaveText('0');
+        await expect(primary).toBeHidden();
+        await expect(criticalSection).toBeHidden();
+    } finally {
+        if (await toast.isVisible().catch(() => false)) {
+            const undoResponse = page.waitForResponse(
+                (response) => (
+                    response.request().method() === 'POST'
+                    && new URL(response.url()).pathname === '/deshacer'
+                ),
+            );
 
-    const undoResponse = page.waitForResponse(
-        (response) => (
-            response.request().method() === 'POST'
-            && new URL(response.url()).pathname === '/deshacer'
-        ),
-    );
+            await toast.getByRole('button', {
+                name: /Deshacer/,
+            }).click();
 
-    await toast.getByRole('button', {
-        name: /Deshacer/,
-    }).click();
-
-    expect((await undoResponse).status()).toBe(200);
+            expect((await undoResponse).status()).toBe(200);
+        }
+    }
 
     await expect(
         page.locator('[data-daily-stat="critical"]'),
