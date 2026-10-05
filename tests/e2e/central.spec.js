@@ -1243,6 +1243,48 @@ test('Mi Día reacomoda fichas con micro-rebote y deshacer estable', async (
     const before = await followingCard.boundingBox();
     expect(before).not.toBeNull();
 
+    await followingCard.evaluate((element) => {
+        window.__centralE2EReflowObserved = false;
+
+        const observer = new MutationObserver(() => {
+            if (
+                element.classList.contains(
+                    'daily-task-reflowing',
+                )
+            ) {
+                window.__centralE2EReflowObserved = true;
+            }
+        });
+
+        observer.observe(element, {
+            attributes: true,
+            attributeFilter: ['class'],
+        });
+
+        window.__centralE2EReflowObserver = observer;
+    });
+
+    await card.evaluate((element) => {
+        window.__centralE2ERestoreObserved = false;
+
+        const observer = new MutationObserver(() => {
+            if (
+                element.classList.contains(
+                    'daily-task-restoring',
+                )
+            ) {
+                window.__centralE2ERestoreObserved = true;
+            }
+        });
+
+        observer.observe(element, {
+            attributes: true,
+            attributeFilter: ['class'],
+        });
+
+        window.__centralE2ERestoreObserver = observer;
+    });
+
     const overdueStat = page.locator(
         '[data-daily-stat="overdue"]',
     );
@@ -1266,57 +1308,66 @@ test('Mi Día reacomoda fichas con micro-rebote y deshacer estable', async (
     const response = await completionResponse;
     expect(response.status()).toBe(200);
 
-    await expect(overdueStat).toHaveText(
-        String(overdueBefore - 1),
-    );
-
-    await expect(
-        page.locator('[data-daily-focus-title]'),
-    ).toContainText(
-        String(overdueBefore - 1),
-    );
-
-    await page.waitForTimeout(760);
-
-    await expect(card).toBeHidden();
-    await expect(followingCard).toHaveClass(
-        /daily-task-reflowing/,
-    );
-
-    const during = await followingCard.boundingBox();
-    expect(during).not.toBeNull();
-
-    const moved = (
-        Math.abs(during.x - before.x) > 4
-        || Math.abs(during.y - before.y) > 4
-    );
-
-    expect(moved).toBe(true);
-
-    await expect(followingCard).not.toHaveClass(
-        /daily-task-reflowing/,
-        { timeout: 1500 },
-    );
-
     const toast = page.locator(
         '#daily-live-undo-toast',
     );
 
-    const undoResponse = page.waitForResponse(
-        (undoResponseCandidate) => (
-            undoResponseCandidate.request().method() === 'POST'
-            && new URL(
-                undoResponseCandidate.url(),
-            ).pathname === '/deshacer'
-        ),
-    );
+    try {
+        await expect(overdueStat).toHaveText(
+            String(overdueBefore - 1),
+        );
 
-    await toast.getByRole('button', {
-        name: /Deshacer/,
-    }).click();
+        await expect(
+            page.locator('[data-daily-focus-title]'),
+        ).toContainText(
+            String(overdueBefore - 1),
+        );
 
-    const undoResult = await undoResponse;
-    expect(undoResult.status()).toBe(200);
+        await expect(card).toBeHidden();
+
+        await page.waitForFunction(
+            () => (
+                window.__centralE2EReflowObserved
+                === true
+            ),
+            null,
+            { timeout: 2000 },
+        );
+
+        await expect(followingCard).not.toHaveClass(
+            /daily-task-reflowing/,
+            { timeout: 2000 },
+        );
+
+        const after = await followingCard.boundingBox();
+        expect(after).not.toBeNull();
+
+        const moved = (
+            Math.abs(after.x - before.x) > 4
+            || Math.abs(after.y - before.y) > 4
+        );
+
+        expect(moved).toBe(true);
+        await expect(toast).toBeVisible();
+    } finally {
+        if (await toast.isVisible().catch(() => false)) {
+            const undoResponse = page.waitForResponse(
+                (undoResponseCandidate) => (
+                    undoResponseCandidate.request().method() === 'POST'
+                    && new URL(
+                        undoResponseCandidate.url(),
+                    ).pathname === '/deshacer'
+                ),
+            );
+
+            await toast.getByRole('button', {
+                name: /Deshacer/,
+            }).click();
+
+            const undoResult = await undoResponse;
+            expect(undoResult.status()).toBe(200);
+        }
+    }
 
     await expect(overdueStat).toHaveText(
         String(overdueBefore),
@@ -1329,25 +1380,33 @@ test('Mi Día reacomoda fichas con micro-rebote y deshacer estable', async (
     );
 
     await expect(title).toBeVisible();
+
+    await page.waitForFunction(
+        () => (
+            window.__centralE2ERestoreObserved
+            === true
+        ),
+        null,
+        { timeout: 1500 },
+    );
 
     const restoredCard = title.locator(
         'xpath=ancestor::*[contains(@class,"item")][1]',
     );
 
-    await expect(restoredCard).toHaveClass(
-        /daily-task-restoring/,
-    );
-
-    await page.waitForTimeout(650);
-
     await expect(restoredCard).not.toHaveClass(
         /daily-task-restoring/,
+        { timeout: 1500 },
     );
     await expect(title).toBeVisible();
 
+    await page.evaluate(() => {
+        window.__centralE2EReflowObserver?.disconnect();
+        window.__centralE2ERestoreObserver?.disconnect();
+    });
+
     await expectNoHorizontalOverflow(page);
 });
-
 test('Mi Día permite deshacer antes de terminar la salida sin borrar la ficha restaurada', async (
     { page },
     testInfo,
