@@ -11,18 +11,11 @@
                                     ? $task->canBeUpdatedBy($currentUser)
                                     : false;
 
-                                $organizationColor =
-                                    $task->organization?->color;
-
-                                $organizationAccent = (
-                                    is_string($organizationColor)
-                                    && preg_match(
-                                        '/^#[0-9A-Fa-f]{6}$/',
-                                        $organizationColor,
-                                    )
-                                )
-                                    ? $organizationColor
-                                    : '#64748b';
+                                $organizationTone =
+                                    ((int) (
+                                        $task->organization_id
+                                        ?? 0
+                                    )) % 6;
                             @endphp
 
                             <div
@@ -38,8 +31,7 @@
 
                                 <div class="meta task-context-line">
                                     <span
-                                        class="task-organization-badge"
-                                        style="--organization-accent: {{ $organizationAccent }}"
+                                        class="task-organization-badge organization-tone-{{ $organizationTone }}"
                                     >
                                         <span
                                             class="task-organization-dot"
