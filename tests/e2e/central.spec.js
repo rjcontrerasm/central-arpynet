@@ -326,7 +326,28 @@ test('Mi Día completa tarea en vivo con mini confetti y undo inferior', async (
         ),
     ).toEqual([740, 990, 1320, 560, 420]);
 
+    await expect(
+        toast.locator('.global-undo-title'),
+    ).toHaveText('Acción deshecha.');
+
+    const undoButton = toast.locator(
+        '.global-undo-button',
+    );
+
+    await expect(undoButton).toBeHidden();
+
+    const restoredToastBox =
+        await toast.boundingBox();
+
+    expect(restoredToastBox).not.toBeNull();
+    expect(restoredToastBox.height)
+        .toBeLessThan(toastBox.height);
+
     await expect(taskTitle).toBeVisible();
+
+    await expect(toast).toBeHidden({
+        timeout: 1800,
+    });
 
     await expectNoHorizontalOverflow(page);
 });
