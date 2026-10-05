@@ -262,16 +262,9 @@
             const overdueLink = document.querySelector(
                 '[data-daily-overdue-link]',
             );
-            const overdueLinkCount = document.querySelector(
-                '[data-daily-overdue-link-count]',
-            );
-
             if (overdueLink) {
                 overdueLink.hidden = overdue <= 0;
-            }
-
-            if (overdueLinkCount) {
-                overdueLinkCount.textContent = String(overdue);
+                overdueLink.textContent = `Ver las ${overdue}`;
             }
         };
 
