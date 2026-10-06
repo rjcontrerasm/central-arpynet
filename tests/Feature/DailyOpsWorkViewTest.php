@@ -156,7 +156,7 @@ class DailyOpsWorkViewTest extends TestCase
 
     public function test_service_orders_follow_selected_work_view(): void
     {
-        [$owner, $teammate, $organization] = $this->context();
+        [$owner, $teammate, $organization, $team] = $this->context();
 
         $client = Client::query()->create([
             'organization_id' => $organization->id,
@@ -171,6 +171,7 @@ class DailyOpsWorkViewTest extends TestCase
             'title' => 'Servicio asignado al equipo',
             'stage' => 'execution',
             'assigned_to' => $teammate->id,
+            'work_team_id' => $team->id,
             'created_by' => $owner->id,
         ]);
 
@@ -188,7 +189,7 @@ class DailyOpsWorkViewTest extends TestCase
             ->assertOk()
             ->assertSee('Órdenes y servicios')
             ->assertSee('Servicio asignado al equipo')
-            ->assertSee('Servicio sin responsable')
+            ->assertDontSee('Servicio sin responsable')
             ->assertSee($teammate->name);
 
         $this->actingAs($owner)
@@ -196,6 +197,106 @@ class DailyOpsWorkViewTest extends TestCase
             ->assertOk()
             ->assertDontSee('Servicio asignado al equipo')
             ->assertSee('Servicio sin responsable');
+    }
+
+    public function test_mi_dia_default_includes_services_from_all_user_teams(): void
+    {
+        [$owner, , $organization, $administration] =
+            $this->context();
+
+        $marisol = User::factory()->create([
+            'name' => 'Marisol',
+            'email' => 'arpynetsac@gmail.com',
+            'is_active' => true,
+        ]);
+
+        $support = WorkTeam::query()->create([
+            'home_organization_id' => $organization->id,
+            'name' => 'Soporte',
+            'is_active' => true,
+            'created_by' => $owner->id,
+        ]);
+
+        $administration->users()->attach(
+            $marisol->id,
+            [
+                'role' => 'member',
+                'is_active' => true,
+            ],
+        );
+
+        $support->users()->attach(
+            $marisol->id,
+            [
+                'role' => 'member',
+                'is_active' => true,
+            ],
+        );
+
+        $client = Client::query()->create([
+            'organization_id' => $organization->id,
+            'name' => 'Cliente servicios por equipo',
+            'is_active' => true,
+            'created_by' => $owner->id,
+        ]);
+
+        ServiceOrder::query()->create([
+            'organization_id' => $organization->id,
+            'client_id' => $client->id,
+            'title' => 'Servicio de Administración',
+            'stage' => 'execution',
+            'assigned_to' => $owner->id,
+            'work_team_id' => $administration->id,
+            'created_by' => $owner->id,
+        ]);
+
+        ServiceOrder::query()->create([
+            'organization_id' => $organization->id,
+            'client_id' => $client->id,
+            'title' => 'Servicio de Soporte',
+            'stage' => 'execution',
+            'assigned_to' => $owner->id,
+            'work_team_id' => $support->id,
+            'created_by' => $owner->id,
+        ]);
+
+        ServiceOrder::query()->create([
+            'organization_id' => $organization->id,
+            'client_id' => $client->id,
+            'title' => 'Servicio fuera de sus equipos',
+            'stage' => 'execution',
+            'assigned_to' => $owner->id,
+            'work_team_id' => null,
+            'created_by' => $owner->id,
+        ]);
+
+        $this->assertFalse(
+            $marisol->canAccessOrganization(
+                $organization->id,
+            ),
+        );
+
+        $this->actingAs($marisol)
+            ->get('/mi-dia')
+            ->assertOk()
+            ->assertViewHas('selectedWorkView', 'mine')
+            ->assertViewHas('selectedWorkTeam', null)
+            ->assertSee('Servicio de Administración')
+            ->assertSee('Servicio de Soporte')
+            ->assertDontSee('Servicio fuera de sus equipos')
+            ->assertSee($organization->name);
+
+        $this->actingAs($marisol)
+            ->get('/mi-dia?work_team='.$administration->id)
+            ->assertOk()
+            ->assertViewHas('selectedWorkView', 'team')
+            ->assertViewHas(
+                'selectedWorkTeam',
+                $administration->id,
+            )
+            ->assertSee('Servicio de Administración')
+            ->assertDontSee('Servicio de Soporte')
+            ->assertDontSee('Servicio fuera de sus equipos');
     }
 
     public function test_viewer_sees_team_work_without_mutation_controls(): void
