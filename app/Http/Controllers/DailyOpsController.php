@@ -109,8 +109,16 @@ class DailyOpsController extends Controller
             $user->taskScopeOrganizationIds(),
         );
 
+        $serviceScopeOrganizationIds = ServiceOrder::query()
+            ->visibleTo($user)
+            ->select('organization_id')
+            ->distinct()
+            ->pluck('organization_id')
+            ->map(fn ($id): int => (int) $id);
+
         $visibleScopeOrganizationIds = $organizationIds
             ->merge($taskScopeOrganizationIds)
+            ->merge($serviceScopeOrganizationIds)
             ->unique()
             ->values();
 
@@ -772,25 +780,59 @@ class DailyOpsController extends Controller
             ->get();
 
         $serviceOrders = ServiceOrder::query()
+            ->visibleTo($user)
             ->with([
                 'organization',
                 'client',
                 'assignee',
+                'workTeam',
             ])
-            ->whereIn(
-                'organization_id',
-                $organizationIds,
-            )
             ->whereNotIn(
                 'stage',
                 ['closed', 'cancelled'],
             );
 
-        $this->applyWorkView(
-            $serviceOrders,
-            $selectedWorkView,
-            $user->id,
-        );
+        $accessibleWorkTeamIds = $workTeams
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+
+        if ($selectedWorkTeam) {
+            $serviceOrders->where(
+                'work_team_id',
+                $selectedWorkTeam,
+            );
+        } elseif ($selectedWorkView === 'mine') {
+            $serviceOrders->where(
+                function (Builder $query) use (
+                    $user,
+                    $accessibleWorkTeamIds,
+                ): void {
+                    $query->where(
+                        'assigned_to',
+                        $user->id,
+                    );
+
+                    if ($accessibleWorkTeamIds !== []) {
+                        $query->orWhereIn(
+                            'work_team_id',
+                            $accessibleWorkTeamIds,
+                        );
+                    }
+                },
+            );
+        } elseif ($selectedWorkView === 'team') {
+            if ($accessibleWorkTeamIds === []) {
+                $serviceOrders->whereRaw('1 = 0');
+            } else {
+                $serviceOrders->whereIn(
+                    'work_team_id',
+                    $accessibleWorkTeamIds,
+                );
+            }
+        } else {
+            $serviceOrders->whereNull('assigned_to');
+        }
 
         if ($selectedScope) {
             $serviceOrders->where(
