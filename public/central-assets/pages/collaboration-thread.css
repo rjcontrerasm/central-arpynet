@@ -1,7 +1,15 @@
 /* Central ARPYNET 2.48.5 — Natural collaboration composer */
 
+.collaboration-shell,
+.collaboration-shell *,
+.collaboration-shell *::before,
+.collaboration-shell *::after {
+    box-sizing: border-box;
+}
+
 .collaboration-shell {
     width: min(100%, 1080px) !important;
+    max-width: 100%;
     margin: 0 auto;
     padding: 24px 16px 80px;
 }
