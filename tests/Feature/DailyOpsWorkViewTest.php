@@ -189,7 +189,7 @@ class DailyOpsWorkViewTest extends TestCase
             ->assertOk()
             ->assertSee('Órdenes y servicios')
             ->assertSee('Servicio asignado al equipo')
-            ->assertSee('Servicio sin responsable')
+            ->assertDontSee('Servicio sin responsable')
             ->assertSee($teammate->name);
 
         $this->actingAs($owner)
