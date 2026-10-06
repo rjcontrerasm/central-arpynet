@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Models\Organization;
 use App\Models\ServiceOrder;
 use App\Models\User;
+use App\Models\WorkTeam;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -103,6 +104,98 @@ class ServiceOrderOpsTest extends TestCase
             ->assertSee('Incluye impuestos')
             ->assertSee('service-orders-ops.js?v=', false)
             ->assertDontSee('Definir próxima acción');
+    }
+
+    public function test_team_member_without_company_membership_sees_only_team_assigned_service(): void
+    {
+        [$owner, $organization, $client] = $this->context();
+
+        $member = User::factory()->create([
+            'email' => 'arpynetsac@gmail.com',
+            'is_active' => true,
+        ]);
+
+        $team = WorkTeam::query()->create([
+            'home_organization_id' => $organization->id,
+            'name' => 'Administración',
+            'is_active' => true,
+            'created_by' => $owner->id,
+        ]);
+
+        $team->users()->attach($member->id, [
+            'role' => 'member',
+            'is_active' => true,
+        ]);
+
+        $visible = $this->order(
+            $owner,
+            $organization,
+            $client,
+            [
+                'title' => 'Servicio Administración visible',
+                'stage' => 'execution',
+                'work_team_id' => $team->id,
+            ],
+        );
+
+        $this->order(
+            $owner,
+            $organization,
+            $client,
+            [
+                'title' => 'Servicio empresa no asignado',
+                'stage' => 'execution',
+                'work_team_id' => null,
+            ],
+        );
+
+        $this->assertFalse(
+            $member->canAccessOrganization(
+                $organization->id,
+            ),
+        );
+
+        $this->actingAs($member)
+            ->get('/servicios?focus=all')
+            ->assertOk()
+            ->assertSee('Servicio Administración visible')
+            ->assertDontSee('Servicio empresa no asignado')
+            ->assertSee($organization->name);
+
+        $this->actingAs($member)
+            ->get(
+                '/servicios?scope='
+                .$organization->id
+                .'&focus=all',
+            )
+            ->assertOk()
+            ->assertSee('Servicio Administración visible')
+            ->assertDontSee('Servicio empresa no asignado');
+
+        $this->actingAs($member)
+            ->get('/servicios/'.$visible->id)
+            ->assertOk()
+            ->assertSee('Servicio Administración visible')
+            ->assertDontSee('Editar servicio');
+
+        $this->actingAs($member)
+            ->get('/servicios/'.$visible->id.'/editar')
+            ->assertForbidden();
+
+        $this->actingAs($member)
+            ->post(
+                '/servicios/'.$visible->id.'/actualizar',
+                [
+                    'stage' => 'closed',
+                    'focus' => 'all',
+                ],
+            )
+            ->assertForbidden();
+
+        $this->assertSame(
+            'execution',
+            $visible->fresh()->stage,
+        );
     }
 
     public function test_foreign_scope_is_forbidden(): void

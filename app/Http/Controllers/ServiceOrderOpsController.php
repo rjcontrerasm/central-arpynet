@@ -9,7 +9,6 @@ use App\Support\ServiceOrderFinancialState;
 use App\Support\ServiceHealthScore;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class ServiceOrderOpsController extends Controller
@@ -30,10 +29,19 @@ class ServiceOrderOpsController extends Controller
         $user = $request->user();
         $writableOrganizationIds = $user->writableOrganizationIds();
 
-        $organizationIds = DB::table('organization_user')
-            ->where('user_id', $user->id)
-            ->where('is_active', true)
-            ->pluck('organization_id');
+        $organizationIds = collect(
+            $user->activeOrganizationIds(),
+        )
+            ->merge(
+                ServiceOrder::query()
+                    ->visibleTo($user)
+                    ->select('organization_id')
+                    ->distinct()
+                    ->pluck('organization_id'),
+            )
+            ->map(fn ($id): int => (int) $id)
+            ->unique()
+            ->values();
 
         $organizations = Organization::query()
             ->whereIn('id', $organizationIds)
@@ -64,8 +72,8 @@ class ServiceOrderOpsController extends Controller
         $finance = $validated['finance'] ?? 'all';
 
         $query = ServiceOrder::query()
-            ->with(['organization', 'client', 'workTeam', 'milestones.task'])
-            ->whereIn('organization_id', $organizationIds);
+            ->visibleTo($user)
+            ->with(['organization', 'client', 'workTeam', 'milestones.task']);
 
         if ($selectedScope) {
             $query->where('organization_id', $selectedScope);

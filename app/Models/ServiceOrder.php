@@ -207,13 +207,54 @@ class ServiceOrder extends Model
 
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
-        return $query->whereHas(
-            'organization.users',
-            fn (Builder $membershipQuery): Builder =>
-                $membershipQuery
-                    ->where('users.id', $user->id)
-                    ->where('organization_user.is_active', true),
-        );
+        if (! $user->is_active) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query
+            ->whereHas(
+                'organization',
+                fn (Builder $organization): Builder =>
+                    $organization->where('is_active', true),
+            )
+            ->where(
+                function (Builder $visibility) use ($user): void {
+                    $visibility
+                        ->whereHas(
+                            'organization.users',
+                            fn (Builder $membershipQuery): Builder =>
+                                $membershipQuery
+                                    ->where('users.id', $user->id)
+                                    ->where(
+                                        'organization_user.is_active',
+                                        true,
+                                    ),
+                        )
+                        ->orWhereHas(
+                            'workTeam',
+                            fn (Builder $team): Builder =>
+                                $team
+                                    ->where('is_active', true)
+                                    ->whereHas(
+                                        'users',
+                                        fn (Builder $membership): Builder =>
+                                            $membership
+                                                ->where(
+                                                    'users.id',
+                                                    $user->id,
+                                                )
+                                                ->where(
+                                                    'users.is_active',
+                                                    true,
+                                                )
+                                                ->where(
+                                                    'work_team_user.is_active',
+                                                    true,
+                                                ),
+                                    ),
+                        );
+                },
+            );
     }
 
     public function getDaysInStageAttribute(): int
