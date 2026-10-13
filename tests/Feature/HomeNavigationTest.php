@@ -25,7 +25,7 @@ class HomeNavigationTest extends TestCase
             ->get('/mi-dia')
             ->assertOk()
             ->assertSee('Mi día')
-            ->assertSee('Captura')
+            ->assertSee('Nueva tarea')
             ->assertSee('Incidentes 360')
             ->assertSee('Administración avanzada')
             ->assertDontSee('Panel administrativo');
@@ -39,7 +39,7 @@ class HomeNavigationTest extends TestCase
             ->get('/captura')
             ->assertOk()
             ->assertSee('Mi día')
-            ->assertSee('Captura')
+            ->assertSee('Nueva tarea')
             ->assertSee('Incidentes 360')
             ->assertSee('Administración avanzada')
             ->assertDontSee('Panel administrativo');

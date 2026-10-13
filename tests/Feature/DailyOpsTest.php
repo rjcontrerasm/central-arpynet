@@ -28,7 +28,7 @@ class DailyOpsTest extends TestCase
             ->get('/mi-dia')
             ->assertOk()
             ->assertSee('Mi día')
-            ->assertSee('Captura rápida');
+            ->assertSee('Nueva tarea');
     }
 
     public function test_mi_dia_shows_user_task(): void

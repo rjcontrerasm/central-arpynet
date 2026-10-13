@@ -46,7 +46,7 @@ class OperationalNavigationTest extends TestCase
                     false,
                 )
                 ->assertSee('Mi día')
-                ->assertSee('Captura')
+                ->assertSee('Nueva tarea')
                 ->assertSee('Clientes')
                 ->assertSee('Proyectos')
                 ->assertSee('Incidentes 360')

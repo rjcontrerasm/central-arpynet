@@ -252,7 +252,7 @@ class WorkTeamQuickCaptureTest extends TestCase
                 'defaultOrganizationId',
                 $pcsotec->id,
             )
-            ->assertSee('Contexto de captura')
+            ->assertSee('Contexto de la tarea')
             ->assertSee('Equipo: Administración')
             ->assertSee('Empresa: PC SOTEC')
             ->assertSee(

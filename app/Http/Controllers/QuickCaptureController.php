@@ -13,7 +13,9 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -206,6 +208,8 @@ class QuickCaptureController extends Controller
                     ->all(),
             );
 
+        $submissionToken = Str::uuid()->toString();
+
         return view('quick-capture', compact(
             'organizations',
             'projects',
@@ -221,6 +225,7 @@ class QuickCaptureController extends Controller
             'defaultTeamByAssignee',
             'assigneeOrganizationIds',
             'assigneeWorkTeamIds',
+            'submissionToken',
         ));
     }
 
@@ -235,6 +240,8 @@ class QuickCaptureController extends Controller
             'organization_id' => ['required', 'integer'],
             'project_id' => ['nullable', 'integer'],
             'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:10000'],
+            'submission_token' => ['nullable', 'uuid'],
             'due_mode' => ['required', 'in:today,tomorrow,next_week,custom,none'],
             'due_date' => ['nullable', 'date', 'required_if:due_mode,custom'],
             'urgency' => ['required', 'in:low,normal,medium,high,critical'],
@@ -469,48 +476,124 @@ class QuickCaptureController extends Controller
         $dueAt = $this->dueAt($dueMode, $customDate);
         $timezone = config('app.timezone', 'America/Lima');
 
-        $task = Task::query()->create([
-            'organization_id' => $organizationId,
-            'project_id' => $projectId,
-            'title' => $title,
-            'next_action' => $parsed['next_action'],
-            'status' => $waiting ? 'waiting' : 'pending',
-            'urgency' => $urgency,
-            'impact' => $impact,
-            'due_at' => $waiting ? null : $dueAt,
-            'waiting_since' => $waiting
-                ? CarbonImmutable::now($timezone)
-                : null,
-            'waiting_until' => $waiting ? $dueAt : null,
-            'waiting_reason' => $waiting
-                ? 'Seguimiento pendiente'
-                : null,
-            'source' => 'manual',
-            'assigned_to' => $assigneeId,
-            'created_by' => $user->id,
-            'visibility_scope' =>
-                $visibilityScope,
+        $submissionToken = (string) (
+            $validated['submission_token']
+            ?? Str::uuid()->toString()
+        );
+
+        $submissionKey = implode(':', [
+            'quick-capture',
+            'submission',
+            $user->id,
+            $submissionToken,
         ]);
 
-        if (
-            $visibilityScope
-            === 'teams'
-        ) {
-            $task->workTeams()->sync(
-                $selectedTeamIds->all(),
+        if (! Cache::add($submissionKey, 'processing', 600)) {
+            return back()->with(
+                'quick_capture_success',
+                'La tarea ya estaba siendo guardada. Se evitó crear un duplicado.',
             );
         }
 
-        $undo->rememberTaskCreated(
-            $user,
-            $task,
-            'Tarea creada',
-            route(
-                'quick-capture.show',
-                [],
-                false,
-            ),
-        );
+        $task = null;
+
+        try {
+            $task = DB::transaction(
+                function () use (
+                    $organizationId,
+                    $projectId,
+                    $title,
+                    $validated,
+                    $parsed,
+                    $waiting,
+                    $urgency,
+                    $impact,
+                    $dueAt,
+                    $timezone,
+                    $assigneeId,
+                    $user,
+                    $visibilityScope,
+                    $selectedTeamIds,
+                ): Task {
+                    $task = Task::query()->create([
+                        'organization_id' =>
+                            $organizationId,
+                        'project_id' => $projectId,
+                        'title' => $title,
+                        'description' => filled(
+                            $validated[
+                                'description'
+                            ] ?? null,
+                        )
+                            ? trim(
+                                (string) $validated[
+                                    'description'
+                                ],
+                            )
+                            : null,
+                        'next_action' =>
+                            $parsed['next_action'],
+                        'status' => $waiting
+                            ? 'waiting'
+                            : 'pending',
+                        'urgency' => $urgency,
+                        'impact' => $impact,
+                        'due_at' => $waiting
+                            ? null
+                            : $dueAt,
+                        'waiting_since' => $waiting
+                            ? CarbonImmutable::now(
+                                $timezone,
+                            )
+                            : null,
+                        'waiting_until' => $waiting
+                            ? $dueAt
+                            : null,
+                        'waiting_reason' => $waiting
+                            ? 'Seguimiento pendiente'
+                            : null,
+                        'source' => 'manual',
+                        'assigned_to' => $assigneeId,
+                        'created_by' => $user->id,
+                        'visibility_scope' =>
+                            $visibilityScope,
+                    ]);
+
+                    if (
+                        $visibilityScope === 'teams'
+                    ) {
+                        $task->workTeams()->sync(
+                            $selectedTeamIds->all(),
+                        );
+                    }
+
+                    return $task;
+                },
+            );
+
+            Cache::put(
+                $submissionKey,
+                'created:'.$task->id,
+                600,
+            );
+
+            $undo->rememberTaskCreated(
+                $user,
+                $task,
+                'Tarea creada',
+                route(
+                    'quick-capture.show',
+                    [],
+                    false,
+                ),
+            );
+        } catch (\Throwable $exception) {
+            if (! $task?->exists) {
+                Cache::forget($submissionKey);
+            }
+
+            throw $exception;
+        }
 
         $message = 'Tarea registrada correctamente.';
 

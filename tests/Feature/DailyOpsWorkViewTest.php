@@ -340,7 +340,7 @@ class DailyOpsWorkViewTest extends TestCase
             ->get('/mi-dia?view=team')
             ->assertOk()
             ->assertSee('Tarea visible sin edición')
-            ->assertDontSee('+ Captura rápida')
+            ->assertDontSee('+ Nueva tarea')
             ->assertDontSee('Poner en espera')
             ->assertDontSee('Guardar cambios')
             ->assertDontSee('Hacer recurrente')

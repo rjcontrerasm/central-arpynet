@@ -1887,9 +1887,22 @@ test('captura rápida crea una tarea desde FRONT', async (
 
     await page.goto('/captura');
 
+    await expect(
+        page.getByRole('heading', {
+            name: 'Nueva tarea',
+            exact: true,
+        }),
+    ).toBeVisible();
+
     await page
         .locator('input[name="title"]')
         .fill('E2E captura Playwright');
+
+    await page
+        .locator('textarea[name="description"]')
+        .fill(
+            'Detalle E2E con información útil para ejecutar la tarea.',
+        );
 
     await page
         .getByRole('button', {

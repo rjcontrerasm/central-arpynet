@@ -86,7 +86,7 @@
         href="{{ route('quick-capture.show') }}"
         @if ($active === 'capture') aria-current="page" @endif
     >
-        Captura
+        Nueva tarea
     </a>
 
     <a
