@@ -33,7 +33,7 @@ class DailyOpsFocusTest extends TestCase
             ->assertSee('Foco del día')
             ->assertSee('Sin urgencias en tu bandeja')
             ->assertSee('Abrir agenda')
-            ->assertSee('+ Capturar');
+            ->assertSee('+ Nueva tarea');
     }
 
     public function test_critical_work_is_promoted_before_supporting_context(): void
