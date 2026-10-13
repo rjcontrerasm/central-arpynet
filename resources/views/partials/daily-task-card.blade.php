@@ -136,6 +136,16 @@
                                     </div>
                                 @endif
 
+                                @if ($task->description)
+                                    <details class="task-description">
+                                        <summary>Ver detalle</summary>
+
+                                        <div class="task-description-body">
+                                            {!! nl2br(e($task->description)) !!}
+                                        </div>
+                                    </details>
+                                @endif
+
                                 <div class="task-collaboration-row">
                                     <a
                                         class="task-collaboration-link"
@@ -558,6 +568,17 @@
                                             @endif
 
                                             <div class="edit-grid">
+                                                <label class="edit-field full">
+                                                    Descripción / detalle
+
+                                                    <textarea
+                                                        name="description"
+                                                        rows="5"
+                                                        maxlength="10000"
+                                                        placeholder="Contexto, datos importantes, instrucciones, enlaces u otra información útil."
+                                                    >{{ $task->description }}</textarea>
+                                                </label>
+
                                                 <label class="edit-field full">
                                                     Empresa / ámbito
 
