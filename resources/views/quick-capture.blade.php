@@ -89,7 +89,7 @@
 
             <div class="capture-context">
                 <div class="capture-context-title">
-                    Contexto de captura
+                    Contexto de la tarea
                 </div>
 
                 <div class="capture-context-badges">
@@ -418,7 +418,7 @@
 
     @if ($recentTasks->isNotEmpty())
         <section class="recent">
-            <h2>Últimas capturas</h2>
+            <h2>Tareas recientes</h2>
 
             <div class="recent-list">
                 @foreach ($recentTasks as $task)
