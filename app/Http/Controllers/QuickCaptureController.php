@@ -241,7 +241,7 @@ class QuickCaptureController extends Controller
             'project_id' => ['nullable', 'integer'],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:10000'],
-            'submission_token' => ['required', 'uuid'],
+            'submission_token' => ['nullable', 'uuid'],
             'due_mode' => ['required', 'in:today,tomorrow,next_week,custom,none'],
             'due_date' => ['nullable', 'date', 'required_if:due_mode,custom'],
             'urgency' => ['required', 'in:low,normal,medium,high,critical'],
@@ -476,11 +476,16 @@ class QuickCaptureController extends Controller
         $dueAt = $this->dueAt($dueMode, $customDate);
         $timezone = config('app.timezone', 'America/Lima');
 
+        $submissionToken = (string) (
+            $validated['submission_token']
+            ?? Str::uuid()->toString()
+        );
+
         $submissionKey = implode(':', [
             'quick-capture',
             'submission',
             $user->id,
-            $validated['submission_token'],
+            $submissionToken,
         ]);
 
         if (! Cache::add($submissionKey, 'processing', 600)) {
