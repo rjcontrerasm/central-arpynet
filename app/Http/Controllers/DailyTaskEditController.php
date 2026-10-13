@@ -27,6 +27,11 @@ class DailyTaskEditController extends Controller
                 'nullable',
                 'integer',
             ],
+            'description' => [
+                'nullable',
+                'string',
+                'max:10000',
+            ],
             'due_date' => [
                 'nullable',
                 'date',
@@ -261,6 +266,9 @@ class DailyTaskEditController extends Controller
             'organization_id' =>
                 $validated['organization_id'],
             'project_id' => $projectId,
+            'description' => filled($validated['description'] ?? null)
+                ? trim((string) $validated['description'])
+                : null,
             'due_at' => $dueAt,
             'urgency' => $validated['urgency'],
             'impact' => $validated['impact'],
