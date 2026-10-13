@@ -529,15 +529,20 @@
                                             <div class="task-edit-modal-header">
                                                 <div>
                                                     <div class="task-edit-modal-eyebrow">
-                                                        Editar tarea
+                                                        Tarea
                                                     </div>
 
                                                     <h3
                                                         id="task-edit-title-{{ $task->id }}"
                                                         class="task-edit-modal-title"
                                                     >
-                                                        {{ $task->title }}
+                                                        Editar tarea
                                                     </h3>
+
+                                                    <div
+                                                        class="task-edit-modal-task-name"
+                                                        data-task-edit-task-name
+                                                    ></div>
 
                                                     <div class="task-edit-modal-context">
                                                         {{ $task->organization?->name ?? 'Sin ámbito' }}
