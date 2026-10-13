@@ -169,7 +169,8 @@
         }
 
         input,
-        select {
+        select,
+        textarea {
             width: 100%;
             border: 1px solid #334155;
             border-radius: 14px;
@@ -182,7 +183,8 @@
         }
 
         input:focus,
-        select:focus {
+        select:focus,
+        textarea:focus {
             border-color: #60a5fa;
             box-shadow:
                 0 0 0 3px rgba(96, 165, 250, .16);
@@ -192,6 +194,12 @@
             min-height: 62px;
             font-size: 18px;
             font-weight: 700;
+        }
+
+        #description {
+            min-height: 132px;
+            resize: vertical;
+            line-height: 1.5;
         }
 
         .chips {
@@ -391,7 +399,8 @@
             }
 
             input,
-            select {
+            select,
+            textarea {
                 min-height: 46px;
             }
 
@@ -484,6 +493,7 @@
 
             input,
             select,
+            textarea,
             .chip span {
                 background: white;
                 color: #0f172a;
