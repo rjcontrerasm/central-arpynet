@@ -497,39 +497,46 @@ class QuickCaptureController extends Controller
 
         try {
             $task = Task::query()->create([
-            'organization_id' => $organizationId,
-            'project_id' => $projectId,
+                'organization_id' => $organizationId,
+                'project_id' => $projectId,
                 'title' => $title,
-                'description' => filled($validated['description'] ?? null)
-                    ? trim((string) $validated['description'])
+                'description' => filled(
+                    $validated['description'] ?? null,
+                )
+                    ? trim(
+                        (string) $validated['description'],
+                    )
                     : null,
                 'next_action' => $parsed['next_action'],
-            'status' => $waiting ? 'waiting' : 'pending',
-            'urgency' => $urgency,
-            'impact' => $impact,
-            'due_at' => $waiting ? null : $dueAt,
-            'waiting_since' => $waiting
-                ? CarbonImmutable::now($timezone)
-                : null,
-            'waiting_until' => $waiting ? $dueAt : null,
-            'waiting_reason' => $waiting
-                ? 'Seguimiento pendiente'
-                : null,
-            'source' => 'manual',
-            'assigned_to' => $assigneeId,
-            'created_by' => $user->id,
-            'visibility_scope' =>
-                $visibilityScope,
-        ]);
+                'status' => $waiting
+                    ? 'waiting'
+                    : 'pending',
+                'urgency' => $urgency,
+                'impact' => $impact,
+                'due_at' => $waiting
+                    ? null
+                    : $dueAt,
+                'waiting_since' => $waiting
+                    ? CarbonImmutable::now($timezone)
+                    : null,
+                'waiting_until' => $waiting
+                    ? $dueAt
+                    : null,
+                'waiting_reason' => $waiting
+                    ? 'Seguimiento pendiente'
+                    : null,
+                'source' => 'manual',
+                'assigned_to' => $assigneeId,
+                'created_by' => $user->id,
+                'visibility_scope' =>
+                    $visibilityScope,
+            ]);
 
-        if (
-            $visibilityScope
-            === 'teams'
-        ) {
-            $task->workTeams()->sync(
-                $selectedTeamIds->all(),
-            );
-        }
+            if ($visibilityScope === 'teams') {
+                $task->workTeams()->sync(
+                    $selectedTeamIds->all(),
+                );
+            }
 
             $undo->rememberTaskCreated(
                 $user,
