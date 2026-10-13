@@ -1107,17 +1107,45 @@ test('Mi Día filtra responsable y proyecto al editar empresa', async (
         'xpath=ancestor::*[@data-operational-card][1]',
     );
 
-    const form = card.locator(
+    const beforeCard = await card.boundingBox();
+    expect(beforeCard).not.toBeNull();
+
+    const dialog = card.locator(
+        'dialog[data-task-edit-dialog]',
+    );
+    const form = dialog.locator(
         'form[data-daily-edit-form]',
     );
 
-    await form.locator(
-        'xpath=../summary',
+    await card.locator(
+        'button[data-task-edit-open]',
     ).click();
 
+    await expect(dialog).toBeVisible();
     await expect(form).toHaveAttribute(
         'data-daily-edit-bound',
         '1',
+    );
+
+    const afterCard = await card.boundingBox();
+    expect(afterCard).not.toBeNull();
+    expect(
+        Math.abs(afterCard.height - beforeCard.height),
+    ).toBeLessThan(3);
+
+    const dialogBox = await dialog.boundingBox();
+    expect(dialogBox).not.toBeNull();
+
+    const viewport = await page.evaluate(() => ({
+        width: window.innerWidth,
+        height: window.innerHeight,
+    }));
+
+    expect(dialogBox.width).toBeLessThanOrEqual(
+        Math.min(822, viewport.width),
+    );
+    expect(dialogBox.height).toBeLessThan(
+        viewport.height,
     );
 
     const organization = form.locator(
@@ -1190,6 +1218,95 @@ test('Mi Día filtra responsable y proyecto al editar empresa', async (
     await expect(
         assignee.locator('option:checked'),
     ).toHaveText('Central E2E');
+
+    await expectNoHorizontalOverflow(page);
+});
+
+test('Mi Día abre edición en modal sin deformar la tarjeta', async (
+    { page },
+    testInfo,
+) => {
+    test.skip(
+        ! ['desktop-1366', 'mobile-390'].includes(
+            testInfo.project.name,
+        ),
+        'El editor modal se valida en desktop y móvil.',
+    );
+
+    await page.goto(
+        '/mi-dia?q=E2E%20reflow%20uno',
+    );
+
+    const title = page.getByText(
+        'E2E reflow uno',
+        { exact: true },
+    ).first();
+
+    await expect(title).toBeVisible();
+
+    const card = title.locator(
+        'xpath=ancestor::*[@data-operational-card][1]',
+    );
+    const before = await card.boundingBox();
+
+    expect(before).not.toBeNull();
+
+    await card.locator(
+        'button[data-task-edit-open]',
+    ).click();
+
+    const dialog = card.locator(
+        'dialog[data-task-edit-dialog]',
+    );
+
+    await expect(dialog).toBeVisible();
+    await expect(
+        dialog.getByRole('heading', {
+            name: 'Editar tarea',
+            exact: true,
+        }),
+    ).toBeVisible();
+
+    await expect(
+        dialog.getByText(
+            'E2E reflow uno',
+            { exact: true },
+        ),
+    ).toBeVisible();
+
+    const during = await card.boundingBox();
+    expect(during).not.toBeNull();
+    expect(
+        Math.abs(during.height - before.height),
+    ).toBeLessThan(3);
+
+    const box = await dialog.boundingBox();
+    expect(box).not.toBeNull();
+
+    const viewport = await page.evaluate(() => ({
+        width: window.innerWidth,
+        height: window.innerHeight,
+    }));
+
+    expect(box.width).toBeLessThanOrEqual(
+        viewport.width,
+    );
+    expect(box.height).toBeLessThanOrEqual(
+        viewport.height,
+    );
+
+    await dialog.getByRole('button', {
+        name: 'Cancelar',
+        exact: true,
+    }).click();
+
+    await expect(dialog).not.toBeVisible();
+
+    const after = await card.boundingBox();
+    expect(after).not.toBeNull();
+    expect(
+        Math.abs(after.height - before.height),
+    ).toBeLessThan(3);
 
     await expectNoHorizontalOverflow(page);
 });

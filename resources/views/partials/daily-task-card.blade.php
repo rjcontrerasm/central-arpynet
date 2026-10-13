@@ -511,10 +511,55 @@
                                         </div>
                                     </details>
 
-                                    <details class="task-edit">
-                                        <summary>Editar</summary>
+                                    <button
+                                        class="task-edit-trigger"
+                                        type="button"
+                                        data-task-edit-open="task-edit-dialog-{{ $task->id }}"
+                                    >
+                                        Editar
+                                    </button>
 
-                                        <form
+                                    <dialog
+                                        id="task-edit-dialog-{{ $task->id }}"
+                                        class="task-edit-dialog"
+                                        data-task-edit-dialog
+                                        aria-labelledby="task-edit-title-{{ $task->id }}"
+                                    >
+                                        <div class="task-edit-modal-shell">
+                                            <div class="task-edit-modal-header">
+                                                <div>
+                                                    <div class="task-edit-modal-eyebrow">
+                                                        Tarea
+                                                    </div>
+
+                                                    <h3
+                                                        id="task-edit-title-{{ $task->id }}"
+                                                        class="task-edit-modal-title"
+                                                    >
+                                                        Editar tarea
+                                                    </h3>
+
+                                                    <div
+                                                        class="task-edit-modal-task-name"
+                                                        data-task-edit-task-name
+                                                    ></div>
+
+                                                    <div class="task-edit-modal-context">
+                                                        {{ $task->organization?->name ?? 'Sin ámbito' }}
+                                                    </div>
+                                                </div>
+
+                                                <button
+                                                    class="task-edit-modal-close"
+                                                    type="button"
+                                                    data-task-edit-close
+                                                    aria-label="Cerrar edición"
+                                                >
+                                                    ×
+                                                </button>
+                                            </div>
+
+                                            <form
                                             class="edit-form"
                                             method="POST"
                                             data-daily-edit-form
@@ -819,13 +864,25 @@
                                                 </label>
                                             </div>
 
-                                            <button
-                                                class="save-edit"
-                                                type="submit"
-                                            >
-                                                Guardar cambios
-                                            </button>
+                                            <div class="task-edit-modal-footer">
+                                                <button
+                                                    class="task-edit-cancel"
+                                                    type="button"
+                                                    data-task-edit-close
+                                                >
+                                                    Cancelar
+                                                </button>
+
+                                                <button
+                                                    class="save-edit"
+                                                    type="submit"
+                                                    data-busy-label="Guardando…"
+                                                >
+                                                    Guardar cambios
+                                                </button>
+                                            </div>
                                         </form>
-                                    </details>
+                                        </div>
+                                    </dialog>
                                 @endif
                             </div>
