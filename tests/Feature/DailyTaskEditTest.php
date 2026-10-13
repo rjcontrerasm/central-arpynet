@@ -27,6 +27,8 @@ class DailyTaskEditTest extends TestCase
                 [
                     'organization_id' =>
                         $organization->id,
+                    'description' =>
+                        'Detalle actualizado para ejecutar la tarea.',
                     'due_date' => '2026-09-05',
                     'urgency' => 'high',
                     'impact' => 'low',
@@ -41,6 +43,10 @@ class DailyTaskEditTest extends TestCase
             $task->due_at->format('Y-m-d H:i:s'),
         );
 
+        $this->assertSame(
+            'Detalle actualizado para ejecutar la tarea.',
+            $task->description,
+        );
         $this->assertSame('high', $task->urgency);
         $this->assertSame('low', $task->impact);
     }
