@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class QuickCaptureTest extends TestCase
@@ -24,7 +25,7 @@ class QuickCaptureTest extends TestCase
         $this->actingAs($user)
             ->get('/captura')
             ->assertOk()
-            ->assertSee('Captura rápida');
+            ->assertSee('Nueva tarea');
     }
 
     public function test_user_can_capture_task_for_today(): void
@@ -35,6 +36,7 @@ class QuickCaptureTest extends TestCase
             ->post('/captura', [
                 'organization_id' => $organization->id,
                 'title' => 'Enviar informe',
+                'description' => 'Adjuntar sustento y validar el monto antes de enviarlo.',
                 'due_mode' => 'today',
                 'urgency' => 'high',
                 'impact' => 'high',
@@ -44,6 +46,7 @@ class QuickCaptureTest extends TestCase
         $this->assertDatabaseHas('tasks', [
             'organization_id' => $organization->id,
             'title' => 'Enviar informe',
+            'description' => 'Adjuntar sustento y validar el monto antes de enviarlo.',
             'status' => 'pending',
             'urgency' => 'high',
             'impact' => 'high',
@@ -56,6 +59,47 @@ class QuickCaptureTest extends TestCase
                 ->first()
                 ?->due_at,
         );
+    }
+
+    public function test_same_submission_token_does_not_create_duplicate_task(): void
+    {
+        [$user, $organization] = $this->context();
+
+        $token = Str::uuid()->toString();
+
+        $payload = [
+            'organization_id' => $organization->id,
+            'title' => 'Pago proveedor con detalle',
+            'description' => 'Cuenta 001-123456. Validar factura antes de pagar.',
+            'due_mode' => 'today',
+            'urgency' => 'normal',
+            'impact' => 'normal',
+            'submission_token' => $token,
+        ];
+
+        $this->actingAs($user)
+            ->from('/captura')
+            ->post('/captura', $payload)
+            ->assertRedirect('/captura');
+
+        $this->actingAs($user)
+            ->from('/captura')
+            ->post('/captura', $payload)
+            ->assertRedirect('/captura');
+
+        $this->assertSame(
+            1,
+            \App\Models\Task::query()
+                ->where('title', 'Pago proveedor con detalle')
+                ->count(),
+        );
+
+        $this->assertDatabaseHas('tasks', [
+            'organization_id' => $organization->id,
+            'title' => 'Pago proveedor con detalle',
+            'description' => 'Cuenta 001-123456. Validar factura antes de pagar.',
+            'created_by' => $user->id,
+        ]);
     }
 
     public function test_user_cannot_capture_for_foreign_organization(): void
