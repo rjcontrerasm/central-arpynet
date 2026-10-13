@@ -10,7 +10,7 @@
         name="color-scheme"
         content="light dark"
     >
-    <title>Captura rápida · Central ARPYNET</title>
+    <title>Nueva tarea · Central ARPYNET</title>
 
     <link
         rel="stylesheet"
@@ -22,8 +22,8 @@
 <div class="shell">
     <x-operational-page-header
         active="capture"
-        title="Captura rápida"
-        subtitle="Escribe la tarea, elige cuándo y guarda. Lo demás puede esperar."
+        title="Nueva tarea"
+        subtitle="Registra la tarea con el detalle necesario para ejecutarla sin perder contexto."
     />
 
     @if (session('quick_capture_success'))
@@ -53,6 +53,12 @@
         data-current-user-id="{{ auth()->id() }}"
     >
         @csrf
+
+        <input
+            type="hidden"
+            name="submission_token"
+            value="{{ old('submission_token', $submissionToken) }}"
+        >
 
         @if ($contextWorkTeamId)
             <input
@@ -121,6 +127,22 @@
                 autofocus
                 required
             >
+        </label>
+
+        <label>
+            Descripción / detalle
+
+            <textarea
+                id="description"
+                name="description"
+                maxlength="10000"
+                rows="5"
+                placeholder="Agrega aquí el contexto, datos importantes, montos, teléfonos, enlaces, instrucciones o cualquier información que necesitarás al ejecutar la tarea."
+            >{{ old('description') }}</textarea>
+
+            <span class="advanced-hint">
+                Opcional para tareas simples. Úsalo cuando necesites conservar información de trabajo.
+            </span>
         </label>
 
         <div class="smart-hint">
