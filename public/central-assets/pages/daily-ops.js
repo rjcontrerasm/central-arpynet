@@ -2773,6 +2773,14 @@
                     dialog.querySelectorAll(
                         '[data-task-edit-close]',
                     );
+                const modalTaskName =
+                    dialog.querySelector(
+                        '[data-task-edit-task-name]',
+                    );
+                const cardTaskName =
+                    card?.querySelector(
+                        '.item-title',
+                    )?.textContent?.trim() || '';
 
                 let dirty = false;
 
@@ -2837,6 +2845,11 @@
                     'click',
                     () => {
                         restoreForm();
+
+                        if (modalTaskName) {
+                            modalTaskName.textContent =
+                                cardTaskName;
+                        }
 
                         if (
                             typeof dialog.showModal
