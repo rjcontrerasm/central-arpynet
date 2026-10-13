@@ -2745,6 +2745,186 @@
             });
         };
 
+        const bindTaskEditDialogs = (root = document) => {
+            root.querySelectorAll(
+                '[data-task-edit-dialog]',
+            ).forEach((dialog) => {
+                if (
+                    dialog.dataset.taskEditDialogBound
+                    === '1'
+                ) {
+                    return;
+                }
+
+                dialog.dataset.taskEditDialogBound = '1';
+
+                const card = dialog.closest(
+                    '[data-operational-card]',
+                );
+                const trigger = card?.querySelector(
+                    '[data-task-edit-open="'
+                    + dialog.id
+                    + '"]',
+                );
+                const form = dialog.querySelector(
+                    'form[data-daily-edit-form]',
+                );
+                const closeButtons =
+                    dialog.querySelectorAll(
+                        '[data-task-edit-close]',
+                    );
+
+                let dirty = false;
+
+                const syncDynamicFields = () => {
+                    form?.querySelector(
+                        '[data-edit-organization]',
+                    )?.dispatchEvent(
+                        new Event(
+                            'change',
+                            { bubbles: true },
+                        ),
+                    );
+
+                    form?.querySelector(
+                        '[data-edit-visibility]',
+                    )?.dispatchEvent(
+                        new Event(
+                            'change',
+                            { bubbles: true },
+                        ),
+                    );
+                };
+
+                const restoreForm = () => {
+                    if (! form) {
+                        return;
+                    }
+
+                    form.reset();
+                    syncDynamicFields();
+                    dirty = false;
+                };
+
+                const closeDialog = (
+                    requireConfirmation = true,
+                ) => {
+                    if (
+                        requireConfirmation
+                        && dirty
+                        && ! window.confirm(
+                            '¿Descartar los cambios no guardados?',
+                        )
+                    ) {
+                        return;
+                    }
+
+                    restoreForm();
+
+                    if (dialog.open) {
+                        dialog.close();
+                    }
+
+                    document.documentElement
+                        .classList.remove(
+                            'task-edit-modal-open',
+                        );
+
+                    trigger?.focus();
+                };
+
+                trigger?.addEventListener(
+                    'click',
+                    () => {
+                        restoreForm();
+
+                        if (
+                            typeof dialog.showModal
+                            === 'function'
+                        ) {
+                            dialog.showModal();
+                        } else {
+                            dialog.setAttribute(
+                                'open',
+                                '',
+                            );
+                        }
+
+                        document.documentElement
+                            .classList.add(
+                                'task-edit-modal-open',
+                            );
+
+                        window.requestAnimationFrame(
+                            () => {
+                                form?.querySelector(
+                                    'textarea[name="description"]',
+                                )?.focus();
+                            },
+                        );
+                    },
+                );
+
+                closeButtons.forEach((button) => {
+                    button.addEventListener(
+                        'click',
+                        () => closeDialog(true),
+                    );
+                });
+
+                form?.addEventListener(
+                    'input',
+                    () => {
+                        dirty = true;
+                    },
+                );
+
+                form?.addEventListener(
+                    'change',
+                    () => {
+                        dirty = true;
+                    },
+                );
+
+                form?.addEventListener(
+                    'submit',
+                    () => {
+                        dirty = false;
+                    },
+                );
+
+                dialog.addEventListener(
+                    'cancel',
+                    (event) => {
+                        event.preventDefault();
+                        closeDialog(true);
+                    },
+                );
+
+                dialog.addEventListener(
+                    'click',
+                    (event) => {
+                        if (
+                            event.target === dialog
+                            && ! dirty
+                        ) {
+                            closeDialog(false);
+                        }
+                    },
+                );
+
+                dialog.addEventListener(
+                    'close',
+                    () => {
+                        document.documentElement
+                            .classList.remove(
+                                'task-edit-modal-open',
+                            );
+                    },
+                );
+            });
+        };
+
         const bindLiveTaskForms = (root = document) => {
             bindResumeForms(root);
             bindWaitingForms(root);
@@ -2752,6 +2932,7 @@
             bindStartActionForms(root);
             bindCompleteActionForms(root);
             bindEditForms(root);
+            bindTaskEditDialogs(root);
         };
 
         bindLiveTaskForms();
