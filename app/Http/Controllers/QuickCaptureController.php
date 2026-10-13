@@ -495,48 +495,87 @@ class QuickCaptureController extends Controller
             );
         }
 
-        try {
-            $task = Task::query()->create([
-                'organization_id' => $organizationId,
-                'project_id' => $projectId,
-                'title' => $title,
-                'description' => filled(
-                    $validated['description'] ?? null,
-                )
-                    ? trim(
-                        (string) $validated['description'],
-                    )
-                    : null,
-                'next_action' => $parsed['next_action'],
-                'status' => $waiting
-                    ? 'waiting'
-                    : 'pending',
-                'urgency' => $urgency,
-                'impact' => $impact,
-                'due_at' => $waiting
-                    ? null
-                    : $dueAt,
-                'waiting_since' => $waiting
-                    ? CarbonImmutable::now($timezone)
-                    : null,
-                'waiting_until' => $waiting
-                    ? $dueAt
-                    : null,
-                'waiting_reason' => $waiting
-                    ? 'Seguimiento pendiente'
-                    : null,
-                'source' => 'manual',
-                'assigned_to' => $assigneeId,
-                'created_by' => $user->id,
-                'visibility_scope' =>
-                    $visibilityScope,
-            ]);
+        $task = null;
 
-            if ($visibilityScope === 'teams') {
-                $task->workTeams()->sync(
-                    $selectedTeamIds->all(),
-                );
-            }
+        try {
+            $task = DB::transaction(
+                function () use (
+                    $organizationId,
+                    $projectId,
+                    $title,
+                    $validated,
+                    $parsed,
+                    $waiting,
+                    $urgency,
+                    $impact,
+                    $dueAt,
+                    $timezone,
+                    $assigneeId,
+                    $user,
+                    $visibilityScope,
+                    $selectedTeamIds,
+                ): Task {
+                    $task = Task::query()->create([
+                        'organization_id' =>
+                            $organizationId,
+                        'project_id' => $projectId,
+                        'title' => $title,
+                        'description' => filled(
+                            $validated[
+                                'description'
+                            ] ?? null,
+                        )
+                            ? trim(
+                                (string) $validated[
+                                    'description'
+                                ],
+                            )
+                            : null,
+                        'next_action' =>
+                            $parsed['next_action'],
+                        'status' => $waiting
+                            ? 'waiting'
+                            : 'pending',
+                        'urgency' => $urgency,
+                        'impact' => $impact,
+                        'due_at' => $waiting
+                            ? null
+                            : $dueAt,
+                        'waiting_since' => $waiting
+                            ? CarbonImmutable::now(
+                                $timezone,
+                            )
+                            : null,
+                        'waiting_until' => $waiting
+                            ? $dueAt
+                            : null,
+                        'waiting_reason' => $waiting
+                            ? 'Seguimiento pendiente'
+                            : null,
+                        'source' => 'manual',
+                        'assigned_to' => $assigneeId,
+                        'created_by' => $user->id,
+                        'visibility_scope' =>
+                            $visibilityScope,
+                    ]);
+
+                    if (
+                        $visibilityScope === 'teams'
+                    ) {
+                        $task->workTeams()->sync(
+                            $selectedTeamIds->all(),
+                        );
+                    }
+
+                    return $task;
+                },
+            );
+
+            Cache::put(
+                $submissionKey,
+                'created:'.$task->id,
+                600,
+            );
 
             $undo->rememberTaskCreated(
                 $user,
@@ -548,14 +587,10 @@ class QuickCaptureController extends Controller
                     false,
                 ),
             );
-
-            Cache::put(
-                $submissionKey,
-                'created:'.$task->id,
-                600,
-            );
         } catch (\Throwable $exception) {
-            Cache::forget($submissionKey);
+            if (! $task?->exists) {
+                Cache::forget($submissionKey);
+            }
 
             throw $exception;
         }
