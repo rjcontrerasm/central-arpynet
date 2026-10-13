@@ -13,7 +13,9 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -206,6 +208,8 @@ class QuickCaptureController extends Controller
                     ->all(),
             );
 
+        $submissionToken = Str::uuid()->toString();
+
         return view('quick-capture', compact(
             'organizations',
             'projects',
@@ -221,6 +225,7 @@ class QuickCaptureController extends Controller
             'defaultTeamByAssignee',
             'assigneeOrganizationIds',
             'assigneeWorkTeamIds',
+            'submissionToken',
         ));
     }
 
@@ -235,6 +240,8 @@ class QuickCaptureController extends Controller
             'organization_id' => ['required', 'integer'],
             'project_id' => ['nullable', 'integer'],
             'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:10000'],
+            'submission_token' => ['required', 'uuid'],
             'due_mode' => ['required', 'in:today,tomorrow,next_week,custom,none'],
             'due_date' => ['nullable', 'date', 'required_if:due_mode,custom'],
             'urgency' => ['required', 'in:low,normal,medium,high,critical'],
@@ -469,11 +476,29 @@ class QuickCaptureController extends Controller
         $dueAt = $this->dueAt($dueMode, $customDate);
         $timezone = config('app.timezone', 'America/Lima');
 
-        $task = Task::query()->create([
+        $submissionKey = implode(':', [
+            'quick-capture',
+            'submission',
+            $user->id,
+            $validated['submission_token'],
+        ]);
+
+        if (! Cache::add($submissionKey, 'processing', 600)) {
+            return back()->with(
+                'quick_capture_success',
+                'La tarea ya estaba siendo guardada. Se evitó crear un duplicado.',
+            );
+        }
+
+        try {
+            $task = Task::query()->create([
             'organization_id' => $organizationId,
             'project_id' => $projectId,
-            'title' => $title,
-            'next_action' => $parsed['next_action'],
+                'title' => $title,
+                'description' => filled($validated['description'] ?? null)
+                    ? trim((string) $validated['description'])
+                    : null,
+                'next_action' => $parsed['next_action'],
             'status' => $waiting ? 'waiting' : 'pending',
             'urgency' => $urgency,
             'impact' => $impact,
@@ -501,16 +526,27 @@ class QuickCaptureController extends Controller
             );
         }
 
-        $undo->rememberTaskCreated(
-            $user,
-            $task,
-            'Tarea creada',
-            route(
-                'quick-capture.show',
-                [],
-                false,
-            ),
-        );
+            $undo->rememberTaskCreated(
+                $user,
+                $task,
+                'Tarea creada',
+                route(
+                    'quick-capture.show',
+                    [],
+                    false,
+                ),
+            );
+
+            Cache::put(
+                $submissionKey,
+                'created:'.$task->id,
+                600,
+            );
+        } catch (\Throwable $exception) {
+            Cache::forget($submissionKey);
+
+            throw $exception;
+        }
 
         $message = 'Tarea registrada correctamente.';
 
