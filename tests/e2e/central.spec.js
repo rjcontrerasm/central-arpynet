@@ -1262,9 +1262,16 @@ test('Mi Día abre edición en modal sin deformar la tarjeta', async (
     await expect(dialog).toBeVisible();
     await expect(
         dialog.getByRole('heading', {
-            name: 'E2E reflow uno',
+            name: 'Editar tarea',
             exact: true,
         }),
+    ).toBeVisible();
+
+    await expect(
+        dialog.getByText(
+            'E2E reflow uno',
+            { exact: true },
+        ),
     ).toBeVisible();
 
     const during = await card.boundingBox();
