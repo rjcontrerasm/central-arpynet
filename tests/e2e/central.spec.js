@@ -1274,6 +1274,103 @@ test('Mi Día abre edición en modal sin deformar la tarjeta', async (
         ),
     ).toBeVisible();
 
+    const titleInput = dialog.locator(
+        'input[name="title"]',
+    );
+    await expect(titleInput).toHaveValue(
+        'E2E reflow uno',
+    );
+
+    const organization = dialog.locator(
+        '[data-edit-organization]',
+    );
+    const project = dialog.locator(
+        '[data-edit-project]',
+    );
+    const assignee = dialog.locator(
+        '[data-edit-assignee]',
+    );
+    const visibility = dialog.locator(
+        '[data-edit-visibility]',
+    );
+    const dueDate = dialog.locator(
+        'input[name="due_date"]',
+    );
+    const urgency = dialog.locator(
+        'select[name="urgency"]',
+    );
+    const impact = dialog.locator(
+        'select[name="impact"]',
+    );
+
+    const [
+        organizationBox,
+        projectBox,
+        assigneeBox,
+        visibilityBox,
+        dueDateBox,
+        urgencyBox,
+        impactBox,
+    ] = await Promise.all([
+        organization.boundingBox(),
+        project.boundingBox(),
+        assignee.boundingBox(),
+        visibility.boundingBox(),
+        dueDate.boundingBox(),
+        urgency.boundingBox(),
+        impact.boundingBox(),
+    ]);
+
+    for (const fieldBox of [
+        organizationBox,
+        projectBox,
+        assigneeBox,
+        visibilityBox,
+        dueDateBox,
+        urgencyBox,
+        impactBox,
+    ]) {
+        expect(fieldBox).not.toBeNull();
+    }
+
+    if (testInfo.project.name === 'desktop-1366') {
+        expect(
+            Math.abs(
+                organizationBox.y
+                - projectBox.y,
+            ),
+        ).toBeLessThan(4);
+
+        expect(
+            Math.abs(
+                assigneeBox.y
+                - visibilityBox.y,
+            ),
+        ).toBeLessThan(4);
+
+        expect(
+            Math.max(
+                dueDateBox.y,
+                urgencyBox.y,
+                impactBox.y,
+            )
+            - Math.min(
+                dueDateBox.y,
+                urgencyBox.y,
+                impactBox.y,
+            ),
+        ).toBeLessThan(4);
+    } else {
+        expect(projectBox.y).toBeGreaterThan(
+            organizationBox.y
+            + organizationBox.height,
+        );
+        expect(visibilityBox.y).toBeGreaterThan(
+            assigneeBox.y
+            + assigneeBox.height,
+        );
+    }
+
     const during = await card.boundingBox();
     expect(during).not.toBeNull();
     expect(
