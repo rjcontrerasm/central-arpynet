@@ -614,17 +614,30 @@
 
                                             <div class="edit-grid">
                                                 <label class="edit-field full">
+                                                    Título
+
+                                                    <input
+                                                        type="text"
+                                                        name="title"
+                                                        maxlength="255"
+                                                        value="{{ $task->title }}"
+                                                        required
+                                                        data-edit-title
+                                                    >
+                                                </label>
+
+                                                <label class="edit-field full">
                                                     Descripción / detalle
 
                                                     <textarea
                                                         name="description"
-                                                        rows="5"
+                                                        rows="4"
                                                         maxlength="10000"
                                                         placeholder="Contexto, datos importantes, instrucciones, enlaces u otra información útil."
                                                     >{{ $task->description }}</textarea>
                                                 </label>
 
-                                                <label class="edit-field full">
+                                                <label class="edit-field edit-span-3">
                                                     Empresa / ámbito
 
                                                     <select
@@ -649,7 +662,7 @@
                                                     </select>
                                                 </label>
 
-                                                <label class="edit-field full">
+                                                <label class="edit-field edit-span-3">
                                                     Proyecto
 
                                                     <select
@@ -704,7 +717,7 @@
                                                     </select>
                                                 </label>
 
-                                                <label class="edit-field full">
+                                                <label class="edit-field edit-span-3">
                                                     Responsable
 
                                                     <select
@@ -731,7 +744,7 @@
                                                     </select>
                                                 </label>
 
-                                                <label class="edit-field full">
+                                                <label class="edit-field edit-span-3">
                                                     Visibilidad
 
                                                     <select
@@ -807,7 +820,7 @@
                                                     </span>
                                                 </label>
 
-                                                <label class="edit-field full">
+                                                <label class="edit-field edit-span-2">
                                                     Fecha
 
                                                     <input
@@ -817,7 +830,7 @@
                                                     >
                                                 </label>
 
-                                                <label class="edit-field">
+                                                <label class="edit-field edit-span-2">
                                                     Urgencia
 
                                                     <select name="urgency">
@@ -840,7 +853,7 @@
                                                     </select>
                                                 </label>
 
-                                                <label class="edit-field">
+                                                <label class="edit-field edit-span-2">
                                                     Impacto
 
                                                     <select name="impact">
