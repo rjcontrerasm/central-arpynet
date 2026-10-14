@@ -620,7 +620,6 @@
                                                         type="text"
                                                         name="title"
                                                         maxlength="255"
-                                                        value="{{ $task->title }}"
                                                         required
                                                         data-edit-title
                                                     >
