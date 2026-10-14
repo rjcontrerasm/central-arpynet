@@ -2814,6 +2814,12 @@
                     }
 
                     form.reset();
+
+                    if (titleInput) {
+                        titleInput.value =
+                            cardTaskName;
+                    }
+
                     syncDynamicFields();
 
                     if (modalTaskName) {
