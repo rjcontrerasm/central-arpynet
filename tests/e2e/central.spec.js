@@ -385,26 +385,23 @@ test('Mi Día convierte próxima acción en tarea vinculada al completar', async
         'xpath=ancestor::*[@data-operational-card][1]',
     );
 
-    const nextActionEditor = card
-        .locator('details.task-edit')
-        .filter({
-            has: card.locator(
-                'form.next-action-form',
-            ),
-        })
-        .first();
+    const nextActionForm = card.locator(
+        'form.next-action-form',
+    ).first();
+    const nextActionEditor =
+        nextActionForm.locator('xpath=..');
 
     await nextActionEditor.locator(
         'summary',
     ).click();
 
-    await nextActionEditor.locator(
+    await nextActionForm.locator(
         'input[name="next_action"]',
     ).fill('E2E seguimiento encadenado');
 
     await Promise.all([
         page.waitForNavigation(),
-        nextActionEditor.getByRole(
+        nextActionForm.getByRole(
             'button',
             { name: 'Guardar', exact: true },
         ).click(),
@@ -519,25 +516,22 @@ test('Mi Día convierte próxima acción en tarea vinculada al completar', async
         timeout: 1800,
     });
 
-    const changeEditor = card
-        .locator('details.task-edit')
-        .filter({
-            has: card.locator(
-                'form.next-action-form',
-            ),
-        })
-        .first();
+    const changeForm = card.locator(
+        'form.next-action-form',
+    ).first();
+    const changeEditor =
+        changeForm.locator('xpath=..');
 
     await changeEditor.locator('summary')
         .click();
 
-    await changeEditor.locator(
+    await changeForm.locator(
         'input[name="next_action"]',
     ).fill('');
 
     await Promise.all([
         page.waitForNavigation(),
-        changeEditor.getByRole(
+        changeForm.getByRole(
             'button',
             { name: 'Guardar', exact: true },
         ).click(),
