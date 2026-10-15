@@ -129,6 +129,47 @@ class AppServiceProvider extends ServiceProvider
             }
 
             if (
+                $model instanceof Task
+                && ! $model->exists
+                && request()->routeIs(
+                    'daily-task-action.update',
+                )
+                && $model->source === 'next_action'
+                && $model->parent_task_id
+            ) {
+                $parent = Task::query()
+                    ->whereKey(
+                        $model->parent_task_id,
+                    )
+                    ->first();
+
+                if (
+                    $parent
+                    && (int) $parent->organization_id
+                        === $organizationId
+                    && $parent->canBeUpdatedBy($user)
+                    && trim(
+                        (string) $parent->next_action,
+                    ) === trim(
+                        (string) $model->title,
+                    )
+                    && (int) ($parent->project_id ?? 0)
+                        === (int) ($model->project_id ?? 0)
+                    && (int) ($parent->assigned_to ?? 0)
+                        === (int) ($model->assigned_to ?? 0)
+                    && (
+                        $parent->visibility_scope
+                            ?: 'organization'
+                    ) === (
+                        $model->visibility_scope
+                            ?: 'organization'
+                    )
+                ) {
+                    continue;
+                }
+            }
+
+            if (
                 $model instanceof CollaborationComment
                 && ! $model->exists
                 && request()->routeIs(
