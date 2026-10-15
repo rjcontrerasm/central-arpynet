@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\Organization;
+use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
+use App\Models\WorkTeam;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -198,6 +200,255 @@ class DailyTaskActionsTest extends TestCase
         $this->assertSame(
             'pending',
             $first->fresh()->status,
+        );
+    }
+
+    public function test_completing_task_can_create_linked_follow_up_and_undo_both(): void
+    {
+        Carbon::setTestNow(
+            '2026-10-15 10:00:00',
+        );
+
+        [$user, $organization] = $this->context();
+
+        $project = Project::query()->create([
+            'organization_id' => $organization->id,
+            'name' => 'Cotización PCM',
+            'type' => 'project',
+            'horizon' => 'short',
+            'status' => 'active',
+            'start_date' => '2026-10-15',
+            'created_by' => $user->id,
+            'is_private' => false,
+        ]);
+
+        $team = WorkTeam::query()->create([
+            'home_organization_id' => $organization->id,
+            'name' => 'Administración',
+            'is_active' => true,
+            'created_by' => $user->id,
+        ]);
+
+        $team->users()->attach(
+            $user->id,
+            [
+                'role' => 'lead',
+                'is_active' => true,
+            ],
+        );
+
+        $task = Task::query()->create([
+            'organization_id' => $organization->id,
+            'project_id' => $project->id,
+            'title' => 'Cotizar twitter a la PCM',
+            'next_action' =>
+                'Seguimiento de cotización de twitter a la PCM',
+            'status' => 'pending',
+            'urgency' => 'high',
+            'impact' => 'normal',
+            'due_at' => now(),
+            'assigned_to' => $user->id,
+            'created_by' => $user->id,
+            'visibility_scope' => 'teams',
+        ]);
+
+        $task->workTeams()->sync([$team->id]);
+
+        $response = $this->actingAs($user)
+            ->postJson(
+                "/mi-dia/tareas/{$task->id}/accion",
+                [
+                    'action' => 'complete',
+                    'follow_up_mode' => 'tomorrow',
+                ],
+            )
+            ->assertOk()
+            ->assertJsonPath(
+                'follow_up.created',
+                true,
+            )
+            ->assertJsonPath(
+                'follow_up.title',
+                'Seguimiento de cotización de twitter a la PCM',
+            )
+            ->assertJsonPath(
+                'follow_up.due_date',
+                '16/10/2026',
+            );
+
+        $task->refresh();
+
+        $this->assertSame(
+            'completed',
+            $task->status,
+        );
+
+        $followUp = Task::query()
+            ->where('parent_task_id', $task->id)
+            ->firstOrFail();
+
+        $this->assertSame(
+            $organization->id,
+            $followUp->organization_id,
+        );
+        $this->assertSame(
+            $project->id,
+            $followUp->project_id,
+        );
+        $this->assertSame(
+            $user->id,
+            $followUp->assigned_to,
+        );
+        $this->assertSame(
+            'teams',
+            $followUp->visibility_scope,
+        );
+        $this->assertSame(
+            'next_action',
+            $followUp->source,
+        );
+        $this->assertSame(
+            'central_next_action',
+            $followUp->external_system,
+        );
+        $this->assertSame(
+            '2026-10-16 17:00:00',
+            $followUp->due_at->format(
+                'Y-m-d H:i:s',
+            ),
+        );
+
+        $this->assertTrue(
+            $followUp->workTeams()
+                ->whereKey($team->id)
+                ->exists(),
+        );
+
+        $this->get(
+            '/mi-dia?q='
+            .urlencode(
+                'Seguimiento de cotización de twitter a la PCM',
+            ),
+        )
+            ->assertOk()
+            ->assertSee('Continuación de:')
+            ->assertSee('Cotizar twitter a la PCM');
+
+        $undoId = (int) $response->json(
+            'undo.id',
+        );
+
+        $this->postJson(
+            '/deshacer',
+            ['undo_id' => $undoId],
+        )
+            ->assertOk()
+            ->assertJson([
+                'ok' => true,
+                'message' => 'Acción deshecha.',
+            ]);
+
+        $this->assertSame(
+            'pending',
+            $task->fresh()->status,
+        );
+
+        $this->assertSoftDeleted(
+            'tasks',
+            ['id' => $followUp->id],
+        );
+    }
+
+    public function test_completion_can_skip_creating_prepared_next_action(): void
+    {
+        [$user, $organization] = $this->context();
+
+        $task = Task::query()->create([
+            'organization_id' => $organization->id,
+            'title' => 'Cotizar servicio',
+            'next_action' => 'Hacer seguimiento',
+            'status' => 'pending',
+            'urgency' => 'normal',
+            'impact' => 'normal',
+            'due_at' => now(),
+            'assigned_to' => $user->id,
+            'created_by' => $user->id,
+        ]);
+
+        $this->actingAs($user)
+            ->postJson(
+                "/mi-dia/tareas/{$task->id}/accion",
+                [
+                    'action' => 'complete',
+                    'follow_up_mode' => 'none',
+                ],
+            )
+            ->assertOk()
+            ->assertJsonPath(
+                'follow_up',
+                null,
+            );
+
+        $this->assertSame(
+            'completed',
+            $task->fresh()->status,
+        );
+
+        $this->assertSame(
+            0,
+            Task::query()
+                ->where(
+                    'parent_task_id',
+                    $task->id,
+                )
+                ->count(),
+        );
+    }
+
+    public function test_custom_follow_up_date_is_applied(): void
+    {
+        Carbon::setTestNow(
+            '2026-10-15 10:00:00',
+        );
+
+        [$user, $organization] = $this->context();
+
+        $task = Task::query()->create([
+            'organization_id' => $organization->id,
+            'title' => 'Enviar propuesta',
+            'next_action' => 'Llamar para confirmar recepción',
+            'status' => 'pending',
+            'urgency' => 'normal',
+            'impact' => 'normal',
+            'due_at' => now(),
+            'assigned_to' => $user->id,
+            'created_by' => $user->id,
+        ]);
+
+        $this->actingAs($user)
+            ->postJson(
+                "/mi-dia/tareas/{$task->id}/accion",
+                [
+                    'action' => 'complete',
+                    'follow_up_mode' => 'custom',
+                    'follow_up_due_date' => '2026-10-20',
+                ],
+            )
+            ->assertOk()
+            ->assertJsonPath(
+                'follow_up.due_date',
+                '20/10/2026',
+            );
+
+        $followUp = Task::query()
+            ->where('parent_task_id', $task->id)
+            ->firstOrFail();
+
+        $this->assertSame(
+            '2026-10-20 17:00:00',
+            $followUp->due_at->format(
+                'Y-m-d H:i:s',
+            ),
         );
     }
 
