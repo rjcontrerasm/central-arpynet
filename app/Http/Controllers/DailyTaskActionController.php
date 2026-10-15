@@ -274,8 +274,16 @@ class DailyTaskActionController extends Controller
         string $mode,
         ?string $customDate,
     ): array {
-        $externalId =
-            'parent:'.$parent->id.':next-action';
+        $nextAction = trim(
+            (string) $parent->next_action,
+        );
+
+        $externalId = implode(':', [
+            'parent',
+            $parent->id,
+            'next-action',
+            sha1(mb_strtolower($nextAction)),
+        ]);
 
         $existing = Task::query()
             ->where(
@@ -308,9 +316,7 @@ class DailyTaskActionController extends Controller
                 $parent->organization_id,
             'project_id' => $parent->project_id,
             'parent_task_id' => $parent->id,
-            'title' => trim(
-                (string) $parent->next_action,
-            ),
+            'title' => $nextAction,
             'status' => 'pending',
             'urgency' => $parent->urgency,
             'impact' => $parent->impact,
@@ -339,6 +345,12 @@ class DailyTaskActionController extends Controller
             $followUp->workTeams()->sync(
                 $teamIds,
             );
+        }
+
+        if (is_null($parent->assigned_to)) {
+            $followUp->forceFill([
+                'assigned_to' => null,
+            ])->saveQuietly();
         }
 
         return [$followUp->fresh(), true];
