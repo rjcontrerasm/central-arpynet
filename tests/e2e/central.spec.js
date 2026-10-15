@@ -388,10 +388,7 @@ test('Mi Día convierte próxima acción en tarea vinculada al completar', async
     const nextActionEditor = card
         .locator('details.task-edit')
         .filter({
-            has: page.getByText(
-                'Definir próxima acción',
-                { exact: true },
-            ),
+            hasText: 'Definir próxima acción',
         })
         .first();
 
@@ -522,10 +519,7 @@ test('Mi Día convierte próxima acción en tarea vinculada al completar', async
     const changeEditor = card
         .locator('details.task-edit')
         .filter({
-            has: page.getByText(
-                'Cambiar próxima acción',
-                { exact: true },
-            ),
+            hasText: 'Cambiar próxima acción',
         })
         .first();
 
