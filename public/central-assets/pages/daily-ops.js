@@ -1081,7 +1081,9 @@
 
             title.textContent =
                 state.toastTitle || 'Tarea completada';
-            detail.textContent = 'Puedes deshacer la acción.';
+            detail.textContent =
+                state.toastDetail
+                || 'Puedes deshacer la acción.';
             animateUndoProgress(
                 toast,
                 undo?.expires_at,
@@ -2241,6 +2243,90 @@
 
             form.dataset.liveComplete = 'true';
 
+            const followUpDialog = card.querySelector(
+                '[data-follow-up-dialog]',
+            );
+            const followUpMode = form.querySelector(
+                '[data-follow-up-mode]',
+            );
+            const followUpDueDate = form.querySelector(
+                '[data-follow-up-due-date]',
+            );
+
+            if (
+                followUpDialog
+                && followUpDialog.dataset.bound !== '1'
+            ) {
+                followUpDialog.dataset.bound = '1';
+
+                const datePicker =
+                    followUpDialog.querySelector(
+                        '[data-follow-up-date-picker]',
+                    );
+
+                const closeDialog = () => {
+                    if (followUpDialog.open) {
+                        followUpDialog.close();
+                    }
+                };
+
+                followUpDialog.querySelectorAll(
+                    '[data-follow-up-cancel]',
+                ).forEach((button) => {
+                    button.addEventListener(
+                        'click',
+                        closeDialog,
+                    );
+                });
+
+                followUpDialog.querySelectorAll(
+                    '[data-follow-up-choice]',
+                ).forEach((button) => {
+                    button.addEventListener(
+                        'click',
+                        () => {
+                            const choice =
+                                button.dataset
+                                    .followUpChoice
+                                || 'none';
+
+                            if (
+                                choice === 'custom'
+                                && (
+                                    ! datePicker
+                                    || ! datePicker.value
+                                )
+                            ) {
+                                datePicker?.reportValidity();
+                                return;
+                            }
+
+                            if (followUpMode) {
+                                followUpMode.value =
+                                    choice;
+                            }
+
+                            if (followUpDueDate) {
+                                followUpDueDate.value =
+                                    choice === 'custom'
+                                        ? (
+                                            datePicker?.value
+                                            || ''
+                                        )
+                                        : '';
+                            }
+
+                            form.dataset
+                                .followUpConfirmed =
+                                'yes';
+
+                            closeDialog();
+                            form.requestSubmit();
+                        },
+                    );
+                });
+            }
+
             form.addEventListener(
                 'submit',
                 async (event) => {
@@ -2250,6 +2336,29 @@
                     if (form.dataset.submitting === 'yes') {
                         return;
                     }
+
+                    if (
+                        form.dataset.hasNextAction === '1'
+                        && form.dataset.followUpConfirmed
+                            !== 'yes'
+                        && followUpDialog
+                    ) {
+                        if (
+                            typeof followUpDialog.showModal
+                            === 'function'
+                        ) {
+                            followUpDialog.showModal();
+                        } else {
+                            followUpDialog.setAttribute(
+                                'open',
+                                '',
+                            );
+                        }
+
+                        return;
+                    }
+
+                    delete form.dataset.followUpConfirmed;
 
                     primeFeedbackAudio();
                     playFeedbackSound('complete');
@@ -2376,6 +2485,26 @@
                                     placeholder,
                                     leaveTimer,
                                     removeTimer,
+                                    toastTitle:
+                                        payload.follow_up
+                                        && payload.follow_up.created
+                                            ? 'Tarea completada · continuación creada'
+                                            : 'Tarea completada',
+                                    toastDetail:
+                                        payload.follow_up
+                                        && payload.follow_up.created
+                                            ? (
+                                                'Nueva tarea: '
+                                                + payload.follow_up.title
+                                                + (
+                                                    payload.follow_up.due_date
+                                                        ? ' · '
+                                                            + payload.follow_up.due_date
+                                                        : ''
+                                                )
+                                                + '. Puedes deshacer ambas.'
+                                            )
+                                            : 'Puedes deshacer la acción.',
                                 },
                             );
                         } else {
