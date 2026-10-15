@@ -19,6 +19,12 @@ class DailyTaskEditController extends Controller
         GlobalUndoService $undo,
     ): RedirectResponse {
         $validated = $request->validate([
+            'title' => [
+                'sometimes',
+                'required',
+                'string',
+                'max:255',
+            ],
             'organization_id' => [
                 'required',
                 'integer',
@@ -262,6 +268,13 @@ class DailyTaskEditController extends Controller
             $task,
         );
 
+        $title = array_key_exists(
+            'title',
+            $validated,
+        )
+            ? trim((string) $validated['title'])
+            : $task->title;
+
         $description = array_key_exists(
             'description',
             $validated,
@@ -278,6 +291,7 @@ class DailyTaskEditController extends Controller
             : $task->description;
 
         $task->forceFill([
+            'title' => $title,
             'organization_id' =>
                 $validated['organization_id'],
             'project_id' => $projectId,

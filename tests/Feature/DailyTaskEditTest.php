@@ -25,6 +25,8 @@ class DailyTaskEditTest extends TestCase
             ->post(
                 "/mi-dia/tareas/{$task->id}/editar",
                 [
+                    'title' =>
+                        'Tarea editable actualizada',
                     'organization_id' =>
                         $organization->id,
                     'description' =>
@@ -41,6 +43,11 @@ class DailyTaskEditTest extends TestCase
         $this->assertSame(
             '2026-09-05 17:00:00',
             $task->due_at->format('Y-m-d H:i:s'),
+        );
+
+        $this->assertSame(
+            'Tarea editable actualizada',
+            $task->title,
         );
 
         $this->assertSame(
@@ -79,9 +86,17 @@ class DailyTaskEditTest extends TestCase
                 'recurring_rule' => 77,
             ]));
 
+        $task->refresh();
+
         $this->assertSame(
             '2026-09-05 17:00:00',
-            $task->fresh()->due_at->format('Y-m-d H:i:s'),
+            $task->due_at->format('Y-m-d H:i:s'),
+        );
+
+        $this->assertSame(
+            'Tarea editable',
+            $task->title,
+            'Un request legado sin title debe conservar el título actual.',
         );
     }
 

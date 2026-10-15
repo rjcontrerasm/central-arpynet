@@ -2777,6 +2777,10 @@
                     dialog.querySelector(
                         '[data-task-edit-task-name]',
                     );
+                const titleInput =
+                    form?.querySelector(
+                        '[data-edit-title]',
+                    );
                 const cardTaskName =
                     card?.querySelector(
                         '.item-title',
@@ -2810,7 +2814,20 @@
                     }
 
                     form.reset();
+
+                    if (titleInput) {
+                        titleInput.value =
+                            cardTaskName;
+                    }
+
                     syncDynamicFields();
+
+                    if (modalTaskName) {
+                        modalTaskName.textContent =
+                            titleInput?.value?.trim()
+                            || cardTaskName;
+                    }
+
                     dirty = false;
                 };
 
@@ -2887,8 +2904,17 @@
 
                 form?.addEventListener(
                     'input',
-                    () => {
+                    (event) => {
                         dirty = true;
+
+                        if (
+                            event.target === titleInput
+                            && modalTaskName
+                        ) {
+                            modalTaskName.textContent =
+                                titleInput.value.trim()
+                                || 'Sin título';
+                        }
                     },
                 );
 
