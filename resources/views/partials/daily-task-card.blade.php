@@ -428,6 +428,7 @@
                                                             type="date"
                                                             value="{{ $now->addDay()->format('Y-m-d') }}"
                                                             min="{{ $now->format('Y-m-d') }}"
+                                                            required
                                                             data-follow-up-date-picker
                                                         >
                                                     </label>
