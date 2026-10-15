@@ -452,6 +452,107 @@ class DailyTaskActionsTest extends TestCase
         );
     }
 
+    public function test_team_member_without_company_membership_can_create_and_undo_follow_up(): void
+    {
+        Carbon::setTestNow(
+            '2026-10-15 10:00:00',
+        );
+
+        [$owner, $organization] = $this->context();
+
+        $marisol = User::factory()->create([
+            'name' => 'Marisol',
+            'email' => 'arpynetsac@gmail.com',
+            'is_active' => true,
+        ]);
+
+        $team = WorkTeam::query()->create([
+            'home_organization_id' => $organization->id,
+            'name' => 'Administración',
+            'is_active' => true,
+            'created_by' => $owner->id,
+        ]);
+
+        $team->users()->attach(
+            $marisol->id,
+            [
+                'role' => 'member',
+                'is_active' => true,
+            ],
+        );
+
+        $task = Task::query()->create([
+            'organization_id' => $organization->id,
+            'title' => 'Facturar servicio',
+            'next_action' => 'Confirmar pago con cliente',
+            'status' => 'pending',
+            'urgency' => 'normal',
+            'impact' => 'normal',
+            'due_at' => now(),
+            'assigned_to' => $owner->id,
+            'created_by' => $owner->id,
+            'visibility_scope' => 'teams',
+        ]);
+
+        $task->workTeams()->sync([$team->id]);
+
+        $this->assertFalse(
+            $marisol->canAccessOrganization(
+                $organization->id,
+            ),
+        );
+
+        $response = $this->actingAs($marisol)
+            ->postJson(
+                "/mi-dia/tareas/{$task->id}/accion",
+                [
+                    'action' => 'complete',
+                    'follow_up_mode' => 'tomorrow',
+                ],
+            )
+            ->assertOk()
+            ->assertJsonPath(
+                'follow_up.created',
+                true,
+            );
+
+        $followUp = Task::query()
+            ->where('parent_task_id', $task->id)
+            ->firstOrFail();
+
+        $this->assertSame(
+            $owner->id,
+            $followUp->assigned_to,
+        );
+
+        $this->assertTrue(
+            $followUp->workTeams()
+                ->whereKey($team->id)
+                ->exists(),
+        );
+
+        $this->postJson(
+            '/deshacer',
+            [
+                'undo_id' => (int) $response->json(
+                    'undo.id',
+                ),
+            ],
+        )
+            ->assertOk()
+            ->assertJsonPath('ok', true);
+
+        $this->assertSame(
+            'pending',
+            $task->fresh()->status,
+        );
+
+        $this->assertSoftDeleted(
+            'tasks',
+            ['id' => $followUp->id],
+        );
+    }
+
     public function test_user_can_move_task_to_tomorrow(): void
     {
         Carbon::setTestNow('2026-09-01 12:00:00');
