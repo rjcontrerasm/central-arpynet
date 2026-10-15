@@ -66,21 +66,22 @@ class DailyTaskActionController extends Controller
             $validated,
         );
 
-        $before = $undo->captureTask(
-            $task,
-        );
-
         $operation = DB::transaction(
             function () use (
                 $request,
                 $task,
                 $validated,
                 $actions,
+                $undo,
             ): array {
                 $lockedTask = Task::query()
                     ->whereKey($task->id)
                     ->lockForUpdate()
                     ->firstOrFail();
+
+                $before = $undo->captureTask(
+                    $lockedTask,
+                );
 
                 $result = $actions->execute(
                     $request->user(),
@@ -120,6 +121,7 @@ class DailyTaskActionController extends Controller
                 }
 
                 return [
+                    'before' => $before,
                     'result' => $result,
                     'follow_up' => $followUp,
                     'follow_up_created' =>
@@ -128,6 +130,7 @@ class DailyTaskActionController extends Controller
             },
         );
 
+        $before = $operation['before'];
         $result = $operation['result'];
         $followUp = $operation['follow_up'];
         $followUpCreated =
