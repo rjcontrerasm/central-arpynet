@@ -136,6 +136,16 @@
                                     </div>
                                 @endif
 
+                                @if ($task->parent)
+                                    <div class="task-lineage">
+                                        <span aria-hidden="true">↳</span>
+                                        <span>
+                                            Continuación de:
+                                            <strong>{{ $task->parent->title }}</strong>
+                                        </span>
+                                    </div>
+                                @endif
+
                                 @if ($task->description)
                                     <details class="task-description">
                                         <summary>Ver detalle</summary>
@@ -272,6 +282,9 @@
                                             <form
                                                 class="action-form"
                                                 data-daily-action="{{ $action }}"
+                                                @if ($action === 'complete')
+                                                    data-has-next-action="{{ filled($task->next_action) ? '1' : '0' }}"
+                                                @endif
                                                 @if (
                                                     $action === 'today'
                                                     && $task->due_at
@@ -292,6 +305,20 @@
                                                     name="action"
                                                     value="{{ $action }}"
                                                 >
+                                                @if ($action === 'complete')
+                                                    <input
+                                                        type="hidden"
+                                                        name="follow_up_mode"
+                                                        value="none"
+                                                        data-follow-up-mode
+                                                    >
+                                                    <input
+                                                        type="hidden"
+                                                        name="follow_up_due_date"
+                                                        value=""
+                                                        data-follow-up-due-date
+                                                    >
+                                                @endif
                                                 <input
                                                     type="hidden"
                                                     name="view"
@@ -353,6 +380,87 @@
                                             </form>
                                         @endforeach
                                     </div>
+
+                                    @if (filled($task->next_action))
+                                        <dialog
+                                            id="follow-up-dialog-{{ $task->id }}"
+                                            class="follow-up-dialog"
+                                            data-follow-up-dialog
+                                        >
+                                            <div class="follow-up-dialog-shell">
+                                                <div class="follow-up-dialog-header">
+                                                    <div>
+                                                        <div class="follow-up-dialog-eyebrow">
+                                                            Próxima acción
+                                                        </div>
+                                                        <h3>
+                                                            Crear como nueva tarea
+                                                        </h3>
+                                                    </div>
+
+                                                    <button
+                                                        type="button"
+                                                        class="follow-up-dialog-close"
+                                                        data-follow-up-cancel
+                                                        aria-label="Cerrar"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </div>
+
+                                                <div class="follow-up-dialog-body">
+                                                    <p class="follow-up-dialog-intro">
+                                                        Completaste:
+                                                        <strong>{{ $task->title }}</strong>
+                                                    </p>
+
+                                                    <div class="follow-up-task-preview">
+                                                        {{ $task->next_action }}
+                                                    </div>
+
+                                                    <p class="follow-up-dialog-help">
+                                                        La nueva tarea quedará vinculada como continuación y conservará empresa, responsable, proyecto, visibilidad y equipos.
+                                                    </p>
+
+                                                    <label class="follow-up-date-field">
+                                                        Fecha de la nueva tarea
+                                                        <input
+                                                            type="date"
+                                                            value="{{ $now->addDay()->format('Y-m-d') }}"
+                                                            min="{{ $now->format('Y-m-d') }}"
+                                                            data-follow-up-date-picker
+                                                        >
+                                                    </label>
+                                                </div>
+
+                                                <div class="follow-up-dialog-actions">
+                                                    <button
+                                                        type="button"
+                                                        class="follow-up-secondary"
+                                                        data-follow-up-choice="none"
+                                                    >
+                                                        Completar sin crear
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        class="follow-up-secondary"
+                                                        data-follow-up-choice="custom"
+                                                    >
+                                                        Crear en fecha
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        class="follow-up-primary"
+                                                        data-follow-up-choice="tomorrow"
+                                                    >
+                                                        Crear para mañana
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </dialog>
+                                    @endif
 
                                     <details class="task-edit">
                                         <summary>En espera</summary>
