@@ -512,9 +512,14 @@ test('Mi Día convierte próxima acción en tarea vinculada al completar', async
 
     await expect(title).toBeVisible();
 
-    await expect(toast).toBeHidden({
-        timeout: 1800,
-    });
+    // La pila puede mostrar inmediatamente la acción anterior
+    // (guardar la próxima acción), por lo que el toast no
+    // necesariamente desaparece después del primer Deshacer.
+    await expect(
+        toast.getByRole('button', {
+            name: /Deshacer/,
+        }),
+    ).toBeVisible();
 
     const changeForm = card.locator(
         'form.next-action-form',
