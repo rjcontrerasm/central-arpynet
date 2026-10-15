@@ -10,6 +10,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DailyTaskActionController extends Controller
 {
@@ -42,6 +43,16 @@ class DailyTaskActionController extends Controller
                 'nullable',
                 'integer',
             ],
+            'follow_up_mode' => [
+                'nullable',
+                'in:none,tomorrow,custom',
+            ],
+            'follow_up_due_date' => [
+                'nullable',
+                'date',
+                'after_or_equal:today',
+                'required_if:follow_up_mode,custom',
+            ],
         ]);
 
         $actions->preview(
@@ -59,23 +70,101 @@ class DailyTaskActionController extends Controller
             $task,
         );
 
-        $result = $actions->execute(
-            $request->user(),
-            $task,
-            $validated['action'],
-            confirmed: true,
+        $operation = DB::transaction(
+            function () use (
+                $request,
+                $task,
+                $validated,
+                $actions,
+            ): array {
+                $lockedTask = Task::query()
+                    ->whereKey($task->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                $result = $actions->execute(
+                    $request->user(),
+                    $lockedTask,
+                    $validated['action'],
+                    confirmed: true,
+                );
+
+                $followUp = null;
+                $followUpCreated = false;
+
+                if (
+                    $validated['action'] === 'complete'
+                    && in_array(
+                        $validated['follow_up_mode']
+                            ?? 'none',
+                        ['tomorrow', 'custom'],
+                        true,
+                    )
+                    && filled($lockedTask->next_action)
+                ) {
+                    [
+                        $followUp,
+                        $followUpCreated,
+                    ] = $this->createFollowUpTask(
+                        $request,
+                        $lockedTask,
+                        (string) (
+                            $validated[
+                                'follow_up_mode'
+                            ]
+                        ),
+                        $validated[
+                            'follow_up_due_date'
+                        ] ?? null,
+                    );
+                }
+
+                return [
+                    'result' => $result,
+                    'follow_up' => $followUp,
+                    'follow_up_created' =>
+                        $followUpCreated,
+                ];
+            },
         );
+
+        $result = $operation['result'];
+        $followUp = $operation['follow_up'];
+        $followUpCreated =
+            $operation['follow_up_created'];
+
+        $task->refresh();
+
+        $label = $followUpCreated
+            ? $result['label']
+                .' · próxima acción creada'
+            : $result['label'];
+
+        $cleanup = (
+            $followUp
+            && $followUpCreated
+        )
+            ? [
+                'kind' => 'task',
+                'id' => $followUp->id,
+                'updated_at' =>
+                    $followUp->updated_at
+                        ?->toIso8601String(),
+                'parent_task_id' => $task->id,
+            ]
+            : [];
 
         $undoAction = $undo->rememberTaskMutation(
             $request->user(),
             $task,
             $before,
-            $result['label'],
+            $label,
             route(
                 'daily-ops.show',
                 $filters,
                 false,
             ),
+            $cleanup,
         );
 
         if (
@@ -133,7 +222,16 @@ class DailyTaskActionController extends Controller
                 'ok' => true,
                 'task_id' => $task->id,
                 'action' => $validated['action'],
-                'label' => $result['label'],
+                'label' => $label,
+                'follow_up' => $followUp
+                    ? [
+                        'id' => $followUp->id,
+                        'title' => $followUp->title,
+                        'due_date' => $followUp->due_at
+                            ?->format('d/m/Y'),
+                        'created' => $followUpCreated,
+                    ]
+                    : null,
                 'presentation' => [
                     'due_date' => $task->due_at
                         ?->format('d/m/Y'),
@@ -166,8 +264,84 @@ class DailyTaskActionController extends Controller
             )
             ->with(
                 'daily_action_success',
-                $result['label'].'.',
+                $label.'.',
             );
+    }
+
+    private function createFollowUpTask(
+        Request $request,
+        Task $parent,
+        string $mode,
+        ?string $customDate,
+    ): array {
+        $externalId =
+            'parent:'.$parent->id.':next-action';
+
+        $existing = Task::query()
+            ->where(
+                'external_system',
+                'central_next_action',
+            )
+            ->where('external_id', $externalId)
+            ->first();
+
+        if ($existing) {
+            return [$existing, false];
+        }
+
+        $timezone = config(
+            'app.timezone',
+            'America/Lima',
+        );
+
+        $dueAt = $mode === 'tomorrow'
+            ? CarbonImmutable::now($timezone)
+                ->addDay()
+                ->setTime(17, 0)
+            : CarbonImmutable::parse(
+                (string) $customDate,
+                $timezone,
+            )->setTime(17, 0);
+
+        $followUp = Task::query()->create([
+            'organization_id' =>
+                $parent->organization_id,
+            'project_id' => $parent->project_id,
+            'parent_task_id' => $parent->id,
+            'title' => trim(
+                (string) $parent->next_action,
+            ),
+            'status' => 'pending',
+            'urgency' => $parent->urgency,
+            'impact' => $parent->impact,
+            'due_at' => $dueAt,
+            'source' => 'next_action',
+            'external_system' =>
+                'central_next_action',
+            'external_id' => $externalId,
+            'assigned_to' =>
+                $parent->assigned_to,
+            'created_by' =>
+                $request->user()->id,
+            'is_private' =>
+                (bool) $parent->is_private,
+            'visibility_scope' =>
+                $parent->visibility_scope
+                    ?: 'organization',
+        ]);
+
+        $teamIds = $parent->workTeams()
+            ->pluck('work_teams.id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+
+        if ($teamIds !== []) {
+            $followUp->workTeams()->sync(
+                $teamIds,
+            );
+        }
+
+        return [$followUp->fresh(), true];
     }
 
     private function filterParams(
