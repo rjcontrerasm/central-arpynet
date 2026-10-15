@@ -388,7 +388,9 @@ test('Mi Día convierte próxima acción en tarea vinculada al completar', async
     const nextActionEditor = card
         .locator('details.task-edit')
         .filter({
-            hasText: 'Definir próxima acción',
+            has: card.locator(
+                'form.next-action-form',
+            ),
         })
         .first();
 
@@ -417,11 +419,12 @@ test('Mi Día convierte próxima acción en tarea vinculada al completar', async
     );
 
     await expect(
-        card.getByText(
-            'E2E seguimiento encadenado',
-            { exact: true },
+        card.locator(
+            '.next-action-current',
         ),
-    ).toBeVisible();
+    ).toContainText(
+        'E2E seguimiento encadenado',
+    );
 
     await card.getByRole('button', {
         name: '✓ Hecho',
@@ -519,7 +522,9 @@ test('Mi Día convierte próxima acción en tarea vinculada al completar', async
     const changeEditor = card
         .locator('details.task-edit')
         .filter({
-            hasText: 'Cambiar próxima acción',
+            has: card.locator(
+                'form.next-action-form',
+            ),
         })
         .first();
 
@@ -2051,6 +2056,20 @@ test('Mi Día permite deshacer antes de terminar la salida sin borrar la ficha r
         name: '✓ Hecho',
         exact: true,
     }).click();
+
+    const followUpDialog = card.locator(
+        '[data-follow-up-dialog]',
+    );
+
+    if (await followUpDialog.isVisible()) {
+        await followUpDialog.getByRole(
+            'button',
+            {
+                name: 'Completar sin crear',
+                exact: true,
+            },
+        ).click();
+    }
 
     await completionResponse;
 
