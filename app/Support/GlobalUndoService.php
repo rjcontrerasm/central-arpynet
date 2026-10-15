@@ -767,20 +767,27 @@ class GlobalUndoService
             ];
         }
 
+        $beforeOrganizationId = (int) (
+            $before['organization_id']
+            ?? 0
+        );
+
+        $currentAuthorized =
+            $task->canBeUpdatedBy($user);
+
+        $beforeAuthorized = (
+            $beforeOrganizationId
+            === (int) $task->organization_id
+        )
+            ? $currentAuthorized
+            : $this->authorizedOrganization(
+                $user,
+                $beforeOrganizationId,
+            );
+
         if (
-            ! $this->authorizedOrganization(
-                $user,
-                $task->organization_id,
-            )
-            || ! $this->authorizedOrganization(
-                $user,
-                (int) (
-                    $before[
-                        'organization_id'
-                    ]
-                    ?? 0
-                ),
-            )
+            ! $currentAuthorized
+            || ! $beforeAuthorized
         ) {
             abort(403);
         }
@@ -1375,6 +1382,45 @@ class GlobalUndoService
             return ['ok' => true];
         }
 
+        if ($kind === 'task') {
+            $createdTask = Task::query()
+                ->find($id);
+
+            if (! $createdTask) {
+                return [
+                    'ok' => false,
+                    'message' =>
+                        'La tarea de continuación ya no está disponible.',
+                ];
+            }
+
+            if (
+                $createdTask->updated_at
+                    ?->toIso8601String()
+                !== $expectedUpdatedAt
+                || (int) $createdTask->parent_task_id
+                    !== (int) $task->id
+                || $createdTask->external_system
+                    !== 'central_next_action'
+            ) {
+                return [
+                    'ok' => false,
+                    'message' =>
+                        'La tarea de continuación recibió cambios; ya no es seguro eliminarla automáticamente.',
+                ];
+            }
+
+            if ($createdTask->children()->exists()) {
+                return [
+                    'ok' => false,
+                    'message' =>
+                        'La tarea de continuación ya tiene tareas derivadas; no puede eliminarse automáticamente.',
+                ];
+            }
+
+            return ['ok' => true];
+        }
+
         return [
             'ok' => false,
             'message' =>
@@ -1408,6 +1454,10 @@ class GlobalUndoService
                     ?->delete(),
             'recurring' =>
                 RecurringTaskRule::query()
+                    ->find($id)
+                    ?->delete(),
+            'task' =>
+                Task::query()
                     ->find($id)
                     ?->delete(),
             default => null,
