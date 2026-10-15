@@ -361,6 +361,200 @@ test('Mi Día completa tarea en vivo con mini confetti y undo inferior', async (
     await expectNoHorizontalOverflow(page);
 });
 
+test('Mi Día convierte próxima acción en tarea vinculada al completar', async (
+    { page },
+    testInfo,
+) => {
+    test.skip(
+        testInfo.project.name !== 'desktop-1366',
+        'El flujo de creación vinculada se valida una sola vez.',
+    );
+
+    await page.goto(
+        '/mi-dia?q=E2E%20reflow%20uno',
+    );
+
+    let title = page.getByText(
+        'E2E reflow uno',
+        { exact: true },
+    ).first();
+
+    await expect(title).toBeVisible();
+
+    let card = title.locator(
+        'xpath=ancestor::*[@data-operational-card][1]',
+    );
+
+    const nextActionEditor = card
+        .locator('details.task-edit')
+        .filter({
+            has: page.getByText(
+                'Definir próxima acción',
+                { exact: true },
+            ),
+        })
+        .first();
+
+    await nextActionEditor.locator(
+        'summary',
+    ).click();
+
+    await nextActionEditor.locator(
+        'input[name="next_action"]',
+    ).fill('E2E seguimiento encadenado');
+
+    await Promise.all([
+        page.waitForNavigation(),
+        nextActionEditor.getByRole(
+            'button',
+            { name: 'Guardar', exact: true },
+        ).click(),
+    ]);
+
+    title = page.getByText(
+        'E2E reflow uno',
+        { exact: true },
+    ).first();
+    card = title.locator(
+        'xpath=ancestor::*[@data-operational-card][1]',
+    );
+
+    await expect(
+        card.getByText(
+            'E2E seguimiento encadenado',
+            { exact: true },
+        ),
+    ).toBeVisible();
+
+    await card.getByRole('button', {
+        name: '✓ Hecho',
+        exact: true,
+    }).click();
+
+    const dialog = card.locator(
+        '[data-follow-up-dialog]',
+    );
+
+    await expect(dialog).toBeVisible();
+    await expect(
+        dialog.getByText(
+            'Crear como nueva tarea',
+            { exact: true },
+        ),
+    ).toBeVisible();
+    await expect(
+        dialog.getByText(
+            'E2E seguimiento encadenado',
+            { exact: true },
+        ),
+    ).toBeVisible();
+
+    const completionResponse =
+        page.waitForResponse(
+            (response) => (
+                response.request().method()
+                    === 'POST'
+                && response.url().includes(
+                    '/mi-dia/tareas/',
+                )
+                && response.url().includes(
+                    '/accion',
+                )
+            ),
+        );
+
+    await dialog.getByRole('button', {
+        name: 'Crear para mañana',
+        exact: true,
+    }).click();
+
+    const response = await completionResponse;
+
+    expect(response.status()).toBe(200);
+
+    const payload = await response.json();
+
+    expect(payload.follow_up?.created)
+        .toBe(true);
+    expect(payload.follow_up?.title)
+        .toBe('E2E seguimiento encadenado');
+    expect(payload.follow_up?.id)
+        .toBeTruthy();
+
+    const toast = page.locator(
+        '#daily-live-undo-toast',
+    );
+
+    await expect(toast).toBeVisible();
+    await expect(
+        toast.locator('.global-undo-title'),
+    ).toHaveText(
+        'Tarea completada · continuación creada',
+    );
+    await expect(
+        toast.locator('.global-undo-detail'),
+    ).toContainText(
+        'Nueva tarea: E2E seguimiento encadenado',
+    );
+
+    const undoResponse = page.waitForResponse(
+        (candidate) => (
+            candidate.request().method() === 'POST'
+            && new URL(
+                candidate.url(),
+            ).pathname === '/deshacer'
+        ),
+    );
+
+    await toast.getByRole('button', {
+        name: /Deshacer/,
+    }).click();
+
+    expect((await undoResponse).status())
+        .toBe(200);
+
+    await expect(title).toBeVisible();
+
+    await expect(toast).toBeHidden({
+        timeout: 1800,
+    });
+
+    const changeEditor = card
+        .locator('details.task-edit')
+        .filter({
+            has: page.getByText(
+                'Cambiar próxima acción',
+                { exact: true },
+            ),
+        })
+        .first();
+
+    await changeEditor.locator('summary')
+        .click();
+
+    await changeEditor.locator(
+        'input[name="next_action"]',
+    ).fill('');
+
+    await Promise.all([
+        page.waitForNavigation(),
+        changeEditor.getByRole(
+            'button',
+            { name: 'Guardar', exact: true },
+        ).click(),
+    ]);
+
+    await expect(
+        page.getByText(
+            'E2E reflow uno',
+            { exact: true },
+        ).first(),
+    ).toBeVisible();
+
+    await expectNoHorizontalOverflow(page);
+});
+
+
 test('Mi Día cambia En curso en vivo y permite deshacer', async (
     { page },
     testInfo,
