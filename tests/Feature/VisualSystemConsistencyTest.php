@@ -144,6 +144,19 @@ class VisualSystemConsistencyTest extends TestCase
             $capture,
         );
 
+        $this->assertStringContainsString(
+            '.capture-advanced[open]{grid-column:1/-1',
+            $capture,
+        );
+        $this->assertStringContainsString(
+            '.capture-advanced[open].grid2{grid-template-columns:repeat(3,minmax(0,1fr))',
+            str_replace(' ', '', $capture),
+        );
+        $this->assertStringContainsString(
+            '.capture-submit{grid-column:5/-1',
+            $capture,
+        );
+
         $projects = $this->compactCss(
             (string) file_get_contents(
                 public_path(

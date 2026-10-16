@@ -1,4 +1,4 @@
-/* Central ARPYNET 2.48.13 — quick-capture focused layout */
+/* Central ARPYNET 2.48.14 — quick-capture advanced layout */
 
 :root {
             font-family:
@@ -385,10 +385,24 @@
                 min-height: 48px;
             }
 
+            .capture-advanced[open] {
+                grid-column: 1 / -1;
+            }
+
+            .capture-advanced[open] .grid2 {
+                grid-template-columns:
+                    repeat(3, minmax(0, 1fr));
+                gap: 14px;
+            }
+
+            .capture-advanced[open] .grid2 .full {
+                grid-column: auto;
+            }
+
             .capture-submit {
-                grid-column: span 2;
+                grid-column: 5 / -1;
                 width: 100%;
-                align-self: start;
+                align-self: end;
                 justify-self: stretch;
             }
 
