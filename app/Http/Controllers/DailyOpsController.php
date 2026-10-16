@@ -281,6 +281,7 @@ class DailyOpsController extends Controller
                 'assignee',
                 'workTeams',
                 'project',
+                'parent:id,title',
                 'recurringRun.rule',
             ])
             ->whereNotIn(
