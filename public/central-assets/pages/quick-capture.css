@@ -1,4 +1,4 @@
-/* Central ARPYNET 2.39.1 — quick-capture */
+/* Central ARPYNET 2.48.12 — quick-capture desktop compact */
 
 :root {
             font-family:
@@ -53,13 +53,18 @@
         }
 
         .hero {
-            width: min(100%, 760px);
-            margin: 0 auto 20px;
+            width: min(100%, 1080px);
+            margin: 0 auto 16px;
         }
 
         .success,
         .errors,
-        .card,
+        .card {
+            width: min(100%, 1080px);
+            margin-left: auto;
+            margin-right: auto;
+        }
+
         .recent {
             width: min(100%, 760px);
             margin-left: auto;
@@ -90,12 +95,12 @@
 
         .stack {
             display: grid;
-            gap: 16px;
+            gap: 12px;
         }
 
         label {
             display: grid;
-            gap: 7px;
+            gap: 6px;
             font-weight: 700;
             font-size: 14px;
         }
@@ -149,14 +154,14 @@
         }
 
         .smart-hint {
-            margin-top: -7px;
-            padding: 10px 11px;
+            margin-top: -2px;
+            padding: 8px 10px;
             border-radius: 11px;
             background: rgba(59, 130, 246, .08);
             color: #94a3b8;
             font-size: 12px;
             font-weight: 600;
-            line-height: 1.5;
+            line-height: 1.35;
         }
 
         .smart-hint strong {
@@ -176,8 +181,8 @@
             border-radius: 14px;
             background: #0f172a;
             color: #f8fafc;
-            min-height: 48px;
-            padding: 11px 13px;
+            min-height: 44px;
+            padding: 9px 12px;
             font: inherit;
             outline: none;
         }
@@ -191,15 +196,25 @@
         }
 
         #title {
-            min-height: 62px;
-            font-size: 18px;
+            min-height: 52px;
+            font-size: 17px;
             font-weight: 700;
         }
 
         #description {
-            min-height: 132px;
+            min-height: 86px;
             resize: vertical;
-            line-height: 1.5;
+            line-height: 1.45;
+        }
+
+        #work-team-select {
+            min-height: 72px;
+            padding-top: 7px;
+            padding-bottom: 7px;
+        }
+
+        .capture-teams .advanced-hint {
+            margin-top: 3px;
         }
 
         .chips {
@@ -293,7 +308,7 @@
             width: 100%;
             border: 0;
             border-radius: 15px;
-            min-height: 54px;
+            min-height: 48px;
             background: #2563eb;
             color: white;
             font: inherit;
@@ -366,6 +381,57 @@
             display: grid;
         }
 
+
+        @media (min-width: 900px) {
+            .capture-form {
+                grid-template-columns:
+                    repeat(6, minmax(0, 1fr));
+                column-gap: 14px;
+                row-gap: 11px;
+                padding: 20px;
+            }
+
+            .capture-form > * {
+                grid-column: 1 / -1;
+            }
+
+            .capture-organization {
+                grid-column: span 2;
+            }
+
+            .capture-ownership {
+                grid-column: span 4;
+                align-self: start;
+            }
+
+            .capture-teams {
+                grid-column: span 3;
+            }
+
+            .capture-when {
+                grid-column: span 3;
+                align-self: start;
+            }
+
+            .capture-custom-date {
+                grid-column: 4 / -1;
+            }
+
+            .capture-submit {
+                width: min(100%, 220px);
+                justify-self: end;
+            }
+
+            .capture-when .chips {
+                gap: 6px;
+            }
+
+            .capture-when .chip span {
+                min-height: 44px;
+                padding: 7px 8px;
+            }
+        }
+
         @media (max-width: 639px) {
             .shell {
                 padding-top: 14px;
@@ -419,6 +485,7 @@
 
             .submit {
                 position: static;
+                width: 100%;
                 min-height: 52px;
                 box-shadow: none;
             }
@@ -435,7 +502,7 @@
             }
 
             .card {
-                padding: 24px;
+                padding: 20px;
             }
         }
 
