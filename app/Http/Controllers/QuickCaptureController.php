@@ -140,13 +140,6 @@ class QuickCaptureController extends Controller
                 ? 'teams'
                 : 'organization';
 
-        $recentTasks = Task::query()
-            ->with('organization')
-            ->where('created_by', $user->id)
-            ->latest('id')
-            ->limit(5)
-            ->get();
-
         $defaultOrganizationId =
             $contextOrganizationId
             ?? $user->current_organization_id;
@@ -213,7 +206,6 @@ class QuickCaptureController extends Controller
         return view('quick-capture', compact(
             'organizations',
             'projects',
-            'recentTasks',
             'defaultOrganizationId',
             'workTeams',
             'assignees',

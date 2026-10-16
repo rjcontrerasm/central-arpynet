@@ -2341,6 +2341,12 @@ test('captura rápida crea una tarea desde FRONT', async (
         ),
     ).toBeVisible();
 
+    await expectNoHorizontalOverflow(page);
+
+    await page.goto(
+        '/buscar?q=E2E%20captura%20Playwright',
+    );
+
     await expect(
         page.getByText(
             'E2E captura Playwright',

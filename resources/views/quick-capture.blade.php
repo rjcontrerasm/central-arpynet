@@ -415,33 +415,6 @@
             Guardar tarea
         </button>
     </form>
-
-    @if ($recentTasks->isNotEmpty())
-        <section class="recent">
-            <h2>Tareas recientes</h2>
-
-            <div class="recent-list">
-                @foreach ($recentTasks as $task)
-                    <div class="recent-item" data-operational-card>
-                        <div class="recent-title">
-                            {{ $task->title }}
-                        </div>
-
-                        <div class="recent-meta">
-                            {{ $task->organization?->name ?? 'Sin ámbito' }}
-
-                            @if ($task->due_at)
-                                · vence
-                                {{ $task->due_at->format('d/m/Y') }}
-                            @else
-                                · sin fecha
-                            @endif
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        </section>
-    @endif
 </div>
 
 <script
