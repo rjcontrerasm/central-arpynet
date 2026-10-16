@@ -45,7 +45,7 @@
     @endif
 
     <form
-        class="card stack"
+        class="card stack capture-form"
         method="POST"
         action="{{ route('quick-capture.store') }}"
         autocomplete="off"
@@ -114,7 +114,7 @@
             </div>
         @endif
 
-        <label>
+        <label class="capture-title-field">
             ¿Qué tienes que hacer?
 
             <input
@@ -129,14 +129,14 @@
             >
         </label>
 
-        <label>
+        <label class="capture-description-field">
             Descripción / detalle
 
             <textarea
                 id="description"
                 name="description"
                 maxlength="10000"
-                rows="5"
+                rows="3"
                 placeholder="Agrega aquí el contexto, datos importantes, montos, teléfonos, enlaces, instrucciones o cualquier información que necesitarás al ejecutar la tarea."
             >{{ old('description') }}</textarea>
 
@@ -157,7 +157,7 @@
             Solo se interpretan formatos explícitos.
         </div>
 
-        <label>
+        <label class="capture-organization">
             Empresa / ámbito
 
             <select
@@ -182,7 +182,7 @@
             </select>
         </label>
 
-        <div class="grid2">
+        <div class="grid2 capture-ownership">
             <label>
                 Responsable
 
@@ -247,7 +247,7 @@
 
         <label
             id="work-teams-wrapper"
-            class="team-selector"
+            class="team-selector capture-teams"
         >
             Equipos con acceso
 
@@ -283,7 +283,7 @@
             </span>
         </label>
 
-        <div>
+        <div class="capture-when">
             <div class="when-label">
                 ¿Cuándo?
             </div>
@@ -314,7 +314,7 @@
 
         <label
             id="custom-date-wrapper"
-            class="custom-date"
+            class="custom-date capture-custom-date"
         >
             Fecha
 
@@ -325,7 +325,7 @@
             >
         </label>
 
-        <details class="advanced">
+        <details class="advanced capture-advanced">
             <summary>Opciones avanzadas</summary>
 
             <div class="advanced-hint">
@@ -408,7 +408,7 @@
         </details>
 
         <button
-            class="submit"
+            class="submit capture-submit"
             type="submit"
             data-busy-label="Guardando tarea…"
         >
