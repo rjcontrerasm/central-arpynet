@@ -205,7 +205,7 @@ class VisualSystemConsistencyTest extends TestCase
             ->assertOk();
 
         $this->assertStringContainsString(
-            'width:min(100%,760px)',
+            'width:min(100%,1080px)',
             $this->pageCss(
                 $capture->getContent(),
                 'quick-capture',
