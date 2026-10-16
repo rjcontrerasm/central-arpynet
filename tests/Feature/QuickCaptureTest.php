@@ -25,7 +25,8 @@ class QuickCaptureTest extends TestCase
         $this->actingAs($user)
             ->get('/captura')
             ->assertOk()
-            ->assertSee('Nueva tarea');
+            ->assertSee('Nueva tarea')
+            ->assertDontSee('Tareas recientes');
     }
 
     public function test_user_can_capture_task_for_today(): void
