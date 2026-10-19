@@ -46,4 +46,50 @@ class DailyTaskPriority
             default => 'Planificado',
         };
     }
+
+    public static function reviewLevel(
+        Task $task,
+    ): string {
+        $weights = [
+            'low' => 1,
+            'normal' => 2,
+            'medium' => 2,
+            'high' => 3,
+            'critical' => 4,
+        ];
+
+        $level = max(
+            $weights[$task->urgency ?? 'normal'] ?? 2,
+            $weights[$task->impact ?? 'normal'] ?? 2,
+        );
+
+        return match ($level) {
+            4 => 'critical',
+            3 => 'high',
+            1 => 'low',
+            default => 'normal',
+        };
+    }
+
+    public static function reviewRank(
+        Task $task,
+    ): int {
+        return match (self::reviewLevel($task)) {
+            'critical' => 0,
+            'high' => 1,
+            'normal' => 2,
+            default => 3,
+        };
+    }
+
+    public static function reviewLabel(
+        Task $task,
+    ): string {
+        return match (self::reviewLevel($task)) {
+            'critical' => 'Crítica',
+            'high' => 'Alta',
+            'low' => 'Baja',
+            default => 'Normal',
+        };
+    }
 }

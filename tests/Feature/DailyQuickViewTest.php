@@ -61,6 +61,74 @@ class DailyQuickViewTest extends TestCase
             );
     }
 
+    public function test_quick_view_orders_by_review_priority_then_due_date(): void
+    {
+        [$user, $organization] = $this->context();
+
+        Task::query()->create([
+            'organization_id' => $organization->id,
+            'title' => 'Normal más antigua',
+            'status' => 'pending',
+            'urgency' => 'normal',
+            'impact' => 'normal',
+            'due_at' => now()->subDays(12),
+            'assigned_to' => $user->id,
+            'created_by' => $user->id,
+        ]);
+
+        Task::query()->create([
+            'organization_id' => $organization->id,
+            'title' => 'Alta intermedia',
+            'status' => 'pending',
+            'urgency' => 'high',
+            'impact' => 'normal',
+            'due_at' => now()->subDays(7),
+            'assigned_to' => $user->id,
+            'created_by' => $user->id,
+        ]);
+
+        Task::query()->create([
+            'organization_id' => $organization->id,
+            'title' => 'Crítica más reciente',
+            'status' => 'pending',
+            'urgency' => 'normal',
+            'impact' => 'critical',
+            'due_at' => now()->subDays(2),
+            'assigned_to' => $user->id,
+            'created_by' => $user->id,
+        ]);
+
+        $this->actingAs($user)
+            ->get('/mi-dia?display=quick')
+            ->assertOk()
+            ->assertSeeInOrder([
+                'Crítica más reciente',
+                'Alta intermedia',
+                'Normal más antigua',
+            ])
+            ->assertSee(
+                'priority-level-critical',
+                false,
+            )
+            ->assertSee(
+                'priority-level-high',
+                false,
+            )
+            ->assertSee(
+                'priority-level-normal',
+                false,
+            );
+
+        $this->actingAs($user)
+            ->get('/mi-dia')
+            ->assertOk()
+            ->assertSeeInOrder([
+                'Normal más antigua',
+                'Alta intermedia',
+                'Crítica más reciente',
+            ]);
+    }
+
     public function test_user_can_update_task_priority_from_quick_view(): void
     {
         [$user, $organization] = $this->context();

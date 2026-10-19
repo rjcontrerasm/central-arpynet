@@ -92,8 +92,11 @@
 
     @if ($canWriteTask)
         <details class="task-quick-priority">
-            <summary>
-                Prioridad
+            <summary
+                class="task-quick-priority-summary priority-level-{{ $task->quick_priority_level ?? 'normal' }}"
+                title="Prioridad {{ $task->quick_priority_label ?? 'Normal' }} · Urgencia {{ $urgencyOptions[$task->urgency] ?? 'Normal' }} · Impacto {{ $impactOptions[$task->impact] ?? 'Normal' }}"
+            >
+                {{ $task->quick_priority_label ?? 'Normal' }}
                 <span aria-hidden="true">⌄</span>
             </summary>
 
@@ -150,8 +153,11 @@
             </form>
         </details>
     @else
-        <span class="task-quick-priority-readonly">
-            {{ ucfirst($task->urgency) }} / {{ ucfirst($task->impact) }}
+        <span
+            class="task-quick-priority-readonly priority-level-{{ $task->quick_priority_level ?? 'normal' }}"
+            title="Urgencia {{ $urgencyOptions[$task->urgency] ?? 'Normal' }} · Impacto {{ $impactOptions[$task->impact] ?? 'Normal' }}"
+        >
+            {{ $task->quick_priority_label ?? 'Normal' }}
         </span>
     @endif
 </div>
