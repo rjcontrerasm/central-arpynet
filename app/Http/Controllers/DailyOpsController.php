@@ -394,6 +394,21 @@ class DailyOpsController extends Controller
                     DailyTaskPriority::label($band),
                 );
 
+                $task->setAttribute(
+                    'quick_priority_level',
+                    DailyTaskPriority::reviewLevel($task),
+                );
+
+                $task->setAttribute(
+                    'quick_priority_rank',
+                    DailyTaskPriority::reviewRank($task),
+                );
+
+                $task->setAttribute(
+                    'quick_priority_label',
+                    DailyTaskPriority::reviewLabel($task),
+                );
+
                 $run = $task->recurringRun;
                 $rule = $run?->rule;
 
@@ -457,6 +472,48 @@ class DailyOpsController extends Controller
                 ->values();
         }
 
+        $quickDueSortKey =
+            fn (Task $task): string =>
+                sprintf(
+                    '%02d|%s|%010d',
+                    (int) (
+                        $task->quick_priority_rank
+                        ?? 2
+                    ),
+                    $task->due_at?->format(
+                        'Y-m-d H:i:s',
+                    ) ?? '9999-12-31 23:59:59',
+                    (int) $task->id,
+                );
+
+        $quickWaitingSortKey =
+            fn (Task $task): string =>
+                sprintf(
+                    '%02d|%s|%010d',
+                    (int) (
+                        $task->quick_priority_rank
+                        ?? 2
+                    ),
+                    $task->waiting_until?->format(
+                        'Y-m-d H:i:s',
+                    ) ?? '9999-12-31 23:59:59',
+                    (int) $task->id,
+                );
+
+        $quickCreatedSortKey =
+            fn (Task $task): string =>
+                sprintf(
+                    '%02d|%s|%010d',
+                    (int) (
+                        $task->quick_priority_rank
+                        ?? 2
+                    ),
+                    $task->created_at?->format(
+                        'Y-m-d H:i:s',
+                    ) ?? '9999-12-31 23:59:59',
+                    (int) $task->id,
+                );
+
         $allWaitingTasks = $tasks
             ->filter(
                 fn (Task $task): bool =>
@@ -466,16 +523,21 @@ class DailyOpsController extends Controller
 
         $waitingCount = $allWaitingTasks->count();
 
-        $waitingTasks = $allWaitingTasks
-            ->sortBy(
-                fn (Task $task): string =>
-                    (string) (
-                        $task->waiting_until
-                        ?? '9999-12-31'
-                    ),
-            )
-            ->take(12)
-            ->values();
+        $waitingTasks = $displayMode === 'quick'
+            ? $allWaitingTasks
+                ->sortBy($quickWaitingSortKey)
+                ->take(12)
+                ->values()
+            : $allWaitingTasks
+                ->sortBy(
+                    fn (Task $task): string =>
+                        (string) (
+                            $task->waiting_until
+                            ?? '9999-12-31'
+                        ),
+                )
+                ->take(12)
+                ->values();
 
         $activeTasks = $tasks
             ->filter(
@@ -491,21 +553,27 @@ class DailyOpsController extends Controller
                     && $task->due_at->isBefore(
                         $todayStart,
                     ),
-            )
-            ->sortBy(
-                fn (Task $task): string =>
-                    sprintf(
-                        '%s|%03d',
-                        $task->due_at?->format(
-                            'Y-m-d H:i:s',
-                        ) ?? '9999-12-31 23:59:59',
-                        100 - (int) (
-                            $task->display_priority_score
-                            ?? 0
+            );
+
+        $overdueTasks = $displayMode === 'quick'
+            ? $overdueTasks
+                ->sortBy($quickDueSortKey)
+                ->values()
+            : $overdueTasks
+                ->sortBy(
+                    fn (Task $task): string =>
+                        sprintf(
+                            '%s|%03d',
+                            $task->due_at?->format(
+                                'Y-m-d H:i:s',
+                            ) ?? '9999-12-31 23:59:59',
+                            100 - (int) (
+                                $task->display_priority_score
+                                ?? 0
+                            ),
                         ),
-                    ),
-            )
-            ->values();
+                )
+                ->values();
 
         $overdueCount = $overdueTasks->count();
 
@@ -636,16 +704,51 @@ class DailyOpsController extends Controller
                         'latest_due_at' =>
                             $latest->due_at,
                         'has_today' => $hasToday,
+                        'review_rank' => (int) (
+                            $sorted
+                                ->pluck(
+                                    'quick_priority_rank',
+                                )
+                                ->min()
+                            ?? 2
+                        ),
                     ];
                 },
             )
-            ->sortBy(
-                fn (array $row): string =>
-                    $row['oldest_due_at']
-                        ?->format('Y-m-d H:i:s')
-                    ?? '9999-12-31 23:59:59',
-            )
             ->values();
+
+        $overdueGroups = $displayMode === 'quick'
+            ? $overdueGroups
+                ->sortBy(
+                    fn (array $row): string =>
+                        sprintf(
+                            '%02d|%s|%010d',
+                            (int) (
+                                $row['review_rank']
+                                ?? 2
+                            ),
+                            $row['oldest_due_at']
+                                ?->format(
+                                    'Y-m-d H:i:s',
+                                )
+                            ?? '9999-12-31 23:59:59',
+                            (int) (
+                                $row['task']?->id
+                                ?? 0
+                            ),
+                        ),
+                )
+                ->values()
+            : $overdueGroups
+                ->sortBy(
+                    fn (array $row): string =>
+                        $row['oldest_due_at']
+                            ?->format(
+                                'Y-m-d H:i:s',
+                            )
+                        ?? '9999-12-31 23:59:59',
+                )
+                ->values();
 
         $showAllOverdue =
             $displayMode === 'quick'
@@ -668,10 +771,19 @@ class DailyOpsController extends Controller
                     )
                     && $task->display_priority_band
                         === 'critical',
-            )
-            ->sortByDesc('display_priority_score')
-            ->take(8)
-            ->values();
+            );
+
+        $criticalNowTasks = $displayMode === 'quick'
+            ? $criticalNowTasks
+                ->sortBy($quickDueSortKey)
+                ->take(8)
+                ->values()
+            : $criticalNowTasks
+                ->sortByDesc(
+                    'display_priority_score',
+                )
+                ->take(8)
+                ->values();
 
         $criticalNowIds =
             $criticalNowTasks->pluck('id');
@@ -684,10 +796,19 @@ class DailyOpsController extends Controller
                     )
                     && $task->due_at
                     && $task->due_at->isSameDay($now),
-            )
-            ->sortByDesc('display_priority_score')
-            ->take(8)
-            ->values();
+            );
+
+        $todayTasks = $displayMode === 'quick'
+            ? $todayTasks
+                ->sortBy($quickDueSortKey)
+                ->take(8)
+                ->values()
+            : $todayTasks
+                ->sortByDesc(
+                    'display_priority_score',
+                )
+                ->take(8)
+                ->values();
 
         $usedIds = $criticalNowIds
             ->merge($todayTasks->pluck('id'));
@@ -703,19 +824,37 @@ class DailyOpsController extends Controller
                     && $task->due_at->lessThanOrEqualTo(
                         $weekEnd,
                     ),
-            )
-            ->sortByDesc('display_priority_score')
-            ->take(8)
-            ->values();
+            );
+
+        $upcomingTasks = $displayMode === 'quick'
+            ? $upcomingTasks
+                ->sortBy($quickDueSortKey)
+                ->take(8)
+                ->values()
+            : $upcomingTasks
+                ->sortByDesc(
+                    'display_priority_score',
+                )
+                ->take(8)
+                ->values();
 
         $noDateTasks = $activeTasks
             ->filter(
                 fn (Task $task): bool =>
                     is_null($task->due_at),
-            )
-            ->sortByDesc('display_priority_score')
-            ->take(8)
-            ->values();
+            );
+
+        $noDateTasks = $displayMode === 'quick'
+            ? $noDateTasks
+                ->sortBy($quickCreatedSortKey)
+                ->take(8)
+                ->values()
+            : $noDateTasks
+                ->sortByDesc(
+                    'display_priority_score',
+                )
+                ->take(8)
+                ->values();
 
         $upcomingObligations =
             ObligationOccurrence::query()
