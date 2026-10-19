@@ -20,7 +20,9 @@
     data-daily-waiting-card
     data-daily-task-id="{{ $task->id }}"
 >
-    @include('partials.daily-waiting-quick-row')
+    @if (($displayMode ?? 'detailed') === 'quick')
+        @include('partials.daily-waiting-quick-row')
+    @endif
 
     <div class="task-card-heading">
         <div class="item-title">
