@@ -52,7 +52,11 @@ class DailyQuickViewTest extends TestCase
                 false,
             )
             ->assertSee(
-                'daily-task-priority.update',
+                '/mi-dia/tareas/',
+                false,
+            )
+            ->assertSee(
+                '/prioridad',
                 false,
             );
     }
