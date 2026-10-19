@@ -3300,6 +3300,105 @@
             });
         };
 
+        const closeQuickPriorityMenus = (
+            except = null,
+        ) => {
+            document.querySelectorAll(
+                '.task-quick-priority[open]',
+            ).forEach((details) => {
+                if (details === except) {
+                    return;
+                }
+
+                details.open = false;
+
+                details.closest(
+                    '[data-daily-quick-container]',
+                )?.classList.remove(
+                    'quick-priority-active',
+                );
+            });
+        };
+
+        const bindQuickPriorityMenus = (
+            root = document,
+        ) => {
+            root.querySelectorAll(
+                '.task-quick-priority',
+            ).forEach((details) => {
+                if (
+                    details.dataset
+                        .quickPriorityBound
+                    === '1'
+                ) {
+                    return;
+                }
+
+                details.dataset.quickPriorityBound =
+                    '1';
+
+                details.addEventListener(
+                    'toggle',
+                    () => {
+                        const card = details.closest(
+                            '[data-daily-quick-container]',
+                        );
+
+                        if (details.open) {
+                            closeQuickPriorityMenus(
+                                details,
+                            );
+
+                            card?.classList.add(
+                                'quick-priority-active',
+                            );
+                        } else {
+                            card?.classList.remove(
+                                'quick-priority-active',
+                            );
+                        }
+                    },
+                );
+            });
+
+            if (
+                document.documentElement.dataset
+                    .quickPriorityDismissBound
+                === '1'
+            ) {
+                return;
+            }
+
+            document.documentElement.dataset
+                .quickPriorityDismissBound = '1';
+
+            document.addEventListener(
+                'click',
+                (event) => {
+                    if (
+                        event.target.closest(
+                            '.task-quick-priority',
+                        )
+                    ) {
+                        return;
+                    }
+
+                    closeQuickPriorityMenus();
+                },
+            );
+
+            document.addEventListener(
+                'keydown',
+                (event) => {
+                    if (event.key !== 'Escape') {
+                        return;
+                    }
+
+                    closeQuickPriorityMenus();
+                },
+            );
+        };
+
         const bindQuickSectionToggles = () => {
             document.querySelectorAll(
                 '.two-column > main > .section',
@@ -3369,6 +3468,7 @@
             bindEditForms(root);
             bindTaskEditDialogs(root);
             bindQuickEditTriggers(root);
+            bindQuickPriorityMenus(root);
         };
 
         bindDisplayMode();
