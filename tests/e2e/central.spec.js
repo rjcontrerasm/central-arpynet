@@ -116,6 +116,90 @@ test('Mi Día muestra foco operativo sin overflow', async ({ page }) => {
     await expectNoHorizontalOverflow(page);
 });
 
+test('Mi Día alterna a vista rápida y abre edición desde la lista', async (
+    { page },
+    testInfo,
+) => {
+    test.skip(
+        testInfo.project.name !== 'desktop-1366',
+        'La vista rápida se valida una sola vez en desktop.',
+    );
+
+    await page.goto(
+        '/mi-dia?q=E2E%20tarea%20cr%C3%ADtica',
+    );
+
+    const quickMode = page.locator(
+        '[data-daily-display-mode="quick"]',
+    );
+
+    await expect(quickMode).toBeVisible();
+
+    await Promise.all([
+        page.waitForURL(
+            (url) => (
+                url.searchParams.get('display')
+                === 'quick'
+            ),
+        ),
+        quickMode.click(),
+    ]);
+
+    await expect(page.locator('body'))
+        .toHaveClass(/daily-mode-quick/);
+
+    const quickRow = page.locator(
+        '[data-daily-quick-row]',
+    ).filter({
+        hasText: 'E2E tarea crítica',
+    }).first();
+
+    await expect(quickRow).toBeVisible();
+
+    const title = quickRow.locator(
+        '.task-quick-title',
+    );
+
+    await expect(title).toHaveText(
+        'E2E tarea crítica',
+    );
+
+    await title.click();
+
+    const dialog = page.locator(
+        '[data-task-edit-dialog][open]',
+    );
+
+    await expect(dialog).toBeVisible();
+    await expect(
+        dialog.getByRole('heading', {
+            name: 'Editar tarea',
+        }),
+    ).toBeVisible();
+
+    await dialog.getByRole('button', {
+        name: 'Cerrar edición',
+    }).click();
+
+    const detailedMode = page.locator(
+        '[data-daily-display-mode="detailed"]',
+    );
+
+    await Promise.all([
+        page.waitForURL(
+            (url) => ! url.searchParams.has(
+                'display',
+            ),
+        ),
+        detailedMode.click(),
+    ]);
+
+    await expect(page.locator('body'))
+        .not.toHaveClass(/daily-mode-quick/);
+
+    await expectNoHorizontalOverflow(page);
+});
+
 test('Mi Día completa tarea en vivo con mini confetti y undo inferior', async (
     { page },
     testInfo,
