@@ -18,7 +18,9 @@
     data-daily-quick-container
     data-daily-live-complete="reload"
 >
-    @include('partials.daily-recurring-quick-row')
+    @if (($displayMode ?? 'detailed') === 'quick')
+        @include('partials.daily-recurring-quick-row')
+    @endif
 
     <div class="task-card-heading">
         <div class="item-title">
