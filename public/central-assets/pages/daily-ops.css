@@ -1,4 +1,4 @@
-/* Central ARPYNET 2.49.0 — daily-ops quick review */
+/* Central ARPYNET 2.49.2 — daily-ops quick priority review */
 
 :root {
             font-family:
@@ -2458,9 +2458,25 @@ body.daily-mode-quick .task-quick-row {
 .task-quick-check {
     width: 32px;
     padding: 0;
-    border: 1px solid #166534;
+    border: 1px solid #475569;
+    background: #0f172a;
+    color: #94a3b8;
+    transition:
+        border-color .16s ease,
+        background .16s ease,
+        color .16s ease,
+        transform .16s ease;
+}
+
+.task-quick-check:hover,
+.task-quick-check:focus-visible {
+    border-color: #22c55e;
     background: #052e16;
     color: #bbf7d0;
+}
+
+.task-quick-check:active {
+    transform: scale(.96);
 }
 
 .task-quick-check-readonly,
@@ -2587,6 +2603,34 @@ body.daily-mode-quick .item[data-daily-quick-container].quick-priority-active {
 
 .task-quick-priority > summary::-webkit-details-marker {
     display: none;
+}
+
+.task-quick-priority-summary.priority-level-critical,
+.task-quick-priority-readonly.priority-level-critical {
+    border-color: #7f1d1d;
+    background: #450a0a;
+    color: #fecaca;
+}
+
+.task-quick-priority-summary.priority-level-high,
+.task-quick-priority-readonly.priority-level-high {
+    border-color: #9a3412;
+    background: #431407;
+    color: #fed7aa;
+}
+
+.task-quick-priority-summary.priority-level-normal,
+.task-quick-priority-readonly.priority-level-normal {
+    border-color: #334155;
+    background: #0f172a;
+    color: #cbd5e1;
+}
+
+.task-quick-priority-summary.priority-level-low,
+.task-quick-priority-readonly.priority-level-low {
+    border-color: #334155;
+    background: #111827;
+    color: #94a3b8;
 }
 
 .task-quick-priority[open] > summary {
@@ -2750,6 +2794,13 @@ body.daily-mode-quick .section.daily-section-collapsed {
 
 @media (prefers-color-scheme: light) {
     .task-quick-check {
+        border-color: #cbd5e1;
+        background: #fff;
+        color: #64748b;
+    }
+
+    .task-quick-check:hover,
+    .task-quick-check:focus-visible {
         border-color: #86efac;
         background: #f0fdf4;
         color: #166534;
@@ -2807,6 +2858,34 @@ body.daily-mode-quick .section.daily-section-collapsed {
         border-color: #cbd5e1;
         background: #fff;
         color: #475569;
+    }
+
+    .task-quick-priority-summary.priority-level-critical,
+    .task-quick-priority-readonly.priority-level-critical {
+        border-color: #fecaca;
+        background: #fef2f2;
+        color: #b91c1c;
+    }
+
+    .task-quick-priority-summary.priority-level-high,
+    .task-quick-priority-readonly.priority-level-high {
+        border-color: #fed7aa;
+        background: #fff7ed;
+        color: #c2410c;
+    }
+
+    .task-quick-priority-summary.priority-level-normal,
+    .task-quick-priority-readonly.priority-level-normal {
+        border-color: #bfdbfe;
+        background: #eff6ff;
+        color: #1d4ed8;
+    }
+
+    .task-quick-priority-summary.priority-level-low,
+    .task-quick-priority-readonly.priority-level-low {
+        border-color: #e2e8f0;
+        background: #f8fafc;
+        color: #64748b;
     }
 
     .task-quick-priority-form {
