@@ -104,6 +104,7 @@
             >
                 @csrf
                 <input type="hidden" name="view" value="{{ $selectedWorkView }}">
+                <input type="hidden" name="display" value="quick">
 
                 @if ($selectedScope)
                     <input type="hidden" name="scope" value="{{ $selectedScope }}">
