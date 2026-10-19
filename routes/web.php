@@ -131,6 +131,16 @@ Route::middleware('auth')->group(function (): void {
 
 Route::middleware('auth')->group(function (): void {
     Route::post(
+        '/mi-dia/tareas/{task}/prioridad',
+        [
+            \\App\\Http\\Controllers\\DailyTaskPriorityController::class,
+            'update',
+        ],
+    )->name('daily-task-priority.update');
+});
+
+Route::middleware('auth')->group(function (): void {
+    Route::post(
         '/tareas/{task}/cancelar',
         [
             \App\Http\Controllers\TaskLifecycleController::class,
