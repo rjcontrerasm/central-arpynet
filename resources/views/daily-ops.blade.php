@@ -204,6 +204,40 @@
                     </nav>
                 </div>
             @endif
+
+            <div class="daily-context-group daily-context-mode">
+                <div class="daily-context-label">
+                    <svg class="daily-context-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M4 6h16M4 12h16M4 18h16"/>
+                        <path d="M7 6h.01M7 12h.01M7 18h.01"/>
+                    </svg>
+                    <span>Modo</span>
+                </div>
+
+                <div
+                    class="daily-context-options daily-display-options"
+                    role="group"
+                    aria-label="Modo de visualización"
+                >
+                    <button
+                        class="scope active"
+                        type="button"
+                        data-daily-display-mode="detailed"
+                        aria-pressed="true"
+                    >
+                        Detallada
+                    </button>
+
+                    <button
+                        class="scope"
+                        type="button"
+                        data-daily-display-mode="quick"
+                        aria-pressed="false"
+                    >
+                        Rápida
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div class="daily-context-section">
