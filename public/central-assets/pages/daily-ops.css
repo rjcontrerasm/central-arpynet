@@ -2561,6 +2561,14 @@ a.task-quick-title {
     justify-self: end;
 }
 
+body.daily-mode-quick .item[data-daily-quick-container].quick-priority-active {
+    z-index: 120;
+}
+
+.task-quick-priority[open] {
+    z-index: 130;
+}
+
 .task-quick-priority > summary,
 .task-quick-secondary,
 .task-quick-resume button {
