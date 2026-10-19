@@ -133,7 +133,7 @@ Route::middleware('auth')->group(function (): void {
     Route::post(
         '/mi-dia/tareas/{task}/prioridad',
         [
-            \\App\\Http\\Controllers\\DailyTaskPriorityController::class,
+            \App\Http\Controllers\DailyTaskPriorityController::class,
             'update',
         ],
     )->name('daily-task-priority.update');
