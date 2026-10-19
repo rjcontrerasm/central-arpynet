@@ -27,7 +27,9 @@
                                 data-daily-priority-band="{{ $band }}"
                                 data-daily-priority-score="{{ $task->display_priority_score }}"
                             >
-                                @include('partials.daily-task-quick-row')
+                                @if (($displayMode ?? 'detailed') === 'quick')
+        @include('partials.daily-task-quick-row')
+    @endif
 
                                 <div class="task-card-heading">
                                     <div class="item-title">
