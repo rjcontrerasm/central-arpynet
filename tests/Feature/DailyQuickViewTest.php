@@ -85,13 +85,17 @@ class DailyQuickViewTest extends TestCase
                     'urgency' => 'critical',
                     'impact' => 'high',
                     'view' => 'mine',
+                    'display' => 'quick',
                 ],
             );
 
         $response->assertRedirect(
             route(
                 'daily-ops.show',
-                ['view' => 'mine'],
+                [
+                    'view' => 'mine',
+                    'display' => 'quick',
+                ],
             ),
         );
 
