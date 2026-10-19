@@ -54,6 +54,10 @@ class DailyOpsController extends Controller
                 'nullable',
                 'integer',
             ],
+            'display' => [
+                'nullable',
+                'in:detailed,quick',
+            ],
         ]);
 
         $user = $request->user();
@@ -257,6 +261,9 @@ class DailyOpsController extends Controller
 
         $selectedPriority =
             $validated['priority'] ?? null;
+
+        $displayMode =
+            $validated['display'] ?? 'detailed';
 
         $selectedRecurringRule = isset(
             $validated['recurring_rule'],
@@ -641,7 +648,8 @@ class DailyOpsController extends Controller
             ->values();
 
         $showAllOverdue =
-            $selectedPriority === 'overdue'
+            $displayMode === 'quick'
+            || $selectedPriority === 'overdue'
             || $search !== ''
             || $selectedRecurringRule;
 
@@ -986,6 +994,7 @@ class DailyOpsController extends Controller
                 'search',
                 'selectedPriority',
                 'selectedRecurringRule',
+                'displayMode',
                 'overdueCount',
                 'overdueGroups',
                 'visibleOverdueGroups',
