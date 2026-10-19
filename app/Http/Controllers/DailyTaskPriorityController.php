@@ -41,6 +41,10 @@ class DailyTaskPriorityController extends Controller
                 'nullable',
                 'integer',
             ],
+            'display' => [
+                'nullable',
+                'in:detailed,quick',
+            ],
         ]);
 
         abort_unless(
@@ -130,6 +134,11 @@ class DailyTaskPriorityController extends Controller
         if (! empty($validated['recurring_rule'])) {
             $params['recurring_rule'] =
                 (int) $validated['recurring_rule'];
+        }
+
+        if (! empty($validated['display'])) {
+            $params['display'] =
+                $validated['display'];
         }
 
         if (! empty($validated['work_team'])) {
