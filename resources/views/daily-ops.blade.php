@@ -106,10 +106,6 @@
             'q' => $search !== '' ? $search : null,
             'recurring_rule' =>
                 $selectedRecurringRule,
-                                    'display' =>
-                                        $displayMode === 'quick'
-                                            ? 'quick'
-                                            : null,
             'display' =>
                 $displayMode === 'quick'
                     ? 'quick'
