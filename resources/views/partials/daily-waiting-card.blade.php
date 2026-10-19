@@ -16,9 +16,12 @@
 <div
     class="item daily-waiting-card daily-waiting-live"
     data-operational-card
+    data-daily-quick-container
     data-daily-waiting-card
     data-daily-task-id="{{ $task->id }}"
 >
+    @include('partials.daily-waiting-quick-row')
+
     <div class="task-card-heading">
         <div class="item-title">
             {{ $task->title }}
