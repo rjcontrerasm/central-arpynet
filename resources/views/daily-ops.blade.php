@@ -19,7 +19,7 @@
     ></script>
 </head>
 
-<body>
+<body class="{{ $displayMode === 'quick' ? 'daily-mode-quick' : '' }}">
 <div class="shell">
     <div class="topbar">
         <div class="brand">Central ARPYNET</div>
@@ -106,6 +106,10 @@
             'q' => $search !== '' ? $search : null,
             'recurring_rule' =>
                 $selectedRecurringRule,
+            'display' =>
+                $displayMode === 'quick'
+                    ? 'quick'
+                    : null,
         ]);
 
         $priorityLabels = [
@@ -145,6 +149,10 @@
                                     'q' => $search !== '' ? $search : null,
                                     'priority' => $selectedPriority,
                                     'recurring_rule' => $selectedRecurringRule,
+                                    'display' =>
+                                        $displayMode === 'quick'
+                                            ? 'quick'
+                                            : null,
                                 ]),
                             ) }}"
                         >
@@ -177,6 +185,10 @@
                                     'q' => $search !== '' ? $search : null,
                                     'priority' => $selectedPriority,
                                     'recurring_rule' => $selectedRecurringRule,
+                                    'display' =>
+                                        $displayMode === 'quick'
+                                            ? 'quick'
+                                            : null,
                                 ]),
                             ) }}"
                         >
@@ -195,6 +207,10 @@
                                         'q' => $search !== '' ? $search : null,
                                         'priority' => $selectedPriority,
                                         'recurring_rule' => $selectedRecurringRule,
+                                    'display' =>
+                                        $displayMode === 'quick'
+                                            ? 'quick'
+                                            : null,
                                     ]),
                                 ) }}"
                             >
@@ -204,6 +220,40 @@
                     </nav>
                 </div>
             @endif
+
+            <div class="daily-context-group daily-context-mode">
+                <div class="daily-context-label">
+                    <svg class="daily-context-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M4 6h16M4 12h16M4 18h16"/>
+                        <path d="M7 6h.01M7 12h.01M7 18h.01"/>
+                    </svg>
+                    <span>Modo</span>
+                </div>
+
+                <div
+                    class="daily-context-options daily-display-options"
+                    role="group"
+                    aria-label="Modo de visualización"
+                >
+                    <button
+                        class="scope {{ $displayMode === 'detailed' ? 'active' : '' }}"
+                        type="button"
+                        data-daily-display-mode="detailed"
+                        aria-pressed="{{ $displayMode === 'detailed' ? 'true' : 'false' }}"
+                    >
+                        Detallada
+                    </button>
+
+                    <button
+                        class="scope {{ $displayMode === 'quick' ? 'active' : '' }}"
+                        type="button"
+                        data-daily-display-mode="quick"
+                        aria-pressed="{{ $displayMode === 'quick' ? 'true' : 'false' }}"
+                    >
+                        Rápida
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div class="daily-context-section">
@@ -228,6 +278,10 @@
                             'q' => $search !== '' ? $search : null,
                             'priority' => $selectedPriority,
                             'recurring_rule' => $selectedRecurringRule,
+                                    'display' =>
+                                        $displayMode === 'quick'
+                                            ? 'quick'
+                                            : null,
                         ]),
                     ) }}"
                 >
@@ -246,6 +300,10 @@
                                 'q' => $search !== '' ? $search : null,
                                 'priority' => $selectedPriority,
                                 'recurring_rule' => $selectedRecurringRule,
+                                    'display' =>
+                                        $displayMode === 'quick'
+                                            ? 'quick'
+                                            : null,
                             ]),
                         ) }}"
                     >
@@ -444,6 +502,10 @@
                     'q' => $search !== '' ? $search : null,
                     'priority' => 'overdue',
                     'recurring_rule' => $selectedRecurringRule,
+                                    'display' =>
+                                        $displayMode === 'quick'
+                                            ? 'quick'
+                                            : null,
                 ])) }}"
                 data-href-critical="{{ route('daily-ops.show', array_filter([
                     'view' => $selectedWorkView,
@@ -451,6 +513,10 @@
                     'q' => $search !== '' ? $search : null,
                     'priority' => 'critical',
                     'recurring_rule' => $selectedRecurringRule,
+                                    'display' =>
+                                        $displayMode === 'quick'
+                                            ? 'quick'
+                                            : null,
                 ])) }}"
                 data-href-today="{{ route('daily-ops.show', array_filter([
                     'view' => $selectedWorkView,
@@ -458,6 +524,10 @@
                     'q' => $search !== '' ? $search : null,
                     'priority' => 'today',
                     'recurring_rule' => $selectedRecurringRule,
+                                    'display' =>
+                                        $displayMode === 'quick'
+                                            ? 'quick'
+                                            : null,
                 ])) }}"
                 @if ($overdueCount > 0)
                     href="{{ route('daily-ops.show', array_filter([
@@ -466,6 +536,10 @@
                         'q' => $search !== '' ? $search : null,
                         'priority' => 'overdue',
                         'recurring_rule' => $selectedRecurringRule,
+                                    'display' =>
+                                        $displayMode === 'quick'
+                                            ? 'quick'
+                                            : null,
                     ])) }}"
                 @elseif ($criticalCount > 0)
                     href="{{ route('daily-ops.show', array_filter([
@@ -474,6 +548,10 @@
                         'q' => $search !== '' ? $search : null,
                         'priority' => 'critical',
                         'recurring_rule' => $selectedRecurringRule,
+                                    'display' =>
+                                        $displayMode === 'quick'
+                                            ? 'quick'
+                                            : null,
                     ])) }}"
                 @elseif ($priorityTodayCount > 0)
                     href="{{ route('daily-ops.show', array_filter([
@@ -482,6 +560,10 @@
                         'q' => $search !== '' ? $search : null,
                         'priority' => 'today',
                         'recurring_rule' => $selectedRecurringRule,
+                                    'display' =>
+                                        $displayMode === 'quick'
+                                            ? 'quick'
+                                            : null,
                     ])) }}"
                 @else
                     hidden
@@ -543,6 +625,10 @@
                 'priority' => 'overdue',
                 'recurring_rule' =>
                     $selectedRecurringRule,
+                                    'display' =>
+                                        $displayMode === 'quick'
+                                            ? 'quick'
+                                            : null,
             ])) }}"
         >
             <div class="stat-value danger-value" data-daily-stat="overdue">
@@ -560,6 +646,10 @@
                 'priority' => 'critical',
                 'recurring_rule' =>
                     $selectedRecurringRule,
+                                    'display' =>
+                                        $displayMode === 'quick'
+                                            ? 'quick'
+                                            : null,
             ])) }}"
         >
             <div class="stat-value critical-value" data-daily-stat="critical">
@@ -577,6 +667,10 @@
                 'priority' => 'today',
                 'recurring_rule' =>
                     $selectedRecurringRule,
+                                    'display' =>
+                                        $displayMode === 'quick'
+                                            ? 'quick'
+                                            : null,
             ])) }}"
         >
             <div class="stat-value today-value" data-daily-stat="today">
@@ -594,6 +688,10 @@
                 'priority' => 'week',
                 'recurring_rule' =>
                     $selectedRecurringRule,
+                                    'display' =>
+                                        $displayMode === 'quick'
+                                            ? 'quick'
+                                            : null,
             ])) }}"
         >
             <div class="stat-value" data-daily-stat="week">
@@ -611,6 +709,10 @@
                 'priority' => 'planned',
                 'recurring_rule' =>
                     $selectedRecurringRule,
+                                    'display' =>
+                                        $displayMode === 'quick'
+                                            ? 'quick'
+                                            : null,
             ])) }}"
         >
             <div class="stat-value" data-daily-stat="planned">
@@ -691,6 +793,10 @@
                                         'critical',
                                     'recurring_rule' =>
                                         $selectedRecurringRule,
+                                    'display' =>
+                                        $displayMode === 'quick'
+                                            ? 'quick'
+                                            : null,
                                 ]),
                             ) }}"
                         >
@@ -740,6 +846,10 @@
                                         'overdue',
                                     'recurring_rule' =>
                                         $selectedRecurringRule,
+                                    'display' =>
+                                        $displayMode === 'quick'
+                                            ? 'quick'
+                                            : null,
                                 ]),
                             ) }}"
                         >
@@ -840,6 +950,10 @@
                                         $sectionPriority,
                                     'recurring_rule' =>
                                         $selectedRecurringRule,
+                                    'display' =>
+                                        $displayMode === 'quick'
+                                            ? 'quick'
+                                            : null,
                                 ]),
                             ) }}"
                         >

@@ -3093,6 +3093,273 @@
             });
         };
 
+        const displayModeStorageKey =
+            'central.daily.displayMode';
+
+        const setStoredDisplayMode = (mode) => {
+            try {
+                window.localStorage.setItem(
+                    displayModeStorageKey,
+                    mode,
+                );
+            } catch (error) {
+                // El modo sigue funcionando aunque el navegador
+                // bloquee almacenamiento local.
+            }
+        };
+
+        const storedDisplayMode = () => {
+            try {
+                return window.localStorage.getItem(
+                    displayModeStorageKey,
+                );
+            } catch (error) {
+                return null;
+            }
+        };
+
+        const updateDisplayButtons = (mode) => {
+            document.querySelectorAll(
+                '[data-daily-display-mode]',
+            ).forEach((button) => {
+                const active =
+                    button.dataset.dailyDisplayMode
+                    === mode;
+
+                button.classList.toggle(
+                    'active',
+                    active,
+                );
+
+                button.setAttribute(
+                    'aria-pressed',
+                    active ? 'true' : 'false',
+                );
+            });
+        };
+
+        const ensureDisplayUrl = (mode) => {
+            const url = new URL(
+                window.location.href,
+            );
+
+            if (mode === 'quick') {
+                if (
+                    url.searchParams.get('display')
+                    === 'quick'
+                ) {
+                    return false;
+                }
+
+                url.searchParams.set(
+                    'display',
+                    'quick',
+                );
+            } else {
+                if (
+                    ! url.searchParams.has('display')
+                ) {
+                    return false;
+                }
+
+                url.searchParams.delete('display');
+            }
+
+            window.location.replace(
+                url.toString(),
+            );
+
+            return true;
+        };
+
+        const applyDisplayMode = (
+            mode,
+            persist = true,
+        ) => {
+            const normalized =
+                mode === 'quick'
+                    ? 'quick'
+                    : 'detailed';
+
+            document.body.classList.toggle(
+                'daily-mode-quick',
+                normalized === 'quick',
+            );
+
+            updateDisplayButtons(normalized);
+
+            if (persist) {
+                setStoredDisplayMode(normalized);
+            }
+
+            return normalized;
+        };
+
+        const bindDisplayMode = () => {
+            const url = new URL(
+                window.location.href,
+            );
+
+            const urlMode =
+                url.searchParams.get('display')
+                    === 'quick'
+                    ? 'quick'
+                    : 'detailed';
+
+            const remembered =
+                storedDisplayMode();
+
+            const initial =
+                remembered === 'quick'
+                || remembered === 'detailed'
+                    ? remembered
+                    : urlMode;
+
+            if (
+                initial !== urlMode
+                && ensureDisplayUrl(initial)
+            ) {
+                return;
+            }
+
+            applyDisplayMode(
+                urlMode,
+                remembered == null,
+            );
+
+            document.querySelectorAll(
+                '[data-daily-display-mode]',
+            ).forEach((button) => {
+                if (
+                    button.dataset.dailyDisplayModeBound
+                    === '1'
+                ) {
+                    return;
+                }
+
+                button.dataset.dailyDisplayModeBound =
+                    '1';
+
+                button.addEventListener(
+                    'click',
+                    () => {
+                        const mode =
+                            button.dataset
+                                .dailyDisplayMode
+                            === 'quick'
+                                ? 'quick'
+                                : 'detailed';
+
+                        setStoredDisplayMode(mode);
+
+                        if (! ensureDisplayUrl(mode)) {
+                            applyDisplayMode(mode);
+                        }
+                    },
+                );
+            });
+        };
+
+        const bindQuickEditTriggers = (
+            root = document,
+        ) => {
+            root.querySelectorAll(
+                '[data-quick-open-edit]',
+            ).forEach((button) => {
+                if (
+                    button.dataset.quickOpenEditBound
+                    === '1'
+                ) {
+                    return;
+                }
+
+                button.dataset.quickOpenEditBound =
+                    '1';
+
+                button.addEventListener(
+                    'click',
+                    () => {
+                        const card = button.closest(
+                            '[data-operational-card]',
+                        );
+
+                        const dialogId =
+                            button.dataset
+                                .quickOpenEdit;
+
+                        const original =
+                            card?.querySelector(
+                                '[data-task-edit-open="'
+                                + dialogId
+                                + '"]',
+                            );
+
+                        original?.click();
+                    },
+                );
+            });
+        };
+
+        const bindQuickSectionToggles = () => {
+            document.querySelectorAll(
+                '.two-column > main > .section',
+            ).forEach((section) => {
+                const head =
+                    section.querySelector(
+                        ':scope > .section-head',
+                    );
+
+                if (
+                    ! head
+                    || head.querySelector(
+                        '[data-daily-section-toggle]',
+                    )
+                ) {
+                    return;
+                }
+
+                const button =
+                    document.createElement(
+                        'button',
+                    );
+
+                button.type = 'button';
+                button.className =
+                    'daily-section-toggle';
+                button.dataset.dailySectionToggle =
+                    '1';
+                button.setAttribute(
+                    'aria-expanded',
+                    'true',
+                );
+                button.textContent = 'Ocultar';
+
+                button.addEventListener(
+                    'click',
+                    () => {
+                        const collapsed =
+                            section.classList.toggle(
+                                'daily-section-collapsed',
+                            );
+
+                        button.setAttribute(
+                            'aria-expanded',
+                            collapsed
+                                ? 'false'
+                                : 'true',
+                        );
+
+                        button.textContent =
+                            collapsed
+                                ? 'Mostrar'
+                                : 'Ocultar';
+                    },
+                );
+
+                head.appendChild(button);
+            });
+        };
+
         const bindLiveTaskForms = (root = document) => {
             bindResumeForms(root);
             bindWaitingForms(root);
@@ -3101,8 +3368,11 @@
             bindCompleteActionForms(root);
             bindEditForms(root);
             bindTaskEditDialogs(root);
+            bindQuickEditTriggers(root);
         };
 
+        bindDisplayMode();
+        bindQuickSectionToggles();
         bindLiveTaskForms();
     };
 

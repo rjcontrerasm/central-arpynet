@@ -15,8 +15,13 @@
 <div
     class="item recurring-overdue-group"
     data-operational-card
+    data-daily-quick-container
     data-daily-live-complete="reload"
 >
+    @if (($displayMode ?? 'detailed') === 'quick')
+        @include('partials.daily-recurring-quick-row')
+    @endif
+
     <div class="task-card-heading">
         <div class="item-title">
             {{ $task->title }}

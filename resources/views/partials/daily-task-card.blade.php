@@ -21,10 +21,16 @@
                             <div
                                 class="item{{ $band === 'critical' ? ' daily-task-critical' : '' }}"
                                 data-operational-card
+                                data-daily-quick-container
+                                data-daily-task-id="{{ $task->id }}"
                                 data-daily-overdue="{{ $isOverdue ? '1' : '0' }}"
                                 data-daily-priority-band="{{ $band }}"
                                 data-daily-priority-score="{{ $task->display_priority_score }}"
                             >
+                                @if (($displayMode ?? 'detailed') === 'quick')
+        @include('partials.daily-task-quick-row')
+    @endif
+
                                 <div class="task-card-heading">
                                     <div class="item-title">
                                         {{ $task->title }}
