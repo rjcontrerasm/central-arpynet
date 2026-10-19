@@ -164,6 +164,12 @@ test('Mi Día alterna a vista rápida y abre edición desde la lista', async (
         'E2E tarea crítica',
     );
 
+    await expect(
+        quickRow.locator(
+            '.task-quick-priority > summary',
+        ),
+    ).toContainText('Crítica');
+
     await title.click();
 
     const dialog = page.locator(
