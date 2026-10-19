@@ -181,6 +181,69 @@ test('Mi Día alterna a vista rápida y abre edición desde la lista', async (
         name: 'Cerrar edición',
     }).click();
 
+    await page.goto('/mi-dia?display=quick');
+
+    const priorityMenus = page.locator(
+        '.task-quick-priority',
+    );
+
+    await expect.poll(
+        async () => priorityMenus.count(),
+    ).toBeGreaterThan(1);
+
+    const firstPriority =
+        priorityMenus.nth(0);
+    const secondPriority =
+        priorityMenus.nth(1);
+
+    await firstPriority.locator('summary').click();
+
+    await expect(firstPriority)
+        .toHaveAttribute('open', '');
+
+    const firstPriorityCard =
+        firstPriority.locator(
+            'xpath=ancestor::*[@data-daily-quick-container][1]',
+        );
+
+    await expect(firstPriorityCard)
+        .toHaveClass(/quick-priority-active/);
+
+    await secondPriority.locator('summary').click();
+
+    await expect(secondPriority)
+        .toHaveAttribute('open', '');
+    await expect(firstPriority)
+        .not.toHaveAttribute('open', '');
+
+    const secondPriorityCard =
+        secondPriority.locator(
+            'xpath=ancestor::*[@data-daily-quick-container][1]',
+        );
+
+    await expect(secondPriorityCard)
+        .toHaveClass(/quick-priority-active/);
+    await expect(firstPriorityCard)
+        .not.toHaveClass(/quick-priority-active/);
+
+    const activeZIndex =
+        await secondPriorityCard.evaluate(
+            (element) => Number(
+                window.getComputedStyle(
+                    element,
+                ).zIndex,
+            ),
+        );
+
+    expect(activeZIndex).toBeGreaterThan(0);
+
+    await page.keyboard.press('Escape');
+
+    await expect(secondPriority)
+        .not.toHaveAttribute('open', '');
+    await expect(secondPriorityCard)
+        .not.toHaveClass(/quick-priority-active/);
+
     const detailedMode = page.locator(
         '[data-daily-display-mode="detailed"]',
     );

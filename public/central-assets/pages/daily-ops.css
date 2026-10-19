@@ -2561,6 +2561,14 @@ a.task-quick-title {
     justify-self: end;
 }
 
+body.daily-mode-quick .item[data-daily-quick-container].quick-priority-active {
+    z-index: 120;
+}
+
+.task-quick-priority[open] {
+    z-index: 130;
+}
+
 .task-quick-priority > summary,
 .task-quick-secondary,
 .task-quick-resume button {
@@ -2588,10 +2596,11 @@ a.task-quick-title {
 
 .task-quick-priority-form {
     position: absolute;
-    z-index: 60;
-    top: calc(100% + 6px);
-    right: 0;
+    z-index: 140;
+    top: 50%;
+    right: calc(100% + 8px);
     width: 250px;
+    transform: translateY(-50%);
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 9px;
@@ -2729,12 +2738,13 @@ body.daily-mode-quick .section.daily-section-collapsed {
 
     .task-quick-priority-form {
         position: fixed;
-        z-index: 100;
+        z-index: 140;
         top: auto;
         right: 12px;
         bottom: 16px;
         left: 12px;
         width: auto;
+        transform: none;
     }
 }
 
