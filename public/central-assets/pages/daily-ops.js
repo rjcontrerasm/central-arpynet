@@ -107,18 +107,47 @@
             }
         };
 
+        const liveHttpError = (
+            response,
+        ) => {
+            const messages = {
+                401: 'Tu sesión venció. Central recargará la página para volver a autenticarte.',
+                419: 'La sesión de seguridad venció. Central recargará la página.',
+            };
+
+            if (! messages[response.status]) {
+                return null;
+            }
+
+            const error = new Error(
+                messages[response.status],
+            );
+
+            error.centralStatus = response.status;
+            error.centralReload = true;
+
+            return error;
+        };
+
         const parseJsonResponse = async (response) => {
+            const sessionError =
+                liveHttpError(response);
+
+            if (sessionError) {
+                throw sessionError;
+            }
+
             const contentType = response.headers.get(
                 'content-type',
             ) || '';
 
             if (! contentType.includes('application/json')) {
-                const body = await response.text();
+                await response.text();
 
                 throw new Error(
                     response.ok
                         ? 'El servidor devolvió una respuesta inesperada.'
-                        : `Error ${response.status}: el servidor no devolvió JSON.`,
+                        : `Error ${response.status}: respuesta inesperada del servidor.`,
                 );
             }
 
@@ -930,13 +959,10 @@
                             }, 1200);
                     }
                 } catch (error) {
-                    toast.querySelector(
-                        '.global-undo-title',
-                    ).textContent = error.message
-                        || 'No se pudo deshacer.';
-                    toast.querySelector(
-                        '.global-undo-detail',
-                    ).textContent = '';
+                    showLiveErrorToast(
+                        error,
+                        'No se pudo deshacer.',
+                    );
                 } finally {
                     button.disabled = false;
                     button.classList.remove('is-busy');
@@ -944,6 +970,96 @@
             });
 
             return toast;
+        };
+
+        const showLiveErrorToast = (
+            error,
+            fallback,
+        ) => {
+            const toast = ensureToast();
+            const previous = lastCompletion;
+            const button = toast.querySelector(
+                '.global-undo-button',
+            );
+            const progress = toast.querySelector(
+                '.global-undo-progress-fill',
+            );
+
+            window.clearTimeout(
+                undoRestoreHideTimer,
+            );
+
+            toast.hidden = false;
+            toast.classList.remove(
+                'global-undo-bar--restored',
+                'daily-live-error-toast',
+            );
+            toast.classList.add(
+                'daily-live-error-toast',
+            );
+
+            if (button) {
+                button.hidden = true;
+                button.disabled = false;
+                button.classList.remove(
+                    'is-busy',
+                );
+            }
+
+            if (progress) {
+                progress.style.transition = 'none';
+                progress.style.transform = 'scaleX(0)';
+            }
+
+            const statusIcon = toast.querySelector(
+                '.global-undo-status-icon',
+            );
+
+            if (statusIcon) {
+                statusIcon.textContent = '!';
+            }
+
+            toast.querySelector(
+                '.global-undo-title',
+            ).textContent =
+                error?.message || fallback;
+
+            toast.querySelector(
+                '.global-undo-detail',
+            ).textContent =
+                error?.centralReload
+                    ? 'Recargando…'
+                    : '';
+
+            undoRestoreHideTimer =
+                window.setTimeout(() => {
+                    toast.classList.remove(
+                        'daily-live-error-toast',
+                    );
+
+                    if (error?.centralReload) {
+                        window.location.reload();
+                        return;
+                    }
+
+                    if (
+                        previous?.undo
+                        && lastCompletion?.undo?.id
+                            === previous.undo.id
+                    ) {
+                        showUndoToast(
+                            previous.undo,
+                            previous.label
+                                || previous.undo.label
+                                || 'Acción anterior',
+                            previous.csrf,
+                            previous,
+                        );
+                        return;
+                    }
+
+                    toast.hidden = true;
+                }, error?.centralReload ? 1300 : 2600);
         };
 
         const animateUndoProgress = (
@@ -1062,7 +1178,20 @@
             toast.hidden = false;
             toast.classList.remove(
                 'global-undo-bar--restored',
+                'daily-live-error-toast',
             );
+
+            const statusIcon = toast.querySelector(
+                '.global-undo-status-icon',
+            );
+
+            if (statusIcon) {
+                statusIcon.innerHTML = `
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="m5 12 4 4L19 6"/>
+                    </svg>
+                `;
+            }
 
             const undoButton = toast.querySelector(
                 '.global-undo-button',
@@ -1398,19 +1527,10 @@
                         } catch (error) {
                             sourceMarker.remove();
 
-                            const toast = ensureToast();
-                            toast.hidden = false;
-                            toast.querySelector(
-                                '.global-undo-title',
-                            ).textContent = error.message
-                                || 'No se pudo reactivar la tarea.';
-                            toast.querySelector(
-                                '.global-undo-detail',
-                            ).textContent = '';
-
-                            window.setTimeout(() => {
-                                toast.hidden = true;
-                            }, 2600);
+                            showLiveErrorToast(
+                                error,
+                                'No se pudo reactivar la tarea.',
+                            );
                         } finally {
                             delete form.dataset.submitting;
                             button.disabled = false;
@@ -1648,19 +1768,10 @@
                     } catch (error) {
                         sourceMarker.remove();
 
-                        const toast = ensureToast();
-                        toast.hidden = false;
-                        toast.querySelector(
-                            '.global-undo-title',
-                        ).textContent = error.message
-                            || 'No se pudo poner la tarea en espera.';
-                        toast.querySelector(
-                            '.global-undo-detail',
-                        ).textContent = '';
-
-                        window.setTimeout(() => {
-                            toast.hidden = true;
-                        }, 2600);
+                        showLiveErrorToast(
+                            error,
+                            'No se pudo poner la tarea en espera.',
+                        );
                     } finally {
                         delete form.dataset.submitting;
                         button.disabled = false;
@@ -2068,19 +2179,10 @@
                     } catch (error) {
                         sourceMarker.remove();
 
-                        const toast = ensureToast();
-                        toast.hidden = false;
-                        toast.querySelector(
-                            '.global-undo-title',
-                        ).textContent = error.message
-                            || 'No se pudo mover la tarea.';
-                        toast.querySelector(
-                            '.global-undo-detail',
-                        ).textContent = '';
-
-                        window.setTimeout(() => {
-                            toast.hidden = true;
-                        }, 2600);
+                        showLiveErrorToast(
+                            error,
+                            'No se pudo mover la tarea.',
+                        );
                     } finally {
                         delete form.dataset.submitting;
                         button.disabled = false;
@@ -2196,19 +2298,10 @@
                             );
                         }
                     } catch (error) {
-                        const toast = ensureToast();
-                        toast.hidden = false;
-                        toast.querySelector(
-                            '.global-undo-title',
-                        ).textContent = error.message
-                            || 'No se pudo iniciar la tarea.';
-                        toast.querySelector(
-                            '.global-undo-detail',
-                        ).textContent = '';
-
-                        window.setTimeout(() => {
-                            toast.hidden = true;
-                        }, 2600);
+                        showLiveErrorToast(
+                            error,
+                            'No se pudo iniciar la tarea.',
+                        );
                     } finally {
                         delete form.dataset.submitting;
                         button.disabled = false;
@@ -2545,19 +2638,10 @@
 
                         placeholder.remove();
 
-                        const toast = ensureToast();
-                        toast.hidden = false;
-                        toast.querySelector(
-                            '.global-undo-title',
-                        ).textContent = error.message
-                            || 'No se pudo completar la tarea.';
-                        toast.querySelector(
-                            '.global-undo-detail',
-                        ).textContent = '';
-
-                        window.setTimeout(() => {
-                            toast.hidden = true;
-                        }, 2600);
+                        showLiveErrorToast(
+                            error,
+                            'No se pudo completar la tarea.',
+                        );
                     } finally {
                         delete form.dataset.submitting;
                         button.disabled = false;
