@@ -1011,6 +1011,14 @@
                 progress.style.transform = 'scaleX(0)';
             }
 
+            const statusIcon = toast.querySelector(
+                '.global-undo-status-icon',
+            );
+
+            if (statusIcon) {
+                statusIcon.textContent = '!';
+            }
+
             toast.querySelector(
                 '.global-undo-title',
             ).textContent =
@@ -1172,6 +1180,18 @@
                 'global-undo-bar--restored',
                 'daily-live-error-toast',
             );
+
+            const statusIcon = toast.querySelector(
+                '.global-undo-status-icon',
+            );
+
+            if (statusIcon) {
+                statusIcon.innerHTML = `
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="m5 12 4 4L19 6"/>
+                    </svg>
+                `;
+            }
 
             const undoButton = toast.querySelector(
                 '.global-undo-button',
