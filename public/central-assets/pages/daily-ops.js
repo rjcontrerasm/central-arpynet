@@ -1170,6 +1170,7 @@
             toast.hidden = false;
             toast.classList.remove(
                 'global-undo-bar--restored',
+                'daily-live-error-toast',
             );
 
             const undoButton = toast.querySelector(
